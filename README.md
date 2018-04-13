@@ -2,10 +2,6 @@
 
 ![Maven Central](https://img.shields.io/maven-central/v/com.raquo/airstream_sjs0.6_2.12.svg)
 
-```
-"com.raquo" %%% "airstream" % "0.1"
-```
-
 Airstream is a small state propagation and streaming library. Primary differences from other solutions:
 
 - **Mandatory [ownership](#ownership) of leaky resources** – it is impossible to create a subscription without specifying when it shall be destroyed. This helps prevent memory leaks and unexpected behaviour.
@@ -23,6 +19,10 @@ Airstream has a very generic design, but is primarily intended to serve as a rea
 
 I created Airstream because I found existing solutions were not suitable for building reactive UI components. My original need for Airstream is to replace the old reactive layer of [Laminar](https://github.com/raquo/Laminar), but I'll be happy to see it used by other reactive UI libraries as well. Laminar in general is well modularized, and you can definitely reuse other bits and pieces of it, for example [Scala DOM Types](https://github.com/raquo/scala-dom-types).
 
+```
+"com.raquo" %%% "airstream" % "0.1"
+```
+
 
 
 ## Table of Contents
@@ -38,12 +38,12 @@ I created Airstream because I found existing solutions were not suitable for bui
   * [State](#state)
   * [Relationship between EventStream, Signal, and State](#relationship-between-eventstream-signal-and-state)
   * [Ownership](#ownership)
-    * [Ownership & Memory Management](#ownership-memory-management)
+    * [Ownership & Memory Management](#ownership--memory-management)
       * [State Considerations](#state-considerations)
       * [Subscription Considerations](#subscription-considerations)
   * [Sources of Events](#sources-of-events)
-    * [EventStream.fromSeq](#eventstream-fromseq)
-    * [EventStream.periodic](#eventstream-periodic)
+    * [EventStream.fromSeq](#eventstreamfromseq)
+    * [EventStream.periodic](#eventstreamperiodic)
     * [EventBus](#eventbus)
     * [Var](#var)
     * [Custom Observables](#custom-observables)
