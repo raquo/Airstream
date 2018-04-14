@@ -1,5 +1,6 @@
 # Airstream
 
+[![Join the chat at https://gitter.im/Laminar_/Airstream](https://badges.gitter.im/Laminar_/Airstream.svg)](https://gitter.im/Laminar_/Airstream)
 ![Maven Central](https://img.shields.io/maven-central/v/com.raquo/airstream_sjs0.6_2.12.svg)
 
 Airstream is a small state propagation and streaming library. Primary differences from other solutions:
@@ -61,7 +62,8 @@ I created Airstream because I found existing solutions were not suitable for bui
 
 ## Community
 
-Please use [github issues](https://github.com/raquo/Airstream/issues) for bugs, feature requests, as well as all kinds of discussions, including questions on usage and roadmap. I think this will work better than spreading thin across gitter / stackoverflow / etc. You can _watch_ this project on github to get issue updates if you're interested in following discussions.
+* [Gitter](https://gitter.im/Laminar_/Airstream) for chat and random questions
+* [Github issues](https://github.com/raquo/Airstream/issues) for bugs, feature requests, and more in-depth discussions
 
 
 
