@@ -10,7 +10,7 @@ trait State[+A] extends MemoryObservable[A] with Owned {
   protected[state] val owner: Owner
 
   /** Initial value is evaluated eagerly on initialization */
-  protected[this] var currentValue: A = initialValue()
+  protected[this] var currentValue: A = initialValue
 
   // State starts itself, it does not need any dependencies to run.
   // Note: This call can be found in every concrete subclass of [[State]].
@@ -52,13 +52,6 @@ trait State[+A] extends MemoryObservable[A] with Owned {
 
   override protected[this] def setCurrentValue(newValue: A): Unit = {
     currentValue = newValue
-  }
-
-  /** State propagates only if its value has changed */ // @TODO[API] Should this also apply to Signals?
-  override protected[this] def fire(nextValue: A, transaction: Transaction): Unit = {
-    if (nextValue != now()) {
-      super.fire(nextValue, transaction)
-    }
   }
 
   override protected[this] def onKilled(): Unit = {

@@ -16,6 +16,6 @@ class CombineState2[A, B, O](
 
   onStart()
 
-  override protected[this] def initialValue(): O = combinator(parent1.now(), parent2.now())
+  override protected[this] def initialValue: O = combinator(parent1.now(), parent2.now())
 
 }

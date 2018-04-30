@@ -15,9 +15,11 @@ trait MemoryObservable[+A] extends Observable[A] {
   protected[airstream] def now(): A
 
   /** Evaluate initial value of this [[MemoryObservable]].
-    * This method should only be called once, when first needed
+    * This method must only be called once, when this value is first needed.
+    * You should override this method as `def` (no `val` or lazy val) to avoid
+    * holding a reference to the initial value beyond the duration of its relevance.
     */
-  protected[this] def initialValue(): A
+  protected[this] def initialValue: A
 
   /** Update the current value of this [[MemoryObservable]] */
   protected[this] def setCurrentValue(newValue: A): Unit
@@ -31,11 +33,11 @@ trait MemoryObservable[+A] extends Observable[A] {
     subscription
   }
 
+  /** MemoryObservable propagates only if its value has changed */
   override protected[this] def fire(nextValue: A, transaction: Transaction): Unit = {
-    // @TODO[API] The reason we might not want this for Signal is because Signal's now() is not guaranteed to be fresh. Not sure if we care.
-//    if (nextValue != currentValue) {  // @TODO we want this check here, right? There's another check like this in State
-    setCurrentValue(nextValue)
-    super.fire(nextValue, transaction)
-//    }
+    if (nextValue != now()) {
+      setCurrentValue(nextValue)
+      super.fire(nextValue, transaction)
+    }
   }
 }

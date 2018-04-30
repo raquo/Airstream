@@ -1,6 +1,6 @@
 package com.raquo.airstream.eventbus
 
-import com.raquo.airstream.core.{Observer, Transaction}
+import com.raquo.airstream.core.Observer
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.ownership.Owner
 
@@ -8,19 +8,21 @@ class WriteBus[A] extends Observer[A] {
 
   private[eventbus] val stream: EventBusStream[A] = new EventBusStream(this)
 
-  /** Note: to remove this source, call .removeSource() on the resulting WriteBusSource */
+  /** Note: this source will be removed when the `owner` you provide says so.
+    * To remove this source manually, call .removeSource() on the resulting WriteBusSource.
+    */
   def addSource(sourceStream: EventStream[A])(implicit owner: Owner): EventBusSource[A] = {
     new EventBusSource(stream, sourceStream, owner)
   }
 
-  // @TODO better names for mapWriter / filterWriter, consider lens/zoom/etc.
-
+  /** Behaves similar to `map`, but gives you a WriteBus, not just an Observer */
   def mapWriter[B](project: B => A)(implicit owner: Owner): WriteBus[B] = {
     val mapBus = new WriteBus[B]
     addSource(mapBus.stream.map(project))(owner)
     mapBus
   }
 
+  /** Behaves similar to `filter`, but gives you a WriteBus, not just an Observer */
   def filterWriter(passes: A => Boolean)(implicit owner: Owner): WriteBus[A] = {
     val filterBus = new WriteBus[A]
     addSource(filterBus.stream.filter(passes))(owner)

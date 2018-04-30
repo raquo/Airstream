@@ -43,7 +43,7 @@ trait Signal[+A] extends MemoryObservable[A] with LazyObservable[A] {
   /** Initial value is only evaluated if/when needed (when there are observers) */
   override protected[airstream] def now(): A = {
     maybeLastSeenCurrentValue.getOrElse {
-      val currentValue = initialValue()
+      val currentValue = initialValue
       setCurrentValue(currentValue)
       currentValue
     }
@@ -52,19 +52,21 @@ trait Signal[+A] extends MemoryObservable[A] with LazyObservable[A] {
   override protected[this] def setCurrentValue(newValue: A): Unit = {
     maybeLastSeenCurrentValue = js.defined(newValue)
   }
+
+  /** Here we need to ensure that Signal's default value has been evaluated.
+    * It is important because if a Signal gets started by means of its .changes
+    * stream acquiring an observer, nothing else would trigger this evaluation
+    * because initialValue is not directly used by the .changes stream.
+    * However, when the events start coming in, we will need this initialValue
+    * because Signal needs to know when its current value has changed.
+    */
+  override protected[this] def onStart(): Unit = {
+    now() // trigger setCurrentValue if we didn't initialize this before
+    super.onStart()
+  }
 }
 
-// @TODO all.map/etc should also return a MemoryStream... But how? CanBuildFrom..?
 object Signal {
-
-//  def combine[A, B](
-//    signal1: Signal[A],
-//    signal2: Signal[B]
-//  )(
-//    implicit combineSignalOwner: Owner
-//  ): CombineSignal2[A, B] = {
-//    new CombineSignal2(parent1 = signal1, parent2 = signal2, combineSignalOwner)
-//  }
 
   implicit def toTuple2Signal[A, B](signal: Signal[(A, B)]): Tuple2Signal[A, B] = {
     new Tuple2Signal(signal)

@@ -14,5 +14,5 @@ class MapSignal[I, O](
     fire(project(nextParentValue), transaction)
   }
 
-  override protected[this] def initialValue(): O = project(parent.now())
+  override protected[this] def initialValue: O = project(parent.now())
 }

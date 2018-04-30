@@ -70,6 +70,19 @@ class SignalSpec extends FunSpec with Matchers {
 
     // --
 
+    bus.writer.onNext(2)
+
+    calculations shouldEqual mutable.Buffer(
+      // signal should not propagate the same value
+      // "map-signal" signal is derived from upstream signal which filters out the same value, so it doesn't get an update
+      Calculation("bus", 2)
+    )
+    effects shouldEqual mutable.Buffer()
+
+    calculations.clear()
+
+    // --
+
     // When adding a new observer, it gets the signal's current value.
     // Here the current value has been updated by the previous event, and the signal remembers it.
     signal.addObserver(signalObserver2)
@@ -188,6 +201,7 @@ class SignalSpec extends FunSpec with Matchers {
     bus.writer.onNext(2)
 
     calculations shouldEqual mutable.Buffer(
+      Calculation("map-signal", -1),
       Calculation("bus", 2),
       Calculation("map-signal", 20),
       Calculation("changes", 20)
@@ -227,6 +241,19 @@ class SignalSpec extends FunSpec with Matchers {
 
     calculations.clear()
     effects.clear()
+
+    // --
+
+    bus.writer.onNext(3)
+
+    calculations shouldEqual mutable.Buffer(
+      // Unchanged value should not propagate through the Signal
+      // map-signal is derived from an upstream signal that filters out same values, so it doesn't even get a calculation
+      Calculation("bus", 3)
+    )
+    effects shouldEqual mutable.Buffer()
+
+    calculations.clear()
 
     // --
 

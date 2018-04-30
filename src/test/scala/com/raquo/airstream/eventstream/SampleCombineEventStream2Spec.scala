@@ -40,7 +40,9 @@ class SampleCombineEventStream2Spec extends FunSpec with Matchers {
 
     combinedStream.addObserver(combinedObserver)
 
-    calculations shouldEqual mutable.Buffer()
+    calculations shouldEqual mutable.Buffer(
+      Calculation("signal", 0)
+    )
     effects shouldEqual mutable.Buffer()
 
     calculations.clear()
@@ -51,7 +53,6 @@ class SampleCombineEventStream2Spec extends FunSpec with Matchers {
 
     calculations shouldEqual mutable.Buffer(
       Calculation("stream", 1),
-      Calculation("signal", 0), // first time accessing initialValue
       Calculation("combined", 1)
     )
     effects shouldEqual mutable.Buffer(

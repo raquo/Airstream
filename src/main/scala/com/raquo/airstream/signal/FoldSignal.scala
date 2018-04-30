@@ -15,5 +15,5 @@ class FoldSignal[A, B](
     fire(fn(now(), nextValue), transaction)
   }
 
-  override protected[this] val initialValue: B = makeInitialValue()
+  override protected[this] def initialValue: B = makeInitialValue()
 }

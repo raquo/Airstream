@@ -77,6 +77,7 @@ This documentation is intended to be read top to bottom, sections further down t
 
 Warning: there is some rambling involved. I will need to revise this at some point.
 
+For examples of Airstream code, see [laminar-examples](https://github.com/raquo/laminar-examples), [Laminar](https://github.com/raquo/Laminar) source code, as well as Airstream tests.
 
 
 ### EventStream
@@ -171,7 +172,9 @@ Unlike EventStream, a Signal always has a current value. For instance, you could
 
 However, all of that would only happen if `signal` had any observers (because of [Laziness](#laziness)). If `signal` had no observers, its current value would be stuck at the last current value it saved while it had observers, or at `initialValue` if it never had observers.
 
-This laziness makes `Signal` generally unsuitable to represent state because its current value might get inconsistent in the absence of observers. It is also the reason why you can't directly access a Signal's current value (there is no `now()` method on it). You can use `stream.withCurrentValueOf(signal).map((lastStreamEvent, signalCurrentValue) => ???)` to access `signal`'s current value. The resulting stream will still be lazy, but this way the processing of `currentValue` is just as lazy as `currentValue` itself, so there is no risk of looking at a stale `currentValue`. If you don't need lastStreamEvent, use `stream.sample(signal).map(signalCurrentValue => ???)` instead. Note: both of these output streams will emit only when `stream` emits, as documented in the code.
+This laziness makes `Signal` unsuitable to represent certain types of state unless the presence of observers is guaranteed, because its current value might get inconsistent in the absence of observers. It is also the reason why you can't directly access a Signal's current value (there is no public `now()` method on it). You can use `stream.withCurrentValueOf(signal).map((lastStreamEvent, signalCurrentValue) => ???)` to access `signal`'s current value. The resulting stream will still be lazy, but this way the processing of `currentValue` is just as lazy as `currentValue` itself, so there is no risk of looking at a stale `currentValue`. If you don't need lastStreamEvent, use `stream.sample(signal).map(signalCurrentValue => ???)` instead. Note: both of these output streams will emit only when `stream` emits, as documented in the code.
+
+Unlike EventStream, Signal only fires an event when its next value is different from its current value. The comparison is made using Scala's `==` operator.
 
 When adding an Observer to a Signal, it will immediately receive its current value, as well as any future values. If you don't want the observer to receive the current value, add an observer to the stream `signal.changes` instead.
 
@@ -211,9 +214,9 @@ This is useful in situations where a parent component wants to maintain some sta
 
 Because State's current value is guaranteed to be consistent regardless of observers, it is available via the `state.now()` method. Using that method will reduce the need for combining multiple observables, if all you want is to sample some State's current value.
 
-Unlike Signal, State only fires an event when its next value is different from its current value. Signal does not have this behaviour partly because we can't rely on its current value being consistent.
+Similar to Signal, State only fires an event when its next value is different from its current value.
 
-Also unlike Signal, State's initial value is evaluated eagerly, but also only once.
+Unlike Signal, State's initial value is evaluated eagerly, but also only once.
 
 Similar to Signal, State's external observers receive its current value immediately on subscription. And State too exposes a `changes` stream that does not send current value on subscription.
 
@@ -346,15 +349,15 @@ WriteBus extends Observer, so you can call `onNext(newEventValue)` on it, or pas
 
 You can also call `addSource(otherStream)(owner)` on it, and the event bus will re-emit every event emitted by that stream. This is different from adding `writer` as an observer to `otherStream` because this will not cause otherStream to be started unless/until the EventBus's own stream is started (see [Laziness](#laziness)).
 
-You've probably noticed that addSource takes `owner` as an implicit param – this is for memory management purposes. You would typically pass a WriteBus to a child component if you want the child to send any events to the parent. Thus, we want addSource to be automatically undone when said child is discarded (see [Ownership](#ownership)).
+You've probably noticed that `addSource` takes `owner` as an implicit param – this is for memory management purposes. You would typically pass a WriteBus to a child component if you want the child to send any events to the parent. Thus, we want `addSource` to be automatically undone when said child is discarded (see [Ownership](#ownership)).
 
-An EventBus can have multiple simultaneously sources. In that case it will emit events from all of those sources. EventBus emits every event in a new transaction. Note that EventBus lets you create loops of Observables. It is up to you to make sure that a propagation of an event through such loops eventually terminates (via a proper `.filter(passes)` gate for example, or an implicit non-equality filter in State).
+An EventBus can have multiple sources simultaneously. In that case it will emit events from all of those sources in the order in which they come in. EventBus emits every event in a new transaction. Note that EventBus lets you create loops of Observables. It is up to you to make sure that a propagation of an event through such loops eventually terminates (via a proper `.filter(passes)` gate for example, or an implicit non-equality filter in State).
 
 You can manually remove a previously added source stream using `removeSource` or by calling `kill()` on the EventBusSource object returned by the addSource call.
 
 EventBus is particularly useful to get a single stream of events from a dynamic list of child components. You basically pass down the `writer` to every child component, and inside the child component you can add a source stream to it, or add it as an observer to some stream. Then when any given child component is discarded, its connection to the event bus will also be severed.
 
-Typically you don't pass EventBus itself down to child components as it provides both read and write access. Instead, you pass down either the writer or the stream, depending on what is needed. This security is the reason those are separate, by the way.
+Typically you don't pass EventBus itself down to child components as it provides both read and write access. Instead, you pass down either the writer or the stream, depending on what is needed. This security is the reason those are separate instances, by the way.
 
 WriteBus comes with a way to create new writers. Consider this:
 
@@ -369,6 +372,13 @@ Now you can send `Bar` events to `barWriter`, and they will appear in `eventBus`
 #### Var
 
 `Var(initialValue)` is a State that you can update manually. It exposes a `writer`, similar to `EventBus`.
+
+
+#### Val
+
+`Val(value)` is a Signal "constant" – a Signal that never changes its value. Unlike other Signals, its value is evaluated immediately upon creation, and it exposes a `now()` method to obtain it.
+
+Val is useful when a component wants to accept either a Signal or a constant value as input. You can just wrap your constant in a Val, and have the component accept a Signal instead.
 
 
 #### Custom Observables

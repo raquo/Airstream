@@ -16,7 +16,7 @@ class MapState[I, O](
 
   onStart()
 
-  override protected[this] def initialValue(): O = project(parent.now())
+  override protected[this] def initialValue: O = project(parent.now())
 
   override protected[airstream] def onNext(nextParentValue: I, transaction: Transaction): Unit = {
     fire(project(nextParentValue), transaction)
