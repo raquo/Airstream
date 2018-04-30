@@ -4,9 +4,9 @@ normalizedName := "airstream"
 
 organization := "com.raquo"
 
-scalaVersion := "2.12.4"
+scalaVersion := "2.12.6"
 
-crossScalaVersions := Seq("2.11.12", "2.12.4")
+crossScalaVersions := Seq("2.11.12", "2.12.6")
 
 homepage := Some(url("https://github.com/raquo/Airstream"))
 
@@ -34,13 +34,7 @@ publishMavenStyle := true
 
 publishArtifact in Test := false
 
-publishTo := {
-  val nexus = "https://oss.sonatype.org/"
-  if (isSnapshot.value)
-    Some("snapshots" at nexus + "content/repositories/snapshots")
-  else
-    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
-}
+publishTo := sonatypePublishTo.value
 
 releaseCrossBuild := true
 
