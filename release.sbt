@@ -40,7 +40,7 @@ releaseCrossBuild := true
 
 pomIncludeRepository := { _ => false }
 
-useGpg := true
+//useGpg := true
 
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
 
