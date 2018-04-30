@@ -21,7 +21,7 @@ Airstream has a very generic design, but is primarily intended to serve as a rea
 I created Airstream because I found existing solutions were not suitable for building reactive UI components. My original need for Airstream is to replace the old reactive layer of [Laminar](https://github.com/raquo/Laminar), but I'll be happy to see it used by other reactive UI libraries as well. Laminar in general is well modularized, and you can definitely reuse other bits and pieces of it, for example [Scala DOM Types](https://github.com/raquo/scala-dom-types).
 
 ```
-"com.raquo" %%% "airstream" % "0.1"
+"com.raquo" %%% "airstream" % "0.2"
 ```
 
 
@@ -46,7 +46,8 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [EventStream.fromSeq](#eventstreamfromseq)
     * [EventStream.periodic](#eventstreamperiodic)
     * [EventBus](#eventbus)
-    * [Var](#var)
+    * [Var-and-StateVar](#var-and-statevar)
+    * [Val](#val)
     * [Custom Observables](#custom-observables)
   * [FRP Glitches](#frp-glitches)
     * [Other Libraries](#other-libraries)
@@ -369,9 +370,11 @@ val barWriter: WriteBus[Bar] = eventBus.writer.filterWriter(isGoodFoo).mapWriter
 Now you can send `Bar` events to `barWriter`, and they will appear in `eventBus` processed with `barToFoo` then and filtered by `isGoodFoo`. This is useful when you want to get events from a child component, but the child component does not or should not know what `Foo` is. Generally if you don't need such separation of concerns, you can just `map`/`filter` the stream that's feeding the EventBus instead.
 
 
-#### Var
+#### Var and StateVar
 
-`Var(initialValue)` is a State that you can update manually. It exposes a `writer`, similar to `EventBus`.
+`Var(initialValue)` contains `.signal` that you can update manually. Similar to `EventBus`, it exposes `.writer` for updates.
+
+Similarly, `StateVar(initialValue)(owner)` contains `.state` that you can also update via `.writer`.
 
 
 #### Val
