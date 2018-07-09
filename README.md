@@ -342,7 +342,7 @@ TODO[API] – implement this.
 
 `new EventBus[MyEvent]` is the general-purpose way to create a stream on which you can manually trigger events. EventBus exposes two properties:
 
-**`stream`** is the stream of events emitted by the EventBus.
+**`events`** is the stream of events emitted by the EventBus.
 
 **`writer`** is a WriteBus object that lets you trigger EventBus events in a few ways.
 
@@ -358,7 +358,7 @@ You can manually remove a previously added source stream using `removeSource` or
 
 EventBus is particularly useful to get a single stream of events from a dynamic list of child components. You basically pass down the `writer` to every child component, and inside the child component you can add a source stream to it, or add it as an observer to some stream. Then when any given child component is discarded, its connection to the event bus will also be severed.
 
-Typically you don't pass EventBus itself down to child components as it provides both read and write access. Instead, you pass down either the writer or the stream, depending on what is needed. This security is the reason those are separate instances, by the way.
+Typically you don't pass EventBus itself down to child components as it provides both read and write access. Instead, you pass down either the writer or the events, depending on what is needed. This security is the reason those are separate instances, by the way.
 
 WriteBus comes with a way to create new writers. Consider this:
 
