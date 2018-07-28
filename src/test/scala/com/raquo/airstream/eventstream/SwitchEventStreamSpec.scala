@@ -1,5 +1,6 @@
 package com.raquo.airstream.eventstream
 
+import com.raquo.airstream.core.Observable.MetaObservable
 import com.raquo.airstream.core.Observer
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
@@ -7,7 +8,7 @@ import org.scalatest.{FunSpec, Matchers}
 
 import scala.collection.mutable
 
-class FlattenEventStreamSpec extends FunSpec with Matchers {
+class SwitchEventStreamSpec extends FunSpec with Matchers {
 
   it("mirrors last emitted stream, but only if subscribed") {
 
@@ -24,7 +25,7 @@ class FlattenEventStreamSpec extends FunSpec with Matchers {
       case (bus, index) => bus.events.map(Calculation.log(s"source-$index", calculations))
     }
 
-    val $latestNumber = metaBus.events.flatten
+    val $latestNumber = metaBus.events.flatten // SwitchStreamStrategy is the default (provided implicitly)
 
     val flattenObserver = Observer[Int](effects += Effect("flattened-obs", _))
 
