@@ -10,8 +10,6 @@ import scala.util.{Failure, Success}
 /** This stream emits the values that the parent observables' emitted futures resolve with,
   * in the order in which they resolve (which is likely different from the order in which the futures are emitted).
   *
-  * This is alternative to [[SwitchFutureStream]].
-  *
   * @param dropPreviousValues if enabled, this option makes this stream NOT emit values of futures that were emitted
   *                           earlier than a future that has already resolved. So if the parent stream emits
   *                           three futures and the third one resolves before the first two, this stream will NOT emit
@@ -32,7 +30,6 @@ class ConcurrentFutureStream[A](
   override protected[airstream] val topoRank: Int = 1
 
   override protected[airstream] def onNext(nextValue: Future[A], transaction: Transaction): Unit = {
-    println("ConcurrentFutureStream.onNext: " + nextValue)
     lastFutureIndex += 1
     val nextFutureIndex = lastFutureIndex
     nextValue.onComplete { tryNextValue =>

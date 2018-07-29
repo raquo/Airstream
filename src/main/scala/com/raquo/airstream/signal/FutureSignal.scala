@@ -7,6 +7,8 @@ import scala.util.{Failure, Success}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
+// @TODO confirm that memory management is ok here between the future and this signal.
+
 /** This signal behaves a bit differently than other signals typically do:
   * it keeps track of state regardless of whether it is started.
   * This is possible because this case requires no special memory management.

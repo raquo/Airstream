@@ -10,7 +10,7 @@ import org.scalatest.Assertion
 import scala.collection.mutable
 import scala.concurrent.{Future, Promise}
 
-class EventStreamFlattenConcurrentFuture extends AsyncSpec {
+class EventStreamFlattenFutureSpec extends AsyncSpec {
 
   it("EventStream.flatten(SwitchFutureStrategy)") {
 
@@ -26,8 +26,6 @@ class EventStreamFlattenConcurrentFuture extends AsyncSpec {
 
     def makePromise() = Promise[Int]()
 
-    def assertEmptyLogs(): Assertion = effects shouldEqual mutable.Buffer()
-
     def clearLogs(): Assertion = {
       effects.clear()
       assert(true)
@@ -37,6 +35,7 @@ class EventStreamFlattenConcurrentFuture extends AsyncSpec {
     val promise2 = makePromise()
     val promise3 = makePromise()
     val promise4 = makePromise()
+    val promise5 = makePromise()
 
     val futureBus = new EventBus[Future[Int]]()
     val stream = futureBus.events.flatten(SwitchFutureStrategy)
@@ -50,7 +49,7 @@ class EventStreamFlattenConcurrentFuture extends AsyncSpec {
       promise2.success(200)
       promise1.success(100)
 
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
 
     }.flatMap { _ =>
       effects shouldEqual mutable.Buffer(Effect("obs", 200))
@@ -58,26 +57,33 @@ class EventStreamFlattenConcurrentFuture extends AsyncSpec {
 
       promise4.success(400)
 
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
 
     }.flatMap { _ =>
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
 
       futureBus.writer.onNext(promise3.future)
-      futureBus.writer.onNext(promise4.future) // already resolved
+      futureBus.writer.onNext(promise4.future) // already resolved, so this will not produce events
 
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
 
     }.flatMap { _ =>
-      effects shouldEqual mutable.Buffer(Effect("obs", 400))
-      clearLogs()
+      effects shouldEqual mutable.Buffer()
 
       promise3.success(300)
 
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
 
     }.flatMap { _ =>
-      assertEmptyLogs()
+      futureBus.writer.onNext(promise5.future)
+      promise5.success(500)
+
+      effects shouldEqual mutable.Buffer()
+
+    }.flatMap { _ =>
+
+      effects shouldEqual mutable.Buffer(Effect("obs", 500))
+      clearLogs()
     }
   }
 
@@ -90,8 +96,6 @@ class EventStreamFlattenConcurrentFuture extends AsyncSpec {
     val obs = Observer[Int](effects += Effect("obs", _))
 
     def makePromise() = Promise[Int]()
-
-    def assertEmptyLogs(): Assertion = effects shouldEqual mutable.Buffer()
 
     def clearLogs(): Assertion = {
       effects.clear()
@@ -116,7 +120,7 @@ class EventStreamFlattenConcurrentFuture extends AsyncSpec {
       promise2.success(200)
       promise1.success(100)
 
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
 
     }.flatMap { _ =>
       effects shouldEqual mutable.Buffer(Effect("obs", 200), Effect("obs", 100))
@@ -124,16 +128,16 @@ class EventStreamFlattenConcurrentFuture extends AsyncSpec {
 
       promise4.success(400)
 
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
 
     }.flatMap { _ =>
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
 
       futureBus.writer.onNext(promise3.future)
       futureBus.writer.onNext(promise4.future) // already resolved
       futureBus.writer.onNext(promise5.future)
 
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
 
     }.flatMap { _ =>
       effects shouldEqual mutable.Buffer(Effect("obs", 400))
@@ -141,17 +145,17 @@ class EventStreamFlattenConcurrentFuture extends AsyncSpec {
 
       promise3.success(300)
 
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
 
     }.flatMap { _ =>
       effects shouldEqual mutable.Buffer(Effect("obs", 300))
       clearLogs()
     }.flatMap { _ =>
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
 
       promise5.success(500)
 
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
     }.flatMap { _ =>
       effects shouldEqual mutable.Buffer(Effect("obs", 500))
       clearLogs()
@@ -167,8 +171,6 @@ class EventStreamFlattenConcurrentFuture extends AsyncSpec {
     val obs = Observer[Int](effects += Effect("obs", _))
 
     def makePromise() = Promise[Int]()
-
-    def assertEmptyLogs(): Assertion = effects shouldEqual mutable.Buffer()
 
     def clearLogs(): Assertion = {
       effects.clear()
@@ -193,7 +195,7 @@ class EventStreamFlattenConcurrentFuture extends AsyncSpec {
       promise2.success(200)
       promise1.success(100)
 
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
 
     }.flatMap { _ =>
       effects shouldEqual mutable.Buffer(Effect("obs", 200))
@@ -201,16 +203,16 @@ class EventStreamFlattenConcurrentFuture extends AsyncSpec {
 
       promise4.success(400)
 
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
 
     }.flatMap { _ =>
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
 
       futureBus.writer.onNext(promise3.future)
       futureBus.writer.onNext(promise4.future) // already resolved
       futureBus.writer.onNext(promise5.future) // already resolved
 
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
 
     }.flatMap { _ =>
       effects shouldEqual mutable.Buffer(Effect("obs", 400))
@@ -218,14 +220,12 @@ class EventStreamFlattenConcurrentFuture extends AsyncSpec {
 
       promise3.success(300)
 
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
 
     }.flatMap { _ =>
-      assertEmptyLogs()
-
       promise5.success(500)
 
-      assertEmptyLogs()
+      effects shouldEqual mutable.Buffer()
     }.flatMap { _ =>
       effects shouldEqual mutable.Buffer(Effect("obs", 500))
       clearLogs()

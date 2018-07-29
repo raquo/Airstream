@@ -16,9 +16,11 @@ class FutureEventStream[A](future: Future[A]) extends EventStream[A] {
 
   override protected[airstream] val topoRank: Int = 1
 
-  future.onComplete {
-    // @TODO[API] Do we need "isStarted" filter on these? Doesn't seem to affect anything for now...
-    case Success(newValue) => new Transaction(fire(newValue, _))
-    case Failure(e) => throw e
+  if (!future.isCompleted) {
+    future.onComplete {
+      // @TODO[API] Do we need "isStarted" filter on these? Doesn't seem to affect anything for now...
+      case Success(newValue) => new Transaction(fire(newValue, _))
+      case Failure(e) => throw e
+    }
   }
 }

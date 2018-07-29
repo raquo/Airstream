@@ -20,11 +20,6 @@ class EventStreamFromFutureSpec extends AsyncSpec with BeforeAndAfter {
 
   def makePromise() = Promise[Int]()
 
-  def assertEmptyLogs(): Assertion = {
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-  }
-
   def clearLogs(): Assertion = {
     calculations.clear()
     effects.clear()
@@ -49,7 +44,8 @@ class EventStreamFromFutureSpec extends AsyncSpec with BeforeAndAfter {
     stream.addObserver(obs1)
 
     delay {
-      assertEmptyLogs()
+      calculations shouldEqual mutable.Buffer()
+      effects shouldEqual mutable.Buffer()
 
       // --
 
@@ -57,7 +53,8 @@ class EventStreamFromFutureSpec extends AsyncSpec with BeforeAndAfter {
 
       // For consistency, the stream will only emit asynchronously even if the Future is already completed
       // This is how Future.onComplete behaves.
-      assertEmptyLogs()
+      calculations shouldEqual mutable.Buffer()
+      effects shouldEqual mutable.Buffer()
 
     }.flatMap { _ =>
       delay {
@@ -72,7 +69,8 @@ class EventStreamFromFutureSpec extends AsyncSpec with BeforeAndAfter {
     val promise = makePromise()
     val stream = makeStream(promise)
 
-    assertEmptyLogs()
+    calculations shouldEqual mutable.Buffer()
+    effects shouldEqual mutable.Buffer()
 
     promise.success(100)
     stream.addObserver(obs1)
@@ -88,17 +86,20 @@ class EventStreamFromFutureSpec extends AsyncSpec with BeforeAndAfter {
     val promise = makePromise()
     val stream = makeStream(promise)
 
-    assertEmptyLogs()
+    calculations shouldEqual mutable.Buffer()
+    effects shouldEqual mutable.Buffer()
 
     promise.success(100)
 
     delay {
-      assertEmptyLogs()
+      calculations shouldEqual mutable.Buffer()
+      effects shouldEqual mutable.Buffer()
       stream.addObserver(obs1)
 
     }.flatMap { _ =>
       delay {
-        assertEmptyLogs()
+        calculations shouldEqual mutable.Buffer()
+        effects shouldEqual mutable.Buffer()
       }
     }
   }
@@ -107,14 +108,18 @@ class EventStreamFromFutureSpec extends AsyncSpec with BeforeAndAfter {
     val promise = makePromise()
     val stream = makeStream(promise)
 
-    assertEmptyLogs()
+    calculations shouldEqual mutable.Buffer()
+    effects shouldEqual mutable.Buffer()
 
     delay {
-      assertEmptyLogs()
+      calculations shouldEqual mutable.Buffer()
+      effects shouldEqual mutable.Buffer()
 
       stream.addObserver(obs1)
       promise.success(100)
-      assertEmptyLogs()
+
+      calculations shouldEqual mutable.Buffer()
+      effects shouldEqual mutable.Buffer()
 
     }.flatMap { _ =>
       delay {
@@ -126,7 +131,8 @@ class EventStreamFromFutureSpec extends AsyncSpec with BeforeAndAfter {
         stream.addObserver(obs2)
 
         delay {
-          assertEmptyLogs()
+          calculations shouldEqual mutable.Buffer()
+          effects shouldEqual mutable.Buffer()
         }
       }
     }
