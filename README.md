@@ -43,6 +43,7 @@ I created Airstream because I found existing solutions were not suitable for bui
       * [State Considerations](#state-considerations)
       * [Subscription Considerations](#subscription-considerations)
   * [Sources of Events](#sources-of-events)
+    * [Creating Observables from Futures](#creating-observables-from-futures)
     * [EventStream.fromSeq](#eventstreamfromseq)
     * [EventStream.periodic](#eventstreamperiodic)
     * [EventBus](#eventbus)
@@ -55,6 +56,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Transactions](#transactions)
     * [Merge Glitch-By-Design](#merge-glitch-by-design)
   * [Operators](#operators)
+    * [Flattening Observables](#flattening-observables)
   * [Error Handling](#error-handling)
 * [Limitations](#limitations)
 * [My Related Projects](#my-related-projects)
@@ -319,6 +321,25 @@ In practice this is not a problem because everyone knows not to keep references 
 We understand how events propagate through streams, signals and state, but the events in Airstream have to originate somewhere, right?
 
 
+#### Creating Observables from Futures
+
+`EventStream.fromFuture[A]` creates a stream that emits the value that the future completes with, when that happens.
+* The event is emitted asynchronously relative to the future's completion
+* Creating a stream from an already completed future results in a stream that emits no events (look into source code of this method for an easy way to get different behaviour)
+
+`Signal.fromFuture[A]` creates a Signal of `Option[A]` that emits the value that the future completes with, when that happens, wrapped in `Some()`.
+* The event is emitted asynchronously relative to the future's completion
+* The initial value of this signal is equal to `Some(value)` if the future was already completed when the initial value was evaluated, or `None` otherwise.
+* Unlike other signals, this signal keeps its current value from going stale even in the absence of observers
+
+`State.fromFuture[A]` – similar to `Signal.fromFuture` but produces a `State[Option[A]]` instead.
+
+Note that all observables created from futures fire their events in a new transaction because they don't have a parent observable to be synchronous with.
+
+Now that you have an `Observable[Future[A]]`, you can flatten it into `Observable[A]` in a few ways, see [Flattening Observables](#flattening-observables).
+
+**Warning: As error handling is not yet implemented in Airstream (TODO), it can't handle failed futures at the moment.**
+
 #### EventStream.fromSeq
 
 ```scala
@@ -444,7 +465,7 @@ And the answer is the limitation of our topological ranking approach: it does no
 
 That said, in practice this is not a big deal because the events that an EventBus receives from different sources should be usually independent of each other because they are coming from different child components.
 
-Apart from EventBus there is another way to create a loop – the `eventStream.flatten` method. And that one too, produces an event stream that emits all events in a new transaction, for all the same reason. TODO[Docs] Document flattening.
+Apart from EventBus there is another way to create a loop – the `eventStream.flatten` method. And that one too, produces an event stream that emits all events in a new transaction, for all the same reasons.
 
 Loops necessarily break transactions as a tradeoff. Some other libraries do some kinds of dynamic topological sorting which is less predictable and whose performance worsens as your observables graph gets more complicated, but with Airstream there are no such costs. The only – and tiny – cost is when Airstream inserts a CombineObservable into the list of pending observables – that list is sorted by a static `topoRank` field, so it takes O(n) where n is the number of currently pending observables, which is usually zero or not much more than that.
 
@@ -477,6 +498,28 @@ MergeEventStream uses the same pendingObservables mechanism as CombineObservable
 Airstream supports standard observables operators like `map` / `filter` / etc. Some of the operators are available only on certain types of observables. For example, you currently can only `sample` an EventStream. This scarcity is sort of deliberate – we start out with the most basic / obvious operators and will expand into fancier ones as the need arises. However, some basic operators are also missing just because I didn't get to it yet (as opposed to by design), it's only for this reason there is no operator to combine more than two observables yet. 
 
 There is currently no centralized documentation on operators – they are well annotated in the source code, in a few traits that extend `Observable`: `LazyObservable`, `MemoryObservable`, `EventStream`, `Signal`, `State`.
+
+#### Flattening Observables
+
+Flattening generally refers to reducing the number of nested container layers. In Airstream the precise type definition can be found in the `FlattenStrategy` trait.
+
+The `def flatten[...](implicit strategy: FlattenStrategy[...])` method is available on all observables by means of `MetaObservable` implicit value class. All you need is to provide it an instance of `FlattenStrategy` that works for your specific observable's type. While you can easily implement your own flattening strategy, we have a few predefined in Airstream:
+
+**`SwitchStreamStrategy`** flattens an `Observable[EventStream[A]]` into an `EventStream[A]`. The resulting stream will emit events from the latest stream emitted by the parent observable. So, as the parent observable emits a new stream, the resulting flattened stream _switches_ to imitating this last emitted stream.
+*  This strategy is the default for the parent observable type that it supports. So if you want to flatten an `Observable[EventStream[A]]` using this strategy, you don't need to pass it to `flatten` explicitly, it is provided implicitly.
+
+**`SwitchFutureStrategy`** flattens an `Observable[Future[A]]` into an `EventStream[A]`. We first create an event stream from each emitted future, then flatten the result using `SwitchStreamStrategy`. So this ends up behaving very similarly, producing a stream that emits the value from the last future emitted by the parent observable, discarding the values of all previously emitted futures.
+
+To summarize, the above strategies result in a stream that imitates the latest stream / future emitted by the parent observable. So as soon as the parent observable emits a new future / stream, it stops listening for values produced by previously emitted futures / streams.
+
+**`ConcurrentFutureStrategy`** also flattens an `Observable[Future[A]]` into an `EventStream[A]`. Whenever a future emitted by the parent observable completes, this stream emits that value, regardless of any other futures emitted by the parent.
+
+**`OverwriteFutureStrategy`** is similar to `ConcurrentFutureStrategy` except it does not emit the values of previous futures if a value from a newer future has already been emitted. For example, suppose the parent observable emits three futures. Future 3 is the first one to be completed, and when that happens the resulting flattened stream emits that value. When futures 1 and 2 eventually complete, their values will be ignored because they are considered stale, _overwritten_ by the more up to date result of future 3. This strategy is best for use cases like fetching autocompletion results where you don't care about older results if you have a newer result. 
+
+All built-in strategies result in observables that emit each event in a new transaction for hopefully obvious reasons. 
+
+`SwitchFutureStrategy`, `ConcurrentFutureStrategy`, and `OverwriteFutureStrategy` treat futures slightly differently than `EventStream.fromFuture`. Namely, if the parent observable emits a future that has already resolved, it will be treated as if the future has just resolved, i.e. its value will be emitted (subject to the strategy's normal logic). This is useful to avoid "swallowing" already resolved futures and enables easy handling of use cases such as cached or default responses. If this behaviour is undesirable you can easily define an alternative flattening strategy – it's a matter of flipping a single boolean in the relevant classes.
+ 
 
 
 ### Error Handling
