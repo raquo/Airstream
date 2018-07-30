@@ -1,6 +1,8 @@
 package com.raquo.airstream.core
 
-import com.raquo.airstream.eventstream.{EventStream, FlattenEventStream}
+import com.raquo.airstream.eventstream.EventStream
+import com.raquo.airstream.features.FlattenStrategy
+import com.raquo.airstream.features.FlattenStrategy.SwitchStreamStrategy
 import com.raquo.airstream.ownership.{Owned, Owner}
 import com.raquo.airstream.state.State
 import com.raquo.airstream.util.GlobalCounter
@@ -9,6 +11,8 @@ import scala.scalajs.js
 
 /** This trait represents a reactive value that can be subscribed to. */
 trait Observable[+A] {
+
+  type Self[+T] <: Observable[T]
 
   // @TODO remove id? Why did I even add it?
   val id: Int = Observable.nextId()
@@ -22,10 +26,6 @@ trait Observable[+A] {
 
   /** Note: This is enforced to be a Set outside of the type system #performance */
   protected[this] val internalObservers: js.Array[InternalObserver[A]] = js.Array()
-
-  def flatten[B](implicit evidence: Observable[A] <:< Observable[EventStream[B]]): EventStream[B] = {
-    new FlattenEventStream[B](parent = evidence(this))
-  }
 
   /** Get a lazy observable that emits the same values as this one (assuming it has observers, as usual)
     *
@@ -91,8 +91,6 @@ trait Observable[+A] {
     shouldRemove
   }
 
-  // @TODO These two methods need updated description because I'm getting them to work for non-lazy observables as well
-
   /** This method is fired when this observable starts working (listening for parent events and/or firing its own events)
     *
     * The above semantic is universal, but different observables fit [[onStart]] differently in their lifecycle:
@@ -134,4 +132,17 @@ trait Observable[+A] {
   }
 }
 
-object Observable extends GlobalCounter
+object Observable extends GlobalCounter {
+
+  implicit val switchStreamStrategy: FlattenStrategy[Observable, EventStream, EventStream] = SwitchStreamStrategy
+
+  /** `flatMap` method can be found in [[LazyObservable.MetaLazyObservable]] */
+  implicit class MetaObservable[A, Outer[+_] <: Observable[_], Inner[_]](val parent: Outer[Inner[A]]) extends AnyVal {
+
+    @inline def flatten[Output[+_] <: LazyObservable[_]](
+      implicit strategy: FlattenStrategy[Outer, Inner, Output]
+    ): Output[A] = {
+      strategy.flatten(parent)
+    }
+  }
+}

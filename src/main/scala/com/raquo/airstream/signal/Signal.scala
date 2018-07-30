@@ -4,11 +4,14 @@ import com.raquo.airstream.core.{LazyObservable, MemoryObservable}
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.state.{MapState, State}
 
+import scala.concurrent.Future
 import scala.scalajs.js
 
 // @TODO[Integrity] Careful with multiple inheritance & addObserver here
 /** Signal is a lazy observable with a current value */
 trait Signal[+A] extends MemoryObservable[A] with LazyObservable[A] {
+
+  override type Self[+T] = Signal[T]
 
   protected[this] var maybeLastSeenCurrentValue: js.UndefOr[A] = js.undefined
 
@@ -67,6 +70,10 @@ trait Signal[+A] extends MemoryObservable[A] with LazyObservable[A] {
 }
 
 object Signal {
+
+  @inline def fromFuture[A](future: Future[A]): Signal[Option[A]] = {
+    new FutureSignal(future)
+  }
 
   implicit def toTuple2Signal[A, B](signal: Signal[(A, B)]): Tuple2Signal[A, B] = {
     new Tuple2Signal(signal)

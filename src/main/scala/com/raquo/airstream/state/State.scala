@@ -1,11 +1,15 @@
 package com.raquo.airstream.state
 
-import com.raquo.airstream.core.{MemoryObservable, Transaction}
+import com.raquo.airstream.core.MemoryObservable
 import com.raquo.airstream.ownership.{Owned, Owner}
 import com.raquo.airstream.signal.{FoldSignal, MapSignal, Signal}
 
+import scala.concurrent.Future
+
 /** State is an eager, [[Owned]] observable */
 trait State[+A] extends MemoryObservable[A] with Owned {
+
+  override type Self[+T] = State[T]
 
   protected[state] val owner: Owner
 
@@ -60,6 +64,10 @@ trait State[+A] extends MemoryObservable[A] with Owned {
 }
 
 object State {
+
+  @inline def fromFuture[A](future: Future[A])(implicit owner: Owner): State[Option[A]] = {
+    Signal.fromFuture(future).toState(owner)
+  }
 
   implicit def toTuple2State[A, B](state: State[(A, B)]): Tuple2State[A, B] = {
     new Tuple2State(state)

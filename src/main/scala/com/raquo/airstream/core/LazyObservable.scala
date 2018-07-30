@@ -1,5 +1,6 @@
 package com.raquo.airstream.core
 
+import com.raquo.airstream.features.FlattenStrategy
 import com.raquo.airstream.ownership.Owner
 
 /** LazyObservable only starts when it gets its first observer (internal or external),
@@ -8,6 +9,8 @@ import com.raquo.airstream.ownership.Owner
   * Stream and Signal are lazy observables. State is not.
   */
 trait LazyObservable[+A] extends Observable[A] {
+
+  type Self[+T] <: LazyObservable[T]
 
   /** Basic idea: Lazy Observable only holds references to those children that have any observers
     * (either directly on themselves, or on any of their descendants). What this achieves:
@@ -19,7 +22,7 @@ trait LazyObservable[+A] extends Observable[A] {
     * when their subscriptions are killed by their owners)
     */
 
-  def map[B](project: A => B): LazyObservable[B]
+  def map[B](project: A => B): Self[B]
 
   protected[this] def isStarted: Boolean = numAllObservers > 0
 
@@ -78,5 +81,20 @@ trait LazyObservable[+A] extends Observable[A] {
   private[this] def numAllObservers: Int = {
     externalObservers.length + internalObservers.length
   }
+}
+
+object LazyObservable {
+
+  implicit class MetaLazyObservable[A, Inner[_]](
+    val parent: LazyObservable[Inner[A]]
+  ) extends AnyVal {
+
+    @inline def flatMap[B, Inner2[_], Output[+_] <: LazyObservable[_]](project: Inner[A] => Inner2[B])(
+      implicit strategy: FlattenStrategy[LazyObservable, Inner2, Output]
+    ): Output[B] = {
+      strategy.flatten(parent.map(project))
+    }
+  }
+
 }
 

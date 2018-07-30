@@ -5,7 +5,11 @@ import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.signal.{FoldSignal, Signal, SignalFromEventStream}
 import com.raquo.airstream.state.{MapState, State}
 
+import scala.concurrent.Future
+
 trait EventStream[+A] extends LazyObservable[A] {
+
+  override type Self[+T] = EventStream[T]
 
   override def map[B](project: A => B): EventStream[B] = {
     new MapEventStream(this, project)
@@ -84,6 +88,10 @@ object EventStream {
 
   def fromSeq[A](events: Seq[A]): EventStream[A] = {
     new SeqEventStream[A](events)
+  }
+
+  def fromFuture[A](future: Future[A]): EventStream[A] = {
+    new FutureEventStream(future, emitIfFutureCompleted = false)
   }
 
   @inline def combine[A, B](
