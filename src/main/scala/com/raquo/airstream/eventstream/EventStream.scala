@@ -15,7 +15,20 @@ trait EventStream[+A] extends LazyObservable[A] {
     new MapEventStream(this, project)
   }
 
-  def mapTo[B](value: B): EventStream[B] = {
+  /** `value` is passed by name, so it will be evaluated on every event.
+    * Use it to sample mutable values (e.g. myInput.ref.value in Laminar).
+    *
+    * See also: [[mapToValue]]
+    */
+  def mapTo[B](value: => B): EventStream[B] = {
+    new MapEventStream[A, B](this, _ => value)
+  }
+
+  /** `value` is evaluated only once, when this method is called.
+    *
+    * See also: [[mapTo]]
+    */
+  def mapToValue[B](value: B): EventStream[B] = {
     new MapEventStream[A, B](this, _ => value)
   }
 
