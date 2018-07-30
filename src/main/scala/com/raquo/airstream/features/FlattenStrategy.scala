@@ -1,7 +1,7 @@
 package com.raquo.airstream.features
 
 import com.raquo.airstream.core.{LazyObservable, Observable}
-import com.raquo.airstream.eventstream.{ConcurrentFutureStream, EventStream, SwitchEventStream}
+import com.raquo.airstream.eventstream.{ConcurrentFutureStream, EventStream, FutureEventStream, SwitchEventStream}
 
 import scala.concurrent.Future
 
@@ -22,14 +22,17 @@ object FlattenStrategy {
   /** See docs for [[SwitchEventStream]] */
   object SwitchFutureStrategy extends FlattenStrategy[Observable, Future, EventStream] {
     override def flatten[A](parent: Observable[Future[A]]): EventStream[A] = {
-      new SwitchEventStream[Future[A], A](parent = parent, makeStream = EventStream.fromFuture)
+      new SwitchEventStream[Future[A], A](
+        parent = parent,
+        makeStream = new FutureEventStream(_, emitIfFutureCompleted = true)
+      )
     }
   }
 
   /** See docs for [[ConcurrentFutureStream]] */
   object ConcurrentFutureStrategy extends FlattenStrategy[Observable, Future, EventStream] {
     override def flatten[A](parent: Observable[Future[A]]): EventStream[A] = {
-      new ConcurrentFutureStream[A](parent, dropPreviousValues = false)
+      new ConcurrentFutureStream[A](parent, dropPreviousValues = false, emitIfFutureCompleted = true)
     }
   }
 
@@ -37,7 +40,7 @@ object FlattenStrategy {
   /** See docs for [[ConcurrentFutureStream]] */
   object OverwriteFutureStrategy extends FlattenStrategy[Observable, Future, EventStream] {
     override def flatten[A](parent: Observable[Future[A]]): EventStream[A] = {
-      new ConcurrentFutureStream[A](parent, dropPreviousValues = true)
+      new ConcurrentFutureStream[A](parent, dropPreviousValues = true, emitIfFutureCompleted = true)
     }
   }
 }

@@ -61,7 +61,7 @@ class SignalFlattenFutureSpec extends AsyncSpec {
       }
     }
 
-    it("(1/2) initial already-resolved future does not result in an async event") {
+    it("initial future that is resolved at the same time as stream created and observer added result in an async event") {
 
       implicit val owner = new TestableOwner
 
@@ -85,11 +85,13 @@ class SignalFlattenFutureSpec extends AsyncSpec {
       val stream = futureBus.events.toSignal(promise0.future).flatten(SwitchFutureStrategy)
       promise0.success(-100)
 
-      delay {
-        stream.addObserver(obs) // Adding observer asynchronously after both stream creation and future resolution
+      stream.addObserver(obs)
 
-      }.flatMap { _ =>
-        effects shouldEqual mutable.Buffer()
+      effects shouldEqual mutable.Buffer()
+
+      delay {
+        effects shouldEqual mutable.Buffer(Effect("obs", -100))
+        clearLogs()
 
         futureBus.writer.onNext(promise1.future)
         futureBus.writer.onNext(promise2.future)
@@ -105,7 +107,7 @@ class SignalFlattenFutureSpec extends AsyncSpec {
       }
     }
 
-    it("(2/2) initial already-resolved future does not result in an async event (observer added sync with stream creation)") {
+    it("initial already-resolved future results in an async event if resolved async-before stream creation") {
 
       implicit val owner = new TestableOwner
 
@@ -133,7 +135,8 @@ class SignalFlattenFutureSpec extends AsyncSpec {
         stream.addObserver(obs)
 
       }.flatMap { _ =>
-        effects shouldEqual mutable.Buffer()
+        effects shouldEqual mutable.Buffer(Effect("obs", -100))
+        clearLogs()
 
         futureBus.writer.onNext(promise1.future)
         futureBus.writer.onNext(promise2.future)

@@ -18,7 +18,8 @@ import scala.util.{Failure, Success}
   */
 class ConcurrentFutureStream[A](
   protected[this] val parent: Observable[Future[A]],
-  dropPreviousValues: Boolean
+  dropPreviousValues: Boolean,
+  emitIfFutureCompleted: Boolean
 ) extends EventStream[A] with SingleParentObservable[Future[A], A] {
 
   // @TODO[Integrity] We should probably eventually deal with the vars' overflow issue
@@ -29,16 +30,18 @@ class ConcurrentFutureStream[A](
 
   override protected[airstream] val topoRank: Int = 1
 
-  override protected[airstream] def onNext(nextValue: Future[A], transaction: Transaction): Unit = {
+  override protected[airstream] def onNext(nextFuture: Future[A], transaction: Transaction): Unit = {
     lastFutureIndex += 1
     val nextFutureIndex = lastFutureIndex
-    nextValue.onComplete { tryNextValue =>
-      if (isStarted && (!dropPreviousValues || (nextFutureIndex > lastEmittedValueIndex))) {
-        lastEmittedValueIndex = nextFutureIndex
-        // @TODO[API] Should lastEmittedValueIndex be updated only on success or also on failure?
-        tryNextValue match {
-          case Success(value) => new Transaction(fire(value, _))
-          case Failure(err) => throw err
+    if (emitIfFutureCompleted || nextFuture.isCompleted) {
+      nextFuture.onComplete { tryNextValue =>
+        if (!dropPreviousValues || (nextFutureIndex > lastEmittedValueIndex)) {
+          lastEmittedValueIndex = nextFutureIndex
+          // @TODO[API] Should lastEmittedValueIndex be updated only on success or also on failure?
+          tryNextValue match {
+            case Success(value) => new Transaction(fire(value, _))
+            case Failure(err) => throw err
+          }
         }
       }
     }

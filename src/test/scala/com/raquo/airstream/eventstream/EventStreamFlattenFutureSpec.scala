@@ -63,12 +63,13 @@ class EventStreamFlattenFutureSpec extends AsyncSpec {
       effects shouldEqual mutable.Buffer()
 
       futureBus.writer.onNext(promise3.future)
-      futureBus.writer.onNext(promise4.future) // already resolved, so this will not produce events
+      futureBus.writer.onNext(promise4.future) // already resolved
 
       effects shouldEqual mutable.Buffer()
 
     }.flatMap { _ =>
-      effects shouldEqual mutable.Buffer()
+      effects shouldEqual mutable.Buffer(Effect("obs", 400))
+      clearLogs()
 
       promise3.success(300)
 
@@ -210,7 +211,7 @@ class EventStreamFlattenFutureSpec extends AsyncSpec {
 
       futureBus.writer.onNext(promise3.future)
       futureBus.writer.onNext(promise4.future) // already resolved
-      futureBus.writer.onNext(promise5.future) // already resolved
+      futureBus.writer.onNext(promise5.future)
 
       effects shouldEqual mutable.Buffer()
 

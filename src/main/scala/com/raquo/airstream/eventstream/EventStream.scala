@@ -91,7 +91,7 @@ object EventStream {
   }
 
   def fromFuture[A](future: Future[A]): EventStream[A] = {
-    new FutureEventStream(future)
+    new FutureEventStream(future, emitIfFutureCompleted = false)
   }
 
   @inline def combine[A, B](
