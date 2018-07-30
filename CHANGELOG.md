@@ -2,8 +2,10 @@
 
 Breaking changes in **bold**.
 
-#### master
+#### master (towards v0.3)
 
+* **Naming: Observer.map -> Observer.contramap**
+* **Naming: WriteBus.mapWriter -> WriteBus.contramapWriter**
 * **API: `EventStream.mapTo` now accepts `value` by name; previous behaviour available using `mapToValue` method**
 * **API: `Observable.flatten` now needs a `FlattenStrategy` except for `SwitchEventStream` which is provided implicitly as a default**
 * New: `EventStream.fromFuture`, `Signal.fromFuture`, `State.fromFuture`

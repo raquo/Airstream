@@ -39,6 +39,7 @@ I created Airstream because I found existing solutions were not suitable for bui
   * [Signal](#signal)
   * [State](#state)
   * [Relationship between EventStream, Signal, and State](#relationship-between-eventstream-signal-and-state)
+  * [Observer](#observer)
   * [Ownership](#ownership)
     * [Ownership & Memory Management](#ownership--memory-management)
       * [State Considerations](#state-considerations)
@@ -246,6 +247,21 @@ Observable has no `map` method because mapping over State is potentially a leaky
 
 
 
+### Observer
+
+`Observer[A]` is a modest wrapper around an `onNext: A => Unit` callback that represents an _external_ observer (see sections above for the distinction with internal observers). Observers have no knowledge of what observables, if any, they're observing, they have no power to choose whether they want to observe an observable, etc.
+
+Observers are intended to contain side effects, and to trigger evaluation of lazy observables. Even though `State` observables run themselves without observers, you should still put your side effects inside observers to make your code more maintainable.
+
+You usually create observers with `Observer.apply` or `Observable.foreach`.
+
+Observers have a couple convenience methods:
+
+`def contramap[B](project: B => A): Observer[B]` – This is useful for separation of concerns. For example your Ajax service might expose an `Observer[Request]`, but you don't want a simple `UserProfile` component to know about your Ajax implementation details (`Request`), so you can instead provide it with `requestObserver.contramap(makeUpdateRequest)` which is a `Observer[User]`.
+
+`def filter(passes: A => Boolean): Observer[A]` – useful if you have an `Observable` that you need to observe while filtering out some events (there is no `Observable.filter` method).
+
+
 ## Ownership
 
 Alright, this is it. By now you've read enough to have many questions about how ownership works. This assumes you've read all the docs above, but to recap the core problem that ownership solves:
@@ -386,7 +402,7 @@ WriteBus comes with a way to create new writers. Consider this:
 
 ```scala
 val eventBus = new EventBus[Foo]
-val barWriter: WriteBus[Bar] = eventBus.writer.filterWriter(isGoodFoo).mapWriter(barToFoo)
+val barWriter: WriteBus[Bar] = eventBus.writer.filterWriter(isGoodFoo).contramapWriter(barToFoo)
 ```
 
 Now you can send `Bar` events to `barWriter`, and they will appear in `eventBus` processed with `barToFoo` then and filtered by `isGoodFoo`. This is useful when you want to get events from a child component, but the child component does not or should not know what `Foo` is. Generally if you don't need such separation of concerns, you can just `map`/`filter` the stream that's feeding the EventBus instead.

@@ -8,9 +8,7 @@ trait Observer[-A] {
 
   def onNext(nextValue: A): Unit
 
-  // @TODO this needs to be implemented, and probably with an implicit owner, just like WriteBus
-
-  // @TODO are map and filter good names? Maybe use lens/zoom/etc?
+  // @TODO[Naming] of methods
 
   /** Creates another Observer such that calling its onNext will call this observer's onNext
     * with the value processed by the `project` function.
@@ -19,15 +17,13 @@ trait Observer[-A] {
     * which should not know anything about the type A, but both child and parent know
     * about type `B`, and the parent knows how to translate B into A.
     */
-  def map[B](project: B => A): Observer[B]
+  def contramap[B](project: B => A): Observer[B]
 
   // @TODO [B <: A], really?
   /** Creates another Observer such that calling its onNext will call this observer's onNext
     * with the same value, but only if it passes the test.
     */
   def filter[B <: A](passes: B => Boolean): Observer[B]
-
-  // @TODO add "collect" method
 }
 
 object Observer {
@@ -41,7 +37,7 @@ object Observer {
         onNextParam(nextValue)
       }
 
-      override def map[B](project: B => A): Observer[B] = {
+      override def contramap[B](project: B => A): Observer[B] = {
         Observer(nextValue => onNextParam(project(nextValue)))
       }
 

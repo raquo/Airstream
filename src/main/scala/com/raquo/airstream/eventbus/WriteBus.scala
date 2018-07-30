@@ -15,8 +15,8 @@ class WriteBus[A] extends Observer[A] {
     new EventBusSource(stream, sourceStream, owner)
   }
 
-  /** Behaves similar to `map`, but gives you a WriteBus, not just an Observer */
-  def mapWriter[B](project: B => A)(implicit owner: Owner): WriteBus[B] = {
+  /** Behaves similar to `contramap`, but gives you a WriteBus, not just an Observer */
+  def contramapWriter[B](project: B => A)(implicit owner: Owner): WriteBus[B] = {
     val mapBus = new WriteBus[B]
     addSource(mapBus.stream.map(project))(owner)
     mapBus
@@ -39,7 +39,7 @@ class WriteBus[A] extends Observer[A] {
     // }
   }
 
-  override def map[B](project: B => A): Observer[B] = {
+  override def contramap[B](project: B => A): Observer[B] = {
     Observer(nextValue => onNext(project(nextValue)))
   }
 
