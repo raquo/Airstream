@@ -5,17 +5,14 @@ import com.raquo.airstream.features.FlattenStrategy
 import com.raquo.airstream.features.FlattenStrategy.SwitchStreamStrategy
 import com.raquo.airstream.ownership.{Owned, Owner}
 import com.raquo.airstream.state.State
-import com.raquo.airstream.util.GlobalCounter
 
 import scala.scalajs.js
+import scala.util.Try
 
 /** This trait represents a reactive value that can be subscribed to. */
 trait Observable[+A] {
 
   type Self[+T] <: Observable[T]
-
-  // @TODO remove id? Why did I even add it?
-  val id: Int = Observable.nextId()
 
   protected[airstream] val topoRank: Int
 
@@ -32,16 +29,20 @@ trait Observable[+A] {
     * This is useful when you want to map over an Observable of an unknown type.
     *
     * Note: [[Observable]] itself has no "map" method because mapping over [[State]]
-    * without expecting / accounting for State's eagerness can result in memory leaks. See README.
+    * without expecting / accounting for State's strictness can result in memory leaks. See README.
     */
   def toLazy: LazyObservable[A]
 
+  /** Create an external observer from a function and subscribe it to this observable.
+    *
+    * Note: since you won't have a reference to the observer, you will need to call Subscription.kill() to unsubscribe
+    * */
   def foreach(onNext: A => Unit)(implicit owner: Owner): Subscription = {
     val observer = Observer(onNext)
     addObserver(observer)(owner)
   }
 
-  /** And an external observer */
+  /** Subscribe an external observer to this observable */
   def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription = {
     val subscription = Subscription(observer, this, owner)
     externalObservers.push(observer)
@@ -49,12 +50,14 @@ trait Observable[+A] {
     subscription
   }
 
-  /** Schedule an external observer to be removed in the next transaction.
+  // @TODO[Bug] See https://github.com/raquo/Airstream/issues/10
+  /** Schedule unsubscription from an external observer in the next transaction.
+    *
     * This will still happen synchronously, but will not interfere with
     * iteration over the observables' lists of observers during the current
     * transaction.
     *
-    * Note: To completely disconnect an Observer from this Observable,
+    * Note: To completely unsubscribe an Observer from this Observable,
     * you need to remove it as many times as you added it to this Observable.
     */
   @inline def removeObserver(observer: Observer[A]): Unit = {
@@ -62,8 +65,7 @@ trait Observable[+A] {
   }
 
   // @TODO Why does simple "protected" not work? Specialization?
-
-  /** Child stream calls this to declare that it was started */
+  /** Child observables call this to announce their existence once they are started */
   protected[airstream] def addInternalObserver(observer: InternalObserver[A]): Unit = {
     internalObservers.push(observer)
   }
@@ -114,30 +116,50 @@ trait Observable[+A] {
     */
   @inline protected[this] def onStop(): Unit = ()
 
-  // @TODO[API] It is rather curious/unintuitive that firing external observers first seems to make more sense. Think about it some more.
-  protected[this] def fire(nextValue: A, transaction: Transaction): Unit = {
-    // Note: Removal of observers is always scheduled for a new transaction, so the iteration here is safe
+  // === A note on performance with error handling ===
+  //
+  // MemoryObservables remember their current value as Try[A], whereas
+  // EventStream-s normally fire plain A values and do not need them
+  // wrapped in Try. To make things more complicated, user-provided
+  // callbacks like `project` in `.map(project)` need to be wrapped in
+  // Try() for safety.
+  //
+  // A worst case performance scenario would see Airstream constantly
+  // wrapping and unwrapping the values being propagated, initializing
+  // many Success() objects as we walk along the observables dependency
+  // graph.
+  //
+  // We avoid this by keeping the values unwrapped as much as possible
+  // in event streams, but wrapping them in signals and state. When
+  // switching between streams and memory observables and vice versa
+  // we have to pay a small price to wrap or unwrap the value. It's a
+  // miniscule penalty that doesn't matter, but if you're wondering
+  // how we decide whether to implement onTry or onNext+onError in a
+  // particular InternalObserver, this is one of the main factors.
+  //
+  // With this in mind, you can see fireValue / fireError / fireTry
+  // implementations in EventStream and MemoryObservable are somewhat
+  // redundant (non-DRY), but performance friendly.
+  //
+  // You must be careful when overriding these methods however, as you
+  // don't know which one of them will be called, but they need to be
+  // implemented to produce similar results
 
-    var index = 0
-    while (index < externalObservers.length) {
-      externalObservers(index).onNext(nextValue)
-      index += 1
-    }
+  protected[this] def fireValue(nextValue: A, transaction: Transaction): Unit
 
-    index = 0
-    while (index < internalObservers.length) {
-      internalObservers(index).onNext(nextValue, transaction)
-      index += 1
-    }
-  }
+  protected[this] def fireError(nextError: Throwable, transaction: Transaction): Unit
+
+  protected[this] def fireTry(nextValue: Try[A], transaction: Transaction): Unit
 }
 
-object Observable extends GlobalCounter {
+object Observable {
 
   implicit val switchStreamStrategy: FlattenStrategy[Observable, EventStream, EventStream] = SwitchStreamStrategy
 
   /** `flatMap` method can be found in [[LazyObservable.MetaLazyObservable]] */
-  implicit class MetaObservable[A, Outer[+_] <: Observable[_], Inner[_]](val parent: Outer[Inner[A]]) extends AnyVal {
+  implicit class MetaObservable[A, Outer[+_] <: Observable[_], Inner[_]](
+    val parent: Outer[Inner[A]]
+  ) extends AnyVal {
 
     @inline def flatten[Output[+_] <: LazyObservable[_]](
       implicit strategy: FlattenStrategy[Outer, Inner, Output]

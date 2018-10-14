@@ -4,8 +4,10 @@ import scala.scalajs.js
 
 // @TODO[Test] Verify throttling
 
-/** [[ThrottleEventStream]] emits the next even only if more than `intervalMillis` ms
+/** [[ThrottleEventStream]] emits the next event only if more than `intervalMillis` ms
   * has elapsed since this stream emitted the previous event.
+  *
+  * This stream emits an error if the parent stream emits an error (Note: no throttling applied in that case)
   *
   * [[ThrottleEventStream]] acts like a synchronous filter on input events, whereas
   * [[DebounceEventStream]] while also filtering input events, emits the events with a delay.

@@ -1,12 +1,12 @@
 package com.raquo.airstream.eventbus
 
-import com.raquo.airstream.core.{InternalObserver, Transaction}
+import com.raquo.airstream.core.Transaction
 import com.raquo.airstream.eventstream.EventStream
-import org.scalajs.dom
+import com.raquo.airstream.features.InternalNextErrorObserver
 
 import scala.scalajs.js
 
-class EventBusStream[A](writeBus: WriteBus[A]) extends EventStream[A] with InternalObserver[A] {
+class EventBusStream[A](writeBus: WriteBus[A]) extends EventStream[A] with InternalNextErrorObserver[A] {
 
   private[eventbus] val sources: js.Array[EventBusSource[A]] = js.Array()
 
@@ -40,7 +40,11 @@ class EventBusStream[A](writeBus: WriteBus[A]) extends EventStream[A] with Inter
     // fired as an internal observer. WriteBus calls this method manually, so it checks .isStarted on its own.
     // @TODO ^^^^ We should document this contract in InternalObserver
     //println("NEW TRX from EventBusStream")
-    new Transaction(fire(nextValue, _))
+    new Transaction(fireValue(nextValue, _))
+  }
+
+  override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
+    new Transaction(fireError(nextError, _))
   }
 
   override protected[this] def onStart(): Unit = {

@@ -4,6 +4,8 @@ import com.raquo.airstream.core.Observer
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.ownership.Owner
 
+import scala.util.Try
+
 class WriteBus[A] extends Observer[A] {
 
   private[eventbus] val stream: EventBusStream[A] = new EventBusStream(this)
@@ -39,11 +41,14 @@ class WriteBus[A] extends Observer[A] {
     // }
   }
 
-  override def contramap[B](project: B => A): Observer[B] = {
-    Observer(nextValue => onNext(project(nextValue)))
+  override def onError(nextError: Throwable): Unit = {
+    if (stream.isStarted) {
+      // @TODO[Integrity] We rely on the knowledge that EventBusStream discards the transaction it's given. Laaaame
+      stream.onError(nextError, transaction = null)
+    }
   }
 
-  override def filter[B <: A](passes: B => Boolean): Observer[B] = {
-    Observer(nextValue => if (passes(nextValue)) onNext(nextValue))
+  override final def onTry(nextValue: Try[A]): Unit = {
+    nextValue.fold(onError, onNext)
   }
 }

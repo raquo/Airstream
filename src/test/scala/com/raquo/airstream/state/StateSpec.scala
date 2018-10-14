@@ -6,6 +6,7 @@ import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import org.scalatest.{FunSpec, Matchers}
 
 import scala.collection.mutable
+import scala.util.Success
 
 class StateSpec extends FunSpec with Matchers {
 
@@ -43,9 +44,9 @@ class StateSpec extends FunSpec with Matchers {
 
     // --
 
-    state1.now() shouldEqual -1
-    state2.now() shouldEqual -1
-    state3.now() shouldEqual -10
+    state1.tryNow() shouldEqual Success(-1)
+    state2.tryNow() shouldEqual Success(-1)
+    state3.tryNow() shouldEqual Success(-10)
 
     calculations shouldEqual mutable.Buffer()
     effects shouldEqual mutable.Buffer()
@@ -65,9 +66,9 @@ class StateSpec extends FunSpec with Matchers {
 
     // --
 
-    state1.now() shouldEqual 1
-    state2.now() shouldEqual 1
-    state3.now() shouldEqual 10
+    state1.tryNow() shouldEqual Success(1)
+    state2.tryNow() shouldEqual Success(1)
+    state3.tryNow() shouldEqual Success(10)
 
     calculations shouldEqual mutable.Buffer()
     effects shouldEqual mutable.Buffer()
@@ -331,7 +332,7 @@ class StateSpec extends FunSpec with Matchers {
 
     childOwner.killPossessions() // this should kills childState1 and childState2
 
-    childState2.now() shouldEqual 40 * 10 + 3
+    childState2.tryNow() shouldEqual Success(40 * 10 + 3)
 
     childBus.writer.onNext(5)
 

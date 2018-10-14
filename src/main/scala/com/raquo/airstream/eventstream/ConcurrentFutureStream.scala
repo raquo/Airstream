@@ -1,11 +1,10 @@
 package com.raquo.airstream.eventstream
 
 import com.raquo.airstream.core.{Observable, Transaction}
-import com.raquo.airstream.features.SingleParentObservable
+import com.raquo.airstream.features.{InternalNextErrorObserver, SingleParentObservable}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
 
 /** This stream emits the values that the parent observables' emitted futures resolve with,
   * in the order in which they resolve (which is likely different from the order in which the futures are emitted).
@@ -20,7 +19,7 @@ class ConcurrentFutureStream[A](
   protected[this] val parent: Observable[Future[A]],
   dropPreviousValues: Boolean,
   emitIfFutureCompleted: Boolean
-) extends EventStream[A] with SingleParentObservable[Future[A], A] {
+) extends EventStream[A] with SingleParentObservable[Future[A], A] with InternalNextErrorObserver[Future[A]] {
 
   // @TODO[Integrity] We should probably eventually deal with the vars' overflow issue
 
@@ -33,18 +32,25 @@ class ConcurrentFutureStream[A](
   override protected[airstream] def onNext(nextFuture: Future[A], transaction: Transaction): Unit = {
     lastFutureIndex += 1
     val nextFutureIndex = lastFutureIndex
-    if (emitIfFutureCompleted || nextFuture.isCompleted) {
-      nextFuture.onComplete { tryNextValue =>
+    if (!nextFuture.isCompleted || emitIfFutureCompleted) {
+      nextFuture.onComplete { nextValue =>
         if (!dropPreviousValues || (nextFutureIndex > lastEmittedValueIndex)) {
           lastEmittedValueIndex = nextFutureIndex
           // @TODO[API] Should lastEmittedValueIndex be updated only on success or also on failure?
-          tryNextValue match {
-            case Success(value) => new Transaction(fire(value, _))
-            case Failure(err) => throw err
-          }
+          new Transaction(fireTry(nextValue, _))
         }
       }
     }
   }
-}
 
+  override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
+    lastFutureIndex += 1
+    val nextFutureIndex = lastFutureIndex
+    if (!dropPreviousValues || (nextFutureIndex > lastEmittedValueIndex)) {
+      lastEmittedValueIndex = nextFutureIndex
+      // @TODO[API] Should lastEmittedValueIndex be updated only on success or also on failure?
+      // @TODO[Performance] We use future.onComplete to better match the timing of onNext. Perhaps this is a bit overkill.
+      Future.failed(nextError).onComplete(_ => new Transaction(fireError(nextError, _)))
+    }
+  }
+}

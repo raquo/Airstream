@@ -13,7 +13,7 @@ Airstream is a small state propagation and streaming library. Primary difference
 - **One integrated system for three core types of observables** – Event streams alone are not a good enough abstraction for anything other than events.
   - EventStream (lazy, no current value)
   - Signal (lazy, has current value)
-  - State (eager, with current value)
+  - State (strict ("eager"), with current value)
 
 - **Small size, simple implementation** – easy to understand, easy to create custom streams. Does not bloat your Scala.js bundle size.
 
@@ -369,6 +369,20 @@ object EventStream {
 This method creates an event stream that synchronously emits events from the provided sequence one by one to any newly added observer.
 
 Each event is emitted in a separate transaction, meaning that the propagation of the previous event will fully complete before the propagation of the new event starts.
+
+**Note:** you should avoid using this factory, at least with multiple events. You generally shouldn't need to emit more than one event at the same time like this stream does. If you do, I think your model is likely abusing the concept of "event". This method is provided as a kludge until I can make a more confident determination.
+
+
+#### `EventStream.fromValue`
+
+Like `EventStream.fromSeq` (see right above), but only allows for a single event.
+
+
+#### `EventStream.fromTry`
+
+Like `EventStream.fromValue` (see right above), but also allows an error.
+
+This is provided as a kludge until it becomes more clear that this is not needed.
 
 
 #### EventStream.periodic

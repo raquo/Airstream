@@ -6,6 +6,7 @@ import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import org.scalatest.{FunSpec, Matchers}
 
 import scala.collection.mutable
+import scala.util.Success
 
 class SignalSpec extends FunSpec with Matchers {
 
@@ -315,7 +316,7 @@ class SignalSpec extends FunSpec with Matchers {
 
     // --
 
-    signal.now() shouldBe -1
+    signal.tryNow() shouldBe Success(-1)
 
     calculations shouldEqual mutable.Buffer(
       Calculation("map-signal", -1)
@@ -352,7 +353,7 @@ class SignalSpec extends FunSpec with Matchers {
 
     // --
 
-    signal.now()
+    signal.tryNow()
 
     calculations shouldEqual mutable.Buffer()
     effects shouldEqual mutable.Buffer()

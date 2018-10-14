@@ -2,10 +2,9 @@ package com.raquo.airstream.signal
 
 import com.raquo.airstream.core.Transaction
 
-import scala.concurrent.Future
-import scala.util.{Failure, Success}
-
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.util.{Success, Try}
 
 // @TODO confirm that memory management is ok here between the future and this signal.
 
@@ -19,16 +18,13 @@ class FutureSignal[A](
 
   override protected[airstream] val topoRank: Int = 1
 
-  override protected[this] def initialValue: Option[A] = future.value match {
-    case None => None
-    case Some(Success(value)) => Some(value)
-    case Some(Failure(e)) => throw e
-  }
+  override protected[this] def initialValue: Try[Option[A]] = future.value.fold[Try[Option[A]]](
+    Success(None)
+  )(
+    value => value.map(Some(_))
+  )
 
   if (!future.isCompleted) {
-    future.onComplete {
-      case Success(newValue) => new Transaction(fire(Some(newValue), _))
-      case Failure(e) => throw e
-    }
+    future.onComplete(value => new Transaction(fireTry(value.map(Some(_)), _)))
   }
 }

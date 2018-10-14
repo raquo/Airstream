@@ -1,6 +1,6 @@
 package com.raquo.airstream.features
 
-import com.raquo.airstream.core.{InternalObserver, Observable, Observer, Transaction}
+import com.raquo.airstream.core.{InternalObserver, Observable, Transaction}
 
 /** A simple observable that only has one parent. */
 trait SingleParentObservable[I, +O] extends Observable[O] with InternalObserver[I] {

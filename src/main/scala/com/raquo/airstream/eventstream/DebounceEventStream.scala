@@ -1,10 +1,11 @@
 package com.raquo.airstream.eventstream
 
 import com.raquo.airstream.core.Transaction
-import com.raquo.airstream.features.SingleParentObservable
+import com.raquo.airstream.features.{InternalTryObserver, SingleParentObservable}
 
 import scala.scalajs.js
 import scala.scalajs.js.timers.SetTimeoutHandle
+import scala.util.Try
 
 // @TODO[Test] Verify debounce
 
@@ -18,7 +19,7 @@ import scala.scalajs.js.timers.SetTimeoutHandle
 class DebounceEventStream[A](
   override protected[this] val parent: EventStream[A],
   delayFromLastEventMillis: Int
-) extends EventStream[A] with SingleParentObservable[A, A] {
+) extends EventStream[A] with SingleParentObservable[A, A] with InternalTryObserver[A] {
 
   private[this] var maybeLastTimeoutHandle: js.UndefOr[SetTimeoutHandle] = js.undefined
 
@@ -28,13 +29,12 @@ class DebounceEventStream[A](
   /** Every time [[parent]] emits an event, we clear the previous timer and set a new one.
     * This stream only emits when the parent has stopped emitting for [[delayFromLastEventMillis]] ms.
     */
-  override protected[airstream] def onNext(nextValue: A, transaction: Transaction): Unit = {
+  override protected[airstream] def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
     maybeLastTimeoutHandle.foreach(js.timers.clearTimeout)
     maybeLastTimeoutHandle = js.defined(
       js.timers.setTimeout(delayFromLastEventMillis) {
-        new Transaction(fire(nextValue, _))
+        new Transaction(fireTry(nextValue, _))
       }
     )
   }
-
 }

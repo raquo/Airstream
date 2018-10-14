@@ -2,7 +2,7 @@ package com.raquo.airstream.core
 
 import com.raquo.airstream.ownership.{Owned, Owner}
 
-abstract class Subscription private[core] (
+abstract class Subscription private (
   override protected[this] val owner: Owner
 ) extends Owned {
 
