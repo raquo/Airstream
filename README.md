@@ -555,8 +555,179 @@ All built-in strategies result in observables that emit each event in a new tran
 
 ### Error Handling
 
+Airstream error handling is very different from conventional streaming libraries. Before diving into implementation details we first need to understand these differences and the reasons such a departure from the norms was deemed beneficial.
 
-TODO[API] Error handling is not yet implemented, but will be soon, it's a priority feature.
+
+#### Scala Exception Handling
+
+First, let's define what kind of errors we're talking about here. This whole section is concerned with exceptions thrown by user-provided code used to build Airstream observables. For example, the `project` function in `stream.map(project)` throwing. Without special error handling capabilities in Airstream, such an exception would terminate the propagation of this stream and bubble up the call stack.
+
+However, this behaviour is vastly undesirable in FRP context because the caller (which would be the source of events) is not normally in a position to handle failures of child observables. For example, a DOM event listener that publishes DOM events onto a stream can't do much about some other component failing to process some of those events. So we need a different strategy to deal with errors in observables.
+
+
+#### Conventional Streaming Libraries
+
+Conventional streaming libraries basically don't propagate errors in observables. If your stream fails, it gets _completed_, meaning that it informs all of its dependants and observers that it will no longer produce events and will basically shut down.
+
+If you don't want this outcome, you need to _recover_ from such an error by creating a stream that takes two inputs: this original stream, and a stream factory that returns a new stream that you will switch to if the original stream errors. 
+
+This model does not make any sense to me. Consider this chain of observables:
+
+```scala
+object OtherModule {
+  def doubled(parentStream: Stream[Double]): parent: Stream[Double] = {
+    parent.map(num => num * 2)
+  }
+}
+ 
+import OtherModule.doubled
+
+val stream1: Stream[Double] = ???
+val invertedStream: Stream[Double] = stream1.map(num => 1 / num)
+ 
+doubled(invertedStream).foreach(dom.console.log(_))
+```
+
+Inside `doubled`, there is nothing you can do to recover from an error in `parentStream`. You don't know what that stream does, so once it's broke, it's broke. You can't replace it with anything meaningful, just maybe some sentinel value to indicate failure.
+
+So essentially, this requires you to either guard every single stream that could possibly throw, or lose your sanity to crazy amounts of coupling. Or you know, the more likely outcome – you'll just forget about error handling, and your program will stop working on an error that would have been recoverable if only it wasn't in your streaming code.
+
+Fundamentally, the problem here is conceptual: conventional streaming libraries see any exception in a stream as a terminal diagnosis for it.
+
+Yes, such an error could have made parts of your application state inconsistent, that is a legitimate problem. However, unconditionally killing parts of your program that depend on a stream is not a way to mitigate inconsistent state for the simple reason that _the streaming library has no idea which, if any, state became inconsistent_, therefore it has no idea whether allowing the error to propagate will mitigate state breakage or make it even worse.
+
+
+#### Airstream's Approach
+
+Airstream aspires to replicate the feel of native exception handling in FRP. However, whereas in imperative code we _want_ Scala to propagate exceptions up the call stack, in Airstream we instead want to propagate errors in observables to their observers and dependent observables.
+
+Think about it this way: in imperative code, you call a function which can throw, and you can either handle it or decide to let your caller handle it, and so on, recursively. In Airstream, you make an observable that depends on another observable which can throw. So you can either handle it, or let any downstream observables or observers handle it.
+
+This FRP adaptation of classic exception handling is somewhat similar to the approach of Scala.rx, however since Airstream offers a unified reactive system, we have to adjust this basic idea to support event streams as well.
+
+To contrast our approach with conventional streaming libraries, where they see a failed stream, we only see a failed value, expecting the next value to fix things up. This is similar to plain Scala exceptions: if a function throws an exception, it does not suddenly become broken forever. You can call it again with perhaps a different value, and it will perhaps not fail that time. Yes, if such an exception produces invalid state, you as a programmer need to address it. We give you the tools, you do the work, because you're the only one who knows how. 
+
+
+#### Error propagation
+
+Airstream does not complete or terminate observables on error. Instead, we essentially propagate error values the same way we propagate normal values. Each Observer and InternalObserver has `onNext(A)` and `onError(Throwable)` methods defined, so both observables and observers are capable of accepting error values as inputs.
+
+If you do not take special action, Airstream observables will generally (but not always, we'll get to that) pass through the errors to their observers untouched. Eventually the error will reach one or more external Observers.
+
+When an error reaches an external observer, its `onError` method will handle it. If you didn't specify `onError` (e.g. if you used the `Observer(onNext)` factory to create an observer) or if your `onError` partial function is not defined for a given error, Airstream will report this error as unhandled.
+
+You can get notified about unhandled errors by registering a callback using `AirstreamError.registerUnhandledErrorCallback(fn: Throwable => Unit)`. Similarly, you can unregister it using `AirstreamError.unregisterUnhandledErrorCallback(fn: Throwable => Unit)`.
+
+By default Airstream registers `AirstreamErrors.consoleErrorCallback` to log all errors to the console. You can unregister it and/or register more callbacks.
+
+Now let's get deeper into each step of this process.
+
+##### User Input is Generally Guarded Against Exceptions
+
+Airstream specifically guards user (developer) inputs that are used to build observables from exceptions. For example, if the `project` function that you provided to `stream.map(project)` throws an exception, this resulting stream will emit an error, kick-starting this whole error handling process.
+
+However, user inputs that are supposed to return a `Try` are assumed to not throw. Various class constructors that are public but generally not intended to be used directly can also have params that are not guarded against exceptions.
+
+For clarity, every Airstream method and constructor available to you has a Scaladoc comment reaffirming which of its parameters are guarded or not.
+
+##### Errors Do Not Affect Propagation
+
+When an error happens in an observable (assuming that it was guarded against, as it should always be, see above), the observable emits this error to all of its observers – internal and external – in the same manner that it would emit a value. Think of it as propagating a `Try[A]` value instead of just `A`.
+
+##### Errors in an Observer Do Not Affect Other Observers
+
+Similarly, and unlike conventional streaming libraries, if an error happened in an observer's `onNext` or `onError` callback, this error will be reported as unhandled, but it will not prevent other observers or the code immediately following it from running.
+
+If you're concerned that the contents of your `onNext` / `onError` can fail and make your app state inconsistent, you do the same thing you've always done in this situation – `try` some code and `catch` the error, just keep it all inside the callback in question:
+
+```scala
+stream.addObserver(Observer(onNext = v =>
+  try { riskyFoo(v) }
+  catch { case err => recoverFromFooFail() }
+))
+```
+
+##### Unhandled Errors Do Not Terminate The Program
+
+In Airstream, unhandled errors do not result in the program terminating. By default they are reported to the console. You can specify different or additional handlers such as `AirstreamError.debuggerErrorCallback` or even a custom handler that effectively terminates your program.
+
+Regardless of this seeming leniency, you should still handle all of your errors at some point. In good Airstream code every error that goes into the unhandled errors callback must be treated as a bug.
+
+##### Error Timing is Consistent
+
+Observables generally emit errors at the same time as they would have emitted a non-error value. For example, a `CombinedObservable` like `stream.combineWith(stream.map(foo))` will only emit a single value if `stream` emits a value. Similarly, it will only emit a single error if `stream` emits an error. However, that error will be wrapped in `CombinedError` because it needs to support the case when its parent observables simultaneously emit a different error.
+
+On the other hand, `MergeEventStream` does no such synchronization, it emits the errors similarly to how it emits non-error events – as they come, putting all but the first seen one in a new transaction.
+
+##### Event Streams Generally Forget Errors
+
+Similarly to how event streams generally do not keep track of their last emitted value, they also forget their last emitted error once they finish propagating it to their observers.
+
+##### Memory Observables Remember Errors
+
+If a `Signal[A]` or `State[A]` observable runs into an error that it doesn't handle itself, this error becomes its current state. `MemoryObservable`s' current state is actually `Try[A]`, not just `A`. 
+
+`State[A]` has a public `now(): A` method that returns its current value. Calling it is equivalent to `tryNow().get`– it will throw an exception if current state is a Failure.
+
+##### Observer Errors Are Wrapped 
+
+Errors originating in an external Observer's onNext and onTry methods are wrapped in `ObserverError` and `ObserverErrorHandlingError` respectively before they are shipped off as unhandled errors. You can still access the original errors on those objects. 
+
+##### Errors Multiply
+
+The same error might need to be handled multiple times to avoid propagating all the way to unhandled errors.
+
+It is perhaps counter-intuitive, but it's obvious:
+
+```scala
+val upStream = ???
+val fooStream = upStream.map(foo)
+val barStream = upStream.map(bar)
+fooStream.foreach(dom.console.log("foo"))
+barStream.foreach(dom.console.log("bar"))
+```
+
+If `upStream` emits an error, both `fooStream` and `barStream` will emit an error – the same instance of it, actually. Then it will end up reported in unhandled errors – twice!
+
+If we try to lean on our call stack analogy, it kinda breaks this time. Call stack is a stack, a linear data structure much like a list. An exception can only ever bubble to just one immediate parent before bubbling up to its grandparent. But in our case it feels like the bubbles are splitting into multiple parallel "streams".
+
+Instead, consider thinking of `fooStream` and `barStream` as independent function **calls** that both require `upStream`, except by magic of FRP `upStream` is only executed once and its value (well, its exception in this case) is shared with both calls. If you call a broken function twice, you get two exceptions (identical ones, thanks to FRP) and two call stacks to propagate through.
+
+To be extra clear, if we add `.recoverIgnoreErrors` to the `fooStream` definition above, its observer will not receive the error coming from `upStream` and will not report that error as unhandled. We did, after all, handle it, so that's fair. However, `barStream`'s observer would still receive that same error, and would still report it as unhandled. This is why handling errors in the right place is very important, just like handling exceptions is in plain Scala code.
+
+
+#### Recovering from Errors
+
+As we mentioned, generally observables propagate the errors they receive with no change. However, we can recover from errors like this:
+
+```scala
+val signal2 = signal1.recover {
+  case MyException(foo) if foo.isGood => Some(foo) // emit foo
+  case MyException(foo) if !foo.isGood => None // skip this, emit nothing
+  case o: MyOtherException => throw new Exception("lolwat") // emit new error
+}
+```
+
+Importantly, this `recover` method does not affect `signal1`, like any other operator it's just creating a new observable (`signal2`), except this one has a defined error handling strategy, so it won't just pass through any errors that come through it.
+
+When `signal1` emits an error, `signal2` will feed it to the partial function we provided to it. That function should normally emit either `Some(value)` to make `signal2` emit some `value` or `None`, to just skip this update altogether, as if it never happened. Yes, this latter case means that `signal2`'s current state would remain at whatever it was before this error came in, meanwhile `signal1`'s current state would be updated to an error.
+
+Any errors that this partial function is not defined for will pass through without being handled. If the partial function throws an error, it will be emitted wrapped in `ErrorHandlingError`.
+
+Observables have a couple shorthand operators:
+
+**`recoverIgnoreErrors`** just skips all errors, emitting only good values. This is an FRP equivalent of an empty catch block.
+
+**`recoverToTry`** transforms an `Observable[A]` into an `Observable[Try[A]]` that never emits an error (it emits `Failure(err)` as a value instead).
+
+
+#### Handling Errors Using Observers
+
+**`Observer.withRecover(onNext, onError: PartialFunction[Throwable, Unit])`** lets you handle some or all of the errors coming from upstream observables. Errors for which `onError` is not defined get reported as unhandled.
+
+**`Observer.ignoreErrors(onNext)`** is similar to `recoverIgnoreErrors` on observables – it simply silences any error it receives, so that it does not get reported as unhandled.
+
+
 
 
 
