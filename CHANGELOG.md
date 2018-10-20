@@ -2,6 +2,11 @@
 
 Breaking changes in **bold**.
 
+#### v0.4 – Oct 2018 – TO BE RELEASED
+
+* **New: Error Handling – see whole new section in docs**
+* **API: a bunch of class / trait member fields are now `Try[A]` instead of `A`**
+
 #### v0.3 – Sep 2018 
 
 * **Naming: Observer.map -> Observer.contramap**

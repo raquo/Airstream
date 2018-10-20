@@ -64,6 +64,7 @@ trait EventStream[+A] extends LazyObservable[A] {
     new DebounceEventStream(parent = this, delayFromLastEventMillis)
   }
 
+  // @TODO[API] Should we introduce some kind of FoldError() wrapper?
   /** @param fn Note: guarded against exceptions */
   def fold[B](initial: B)(fn: (B, A) => B): Signal[B] = {
     foldRecover(

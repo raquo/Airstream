@@ -57,6 +57,7 @@ trait MapMemoryObservable[I, O] extends MemoryObservable[O] with SingleParentObs
               // If recover was not applicable, keep original value
               originalValue
             } else {
+              // @TODO[Test] Verify this
               // If recover was applicable and resulted in Some(value), use that.
               // If None, use the original error because we can't "skip" initial value
               nextValue.map(Success(_)).getOrElse(originalValue)
