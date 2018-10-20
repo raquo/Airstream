@@ -6,6 +6,7 @@ Breaking changes in **bold**.
 
 * **New: Error Handling – see whole new section in docs**
 * **API: a bunch of class / trait member fields are now `Try[A]` instead of `A`**
+* **Build: Drop Scala 2.11 support**
 
 #### v0.3 – Sep 2018 
 
