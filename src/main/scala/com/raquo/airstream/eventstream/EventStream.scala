@@ -36,6 +36,10 @@ trait EventStream[+A] extends LazyObservable[A] {
     new FilterEventStream(this, passes)
   }
 
+  def filterNot(passes: A => Boolean): EventStream[A] = {
+    new FilterEventStream(this, passes.andThen(!_))
+  }
+
   def collect[B](pf: PartialFunction[A, B]): EventStream[B] = {
     filter(pf.isDefinedAt).map(pf)
   }
