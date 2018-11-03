@@ -14,6 +14,7 @@ trait Observable[+A] {
 
   type Self[+T] <: Observable[T]
 
+  // @TODO[API] This needs smarter permissions. See Laminar's DomEventStream
   protected[airstream] val topoRank: Int
 
   /** Note: Observer can be added more than once to an Observable.

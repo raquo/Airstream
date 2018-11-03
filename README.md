@@ -630,7 +630,7 @@ Now let's dive deeper into each step of this process.
 
 Airstream guards from exceptions almost all user (developer) inputs that are used to build observables. For example, if the `project` function that you provided to `stream.map(project)` throws an exception, the resulting stream will emit an error, kick-starting this whole error handling process.
 
-However, user inputs that are supposed to return a `Try` are assumed to not throw. Various class constructors that are public but not intended to be used directly can also have params that are not guarded against exceptions.
+However, user inputs that are supposed to return a `Try` are assumed to not throw. Various public class constructors that require the `new` keyword are generally not intended to be used directly, these can also have params that are not guarded against exceptions.
 
 For clarity, every Airstream method and constructor available to you has a Scaladoc comment reaffirming whether its parameters are guarded or not.
 

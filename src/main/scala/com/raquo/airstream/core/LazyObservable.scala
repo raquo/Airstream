@@ -101,11 +101,12 @@ object LazyObservable {
     val parent: LazyObservable[Inner[A]]
   ) extends AnyVal {
 
-    /** @param project Note: guarded against exceptions */
-    @inline def flatMap[B, Inner2[_], Output[+_] <: LazyObservable[_]](project: Inner[A] => Inner2[B])(
+    // @TODO Does this even work? Seems like type inference is broken
+    /** @param compose Note: guarded against exceptions */
+    @inline def flatMap[B, Inner2[_], Output[+_] <: LazyObservable[_]](compose: Inner[A] => Inner2[B])(
       implicit strategy: FlattenStrategy[LazyObservable, Inner2, Output]
     ): Output[B] = {
-      strategy.flatten(parent.map(project))
+      strategy.flatten(parent.map(compose))
     }
   }
 

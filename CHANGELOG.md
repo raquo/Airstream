@@ -2,10 +2,13 @@
 
 Breaking changes in **bold**.
 
-#### v0.4 – Oct 2018 – TO BE RELEASED
+#### v0.4 – Nov 2018 – TO BE RELEASED
 
 * **New: Error Handling – see whole new section in docs**
-* **API: a bunch of class / trait member fields are now `Try[A]` instead of `A`**
+* **API: a few breaking changes for those who extend Airstream classes**
+  * A bunch of class / trait member fields are now `Try[A]` instead of `A`
+  * Split `fire` into `fireValue` & `fireError`, etc.
+  * By and large this does not affect existing Airstream usage, just customization by subclassing
 * **Build: Drop Scala 2.11 support**
 
 #### v0.3 – Sep 2018 
@@ -28,4 +31,4 @@ Breaking changes in **bold**.
 
 #### v0.1 – Apr 2018
 
-Initial release. First version extracted from Laminar repo.
+Initial release. First version extracted from [Laminar](https://github.com/raquo/Laminar) repo.
