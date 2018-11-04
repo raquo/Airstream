@@ -1,40 +1,33 @@
 package com.raquo.airstream.core
 
-import com.raquo.airstream.util.{GlobalCounter, JsPriorityQueue}
-import org.scalajs.dom
+import com.raquo.airstream.util.JsPriorityQueue
 
 import scala.scalajs.js
 
-class Transaction(code: Transaction => Any) {
+// @TODO[Naming] Should probably be renamed to something like "Propagation"
+class Transaction(private[Transaction] val code: Transaction => Any) {
 
   // @TODO this is not used except for debug logging. Remove eventually
-  val id: Int = Transaction.nextId()
+  // val id: Int = Transaction.nextId()
 
-  /** "Priority queue" of pending observables: sorted by their topoRank */
+  /** Priority queue of pending observables: sorted by their topoRank.
+    *
+    * Corollary: An Observable that is dequeue-d from here does not synchronously depend on any other pending observables
+    */
   private[airstream] val pendingObservables: JsPriorityQueue[SyncObservable[_]] = new JsPriorityQueue(_.topoRank)
 
   Transaction.add(this)
 
-  // @TODO rename
-  private[airstream] def run(): Unit = {
-    //dom.console.log(s"TRX($id).run")
-    Transaction.isSafeToRemoveObserver = false
-    code(this) // this evaluates a pass-by-name param @TODO[Integrity] make sure this is not DCE-d in fullOptJS
-    //dom.console.log(s"TRX($id).pendingObservables.length = ${pendingObservables.size}")
-    resolvePendingObservables()
-    Transaction.isSafeToRemoveObserver = true
-    Transaction.done(this)
-  }
-
-  @inline private def resolvePendingObservables(): Unit = {
+  @inline private[Transaction] def resolvePendingObservables(): Unit = {
     while (pendingObservables.nonEmpty) {
       //      dom.console.log("RANKS: ", pendingObservables.map(_.topoRank))
-      pendingObservables.dequeue().syncFire(this) // Fire the first pending observable and remove it from the list
+      // Fire the first pending observable and remove it from the list
+      pendingObservables.dequeue().syncFire(this)
     }
   }
 }
 
-object Transaction extends GlobalCounter {
+object Transaction { // extends GlobalCounter {
 
   private var isSafeToRemoveObserver: Boolean = true
 
@@ -42,7 +35,10 @@ object Transaction extends GlobalCounter {
 
   private[this] val pendingObserverRemovals: js.Array[() => Unit] = js.Array()
 
-  protected[airstream] def removeExternalObserver[A](observable: Observable[A], observer: Observer[A]): Unit = {
+  /** Safely remove external observer (such that it doesn't interfere with iteration over the list of observers).
+    * Removal still happens synchronously, just at the end of a transaction if one is running right now.
+    */
+  def removeExternalObserver[A](observable: Observable[A], observer: Observer[A]): Unit = {
     if (isSafeToRemoveObserver) {
       // remove right now – useful for efficient recursive removals
       observable.removeExternalObserverNow(observer)
@@ -53,13 +49,15 @@ object Transaction extends GlobalCounter {
     }
   }
 
-  // @TODO Maybe make more public for more extensibility
-  protected[airstream] def removeInternalObserver[A](observable: Observable[A], observer: InternalObserver[A]): Unit = {
+  /** Safely remove internal observer (such that it doesn't interfere with iteration over the list of observers).
+    * Removal still happens synchronously, just at the end of a transaction if one is running right now.
+    */
+  def removeInternalObserver[A](observable: Observable[A], observer: InternalObserver[A]): Unit = {
     if (isSafeToRemoveObserver) {
       // remove right now – useful for efficient recursive removals
       observable.removeInternalObserverNow(observer)
     } else {
-      // schedule removal to happen in a new transaction
+      // schedule removal to happen at the end of the transaction
       // (don't want to interfere with iteration over observables' lists of observers)
       pendingObserverRemovals.push(() => observable.removeInternalObserverNow(observer))
     }
@@ -81,12 +79,20 @@ object Transaction extends GlobalCounter {
     val hasPendingTransactions = pendingTransactions.length > 0
     pendingTransactions.push(transaction)
     if (!hasPendingTransactions) {
-      transaction.run()
+      run(transaction)
     }
   }
 
+  private def run(transaction: Transaction): Unit = {
+    isSafeToRemoveObserver = false
+    transaction.code(transaction)
+    transaction.resolvePendingObservables()
+    isSafeToRemoveObserver = true
+    done(transaction)
+  }
+
   private def done(transaction: Transaction): Unit = {
-    if (pendingTransactions(0) != transaction) {
+    if (pendingTransactions.head != transaction) {
       // @TODO[Integrity] Should we really throw here?
       throw new Exception("Transaction mismatch: done transaction is not first in list")
     }
@@ -95,7 +101,7 @@ object Transaction extends GlobalCounter {
     resolvePendingObserverRemovals()
 
     if (pendingTransactions.length > 0) {
-      pendingTransactions(0).run()
+      run(pendingTransactions.head)
     }
   }
 

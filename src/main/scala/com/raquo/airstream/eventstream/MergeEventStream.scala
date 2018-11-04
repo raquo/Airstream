@@ -8,6 +8,8 @@ import scala.scalajs.js
 
 /** Stream that emit events from all of its parents.
   *
+  * Note: this stream re-emits errors emitted by all of its parents
+  *
   * This feature exists only for EventStream-s because merging MemoryObservable-s
   * (Signal and State) does not make sense, conceptually.
   */
@@ -39,13 +41,15 @@ class MergeEventStream[A](
     * We made it this way because the user probably expects this behavior.
     */
   override private[airstream] def syncFire(transaction: Transaction): Unit = {
+    // @TODO[Integrity] I don't think we actually need this "check":
     // At least one value is guaranteed to exist if this observable is pending
-    fire(pendingParentValues.dequeue().value, transaction)
+    // pendingParentValues.dequeue().value.fold(fireError(_, transaction), fireValue(_, transaction))
 
     while (pendingParentValues.nonEmpty) {
-      //println("NEW TRX from MergeEventStream")
-      val nextValue = pendingParentValues.dequeue().value
-      new Transaction(fire(nextValue, _))
+      pendingParentValues.dequeue().value.fold(
+        fireError(_, transaction),
+        fireValue(_, transaction)
+      )
     }
   }
 
@@ -58,8 +62,11 @@ class MergeEventStream[A](
   }
 
   private def makeInternalObserver(parent: Observable[A]): InternalParentObserver[A] = {
-    InternalParentObserver(parent, onNext = (nextValue, transaction) => {
+    InternalParentObserver.fromTry(parent, (nextValue, transaction) => {
       pendingParentValues.enqueue(new Observation(parent, nextValue))
+      // @TODO[API] Actually, why are we checking for .contains here? We need to better define behaviour
+      // @TODO Make a test case that would exercise this .contains check or lack thereof
+      // @TODO I think this check is moot because we can't have an observable emitting more than once in a transaction. Or can we? I feel like we can't/ It should probably be part of the transaction contract.
       if (!transaction.pendingObservables.contains(this)) {
         transaction.pendingObservables.enqueue(this)
       }

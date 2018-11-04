@@ -6,6 +6,7 @@ class Tuple2State[A, B](val tuple2State: State[(A, B)]) extends AnyVal {
     new MapState[(A, B), C](
       parent = tuple2State,
       combinedValue => project(combinedValue._1, combinedValue._2),
+      recover = None,
       tuple2State.owner
     )
   }

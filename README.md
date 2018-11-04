@@ -13,13 +13,13 @@ Airstream is a small state propagation and streaming library. Primary difference
 - **One integrated system for three core types of observables** – Event streams alone are not a good enough abstraction for anything other than events.
   - EventStream (lazy, no current value)
   - Signal (lazy, has current value)
-  - State (eager, with current value)
+  - State (strict ("eager"), with current value)
 
-- **Small size, simple implementation** – easy to understand, easy to create custom streams. Does not bloat your Scala.js bundle size.
+- **Small size, simple implementation** – easy to understand, easy to create custom observables. Does not bloat your Scala.js bundle size.
 
 Airstream has a very generic design, but is primarily intended to serve as a reactive layer for unidirectional dataflow architecture as applied to hierarchical UI components. As such, it is not burdened by features that cause more problems than they solve in frontend development, such as backpressure and typed effects.
 
-I created Airstream because I found existing solutions were not suitable for building reactive UI components. My original need for Airstream is to replace the old reactive layer of [Laminar](https://github.com/raquo/Laminar), but I'll be happy to see it used by other reactive UI libraries as well. Laminar in general is well modularized, and you can definitely reuse other bits and pieces of it, for example [Scala DOM Types](https://github.com/raquo/scala-dom-types).
+I created Airstream because I found existing solutions were not suitable for building reactive UI components. My original need for Airstream is to replace the previous reactive layer of [Laminar](https://github.com/raquo/Laminar), but I'll be happy to see it used by other reactive UI libraries as well. Laminar in general is well modularized, and you can definitely reuse other bits and pieces of it, for example [Scala DOM Types](https://github.com/raquo/scala-dom-types).
 
 ```
 "com.raquo" %%% "airstream" % "0.3"
@@ -217,7 +217,7 @@ So, we can count on State running as soon as it gets created, regardless of whet
 
 This is useful in situations where a parent component wants to maintain some state, but the only observers of such state are children components, of which there might be zero or more. Without eagerness, the state would go stale when there are temporarily zero children components because it would temporarily have no observers.
 
-Because State's current value is guaranteed to be consistent regardless of observers, it is available via the `state.now()` method. Using that method will reduce the need for combining multiple observables, if all you want is to sample some State's current value.
+Because State's current value is guaranteed to be consistent regardless of observers, it is available via the `state.now(): A` and `state.tryNow(): Try[A]` methods (if state is a `Failure(error)`, the former method throws `error`). Using that method will reduce the need for combining multiple observables, if all you want is to sample some State's current value.
 
 Similar to Signal, State only fires an event when its next value is different from its current value.
 
@@ -355,7 +355,7 @@ Note that all observables created from futures fire their events in a new transa
 
 Now that you have an `Observable[Future[A]]`, you can flatten it into `Observable[A]` in a few ways, see [Flattening Observables](#flattening-observables).
 
-**Warning: As error handling is not yet implemented in Airstream (TODO), it can't handle failed futures at the moment.**
+A failed future results in an error (see [Error Handling](#error-handling)).
 
 #### EventStream.fromSeq
 
@@ -369,6 +369,20 @@ object EventStream {
 This method creates an event stream that synchronously emits events from the provided sequence one by one to any newly added observer.
 
 Each event is emitted in a separate transaction, meaning that the propagation of the previous event will fully complete before the propagation of the new event starts.
+
+**Note:** you should avoid using this factory, at least with multiple events. You generally shouldn't need to emit more than one event at the same time like this stream does. If you do, I think your model is likely abusing the concept of "event". This method is provided as a kludge until I can make a more confident determination.
+
+
+#### `EventStream.fromValue`
+
+Like `EventStream.fromSeq` (see right above), but only allows for a single event.
+
+
+#### `EventStream.fromTry`
+
+Like `EventStream.fromValue` (see right above), but also allows an error.
+
+This is provided as a kludge until it becomes more clear that this is not needed.
 
 
 #### EventStream.periodic
@@ -410,14 +424,14 @@ Now you can send `Bar` events to `barWriter`, and they will appear in `eventBus`
 
 #### Var and StateVar
 
-`Var(initialValue)` contains `.signal` that you can update manually. Similar to `EventBus`, it exposes `.writer` for updates.
+`Var(initialValue)` / `Var.fromTry(tryValue)` contains `.signal` that you can update manually. Similar to `EventBus`, it exposes `.writer` for updates.
 
 Similarly, `StateVar(initialValue)(owner)` contains `.state` that you can also update via `.writer`.
 
 
 #### Val
 
-`Val(value)` is a Signal "constant" – a Signal that never changes its value. Unlike other Signals, its value is evaluated immediately upon creation, and it exposes a `now()` method to obtain it.
+`Val(value)` / `Val.fromTry(tryValue)` is a Signal "constant" – a Signal that never changes its value. Unlike other Signals, its value is evaluated immediately upon creation, and it exposes `now()` and `tryNow()` methods to obtain it.
 
 Val is useful when a component wants to accept either a Signal or a constant value as input. You can just wrap your constant in a Val, and have the component accept a Signal instead.
 
@@ -541,15 +555,217 @@ All built-in strategies result in observables that emit each event in a new tran
 
 ### Error Handling
 
+Airstream error handling is very different from conventional streaming libraries. Before diving into implementation details we first need to understand these differences and the reasons why such a departure from the norm is beneficial.
 
-TODO[API] Error handling is not yet implemented, but will be soon, it's a priority feature.
+
+#### Scala Exception Handling
+
+First, to clarify what kind of errors we're talking about here: this whole section is concerned with exceptions thrown by _user-provided_ code inside Airstream observables. For example, consider the `project` function in `stream.map(project)` throwing. Without special error handling capabilities in Airstream, such an exception would terminate the propagation of this stream and bubble up the call stack.
+
+However, this behaviour is vastly undesirable in FRP context because the caller (which would be the source of events) is not normally in a position to handle failures of child observables. For example, a DOM event listener that publishes DOM events onto a stream can't do much about some other component failing to process some of those events. So we need a different strategy to deal with errors in observables.
+
+
+#### Conventional Streaming Libraries
+
+Conventional streaming libraries basically don't propagate errors in observables. If your stream fails, it gets _completed_, meaning that it informs all of its dependant observables and observers that it will no longer produce events, and is now shutting down forever.
+
+If you don't want this outcome, you need to _recover_ from such an error by creating a stream that takes two inputs: this original stream, and a stream factory that returns a new stream that you will switch to if the original stream errors. 
+
+This model does not make any sense to me. Consider this chain of observables:
+
+```scala
+object OtherModule {
+  def doubled(parentStream: Stream[Double]): parent: Stream[Double] = {
+    parent.map(num => num * 2)
+  }
+}
+ 
+// ----
+ 
+import OtherModule.doubled
+ 
+val stream1: Stream[Double] = ???
+val invertedStream: Stream[Double] = stream1.map(num => 1 / num)
+ 
+doubled(invertedStream).foreach(dom.console.log(_))
+```
+
+Inside `doubled`, there is nothing you can do to recover from an error in `parentStream`. You don't know what that stream does, so once it's broke, it's broke. You can't replace it with anything meaningful, just maybe some sentinel value to indicate failure.
+
+So essentially, this requires you to either manually guard every single user-provided input to every stream, or lose your sanity to crazy amounts of coupling. In this scenario the more likely outcome is that you'll just ignore error handling, and your program will stop working on an error that would have been recoverable if only it wasn't in your streaming code.
+
+Fundamentally, the problem here is conceptual: conventional streaming libraries see any exception in a stream as a terminal diagnosis for it.
+
+Yes, such an error could have made parts of your application state inconsistent, that is a legitimate problem. However, unconditionally killing parts of your program that depend on a stream is not a way to mitigate inconsistent state for the simple reason that _the streaming library has no idea which, if any, state became inconsistent_, therefore it has no idea whether allowing the error to propagate will _mitigate_ state breakage or make it _even worse_.
+
+
+#### Airstream's Approach
+
+Airstream aspires to replicate the feel of native exception handling in FRP. However, whereas in imperative code we _want_ Scala to propagate exceptions up the call stack, in Airstream we instead want to propagate errors in observables to their observers and dependent observables.
+
+Think about it this way: in imperative code, you call a function which can throw, and you can either handle it or decide to let your caller handle it, and so on, recursively. In Airstream, you make an observable that depends on another observable which can throw. So you can either handle it, or let any downstream observables or observers handle it.
+
+This FRP adaptation of classic exception handling is somewhat similar to the approach of Scala.rx, however since Airstream offers a unified reactive system, we have to adjust this basic idea to support event streams as well.
+
+To contrast our approach with conventional streaming libraries, where they see a failed _stream_, we only see a failed _value_, generally expecting the next emitted value to work fine. This is similar to plain Scala exceptions: if a function throws an exception, it does not suddenly become broken forever. You can call it again with perhaps a different value, and it will perhaps not fail that time. Yes, if such an exception produces invalid state, you as a programmer need to address it. Same in Airstream. We give you the tools (more on this below), you do the work, because you're the only one who knows _how_.
+
+We elaborate on the call stack analogy in the subsection [Errors Multiply](#errors-multiply) below.
+
+
+#### Error propagation
+
+Airstream does not complete or terminate observables on error. Instead, we essentially propagate error values the same way we propagate normal values. Each Observer and InternalObserver has `onNext(A)` and `onError(Throwable)` methods defined, so both observables and observers are capable of accepting error values as inputs.
+
+If you do not take special action, Airstream observables will generally (but not always, we'll get to that) pass through the errors to their observers untouched. Eventually the error will reach one or more external Observers.
+
+When an error reaches an external observer, its `onError` method will handle it. If you didn't specify `onError` (e.g. if you used the `Observer(onNext)` factory to create an observer) or if your `onError` partial function is not defined for a given error, Airstream will report this error as _unhandled_.
+
+You can get notified about unhandled errors by registering a callback using `AirstreamError.registerUnhandledErrorCallback(fn: Throwable => Unit)`. Similarly, you can unregister it using `AirstreamError.unregisterUnhandledErrorCallback(fn: Throwable => Unit)`.
+
+By default Airstream registers `AirstreamErrors.consoleErrorCallback` to log all errors to the console because there is nothing worse than silently swallowed unhandled errors. You can unregister it and/or register more callbacks, e.g. to terminate your program, or to report the error to a service like Sentry.
+
+Now let's dive deeper into each step of this process.
+
+##### User Input is Generally Guarded Against Exceptions
+
+Airstream guards from exceptions almost all user (developer) inputs that are used to build observables. For example, if the `project` function that you provided to `stream.map(project)` throws an exception, the resulting stream will emit an error, kick-starting this whole error handling process.
+
+However, user inputs that are supposed to return a `Try` are assumed to not throw. Various public class constructors that require the `new` keyword are generally not intended to be used directly, these can also have params that are not guarded against exceptions.
+
+For clarity, every Airstream method and constructor available to you has a Scaladoc comment reaffirming whether its parameters are guarded or not.
+
+##### Errors Do Not Affect Propagation
+
+When an error happens in an observable (assuming that it was guarded against, as it should always be, see above), the observable emits this error to all of its observers – internal and external – in the same manner that it would emit a value. Think of it as propagating a `Try[A]` value instead of just `A`.
+
+##### Errors in an Observer Do Not Affect Other Observers
+
+Similarly, and unlike conventional streaming libraries, if an error happened in an observer's `onNext` or `onError` callback, this error will be reported as _unhandled_, but it will not prevent other observers or the code immediately following this observer's definition from running.
+
+If you're concerned that the contents of your `onNext` / `onError` can fail and make your app state inconsistent, you do the same thing you've always done in this situation – `try` some code and `catch` the error, just keep it all inside the callback in question:
+
+```scala
+stream.addObserver(Observer(onNext = v =>
+  try { riskyFoo(v) }
+  catch { case err => recoverFromFooFail() }
+))
+```
+
+Remember, this is just for observers. We have a better way for observables, read on.
+
+##### Unhandled Errors Do Not Terminate The Program
+
+In Airstream, unhandled errors do not result in the program terminating. By default they are reported to the console. You can specify different or additional handlers such as `AirstreamError.debuggerErrorCallback` or even a custom handler that effectively terminates your program.
+
+Regardless of this seeming leniency, you should still handle all of your errors at some point before they become _unhandled_. In a good Airstream codebase every _unhandled_ error must be treated as a bug.
+
+##### Error Timing is Consistent
+
+Observables generally emit errors at the same time as they would have emitted a non-error value. For example, a `CombinedObservable` like `stream.combineWith(stream.map(foo))` will only emit a single value if `stream` emits a value (yes, Airstream deals with [FRP Glitches](#frp-glitches) for you). Similarly, it will only emit a single error if `stream` emits an error. However, that error will be wrapped in `CombinedError` because it needs to support the case when its parent observables simultaneously emit a different error.
+
+On the other hand, `MergeEventStream` does no such synchronization, it emits the errors similarly to how it emits non-error events – as they come, putting all but the first seen one in a new transaction.
+
+`DelayEventStream` re-emits incoming errors with the same delay that it uses for normal values.
+
+##### Event Streams Generally Forget Errors
+
+Similarly to how event streams generally do not keep track of their last emitted value, they also forget their last emitted error once they finish propagating it to their observers.
+
+##### Memory Observables Remember Errors
+
+If a `Signal[A]` or `State[A]` observable runs into an error that it doesn't handle itself, this error becomes its current state. `MemoryObservable`s' current state is actually `Try[A]`, not just `A`. 
+
+`State[A]` has a public `now(): A` method that returns its current value. Calling it is equivalent to `tryNow().get`– it will throw if current state is a Failure.
+
+##### Errors Can Become Wrapped 
+
+Errors originating in an external Observer's onNext and onTry methods are wrapped in `ObserverError` and `ObserverErrorHandlingError` respectively before they are shipped off as unhandled errors.
+
+Errors originating in observables error handling code (`stream.recover(pf)`) are wrapped in `ErrorHandlingError`.
+
+You can always access the original errors on wrapped errors, and it will always provide you with a stack trace that includes the line where your code failed. Make sure to configure error reporting as well as Scala.js source maps to make use of this in fullOpt / production.
+
+##### Errors Multiply
+
+The same error might need to be handled multiple times to avoid becoming _unhandled_.
+
+It is perhaps counter-intuitive, but it's obvious in retrospect:
+
+```scala
+val upStream = ???
+val fooStream = upStream.map(foo)
+val barStream = upStream.map(bar)
+fooStream.foreach(dom.console.log("foo"))
+barStream.foreach(dom.console.log("bar"))
+```
+
+If `upStream` emits an error, both `fooStream` and `barStream` will emit an error – the same instance of it, actually. Then it will end up reported as _unhandled_ – twice!
+
+If we try to lean on our call stack analogy, it kinda breaks this time. Call stack is a stack, a linear data structure much like a list. An exception can only ever bubble to just one caller before bubbling up to its one and only caller. But in our case it feels like the bubbles are splitting into multiple parallel "streams".
+
+Instead, think of `fooStream` and `barStream` as independent function **calls** that both require the value of `upStream`, except by magic of FRP `upStream` is only executed once and its value (well, its exception in this case) is shared with both `fooStream` and `barStream` calls. If you call a broken function twice, you get two exceptions (identical ones, thanks to FRP) and thus two call stacks to propagate through.
+
+To be extra clear, if we add `.recoverIgnoreErrors` to the `fooStream` definition above, its observer will not receive the error coming from `upStream`, and will not report that error as _unhandled_. We did, after all, handle it, so that's fair. However, `barStream`'s observer would still receive that same error, and would still report it as _unhandled_. This is why handling errors in the right place is very important, just like handling exceptions is in plain Scala code.
+
+
+#### Recovering from Errors
+
+As we mentioned, generally observables propagate the errors they receive with no change. However, we can recover from errors, like this:
+
+```scala
+val signal0: Signal[A] = ???
+val signal1 = signal0.map(whatever)
+val signal2 = signal1.recover {
+  case MyException(foo) if foo.isGood => Some(foo) // emit foo
+  case MyException(foo) if !foo.isGood => None // skip this, emit nothing
+  case o: MyOtherException => throw new Exception("lolwat") // emit new error
+}
+```
+
+Importantly, this `recover` method does not affect `signal0`, or even `signal1`. Like any other operator it's just creating a new observable (`signal2`), except this one has a defined error handling strategy, so it will process any errors that come through it.
+
+When `signal0` emits an error, `signal2` will feed it to the partial function we provided to it. That function should normally emit either `Some(value)` to make `signal2` emit some `value`, or `None` to just skip this event altogether, as if it never happened. Yes, this latter case means that `signal2`'s current state would remain at whatever it was before this error came in, meanwhile `signal0`'s current state would be updated to the error (same for `signal1`).
+
+Any errors that this partial function is not defined for will pass through without being handled. If the partial function throws an error, it will be passed down wrapped in `ErrorHandlingError`.
+
+In addition to `recover`, Observables have a couple shorthand operators:
+
+**`recoverIgnoreErrors`** just skips all errors, emitting only good values. This is an FRP equivalent of an empty catch block.
+
+Note that you can't ignore an error in a `MemoryObservable`'s initial value, as it _needs_ a `Try[A]` value to be its state whenever it's started. Therefore, if the initial value is an error, and `recover` returns `None` while handling it (that's what `recoverIgnoreErrors` does), the initial value is set to the original error.
+
+**`recoverToTry`** transforms an `Observable[A]` into an `Observable[Try[A]]` that never emits an error (it emits `Failure(err)` as a value instead).
+
+
+#### Handling Errors Using Observers
+
+**`Observer.withRecover(onNext, onError: PartialFunction[Throwable, Unit])`** lets you handle some or all of the errors coming from upstream observables. Errors for which `onError` is not defined get reported as unhandled.
+
+**`Observer.ignoreErrors(onNext)`** is similar to `recoverIgnoreErrors` on observables – it simply silences any error it receives, so that it does not get reported as unhandled.
+
+
+#### Other Error Handling Considerations
+
+* **`fold`** operator is unable to proceed when encountering an error, so such an observable will enter a permanent error state if it encounters an error. You can not use the standard `recover` method to recover from this. You need to use `foldRecover` instead of `fold` to supply your error handling logic.
+
+* **`filter`** operator can't filter if its passes function fails, so it will pass through all errors that it receives, unfiltered. You can filter errors using `recover`, by returning `None`.
+
+* A State with no observers (internal or external) still runs because it's not lazy _(a motivating example to all of us!)_. Ahem. This means that any errors that it emits are _unhandled_, and so they are reported as such. To prevent this, either handle the errors with `.recover`, or use `.recoverIgnoreErrors` to ignore them.
+
+* Consider a State with no observers (internal or external) except for an event stream created with `state.changes`. This stream is started, so it has an observer. As this `state` has an internal observer, it will not send its errors to `unhandled`. However, while new values and errors emitted by `state` are propagated to this `changes` event stream, the state's initial value is not, as the `changes` does not even look at it. So if this `state` has an error in its initial state, no one is handling it, and yet it will remain unreported as _unhandled_.
+
+  * This is an unfortunately flawed edge case in our design. We might address that eventually. Please let me know if you run into this problem.
+
+  * Signals can also potentially face a similar issue, but the scenario allowing it is even more convoluted because a signal's initial value is evaluated lazily – only if and when its observers request it – so it can't really throw an error if no one is looking at it.
+
+
 
 
 
 ## Limitations
 
-* Currently Airstream only runs on Scala.js because its primary intended use case is unidirectional dataflow architecture on the frontend. However, its design is very generic, and it is definitely possible to make Airstream work on JVM, but that is complicated by 1) JVM's multithreaded environment, 2) Airstream using efficient JS-specific data structures such as js.Array that do not exist on the JVM, and 3) me having limited time, and no personal need for Airstream on the JVM. Those are solvable.
-* Airstream has no concept of observables "completing". If you would like to make a case for this feature, please file an issue on github.
+* Currently Airstream only runs on Scala.js because its primary intended use case is unidirectional dataflow architecture on the frontend. However, its design is very generic, and it is definitely possible to make Airstream work on JVM, but that is complicated by 1) JVM's multithreaded environment, 2) Airstream using JS-specific data structures such as js.Array that do not exist on the JVM, and 3) me having limited time, and no personal need for Airstream on the JVM. Those are solvable.
+* Airstream has no concept of observables "completing". Personally I don't think this is a limitation, but I can see it being viewed as such. If you would like to make a case for this feature, please file an issue on github.
 
 
 ## My Related Projects

@@ -1,10 +1,12 @@
 package com.raquo.airstream.state
 
 import com.raquo.airstream.core.MemoryObservable
+import com.raquo.airstream.features.CombineObservable
 import com.raquo.airstream.ownership.{Owned, Owner}
 import com.raquo.airstream.signal.{FoldSignal, MapSignal, Signal}
 
 import scala.concurrent.Future
+import scala.util.{Failure, Try}
 
 /** State is an eager, [[Owned]] observable */
 trait State[+A] extends MemoryObservable[A] with Owned {
@@ -14,7 +16,7 @@ trait State[+A] extends MemoryObservable[A] with Owned {
   protected[state] val owner: Owner
 
   /** Initial value is evaluated eagerly on initialization */
-  protected[this] var currentValue: A = initialValue
+  protected[this] var currentValue: Try[A] = initialValue
 
   // State starts itself, it does not need any dependencies to run.
   // Note: This call can be found in every concrete subclass of [[State]].
@@ -22,39 +24,77 @@ trait State[+A] extends MemoryObservable[A] with Owned {
   // onStart()
 
   /** State is evaluated eagerly, so this value will always be consistent, so we can have it public */
-  @inline override def now(): A = currentValue
+  @inline override def tryNow(): Try[A] = currentValue
+
+  /** State is evaluated eagerly, so this value will always be consistent, so we can have it public
+    *
+    * @throws Exception if current value is an error
+    */
+  override def now(): A = super.now()
 
   /** Note: the derived State will have the same Owner as this State.
     * If you want to create a State with a different Owner, use a `.toSignal.toState` sequence
     */
   def map[B](project: A => B): State[B] = {
-    new MapState[A, B](parent = this, project, owner)
+    new MapState[A, B](parent = this, project, recover = None, owner)
   }
 
   def combineWith[AA >: A, B](otherState: State[B]): CombineState2[AA, B, (AA, B)] = {
     new CombineState2(
       parent1 = this,
       parent2 = otherState,
-      combinator = (_, _),
+      combinator = CombineObservable.guardedCombinator((_, _)),
       owner // @TODO[API] Is this obvious enough?
     )
   }
 
+  /**
+    * @param makeInitial Note: guarded against exceptions
+    * @param fn Note: guarded against exceptions
+    */
   def fold[B](makeInitial: A => B)(fn: (B, A) => B): State[B] = {
+    foldRecover(
+      parentInitial => parentInitial.map(makeInitial)
+    )(
+      (currentValue, nextParentValue) => Try(fn(currentValue.get, nextParentValue.get))
+    )
+  }
+
+  // @TODO[Naming]
+  /**
+    * @param makeInitial currentParentValue => initialValue
+    * @param fn (currentValue, nextParentValue) => nextValue
+    * @return
+    */
+  def foldRecover[B](makeInitial: Try[A] => Try[B])(fn: (Try[B], Try[A]) => Try[B]): State[B] = {
     new FoldSignal(
       parent = this,
-      makeInitialValue = () => makeInitial(now()),
+      makeInitialValue = () => makeInitial(tryNow()),
       fn
     ).toState(owner)
   }
 
+  /** @param pf Note: guarded against exceptions */
+  def recover[B >: A](pf: PartialFunction[Throwable, Option[B]]): Self[B] = {
+    new MapState[A, B](
+      parent = this,
+      project = identity,
+      recover = Some(pf),
+      owner = owner
+    )
+  }
+
+  def recoverIgnoreErrors: Self[A] = recover[A]{ case _ => None }
+
+  def recoverToTry: Self[Try[A]] = map(Try(_)).recover { case err => Some(Failure(err)) }
+
   @inline def toSignal: Signal[A] = toLazy
 
   override def toLazy: Signal[A] = {
-    new MapSignal[A, A](parent = this, project = identity)
+    new MapSignal[A, A](parent = this, project = identity, recover = None)
   }
 
-  override protected[this] def setCurrentValue(newValue: A): Unit = {
+  override protected[this] def setCurrentValue(newValue: Try[A]): Unit = {
     currentValue = newValue
   }
 

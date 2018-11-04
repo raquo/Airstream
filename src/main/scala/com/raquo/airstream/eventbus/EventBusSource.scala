@@ -19,8 +19,5 @@ class EventBusSource[A](
   }
 
   /** Remove this source stream from this event bus */
-  override def kill(): Unit = {
-    onKilled()
-    owner.onKilledExternally(this)
-  }
+  override def kill(): Unit = super.kill()
 }
