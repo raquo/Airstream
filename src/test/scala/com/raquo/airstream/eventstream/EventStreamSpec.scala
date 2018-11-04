@@ -93,12 +93,16 @@ class EventStreamSpec extends AsyncSpec {
     bus.events
   }
 
+  /** Stability: make sure the outer delayedStream interval is large enough to ensure all events
+    * emitted by the inner delayedStream are processed. Just because the interval is set to 6ms
+    * does not mean that this is what it will be. It's merely the lower bound.
+    */
   it("from-future map-flatten works") {
     implicit val owner: Owner = new TestableOwner
 
     val range1 = 1 to 3
     val range2 = 1 to 2
-    val stream = delayedStream(range1, interval = 18)
+    val stream = delayedStream(range1, interval = 30)
 
     val flatStream =
       stream
@@ -110,7 +114,7 @@ class EventStreamSpec extends AsyncSpec {
     val effects = mutable.Buffer[Effect[_]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
-    delay(80) {
+    delay(150) {
       subscription0.kill()
       effects.toList shouldBe range1.flatMap(i =>
         range2.map(j =>
@@ -121,12 +125,16 @@ class EventStreamSpec extends AsyncSpec {
     }
   }
 
+  /** Stability: make sure the outer delayedStream interval is large enough to ensure all events
+    * emitted by the inner delayedStream are processed. Just because the interval is set to 6ms
+    * does not mean that this is what it will be. It's merely the lower bound.
+    */
   it("three-level from-future map-flatten works") {
     implicit val owner: Owner = new TestableOwner
 
     val range1 = 1 to 3
     val range2 = 1 to 2
-    val stream = delayedStream(range1, interval = 18)
+    val stream = delayedStream(range1, interval = 30)
 
     val flatStream =
       stream
@@ -140,7 +148,7 @@ class EventStreamSpec extends AsyncSpec {
     val effects = mutable.Buffer[Effect[_]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
-    delay(80) {
+    delay(150) {
       subscription0.kill()
       effects.toList shouldBe range1.flatMap(i =>
         range2.map(j => Effect("obs0", i * j * 7))
