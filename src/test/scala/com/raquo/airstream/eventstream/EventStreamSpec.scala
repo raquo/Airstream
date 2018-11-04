@@ -80,13 +80,13 @@ class EventStreamSpec extends AsyncSpec {
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
     subscription0.kill()
-    effects.toList shouldBe range.map(i => Effect("obs0", i*3*7))
+    effects.toList shouldBe range.map(i => Effect("obs0", i * 3 * 7))
   }
 
   private def delayedStream(points: Seq[Int], interval: Int, valueF: Int => Int = identity): EventStream[Int] = {
     val bus = new EventBus[Int]()
     points.foreach { i =>
-      delay(i*interval) {
+      delay(i * interval) {
         bus.writer.onNext(valueF(i))
       }
     }
@@ -98,12 +98,12 @@ class EventStreamSpec extends AsyncSpec {
 
     val range1 = 1 to 3
     val range2 = 1 to 2
-    val stream = delayedStream(range1, 10)
+    val stream = delayedStream(range1, interval = 10)
 
     val flatStream =
       stream
         .map { v =>
-          delayedStream(range2, 2, _ * v)
+          delayedStream(range2, interval = 2, _ * v)
         }
         .flatten
 
@@ -121,18 +121,17 @@ class EventStreamSpec extends AsyncSpec {
     }
   }
 
-
   it("three-level from-future map-flatten works") {
     implicit val owner: Owner = new TestableOwner
 
     val range1 = 1 to 3
     val range2 = 1 to 2
-    val stream = delayedStream(range1, 10)
+    val stream = delayedStream(range1, interval = 18)
 
     val flatStream =
       stream
         .map { v =>
-          delayedStream(range2, 4, _ * v).map { vv =>
+          delayedStream(range2, interval = 6, _ * v).map { vv =>
             EventStream.fromFuture(delay(1)(vv * 7))
           }.flatten
         }
@@ -141,13 +140,10 @@ class EventStreamSpec extends AsyncSpec {
     val effects = mutable.Buffer[Effect[_]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
-    delay(50) {
+    delay(80) {
       subscription0.kill()
       effects.toList shouldBe range1.flatMap(i =>
-        range2.map(j =>
-          Effect("obs0", i * j * 7)
-        )
-
+        range2.map(j => Effect("obs0", i * j * 7))
       )
     }
   }
