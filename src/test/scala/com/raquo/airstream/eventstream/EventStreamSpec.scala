@@ -98,19 +98,19 @@ class EventStreamSpec extends AsyncSpec {
 
     val range1 = 1 to 3
     val range2 = 1 to 2
-    val stream = delayedStream(range1, interval = 10)
+    val stream = delayedStream(range1, interval = 18)
 
     val flatStream =
       stream
         .map { v =>
-          delayedStream(range2, interval = 2, _ * v)
+          delayedStream(range2, interval = 6, _ * v)
         }
         .flatten
 
     val effects = mutable.Buffer[Effect[_]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
-    delay(50) {
+    delay(80) {
       subscription0.kill()
       effects.toList shouldBe range1.flatMap(i =>
         range2.map(j =>
