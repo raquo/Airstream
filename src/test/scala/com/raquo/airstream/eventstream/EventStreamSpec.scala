@@ -39,6 +39,8 @@ class EventStreamSpec extends AsyncSpec {
     effects.toList shouldBe range.filterNot(f).map(i => Effect("obs0", i))
   }
 
+  // @TODO[Test] move the tests below somewhere else?
+
   it("sync map-flatten works") {
 
     implicit val owner: Owner = new TestableOwner
@@ -96,7 +98,7 @@ class EventStreamSpec extends AsyncSpec {
 
     val range1 = 1 to 3
     val range2 = 1 to 2
-    val stream = delayedStream(range1, 15)
+    val stream = delayedStream(range1, 10)
 
     val flatStream =
       stream
@@ -108,7 +110,7 @@ class EventStreamSpec extends AsyncSpec {
     val effects = mutable.Buffer[Effect[_]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
-    delay(60) {
+    delay(50) {
       subscription0.kill()
       effects.toList shouldBe range1.flatMap(i =>
         range2.map(j =>
@@ -125,7 +127,7 @@ class EventStreamSpec extends AsyncSpec {
 
     val range1 = 1 to 3
     val range2 = 1 to 2
-    val stream = delayedStream(range1, 15)
+    val stream = delayedStream(range1, 10)
 
     val flatStream =
       stream
@@ -139,7 +141,7 @@ class EventStreamSpec extends AsyncSpec {
     val effects = mutable.Buffer[Effect[_]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
-    delay(60) {
+    delay(50) {
       subscription0.kill()
       effects.toList shouldBe range1.flatMap(i =>
         range2.map(j =>
