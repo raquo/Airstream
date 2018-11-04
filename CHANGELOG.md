@@ -2,7 +2,7 @@
 
 Breaking changes in **bold**.
 
-#### v0.4 – Nov 2018 – TO BE RELEASED
+#### v0.4 – Nov 2018
 
 * **New: Error Handling – see whole new section in docs**
 * **API: a few breaking changes for those who extend Airstream classes**
