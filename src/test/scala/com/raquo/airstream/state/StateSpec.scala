@@ -75,7 +75,7 @@ class StateSpec extends FunSpec with Matchers {
 
     // --
 
-    state1.addObserver(stateObserver1)
+    val sub1 = state1.addObserver(stateObserver1)
 
     calculations shouldEqual mutable.Buffer()
     effects shouldEqual mutable.Buffer(
@@ -102,7 +102,7 @@ class StateSpec extends FunSpec with Matchers {
 
     // --
 
-    state2.addObserver(stateObserver2)
+    val sub2 = state2.addObserver(stateObserver2)
 
     calculations shouldEqual mutable.Buffer()
     effects shouldEqual mutable.Buffer(
@@ -130,8 +130,8 @@ class StateSpec extends FunSpec with Matchers {
 
     // --
 
-    state2.removeObserver(stateObserver2)
-    state1.removeObserver(stateObserver1)
+    sub2.kill()
+    sub1.kill()
 
     calculations shouldEqual mutable.Buffer()
     effects shouldEqual mutable.Buffer()

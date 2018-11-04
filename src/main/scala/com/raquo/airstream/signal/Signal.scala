@@ -77,7 +77,13 @@ trait Signal[+A] extends MemoryObservable[A] with LazyObservable[A] {
 
   override def recoverToTry: Signal[Try[A]] = map(Try(_)).recover[Try[A]] { case err => Some(Failure(err)) }
 
-  def observe(implicit owner: Owner): SignalViewer[A] = new SignalViewer[A](this, owner)
+  /** Add a noop observer to this signal to ensure that it's started.
+    * This lets you access .now and .tryNow on the resulting SignalViewer.
+    *
+    * You can use `myStream.toWeakSignal.observe` to read the last emitted
+    * value from event streams just as well.
+    */
+  def observe(implicit owner: Owner): SignalViewer[A] = new SignalViewer(this, owner)
 
   /** Initial value is only evaluated if/when needed (when there are observers) */
   override protected[airstream] def tryNow(): Try[A] = {

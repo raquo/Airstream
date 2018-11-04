@@ -51,8 +51,9 @@ trait Observable[+A] {
     subscription
   }
 
-  // @TODO[Bug] See https://github.com/raquo/Airstream/issues/10
-  /** Schedule unsubscription from an external observer in the next transaction.
+  /** Note: this is core-private for subscription safety. See https://github.com/raquo/Airstream/issues/10
+    *
+    * Schedule unsubscription from an external observer in the next transaction.
     *
     * This will still happen synchronously, but will not interfere with
     * iteration over the observables' lists of observers during the current
@@ -61,7 +62,7 @@ trait Observable[+A] {
     * Note: To completely unsubscribe an Observer from this Observable,
     * you need to remove it as many times as you added it to this Observable.
     */
-  @inline def removeObserver(observer: Observer[A]): Unit = {
+  @inline private[core] def removeObserver(observer: Observer[A]): Unit = {
     Transaction.removeExternalObserver(this, observer)
   }
 

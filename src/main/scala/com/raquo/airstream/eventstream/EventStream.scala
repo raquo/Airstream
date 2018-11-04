@@ -4,7 +4,7 @@ import com.raquo.airstream.core.AirstreamError.ObserverError
 import com.raquo.airstream.core.{AirstreamError, LazyObservable, MemoryObservable, Transaction}
 import com.raquo.airstream.features.CombineObservable
 import com.raquo.airstream.ownership.Owner
-import com.raquo.airstream.signal.{FoldSignal, Signal, SignalFromEventStream}
+import com.raquo.airstream.signal.{FoldSignal, Signal, SignalFromEventStream, SignalViewer}
 import com.raquo.airstream.state.{MapState, State}
 
 import scala.concurrent.Future

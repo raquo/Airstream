@@ -33,7 +33,7 @@ class FoldSignalSpec extends FunSpec with Matchers {
 
     // --
 
-    signal.addObserver(signalObserver)
+    val sub = signal.addObserver(signalObserver)
 
     calculations shouldEqual mutable.Buffer(
       Calculation("signal", "numbers:")
@@ -61,7 +61,7 @@ class FoldSignalSpec extends FunSpec with Matchers {
 
     // --
 
-    signal.removeObserver(signalObserver)
+    sub.kill()
     bus.writer.onNext(3)
 
     signal.addObserver(signalObserver)

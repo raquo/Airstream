@@ -35,10 +35,13 @@ object Transaction { // extends GlobalCounter {
 
   private[this] val pendingObserverRemovals: js.Array[() => Unit] = js.Array()
 
-  /** Safely remove external observer (such that it doesn't interfere with iteration over the list of observers).
-    * Removal still happens synchronously, just at the end of a transaction if one is running right now.
+  /** Note: this is core-private for subscription safety. See https://github.com/raquo/Airstream/issues/10
+    *
+    * Safely remove external observer (such that it doesn't interfere with iteration over the list of observers).
+    * Removal still happens synchronously, just at the end of a transaction if one is running right now, so that it
+    * does not interfere with iteration over the observables' lists of observers during the current transaction.
     */
-  def removeExternalObserver[A](observable: Observable[A], observer: Observer[A]): Unit = {
+  private[core] def removeExternalObserver[A](observable: Observable[A], observer: Observer[A]): Unit = {
     if (isSafeToRemoveObserver) {
       // remove right now – useful for efficient recursive removals
       observable.removeExternalObserverNow(observer)

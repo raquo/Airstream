@@ -38,7 +38,7 @@ class SampleCombineEventStream2Spec extends FunSpec with Matchers {
 
     // --
 
-    combinedStream.addObserver(combinedObserver)
+    val subCombined = combinedStream.addObserver(combinedObserver)
 
     calculations shouldEqual mutable.Buffer(
       Calculation("signal", 0)
@@ -90,7 +90,7 @@ class SampleCombineEventStream2Spec extends FunSpec with Matchers {
 
     // --
 
-    combinedStream.removeObserver(combinedObserver)
+    subCombined.kill()
     sampledSignal.addObserver(signalObserver)
 
     calculations shouldEqual mutable.Buffer()
@@ -168,7 +168,7 @@ class SampleCombineEventStream2Spec extends FunSpec with Matchers {
 
     // --
 
-    combinedStream.addObserver(combinedObserver)
+    val subCombined = combinedStream.addObserver(combinedObserver)
 
     calculations shouldEqual mutable.Buffer()
     effects shouldEqual mutable.Buffer()
@@ -218,7 +218,7 @@ class SampleCombineEventStream2Spec extends FunSpec with Matchers {
 
     // --
 
-    combinedStream.removeObserver(combinedObserver)
+    subCombined.kill()
 
     calculations shouldEqual mutable.Buffer()
     effects shouldEqual mutable.Buffer()

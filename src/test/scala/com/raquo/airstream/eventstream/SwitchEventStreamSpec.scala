@@ -32,7 +32,7 @@ class SwitchEventStreamSpec extends FunSpec with Matchers {
     val flattenStream = $latestNumber
       .map(Calculation.log("flattened", calculations))
 
-    flattenStream.addObserver(flattenObserver)
+    val subFlatten = flattenStream.addObserver(flattenObserver)
 
     calculations shouldEqual mutable.Buffer()
     effects shouldEqual mutable.Buffer()
@@ -93,7 +93,7 @@ class SwitchEventStreamSpec extends FunSpec with Matchers {
     val sourceStream2Observer = Observer[Int](effects += Effect("source-2-obs", _))
 
     sourceStreams(2).addObserver(sourceStream2Observer)
-    flattenStream.removeObserver(flattenObserver)
+    subFlatten.kill()
 
     calculations shouldEqual mutable.Buffer()
     effects shouldEqual mutable.Buffer()

@@ -40,8 +40,8 @@ class EventBusSpec extends FunSpec with Matchers {
     val obs1 = Observer[Int](newValue => effects += Effect("obs1", newValue))
     val obs2 = Observer[Int](newValue => effects += Effect("obs2", newValue))
 
-    bus.events.addObserver(obs1)
-    bus.events.addObserver(obs2)
+    val sub1 = bus.events.addObserver(obs1)
+    val sub2 = bus.events.addObserver(obs2)
     val subscription3 = bus.events.foreach(newValue => effects += Effect("obs3", newValue))
 
     bus.writer.onNext(5)
@@ -49,14 +49,14 @@ class EventBusSpec extends FunSpec with Matchers {
     effects shouldEqual mutable.Buffer(Effect("obs1", 5), Effect("obs2", 5), Effect("obs3", 5))
     effects.clear()
 
-    bus.events.removeObserver(obs2)
+    sub2.kill()
 
     bus.writer.onNext(6)
 
     effects shouldEqual mutable.Buffer(Effect("obs1", 6), Effect("obs3", 6))
     effects.clear()
 
-    bus.events.removeObserver(obs1)
+    sub1.kill()
 
     bus.writer.onNext(7)
     bus.writer.onNext(8)
