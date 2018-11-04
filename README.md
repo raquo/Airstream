@@ -37,7 +37,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Stopping Observables](#stopping-observables)
     * [Memory Management Implications](#memory-management-implications)
   * [Signal](#signal)
-  * [State](#state)
+  * [State](#state) – _WARNING: [Deprecation notice](https://github.com/raquo/Laminar/issues/37)_
   * [Relationship between EventStream, Signal, and State](#relationship-between-eventstream-signal-and-state)
   * [Observer](#observer)
   * [Ownership](#ownership)
@@ -193,9 +193,14 @@ val barSignal: Signal[Bar] = fooSignal.map(fooToBar)
 
 In this example, `barSignal`'s initial value would be equal to `fooToBar(myFoo)`, but that expression will not be evaluated until it is needed (i.e. until `barSignal` acquires an observer). And once evaluated, it will not be re-evaluated again.
 
+#### SignalViewer
+
+If you need to ensure that a certain Signal runs even if it has no observers, or if you want to get its current value without sampling, just call `observe` on it. That will add a noop observer to the signal, and return a `SignalViewer` instance that you can call `now()` and `tryNow()` on to get the signal's current value.
 
 
 ### State
+
+#### !!! WARNING !!! State is being evaluated for deprecation. Avoid using it in favor of Signals. [Laminar#37](https://github.com/raquo/Laminar/issues/37) 
 
 As mentioned above, Signal's current value depends on whether it has observers or not. Therefore, Airstream also offers State – a reactive variable that is **eager** (strict), not lazy, and remembers its current value.
 

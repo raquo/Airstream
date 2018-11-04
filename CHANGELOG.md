@@ -9,6 +9,9 @@ Breaking changes in **bold**.
   * A bunch of class / trait member fields are now `Try[A]` instead of `A`
   * Split `fire` into `fireValue` & `fireError`, etc.
   * By and large this does not affect existing Airstream usage, just customization by subclassing
+* New: SignalViewer
+  * This serves as a warning about my intention to deprecate and eventually remove the entirety of the `State` type in Airstream. Its strictness has not proved useful, and yet has plenty of drawbacks. See [Laminar#37](https://github.com/raquo/Laminar/issues/37) for details. If you want to speak up against that, now is the time.
+   
 * **Build: Drop Scala 2.11 support**
 
 #### v0.3 – Sep 2018 

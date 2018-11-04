@@ -77,6 +77,8 @@ trait Signal[+A] extends MemoryObservable[A] with LazyObservable[A] {
 
   override def recoverToTry: Signal[Try[A]] = map(Try(_)).recover[Try[A]] { case err => Some(Failure(err)) }
 
+  def observe(implicit owner: Owner): SignalViewer[A] = new SignalViewer[A](this, owner)
+
   /** Initial value is only evaluated if/when needed (when there are observers) */
   override protected[airstream] def tryNow(): Try[A] = {
     maybeLastSeenCurrentValue.getOrElse {

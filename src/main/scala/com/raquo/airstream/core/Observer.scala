@@ -44,6 +44,13 @@ trait Observer[-A] {
 
 object Observer {
 
+
+  /** An observer that does nothing. Use it to ensure that a LazyObservable is run
+    *
+    * Used by SignalView and EventStreamView
+    */
+  val empty: Observer[Any] = Observer[Any](_ => ())
+
   /** @param onNext Note: guarded against exceptions */
   def apply[A](onNext: A => Unit): Observer[A] = {
     withRecover(onNext, onError = PartialFunction.empty)
