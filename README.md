@@ -741,6 +741,12 @@ Note that you can't ignore an error in a `MemoryObservable`'s initial value, as 
 
 **`recoverToTry`** transforms an `Observable[A]` into an `Observable[Try[A]]` that never emits an error (it emits `Failure(err)` as a value instead).
 
+You can use it to get a stream of errors as plain values, for example:
+
+```scala
+stream.recoverToTry.collect { case Failure(err) => err } // EventStream[Throwable]
+```
+
 
 #### Handling Errors Using Observers
 
