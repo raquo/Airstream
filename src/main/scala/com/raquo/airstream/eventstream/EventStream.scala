@@ -194,6 +194,7 @@ trait EventStream[+A] extends LazyObservable[A] {
 
 object EventStream {
 
+  // @TODO Are we sure we want to deprecate this?
   @deprecated("Use fromValue (see docs)", "0.4")
   def fromSeq[A](events: Seq[A]): EventStream[A] = {
     new SeqEventStream[A](events.map(Success(_)))

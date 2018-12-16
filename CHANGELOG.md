@@ -2,6 +2,10 @@
 
 Breaking changes in **bold**.
 
+#### v0.4.1 – Nov 2018
+
+* Fix: NPE from errors unhandled by `recover` partial function
+
 #### v0.4 – Nov 2018
 
 * **New: Error Handling – see whole new section in docs**

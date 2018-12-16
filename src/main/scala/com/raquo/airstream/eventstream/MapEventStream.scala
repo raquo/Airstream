@@ -39,7 +39,7 @@ class MapEventStream[I, O](
     recover.fold(
       // if no `recover` specified, fire original error
       fireError(nextError, transaction))(
-      pf => Try(pf.applyOrElse(nextError, null)).fold(
+      pf => Try(pf.applyOrElse(nextError, (_: Throwable) => null)).fold(
         tryError => {
           // if recover throws error, fire a wrapped error
           fireError(ErrorHandlingError(error = tryError, cause = nextError), transaction)

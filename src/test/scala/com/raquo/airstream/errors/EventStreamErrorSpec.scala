@@ -317,4 +317,21 @@ class EventStreamErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
       Effect("sub2-err", err1)
     )
   }
+
+  it("Error that is not handled by `recover` is unhandled") {
+
+    val stream = EventStream.fromTry(Failure(err1)).map(Calculation.log("stream", calculations))
+
+    val sub = stream.addObserver(Observer.withRecover(
+      effects += Effect("sub", _),
+      // This only recovers from `err2, not `err1`
+      { case err if err.getMessage == err2.getMessage => errorEffects += Effect("sub-err", err) }
+    ))
+
+    calculations shouldEqual mutable.Buffer()
+    effects shouldEqual mutable.Buffer()
+    errorEffects shouldEqual mutable.Buffer(
+      Effect("unhandled", err1)
+    )
+  }
 }

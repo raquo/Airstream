@@ -21,7 +21,7 @@ trait MapMemoryObservable[I, O] extends MemoryObservable[O] with SingleParentObs
       nextError => recover.fold(
         // if no `recover` specified, fire original error
         fireError(nextError, transaction))(
-        pf => Try(pf.applyOrElse(nextError, null)).fold(
+        pf => Try(pf.applyOrElse(nextError, (_: Throwable) => null)).fold(
           tryError => {
             // if recover throws error, fire wrapped error
             fireError(ErrorHandlingError(error = tryError, cause = nextError), transaction)
@@ -47,7 +47,7 @@ trait MapMemoryObservable[I, O] extends MemoryObservable[O] with SingleParentObs
     originalValue.fold(
       // if no `recover` specified, keep original error
       nextError => recover.fold(originalValue)(
-        pf => Try(pf.applyOrElse(nextError, null)).fold(
+        pf => Try(pf.applyOrElse(nextError, (_: Throwable) => null)).fold(
           tryError => {
             // if recover throws error, save wrapped error
             Failure(ErrorHandlingError(error = tryError, cause = nextError))
