@@ -2,7 +2,7 @@
 
 Breaking changes in **bold**.
 
-#### v0.4.1 – Nov 2018
+#### v0.4.1 – Dec 2018
 
 * Fix: NPE from errors unhandled by `recover` partial function
 
