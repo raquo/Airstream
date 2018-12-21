@@ -1,16 +1,14 @@
 package com.raquo.airstream.eventstream
 
 import com.raquo.airstream.core.AirstreamError.ObserverError
-import com.raquo.airstream.core.{AirstreamError, LazyObservable, MemoryObservable, Transaction}
+import com.raquo.airstream.core.{AirstreamError, Observable, Transaction}
 import com.raquo.airstream.features.CombineObservable
-import com.raquo.airstream.ownership.Owner
-import com.raquo.airstream.signal.{FoldSignal, Signal, SignalFromEventStream, SignalViewer}
-import com.raquo.airstream.state.{MapState, State}
+import com.raquo.airstream.signal.{FoldSignal, Signal, SignalFromEventStream}
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-trait EventStream[+A] extends LazyObservable[A] {
+trait EventStream[+A] extends Observable[A] {
 
   override type Self[+T] = EventStream[T]
 
@@ -92,14 +90,6 @@ trait EventStream[+A] extends LazyObservable[A] {
     new SignalFromEventStream(parent = this.map(Some(_)), initialValue = Success(None))
   }
 
-  def toState[B >: A](initial: B)(implicit owner: Owner): State[B] = {
-    toStateWithTry(Success(initial))(owner)
-  }
-
-  def toStateWithTry[B >: A](initial: Try[B])(implicit owner: Owner): State[B] = {
-    new MapState[B, B](parent = this.toSignalWithTry(initial), project = identity, recover = None, owner)
-  }
-
   def compose[B](operator: EventStream[A] => EventStream[B]): EventStream[B] = {
     operator(this)
   }
@@ -112,18 +102,18 @@ trait EventStream[+A] extends LazyObservable[A] {
     )
   }
 
-  def withCurrentValueOf[B](memoryObservable: MemoryObservable[B]): EventStream[(A, B)] = {
+  def withCurrentValueOf[B](signal: Signal[B]): EventStream[(A, B)] = {
     new SampleCombineEventStream2[A, B, (A, B)](
       samplingStream = this,
-      sampledMemoryObservable = memoryObservable,
+      sampledSignal = signal,
       combinator = CombineObservable.guardedCombinator((_, _))
     )
   }
 
-  def sample[B](memoryObservable: MemoryObservable[B]): EventStream[B] = {
+  def sample[B](signal: Signal[B]): EventStream[B] = {
     new SampleCombineEventStream2[A, B, B](
       samplingStream = this,
-      sampledMemoryObservable = memoryObservable,
+      sampledSignal = signal,
       combinator = CombineObservable.guardedCombinator((_, sampledValue) => sampledValue)
     )
   }
@@ -146,7 +136,7 @@ trait EventStream[+A] extends LazyObservable[A] {
     // Note: Removal of observers is always done at the end of a transaction, so the iteration here is safe
 
     // === CAUTION ===
-    // The following logic must match MemoryObservable's fireTry! It is separated here for performance.
+    // The following logic must match Signal's fireTry! It is separated here for performance.
 
     var index = 0
     while (index < externalObservers.length) {
@@ -169,7 +159,7 @@ trait EventStream[+A] extends LazyObservable[A] {
     // Note: Removal of observers is always done at the end of a transaction, so the iteration here is safe
 
     // === CAUTION ===
-    // The following logic must match MemoryObservable's fireTry! It is separated here for performance.
+    // The following logic must match Signal's fireTry! It is separated here for performance.
 
     var index = 0
     while (index < externalObservers.length) {

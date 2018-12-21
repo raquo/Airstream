@@ -41,7 +41,6 @@ class SignalSpec extends FunSpec with Matchers {
 
     // When observer is added, it immediately gets the last evaluated current value
     // Note: Because signal had no observer when bus fired value `1`, that event was NOT used to compute new value.
-    //       This is expected. If this is undesirable to your case, use State instead of Signal.
     val sub1 = signal.addObserver(signalObserver1)
 
     calculations shouldEqual mutable.Buffer(
@@ -349,6 +348,24 @@ class SignalSpec extends FunSpec with Matchers {
     )
 
     calculations.clear()
+    effects.clear()
+
+    // --
+
+    signal.tryNow()
+
+    calculations shouldEqual mutable.Buffer()
+    effects shouldEqual mutable.Buffer()
+
+    // --
+
+    signal.addObserver(Observer[Int](effects += Effect("signal-obs2", _)))
+
+    calculations shouldEqual mutable.Buffer()
+    effects shouldEqual mutable.Buffer(
+      Effect("signal-obs2", 20)
+    )
+
     effects.clear()
 
     // --

@@ -157,6 +157,8 @@ class SignalErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
       if (num < 0) throw err1 else num
     }.toSignal(0).map(Calculation.log("signal", calculations))
 
+    calculations shouldEqual mutable.Buffer()
+
     signal.addObserver(Observer.withRecover(
       effects += Effect("sub", _),
       { case err => errorEffects += Effect("sub-err", err) }

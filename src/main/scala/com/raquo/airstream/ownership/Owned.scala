@@ -1,7 +1,6 @@
 package com.raquo.airstream.ownership
 
 /** Represents a leaky resource such as a
-  * [[com.raquo.airstream.state.State]] or a
   * [[com.raquo.airstream.core.Subscription]] or a
   * [[com.raquo.airstream.eventbus.EventBusSource]]
   *
