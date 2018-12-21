@@ -1,6 +1,6 @@
 package com.raquo.airstream.util
 
-/** Wraps a value with desired `equals` semantics to give MemoryObservables of Ref[A]
+/** Wraps a value with desired `equals` semantics to give Signal of Ref[A]
   * desirable performance or semantic characteristics (see Ref companion object methods for details).
   *
   * Note: This is not a generic replacement of the `Equals` trait. This is only for use in Signals and State.

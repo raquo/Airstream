@@ -1,25 +1,28 @@
 package com.raquo.airstream.signal
 
-import com.raquo.airstream.core.{LazyObservable, MemoryObservable}
-import com.raquo.airstream.features.CombineObservable
+import com.raquo.airstream.core.{Observable, Observer, Subscription, Transaction}
+import com.raquo.airstream.eventstream.{EventStream, MapEventStream}
+import com.raquo.airstream.features.{CombineObservable, FlattenStrategy}
 import com.raquo.airstream.ownership.Owner
-import com.raquo.airstream.state.{MapState, State}
 
 import scala.concurrent.Future
 import scala.scalajs.js
-import scala.util.{Failure, Try}
+import scala.util.{Failure, Success, Try}
 
-// @TODO[Integrity] Careful with multiple inheritance & addObserver here
-/** Signal is a lazy observable with a current value */
-trait Signal[+A] extends MemoryObservable[A] with LazyObservable[A] {
+/** Signal is an Observable with a current value. */
+trait Signal[+A] extends Observable[A] {
 
   override type Self[+T] = Signal[T]
 
-  protected[this] var maybeLastSeenCurrentValue: js.UndefOr[Try[A]] = js.undefined
+  /** Evaluate initial value of this [[Signal]].
+    * This method must only be called once, when this value is first needed.
+    * You should override this method as `def` (no `val` or lazy val) to avoid
+    * holding a reference to the initial value beyond the duration of its relevance.
+    */
+  // @TODO[Integrity] ^^^ Does this memory management advice even hold water?
+  protected[this] def initialValue: Try[A]
 
-  def toState(implicit owner: Owner): State[A] = {
-    new MapState[A, A](parent = this, project = identity, recover = None, owner)
-  }
+  protected[this] var maybeLastSeenCurrentValue: js.UndefOr[Try[A]] = js.undefined
 
   /** @param project Note: guarded against exceptions */
   override def map[B](project: A => B): Signal[B] = {
@@ -39,6 +42,7 @@ trait Signal[+A] extends MemoryObservable[A] with LazyObservable[A] {
     )
   }
 
+  def changes: EventStream[A] = new MapEventStream[A, A](parent = this, project = identity, recover = None)
 
   /**
     * @param makeInitial Note: guarded against exceptions
@@ -86,7 +90,7 @@ trait Signal[+A] extends MemoryObservable[A] with LazyObservable[A] {
   def observe(implicit owner: Owner): SignalViewer[A] = new SignalViewer(this, owner)
 
   /** Initial value is only evaluated if/when needed (when there are observers) */
-  override protected[airstream] def tryNow(): Try[A] = {
+  protected[airstream] def tryNow(): Try[A] = {
     maybeLastSeenCurrentValue.getOrElse {
       val currentValue = initialValue
       setCurrentValue(currentValue)
@@ -94,7 +98,13 @@ trait Signal[+A] extends MemoryObservable[A] with LazyObservable[A] {
     }
   }
 
-  override protected[this] def setCurrentValue(newValue: Try[A]): Unit = {
+  /** See comment for [[tryNow]] right above
+    *
+    * @throws Exception if current value is an error
+    */
+  protected[airstream] def now(): A = tryNow().get
+
+  protected[this] def setCurrentValue(newValue: Try[A]): Unit = {
     maybeLastSeenCurrentValue = js.defined(newValue)
   }
 
@@ -108,6 +118,49 @@ trait Signal[+A] extends MemoryObservable[A] with LazyObservable[A] {
   override protected[this] def onStart(): Unit = {
     tryNow() // trigger setCurrentValue if we didn't initialize this before
     super.onStart()
+  }
+
+  // @TODO[API] Use pattern match instead when isInstanceOf performance is fixed: https://github.com/scala-js/scala-js/issues/2066
+  override protected def onAddedExternalObserver(observer: Observer[A]): Unit = {
+    super.onAddedExternalObserver(observer)
+    observer.onTry(tryNow()) // send current value immediately
+  }
+
+  override protected[this] final def fireValue(nextValue: A, transaction: Transaction): Unit = {
+    fireTry(Success(nextValue), transaction)
+  }
+
+  override protected[this] final def fireError(nextError: Throwable, transaction: Transaction): Unit = {
+    fireTry(Failure(nextError), transaction)
+  }
+
+  /** Signal propagates only if its value has changed */
+  override protected[this] def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
+    // @TODO[API] It is rather curious/unintuitive that firing external observers first seems to make more sense. Think about it some more.
+    // @TODO[Performance] This might be suboptimal for some data structures (e.g. big maps). Document this along with workarounds.
+    if (tryNow() != nextValue) {
+      setCurrentValue(nextValue)
+
+      // === CAUTION ===
+      // The following logic must match EventStream's fireValue / fireError! It is separated here for performance.
+
+      val isError = nextValue.isFailure
+      var errorReported = false
+
+      var index = 0
+      while (index < externalObservers.length) {
+        externalObservers(index).onTry(nextValue)
+        index += 1
+      }
+      if (index > 0 && isError) errorReported = true
+
+      index = 0
+      while (index < internalObservers.length) {
+        internalObservers(index).onTry(nextValue, transaction)
+        index += 1
+      }
+      if (index > 0 && isError) errorReported = true
+    }
   }
 }
 

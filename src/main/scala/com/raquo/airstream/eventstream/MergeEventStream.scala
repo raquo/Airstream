@@ -10,8 +10,8 @@ import scala.scalajs.js
   *
   * Note: this stream re-emits errors emitted by all of its parents
   *
-  * This feature exists only for EventStream-s because merging MemoryObservable-s
-  * (Signal and State) does not make sense, conceptually.
+  * This feature exists only for EventStream-s because merging Signals
+  * does not make sense, conceptually (what do you even do with their current values?).
   */
 class MergeEventStream[A](
   parents: Iterable[Observable[A]]

@@ -4,12 +4,24 @@ import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.features.FlattenStrategy
 import com.raquo.airstream.features.FlattenStrategy.SwitchStreamStrategy
 import com.raquo.airstream.ownership.{Owned, Owner}
-import com.raquo.airstream.state.State
 
 import scala.scalajs.js
 import scala.util.Try
 
-/** This trait represents a reactive value that can be subscribed to. */
+/** This trait represents a reactive value that can be subscribed to.
+  *
+  * All Observables are lazy. An Observable starts when it gets its first observer (internal or external),
+  * and stops when it loses its last observer (again, internal or external).
+  *
+  * Basic idea: Lazy Observable only holds references to those children that have any observers
+  * (either directly on themselves, or on any of their descendants). What this achieves:
+  * - Stream only propagates its value to children that (directly or not) have observers
+  * - Stream calculates its value only once regardless of how many observers / children it has)
+  *   (so, all streams are "hot" observables)
+  * - Stream doesn't hold references to Streams that no one observes, allowing those Streams
+  *   to be garbage collected if they are otherwise unreachable (which they should become
+  *   when their subscriptions are killed by their owners)
+  */
 trait Observable[+A] {
 
   type Self[+T] <: Observable[T]
@@ -25,14 +37,17 @@ trait Observable[+A] {
   /** Note: This is enforced to be a Set outside of the type system #performance */
   protected[this] val internalObservers: js.Array[InternalObserver[A]] = js.Array()
 
-  /** Get a lazy observable that emits the same values as this one (assuming it has observers, as usual)
-    *
-    * This is useful when you want to map over an Observable of an unknown type.
-    *
-    * Note: [[Observable]] itself has no "map" method because mapping over [[State]]
-    * without expecting / accounting for State's strictness can result in memory leaks. See README.
-    */
-  def toLazy: LazyObservable[A]
+  /** @param project Note: guarded against exceptions */
+  def map[B](project: A => B): Self[B]
+
+  // @TODO[API] I don't like the Option[O] output type here very much. We should consider a sentinel error object instead (need to check performance). Or maybe add a recoverOrSkip method or something?
+  /** @param pf Note: guarded against exceptions */
+  def recover[B >: A](pf: PartialFunction[Throwable, Option[B]]): Self[B]
+
+  def recoverIgnoreErrors: Self[A] = recover[A]{ case _ => None }
+
+  /** Convert this to an observable that emits Failure(err) instead of erroring */
+  def recoverToTry: Self[Try[A]]
 
   /** Create an external observer from a function and subscribe it to this observable.
     *
@@ -47,9 +62,13 @@ trait Observable[+A] {
   def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription = {
     val subscription = Subscription(observer, this, owner)
     externalObservers.push(observer)
+    onAddedExternalObserver(observer)
+    maybeStart()
     //dom.console.log(s"Adding subscription: $subscription")
     subscription
   }
+
+  @inline protected def onAddedExternalObserver(observer: Observer[A]): Unit = ()
 
   /** Note: this is core-private for subscription safety. See https://github.com/raquo/Airstream/issues/10
     *
@@ -66,21 +85,28 @@ trait Observable[+A] {
     Transaction.removeExternalObserver(this, observer)
   }
 
-  // @TODO Why does simple "protected" not work? Specialization?
-  /** Child observables call this to announce their existence once they are started */
+  /** Child observable should call this method on its parents when it is started.
+    * This observable calls [[onStart]] if this action has given it its first observer (internal or external).
+    */
   protected[airstream] def addInternalObserver(observer: InternalObserver[A]): Unit = {
+    // @TODO Why does simple "protected" not work? Specialization?
     internalObservers.push(observer)
+    maybeStart()
   }
 
 //  @inline protected[airstream] def removeInternalObserver(observer: InternalObserver[A]): Unit = {
 //    Transaction.removeInternalObserver(observable = this, observer)
 //  }
 
+  /** Child observable should call Transaction.removeInternalObserver(parent, childInternalObserver) when it is stopped.
+    * This observable calls [[onStop]] if this action has removed its last observer (internal or external).
+    */
   protected[airstream] def removeInternalObserverNow(observer: InternalObserver[A]): Boolean = {
     val index = internalObservers.indexOf(observer)
     val shouldRemove = index != -1
     if (shouldRemove) {
       internalObservers.splice(index, deleteCount = 1)
+      maybeStop()
     }
     shouldRemove
   }
@@ -91,36 +117,49 @@ trait Observable[+A] {
     val shouldRemove = index != -1
     if (shouldRemove) {
       externalObservers.splice(index, deleteCount = 1)
+      maybeStop()
     }
     shouldRemove
   }
 
-  /** This method is fired when this observable starts working (listening for parent events and/or firing its own events)
+  private[this] def numAllObservers: Int = {
+    externalObservers.length + internalObservers.length
+  }
+
+  protected[this] def isStarted: Boolean = numAllObservers > 0
+
+  /** This method is fired when this observable starts working (listening for parent events and/or firing its own events),
+    * that is, when it gets its first Observer (internal or external).
     *
-    * The above semantic is universal, but different observables fit [[onStart]] differently in their lifecycle:
-    * - [[State]] is an eager observable, it calls [[onStart]] on initialization.
-    * - [[LazyObservable]] (Stream or Signal) calls [[onStart]] when it gets its first observer (internal or external)
-    *
-    * So, a [[State]] observable calls [[onStart]] only once in its existence, whereas a [[LazyObservable]] calls it
-    * potentially multiple times, the second time being after it has stopped (see [[onStop]]).
+    * [[onStart]] can potentially be called multiple times, the second time being after it has stopped (see [[onStop]]).
     */
   @inline protected[this] def onStart(): Unit = ()
 
-  /** This method is fired when this observable stops working (listening for parent events and/or firing its own events)
+  /** This method is fired when this observable stops working (listening for parent events and/or firing its own events),
+    * that is, when it loses its last Observer (internal or external).
     *
-    * The above semantic is universal, but different observables fit [[onStop]] differently in their lifecycle:
-    * - [[State]] is an eager, [[Owned]] observable. It calls [[onStop]] when its [[Owner]] decides to [[State.kill]] it
-    * - [[LazyObservable]] (Stream or Signal) calls [[onStop]] when it loses its last observer (internal or external)
-    *
-    * So, a [[State]] observable calls [[onStop]] only once in its existence. After that, the observable is disabled and
-    * will never start working again. On the other hand, a [[LazyObservable]] calls [[onStop]] potentially multiple
-    * times, the second time being after it has started again (see [[onStart]]).
+    * [[onStop]] can potentially be called multiple times, the second time being after it has started again (see [[onStart]]).
     */
   @inline protected[this] def onStop(): Unit = ()
 
+  private[this] def maybeStart(): Unit = {
+    val isStarting = numAllObservers == 1
+    if (isStarting) {
+      // We've just added first observer
+      onStart()
+    }
+  }
+
+  private[this] def maybeStop(): Unit = {
+    if (!isStarted) {
+      // We've just removed last observer
+      onStop()
+    }
+  }
+
   // === A note on performance with error handling ===
   //
-  // MemoryObservables remember their current value as Try[A], whereas
+  // Signals remember their current value as Try[A], whereas
   // EventStream-s normally fire plain A values and do not need them
   // wrapped in Try. To make things more complicated, user-provided
   // callbacks like `project` in `.map(project)` need to be wrapped in
@@ -140,7 +179,7 @@ trait Observable[+A] {
   // particular InternalObserver, this is one of the main factors.
   //
   // With this in mind, you can see fireValue / fireError / fireTry
-  // implementations in EventStream and MemoryObservable are somewhat
+  // implementations in EventStream and Signal are somewhat
   // redundant (non-DRY), but performance friendly.
   //
   // You must be careful when overriding these methods however, as you
@@ -158,15 +197,37 @@ object Observable {
 
   implicit val switchStreamStrategy: FlattenStrategy[Observable, EventStream, EventStream] = SwitchStreamStrategy
 
-  /** `flatMap` method can be found in [[LazyObservable.MetaLazyObservable]] */
+  // @TODO[Elegance] Maybe use implicit evidence on a method instead?
   implicit class MetaObservable[A, Outer[+_] <: Observable[_], Inner[_]](
     val parent: Outer[Inner[A]]
   ) extends AnyVal {
 
-    @inline def flatten[Output[+_] <: LazyObservable[_]](
+    @inline def flatten[Output[+_] <: Observable[_]](
       implicit strategy: FlattenStrategy[Outer, Inner, Output]
     ): Output[A] = {
       strategy.flatten(parent)
     }
+
+    // @TODO one of the problems is that Outer.map(compose) is not proven to return the same Outer container, as Observable.map returns a Self type.
+    // @TODO Does this even work? Seems like type inference is broken
+    /** @param compose Note: guarded against exceptions */
+//    @inline def flatMap[B, Inner2[_], Output[+_] <: Observable[_]](compose: Inner[A] => Inner2[B])(
+//      implicit strategy: FlattenStrategy[Observable, Inner2, Output]
+//    ): Output[B] = {
+//      strategy.flatten[B](parent.map(inner => compose(inner))) // @TODO eh?
+//    }
   }
+
+//  implicit class MetaLazyObservable[A, Inner[_]](
+//    val parent: Observable[Inner[A]]
+//  ) extends AnyVal {
+//
+//    // @TODO Does this even work? Seems like type inference is broken
+//    /** @param compose Note: guarded against exceptions */
+//    @inline def flatMap[B, Inner2[_], Output[+_] <: Observable[_]](compose: Inner[A] => Inner2[B])(
+//      implicit strategy: FlattenStrategy[Observable, Inner2, Output]
+//    ): Output[B] = {
+//      strategy.flatten(parent.map(compose))
+//    }
+//  }
 }

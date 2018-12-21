@@ -1,7 +1,8 @@
 package com.raquo.airstream.eventstream
 
-import com.raquo.airstream.core.{InternalObserver, MemoryObservable, Observable, Transaction}
+import com.raquo.airstream.core.{InternalObserver, Observable, Transaction}
 import com.raquo.airstream.features.{InternalNextErrorObserver, SingleParentObservable}
+import com.raquo.airstream.signal.Signal
 
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
@@ -31,7 +32,7 @@ class SwitchEventStream[I, O](
   override protected[airstream] val topoRank: Int = 1
 
   private[this] var maybeCurrentEventStream: js.UndefOr[Try[EventStream[O]]] = parent match {
-    case mo: MemoryObservable[I @unchecked] => mo.tryNow().map(makeStream)
+    case signal: Signal[I @unchecked] => signal.tryNow().map(makeStream)
     case _ => js.undefined
   }
 

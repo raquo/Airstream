@@ -142,28 +142,26 @@ class EventStreamErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
     errorEffects shouldEqual mutable.Buffer()
   }
 
-  it("stream propagates errors to child streams, signals and state") {
+  it("stream propagates errors to child streams and signals") {
 
     val bus = new EventBus[Int]
 
     val stream1 = bus.events.map(Calculation.log("stream1", calculations))
-    val signal = stream1.toSignal(-1).map(Calculation.log("signal", calculations))
-    val state = stream1.toState(-1).map(Calculation.log("state", calculations))
+    val signal1 = stream1.toSignal(-1).map(Calculation.log("signal1", calculations))
+    val signal2 = stream1.toSignal(-1).map(Calculation.log("signal2", calculations))
 
     // These subs do not handle errors, so they go to unhandled
 
-    signal.addObserver(Observer(effects += Effect("subSignal1", _)))
-    state.addObserver(Observer(effects += Effect("subState1", _)))
+    signal1.addObserver(Observer(effects += Effect("sub1Signal1", _)))
+    signal2.addObserver(Observer(effects += Effect("sub1Signal2", _)))
 
-    // A bit non obvious: state is ahead of signal because it was added as internal observer when it was initialized,
-    // which is earlier than when signal got its external observer
     calculations shouldEqual mutable.Buffer(
-      Calculation("state", -1),
-      Calculation("signal", -1)
+      Calculation("signal1", -1),
+      Calculation("signal2", -1)
     )
     effects shouldEqual mutable.Buffer(
-      Effect("subSignal1", -1), // @TODO[Integrity,Docs] But why are these in the opposite order?
-      Effect("subState1", -1)
+      Effect("sub1Signal1", -1),
+      Effect("sub1Signal2", -1)
     )
     errorEffects shouldEqual mutable.Buffer()
 
@@ -183,22 +181,22 @@ class EventStreamErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
     errorEffects.clear()
 
 
-    // These observables do handle errors, but the initial ones are independent, so they still sends errors to unhandled
+    // These signals do handle errors, but the initial ones are independent, so they still send errors to unhandled
 
-    signal.addObserver(Observer.withRecover(
-      effects += Effect("subSignal2", _),
-      { case err => errorEffects += Effect("subSignal2-err", err) }
+    signal1.addObserver(Observer.withRecover(
+      effects += Effect("sub2Signal1", _),
+      { case err => errorEffects += Effect("sub2Signal1-err", err) }
     ))
-    state.addObserver(Observer.withRecover(
-      effects += Effect("subState2", _),
-      { case err => errorEffects += Effect("subState2-err", err) }
+    signal2.addObserver(Observer.withRecover(
+      effects += Effect("sub2Signal2", _),
+      { case err => errorEffects += Effect("sub2Signal2-err", err) }
     ))
 
     calculations shouldEqual mutable.Buffer()
     effects shouldEqual mutable.Buffer()
     errorEffects shouldEqual mutable.Buffer(
-      Effect("subSignal2-err", err1),
-      Effect("subState2-err", err1)
+      Effect("sub2Signal1-err", err1),
+      Effect("sub2Signal2-err", err1)
     )
 
     errorEffects.clear()
@@ -209,9 +207,9 @@ class EventStreamErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
     effects shouldEqual mutable.Buffer()
     errorEffects shouldEqual mutable.Buffer(
       Effect("unhandled", err2),
-      Effect("subState2-err", err2),
+      Effect("sub2Signal1-err", err2),
       Effect("unhandled", err2),
-      Effect("subSignal2-err", err2)
+      Effect("sub2Signal2-err", err2)
     )
 
     errorEffects.clear()
@@ -223,14 +221,14 @@ class EventStreamErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
 
     calculations shouldEqual mutable.Buffer(
       Calculation("stream1", 100),
-      Calculation("state", 100),
-      Calculation("signal", 100)
+      Calculation("signal1", 100),
+      Calculation("signal2", 100)
     )
     effects shouldEqual mutable.Buffer(
-      Effect("subState1", 100),
-      Effect("subState2", 100),
-      Effect("subSignal1", 100),
-      Effect("subSignal2", 100)
+      Effect("sub1Signal1", 100),
+      Effect("sub2Signal1", 100),
+      Effect("sub1Signal2", 100),
+      Effect("sub2Signal2", 100)
     )
     errorEffects shouldEqual mutable.Buffer()
   }
@@ -322,7 +320,7 @@ class EventStreamErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
 
     val stream = EventStream.fromTry(Failure(err1)).map(Calculation.log("stream", calculations))
 
-    val sub = stream.addObserver(Observer.withRecover(
+    stream.addObserver(Observer.withRecover(
       effects += Effect("sub", _),
       // This only recovers from `err2, not `err1`
       { case err if err.getMessage == err2.getMessage => errorEffects += Effect("sub-err", err) }

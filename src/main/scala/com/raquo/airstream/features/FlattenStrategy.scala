@@ -1,12 +1,12 @@
 package com.raquo.airstream.features
 
-import com.raquo.airstream.core.{LazyObservable, Observable}
+import com.raquo.airstream.core.Observable
 import com.raquo.airstream.eventstream.{ConcurrentFutureStream, EventStream, FutureEventStream, SwitchEventStream}
 
 import scala.concurrent.Future
 
 /** [[Observable.MetaObservable.flatten]] needs an instance of this trait to know how exactly to do the flattening. */
-trait FlattenStrategy[-Outer[+_] <: Observable[_], -Inner[_], Output[+_] <: LazyObservable[_]] {
+trait FlattenStrategy[-Outer[+_] <: Observable[_], -Inner[_], Output[+_] <: Observable[_]] {
   /** Must not throw */
   def flatten[A](parent: Outer[Inner[A]]): Output[A]
 }

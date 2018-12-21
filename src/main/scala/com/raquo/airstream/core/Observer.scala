@@ -45,7 +45,7 @@ trait Observer[-A] {
 object Observer {
 
 
-  /** An observer that does nothing. Use it to ensure that a LazyObservable is run
+  /** An observer that does nothing. Use it to ensure that an Observable is started
     *
     * Used by SignalView and EventStreamView
     */
