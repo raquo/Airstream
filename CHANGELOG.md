@@ -2,6 +2,24 @@
 
 Breaking changes in **bold**.
 
+#### v0.5 – PENDING
+
+* **API: Eliminate the whole concept of State [#13](https://github.com/raquo/Airstream/pull/13)**
+  * `State` and `StateVar` are no more. RIP
+  * Merge `MemoryObservable` into `Signal`
+  * Merge `LazyObservable` into `Observable`
+  * Remove `toLazy` method as all observables are now lazy
+  * **Migration guide**
+    * Use `Signal` instead of `State` and `MemoryObservable`. This is NOT a drop in replacement as State was not lazy. Make sure you have observers (internal or external) on all Signals that would be replacing State, or else they won't run. Consult the updated documentation for a reminder on Signal semantics.
+    * For `Signal` alternatives to `State`'s `now()` / `tryNow()` methods, see the _Getting Signal's current value_ section in the new docs.
+    * Use `Observable` instead of `LazyObservable`.
+    * Use `Var` instead of `StateVar`.
+    * Use `toSignal` instead of `toState`.
+    * Remove invocations of `toLazy` method, they are not needed anymore. 
+* **API: Remove flatMap method**
+  * Use map(...).flatten
+  * I don't have time to sort out type inference and other stuff needed to get `flatMap` to work nicely.
+
 #### v0.4.1 – Dec 2018
 
 * Fix: NPE from errors unhandled by `recover` partial function
