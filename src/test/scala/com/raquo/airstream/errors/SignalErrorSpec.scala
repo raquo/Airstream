@@ -151,6 +151,39 @@ class SignalErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
     errorEffects shouldEqual mutable.Buffer()
   }
 
+  it("initial value Failure() when .changes is the only consumer") {
+
+    val signalVar = Var.fromTry[Int](Failure(err1))
+    val signal = signalVar.signal.map(Calculation.log("signal", calculations))
+    val changes = signal.changes.map(Calculation.log("stream", calculations))
+
+    changes.addObserver(Observer.withRecover(
+      effects += Effect("sub", _),
+      { case err => errorEffects += Effect("sub-err", err) }
+    ))
+
+    // Initial error value should not be evaluated (because no one is looking at it)
+
+    calculations shouldEqual mutable.Buffer()
+    effects shouldEqual mutable.Buffer()
+    errorEffects shouldEqual mutable.Buffer(
+      //Effect("sub-err", err1)
+    )
+
+    // Success value should propagate
+
+    signalVar.writer.onNext(2)
+
+    calculations shouldEqual mutable.Buffer(
+      Calculation("signal", 2),
+      Calculation("stream", 2)
+    )
+    effects shouldEqual mutable.Buffer(
+      Effect("sub", 2)
+    )
+    errorEffects shouldEqual mutable.Buffer()
+  }
+
   it("map function is guarded against exceptions") {
 
     val signal = EventStream.fromSeq(List(1, -2, 3)).map { num =>
