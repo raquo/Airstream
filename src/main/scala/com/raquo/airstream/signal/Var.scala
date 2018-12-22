@@ -10,11 +10,7 @@ class Var[A] private(initial: Try[A]) {
 
   val writer: WriteBus[A] = eventBus.writer
 
-  val signal: Signal[A] = new MapSignal[A, A](
-    parent = eventBus.events.toSignalWithTry(initial),
-    project = identity,
-    recover = None
-  )
+  val signal: Signal[A] = eventBus.events.toSignalWithTry(initial)
 }
 
 object Var {
