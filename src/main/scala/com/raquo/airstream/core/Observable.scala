@@ -210,7 +210,7 @@ object Observable {
 
     // @TODO one of the problems is that Outer.map(compose) is not proven to return the same Outer container, as Observable.map returns a Self type.
     // @TODO Does this even work? Seems like type inference is broken
-    /** @param compose Note: guarded against exceptions */
+//    /** @param compose Note: guarded against exceptions */
 //    @inline def flatMap[B, Inner2[_], Output[+_] <: Observable[_]](compose: Inner[A] => Inner2[B])(
 //      implicit strategy: FlattenStrategy[Observable, Inner2, Output]
 //    ): Output[B] = {

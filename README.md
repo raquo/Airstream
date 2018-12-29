@@ -21,7 +21,7 @@ Airstream has a very generic design, but is primarily intended to serve as a rea
 I created Airstream because I found existing solutions were not suitable for building reactive UI components. My original need for Airstream was to replace the previous reactive layer of [Laminar](https://github.com/raquo/Laminar), but I'll be happy to see it used by other reactive UI libraries as well. Laminar in general is well modularized, and you can definitely reuse other bits and pieces of it, for example [Scala DOM Types](https://github.com/raquo/scala-dom-types).
 
 ```
-"com.raquo" %%% "airstream" % "0.4.1"
+"com.raquo" %%% "airstream" % "0.5"
 ```
 
 
@@ -64,7 +64,7 @@ I created Airstream because I found existing solutions were not suitable for bui
 
 ## Community
 
-* [Gitter](https://gitter.im/Laminar_/Airstream) for chat and random questions
+* [Gitter](https://gitter.im/Laminar_/Lobby) for chat and random questions (Airstream shares this room with [Laminar](https://github.com/raquo/Laminar))
 * [Github issues](https://github.com/raquo/Airstream/issues) for bugs, feature requests, and more in-depth discussions
 
 

@@ -2,7 +2,7 @@
 
 Breaking changes in **bold**.
 
-#### v0.5 – PENDING
+#### v0.5 – Dec 2018
 
 * **API: Eliminate the whole concept of State [#13](https://github.com/raquo/Airstream/pull/13)**
   * `State` and `StateVar` are no more. RIP
@@ -18,7 +18,7 @@ Breaking changes in **bold**.
     * Remove invocations of `toLazy` method, they are not needed anymore. 
 * **API: Make Var and its signal strict (not lazy)**
   * Var does not provide a WriteBus anymore, only an Observer
-  * Var now exposes `now` and `tryNow` methods, as does its signal.
+  * Var now exposes `now` and `tryNow` methods, as does its signal
   * See Var docs for details 
 * **API: Make SignalViewer a Signal itself**
   * A StrictSignal, to be precise 
@@ -26,9 +26,9 @@ Breaking changes in **bold**.
   * Use map(...).flatten
   * I don't have time to sort out type inference and other stuff needed to get `flatMap` to work nicely.
 * New: Update Vars using (currentValue => nextValue) functions
-  * New methods on Var: set, setTry, update, tryUpdate
+  * New methods on Var instances: `set`, `setTry`, `update`, `tryUpdate`
 * New: Batch update Vars in a single transaction
-  * `Var.set`, `Var.setTry`, `Var.update`, `Var.tryUpdate`
+  * Companion object methods: `Var.set`, `Var.setTry`, `Var.update`, `Var.tryUpdate`
   * See new Var docs for details
 
 #### v0.4.1 – Dec 2018
