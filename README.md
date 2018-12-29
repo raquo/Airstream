@@ -352,7 +352,9 @@ Now you can send `Bar` events to `barWriter`, and they will appear in `eventBus`
 
 #### Var
 
-`Var(initialValue)` / `Var.fromTry(tryValue)` contains `.signal` that you can update manually.
+Var is a reactive variable that you can update manually, and that exposes its current value at all times, as well as a `.signal` of its current value.
+
+Creating a Var is straightforward: `Var(initialValue)`, `Var.fromTry(tryValue)`.
 
 ##### Simple Updates
 
@@ -362,9 +364,9 @@ Every Var also provides an Observer (`.writer`) that you can use where an Observ
 
 ##### Reading Values from a Var
 
-You can get the Var's current value using `now` and `tryNow`. `now` throws if the current value is an error. Var also exposes a `signal` of its values.
+You can get the Var's current value using `now()` and `tryNow()`. Similar to `update`, `now` throws if the current value is an error. Var also exposes a `signal` of its values.
 
-The Var follows **strict** (not lazy) execution – it will update its current value as instructed even if its signal has no observers. Unlike most other signals, the Var's signal is also strict – its current value matches the Var's current value at all times regardless of whether it has observers. Of course, any observables that depend on the Var's signal are still lazy as usual.
+Var follows **strict** (not lazy) execution – it will update its current value as instructed even if its signal has no observers. Unlike most other signals, the Var's signal is also strict – its current value matches the Var's current value at all times regardless of whether it has observers. Of course, any downstream observables that depend on the Var's signal are still lazy as usual.
 
 Being a `StrictSignal`, the signal also exposes `now` and `tryNow` methods, so if you need to provide your code with read-only access to a Var, sharing its signal only is the way to go. 
 
