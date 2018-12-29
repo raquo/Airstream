@@ -11,10 +11,15 @@ import scala.util.{Success, Try}
 /** This signal behaves a bit differently than other signals typically do:
   * it keeps track of state regardless of whether it is started.
   * This is possible because this case requires no special memory management.
+  *
+  * Note that being a StrictSignal, this exposes `now` and `tryNow` methods,
+  * however if the `future` was not yet completed when this signal was created,
+  * this signal's current value will be updated *asynchronously* after the future
+  * has completed.
   */
 class FutureSignal[A](
   future: Future[A]
-) extends Signal[Option[A]] {
+) extends StrictSignal[Option[A]] {
 
   override protected[airstream] val topoRank: Int = 1
 

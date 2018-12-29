@@ -21,7 +21,7 @@ Airstream has a very generic design, but is primarily intended to serve as a rea
 I created Airstream because I found existing solutions were not suitable for building reactive UI components. My original need for Airstream was to replace the previous reactive layer of [Laminar](https://github.com/raquo/Laminar), but I'll be happy to see it used by other reactive UI libraries as well. Laminar in general is well modularized, and you can definitely reuse other bits and pieces of it, for example [Scala DOM Types](https://github.com/raquo/scala-dom-types).
 
 ```
-"com.raquo" %%% "airstream" % "0.5"
+"com.raquo" %%% "airstream" % "0.5.1"
 ```
 
 
@@ -275,9 +275,10 @@ We now understand how events propagate through streams and signals, but the even
 * Creating a stream from an already completed future results in a stream that emits no events (look into the source code of this method for an easy way to get different behaviour)
 
 `Signal.fromFuture[A]` creates a Signal of `Option[A]` that emits the value that the future completes with, when that happens, wrapped in `Some()`.
-* The event is emitted asynchronously relative to the future's completion
 * The initial value of this signal is equal to `Some(value)` if the future was already completed when the initial value was evaluated, or `None` otherwise.
+* If the Signal was created from a not yet completed future, the completion event is emitted asynchronously relative to when the future completes, because that is how `future.onComplete` works.
 * Unlike other signals, this signal keeps its current value from going stale even in the absence of observers
+* Being a StrictSignal, this signal exposes `now` and `tryNow` methods that provide its current value. However, note that there might be asynchronous delay between the completion of the Future and this signal's current value updating, as explained above.
 
 Note that all observables created from futures fire their events in a new transaction because they don't have a parent observable to be synchronous with.
 

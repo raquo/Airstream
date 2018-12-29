@@ -2,6 +2,10 @@
 
 Breaking changes in **bold**.
 
+#### v0.5.1 – Dec 2018
+
+* API: Make `FutureSignal` a StrictSignal (it already behaved like one)
+
 #### v0.5 – Dec 2018
 
 * **API: Eliminate the whole concept of State [#13](https://github.com/raquo/Airstream/pull/13)**

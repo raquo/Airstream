@@ -112,4 +112,29 @@ class SignalFromFutureSpec extends AsyncSpec with BeforeAndAfter {
       }
     }
   }
+
+  it("exposes current value even without observers (unresolved future)") {
+    val promise = makePromise()
+    val signal = Signal.fromFuture(promise.future) // Don't use `makeSignal` here, we need the _original_, strict signal
+
+    assert(signal.now() == None)
+
+    promise.success(100)
+
+    // @TODO[API] Well, this here is not very desirable, but I don't see a way around it
+    assert(signal.now() == None)
+
+    delay {
+      assert(signal.now() == Some(100))
+    }
+  }
+
+  it("exposes current value even without observers (resolved future)") {
+    val promise = makePromise()
+    promise.success(100)
+
+    val signal = Signal.fromFuture(promise.future) // Don't use `makeSignal` here, we need the _original_, strict signal
+
+    assert(signal.now() == Some(100))
+  }
 }
