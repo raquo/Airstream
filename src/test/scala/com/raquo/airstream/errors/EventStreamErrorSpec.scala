@@ -22,14 +22,19 @@ class EventStreamErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
   val err2 = new Exception("err2")
   val err3 = new Exception("err3")
 
-  AirstreamError.registerUnhandledErrorCallback(errorEffects += Effect("unhandled", _))
+  private val errorCallback = (err: Throwable) => {
+    errorEffects += Effect("unhandled", err)
+    ()
+  }
 
   before {
+    AirstreamError.registerUnhandledErrorCallback(errorCallback)
     AirstreamError.unregisterUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
   }
 
   after {
     AirstreamError.registerUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
+    AirstreamError.unregisterUnhandledErrorCallback(errorCallback)
     calculations.clear()
     effects.clear()
     errorEffects.clear()

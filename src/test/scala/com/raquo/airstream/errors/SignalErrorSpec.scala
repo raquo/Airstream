@@ -18,18 +18,23 @@ class SignalErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
   private val effects = mutable.Buffer[Effect[Int]]()
   private val errorEffects = mutable.Buffer[Effect[Throwable]]()
 
+  private val errorCallback = (err: Throwable) => {
+    errorEffects += Effect("unhandled", err)
+    ()
+  }
+
   val err1 = new Exception("err1")
   val err2 = new Exception("err2")
   val err3 = new Exception("err3")
 
-  AirstreamError.registerUnhandledErrorCallback(errorEffects += Effect("unhandled", _))
-
   before {
+    AirstreamError.registerUnhandledErrorCallback(errorCallback)
     AirstreamError.unregisterUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
   }
 
   after {
     AirstreamError.registerUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
+    AirstreamError.unregisterUnhandledErrorCallback(errorCallback)
     calculations.clear()
     effects.clear()
     errorEffects.clear()

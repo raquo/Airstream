@@ -1,8 +1,8 @@
 package com.raquo.airstream.signal
 
-import com.raquo.airstream.core.{Observable, Observer, Subscription, Transaction}
+import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
 import com.raquo.airstream.eventstream.{EventStream, MapEventStream}
-import com.raquo.airstream.features.{CombineObservable, FlattenStrategy}
+import com.raquo.airstream.features.CombineObservable
 import com.raquo.airstream.ownership.Owner
 
 import scala.concurrent.Future
@@ -82,7 +82,7 @@ trait Signal[+A] extends Observable[A] {
   override def recoverToTry: Signal[Try[A]] = map(Try(_)).recover[Try[A]] { case err => Some(Failure(err)) }
 
   /** Add a noop observer to this signal to ensure that it's started.
-    * This lets you access .now and .tryNow on the resulting SignalViewer.
+    * This lets you access .now and .tryNow on the resulting StrictSignal.
     *
     * You can use `myStream.toWeakSignal.observe` to read the last emitted
     * value from event streams just as well.
@@ -160,6 +160,15 @@ trait Signal[+A] extends Observable[A] {
         index += 1
       }
       if (index > 0 && isError) errorReported = true
+
+      // This will only ever happen for special Signals that maintain their current value even without observers.
+      // Currently we only have one kind of such signals: VarSignal.
+      //
+      // We want to report unhandled errors on such signals if they have no observers (including internal observers)
+      // because if we don't, the error will not be reported anywhere, and I think we would usually want it.
+      if (isError && !errorReported) {
+        nextValue.fold(AirstreamError.sendUnhandledError, identity)
+      }
     }
   }
 }

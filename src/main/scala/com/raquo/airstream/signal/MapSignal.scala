@@ -18,7 +18,7 @@ import scala.util.{Failure, Success, Try}
   * @param project Note: guarded against exceptions
   * @param recover Note: guarded against exceptions
   */
-class MapSignal[I, O](
+class MapSignal[I, +O](
   protected[this] val parent: Signal[I],
   protected[this] val project: I => O,
   protected[this] val recover: Option[PartialFunction[Throwable, Option[O]]]

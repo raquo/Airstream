@@ -12,6 +12,10 @@ object AirstreamError {
 
   // @TODO[API] What kind of information do we want to capture to make recovery easier?
 
+  // @TODO[API] Should this be its own error? If so, should now() also throw a special error?
+//  case class VarUpdateError(cause: Throwable)
+//    extends AirstreamError("VarUpdateError: unable to update errored Var; cause: " + cause.getMessage)
+
   case class ErrorHandlingError(error: Throwable, cause: Throwable)
     extends AirstreamError("ErrorHandlingError: " + error.getMessage + "; cause: " + cause.getMessage)
 
@@ -58,7 +62,7 @@ object AirstreamError {
     if (ix >= 0) {
       unhandledErrorCallbacks.remove(ix)
     } else {
-      throw new Exception("This function is not currently registered as unhandled error callback. Make sure you're not actually creating a new function value when calling this.")
+      throw new Exception("This function is not currently registered as unhandled error callback. Make sure you're not accidentally creating a new function value when calling this.")
     }
   }
 

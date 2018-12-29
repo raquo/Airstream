@@ -16,9 +16,20 @@ Breaking changes in **bold**.
     * Use `Var` instead of `StateVar`.
     * Use `toSignal` instead of `toState`.
     * Remove invocations of `toLazy` method, they are not needed anymore. 
+* **API: Make Var and its signal strict (not lazy)**
+  * Var does not provide a WriteBus anymore, only an Observer
+  * Var now exposes `now` and `tryNow` methods, as does its signal.
+  * See Var docs for details 
+* **API: Make SignalViewer a Signal itself**
+  * A StrictSignal, to be precise 
 * **API: Remove flatMap method**
   * Use map(...).flatten
   * I don't have time to sort out type inference and other stuff needed to get `flatMap` to work nicely.
+* New: Update Vars using (currentValue => nextValue) functions
+  * New methods on Var: set, setTry, update, tryUpdate
+* New: Batch update Vars in a single transaction
+  * `Var.set`, `Var.setTry`, `Var.update`, `Var.tryUpdate`
+  * See new Var docs for details
 
 #### v0.4.1 – Dec 2018
 

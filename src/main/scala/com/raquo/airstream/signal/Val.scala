@@ -2,11 +2,9 @@ package com.raquo.airstream.signal
 
 import scala.util.{Success, Try}
 
-class Val[A](value: Try[A]) extends Signal[A] {
+class Val[A](override protected[this] val initialValue: Try[A]) extends Signal[A] {
 
   override protected[airstream] val topoRank: Int = 1
-
-  override protected[this] val initialValue: Try[A] = value
 
   /** Public because it is evaluated immediately and never changes */
   override def tryNow(): Try[A] = initialValue

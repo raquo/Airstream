@@ -196,7 +196,7 @@ You can use `stream.withCurrentValueOf(signal).map((lastStreamEvent, signalCurre
 
 If you don't need lastStreamEvent, use `stream.sample(signal).map(signalCurrentValue => ???)` instead. Note: both of these output streams will emit only when `stream` emits, as documented in the code. If you want updates from signal to also trigger an event, look into the `combineWith` operator.
 
-If you want to get a Signal's current value without the complications of sampling, or even if you just want to make sure that a Signal is started, just call `observe` on it. That will add a noop observer to the signal, and return a `SignalViewer` instance which does expose `now()` and `tryNow()` methods that safely provide you with the signal's current value.
+If you want to get a Signal's current value without the complications of sampling, or even if you just want to make sure that a Signal is started, just call `observe` on it. That will add a noop observer to the signal, and return a `SignalViewer` instance which being a `StrictSignal`, does expose `now()` and `tryNow()` methods that safely provide you with its current value.
 
 
 ### Relationship between EventStream and Signal
@@ -352,7 +352,46 @@ Now you can send `Bar` events to `barWriter`, and they will appear in `eventBus`
 
 #### Var
 
-`Var(initialValue)` / `Var.fromTry(tryValue)` contains `.signal` that you can update manually. Similar to `EventBus`, it exposes `.writer` for updates.
+`Var(initialValue)` / `Var.fromTry(tryValue)` contains `.signal` that you can update manually.
+
+##### Simple Updates
+
+You can update a Var using one of its methods: `set(value)`, `setTry(Try(value))`, `update(currentValue => nextValue)`, `tryUpdate(currentValueTry => Try(nextValue))`. Note that `update` will throw if the Var's current value is an error (thus `tryUpdate`).
+
+Every Var also provides an Observer (`.writer`) that you can use where an Observer is expected, or if you want to provide your code with write-only access to a Var.
+
+##### Reading Values from a Var
+
+You can get the Var's current value using `now` and `tryNow`. `now` throws if the current value is an error. Var also exposes a `signal` of its values.
+
+The Var follows **strict** (not lazy) execution – it will update its current value as instructed even if its signal has no observers. Unlike most other signals, the Var's signal is also strict – its current value matches the Var's current value at all times regardless of whether it has observers. Of course, any observables that depend on the Var's signal are still lazy as usual.
+
+Being a `StrictSignal`, the signal also exposes `now` and `tryNow` methods, so if you need to provide your code with read-only access to a Var, sharing its signal only is the way to go. 
+
+##### Batch Updates
+
+Similar to EventBus, Var emits each event in a new [transaction](#transactions). However, you _can_ put values into multiple Vars "at the same time", in the same transaction, to avoid [glitches](#frp-glitches) downstream. To do that, use the `set` / `setTry` / `update` / `tryUpdate` methods on the Var **companion object**. For example:
+
+```scala
+val value = Var(1)
+val isEven = Var(false)
+
+val sumSignal = x.signal.combineWith(y.signal)
+
+// batch updates!
+Var.set(x -> 2, y -> true)
+```
+
+With such a batched update, `sumSignal` will only emit `(1, false)` and `(2, true)`. It will **not** emit an inconsistent value like `(1, true)` or `(2, false)`.
+
+Batch updates are also atomic in terms of the following errors:
+* `update` throws if the Var's current value is an error
+* `tryUpdate` throws if the provided mod function throws
+
+Those are the only ways in which setting / updating a Var can throw an error. If any of those happen when batch-updating Var values, Airstream will throw an error, and all of the involved Vars will fail to update, keeping their current value.
+
+Remember that this atomicity guarantee only applies to failures which would have caused an individual `update` / `tryUpdate` call to throw. For example, if the `mod` function provided to `update` throws, `update` will not throw, it will instead successfully set that Var `Failure(err)`. 
+
 
 
 #### Val
@@ -366,7 +405,7 @@ Val is useful when a component wants to accept either a Signal or a constant val
 
 EventBus is a very generic solution that should suit most needs, even if perhaps not very elegantly sometimes.
 
-You can create your own observables that emit events in their own unique way by wrapping or extending EventBus (easier) or extending Observable (more work and knowledge required)). For example, `Var` is implemented with EventBus.
+You can create your own observables that emit events in their own unique way by wrapping or extending EventBus (easier) or extending Observable (more work and knowledge required, but rewarded with better behavior)).
 
 Unfortunately I don't have enough time to describe how to create custom observables in detail right now. You will need to read the rest of the documentation and the source code – you will see how other observables such as MapEventStream or FilterEventStream are implemented. Airstream's source code should be easy to comprehend. It is clean, small (a bit more than 1K LoC with all the operators), and does not use complicated implicits or hardcore functional stuff.
 
@@ -597,11 +636,11 @@ On the other hand, `MergeEventStream` does no such synchronization, it emits the
 
 Similarly to how event streams generally do not keep track of their last emitted value, they also forget their last emitted error once they finish propagating it to their observers.
 
-##### Memory Observables Remember Errors
+##### Signals Remember Errors
 
 If a `Signal[A]` observable runs into an error that it doesn't handle itself, this error becomes its current state. `Signal`s' current state is actually `Try[A]`, not just `A`. 
 
-`SignalViewer[A]` has a public `now(): A` method that returns its signal's current value. Calling it is equivalent to `tryNow().get`– it will throw if current state is a Failure.
+`StrictSignal[A]` has a public `now(): A` method that returns its current value. Calling it is equivalent to `tryNow().get`– it will throw if current state is a Failure.
 
 ##### Errors Can Become Wrapped 
 
