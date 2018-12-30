@@ -543,8 +543,8 @@ This model does not make any sense to me. Consider this chain of observables:
 
 ```scala
 object OtherModule {
-  def doubled(parentStream: Stream[Double]): parent: Stream[Double] = {
-    parent.map(num => num * 2)
+  def doubled(parentStream: EventStream[Double]): EventStream[Double] = {
+    parentStream.map(num => num * 2)
   }
 }
  
@@ -552,8 +552,8 @@ object OtherModule {
  
 import OtherModule.doubled
  
-val stream1: Stream[Double] = ???
-val invertedStream: Stream[Double] = stream1.map(num => 1 / num)
+val stream1: EventStream[Double] = ???
+val invertedStream: EventStream[Double] = stream1.map(num => 1 / num)
  
 doubled(invertedStream).foreach(dom.console.log(_))
 ```
