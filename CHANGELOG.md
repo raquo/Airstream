@@ -2,9 +2,13 @@
 
 Breaking changes in **bold**.
 
+#### v0.5.2 – Jan 2019
+
+* API: Make `Val` a `StrictSignal` (it already behaved like one)
+
 #### v0.5.1 – Dec 2018
 
-* API: Make `FutureSignal` a StrictSignal (it already behaved like one)
+* API: Make `FutureSignal` a `StrictSignal` (it already behaved like one)
 
 #### v0.5 – Dec 2018
 

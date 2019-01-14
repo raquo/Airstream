@@ -2,7 +2,7 @@ package com.raquo.airstream.signal
 
 import scala.util.{Success, Try}
 
-class Val[A](override protected[this] val initialValue: Try[A]) extends Signal[A] {
+class Val[A](override protected[this] val initialValue: Try[A]) extends StrictSignal[A] {
 
   override protected[airstream] val topoRank: Int = 1
 

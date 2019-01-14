@@ -21,7 +21,7 @@ Airstream has a very generic design, but is primarily intended to serve as a rea
 I created Airstream because I found existing solutions were not suitable for building reactive UI components. My original need for Airstream was to replace the previous reactive layer of [Laminar](https://github.com/raquo/Laminar), but I'll be happy to see it used by other reactive UI libraries as well. Laminar in general is well modularized, and you can definitely reuse other bits and pieces of it, for example [Scala DOM Types](https://github.com/raquo/scala-dom-types).
 
 ```
-"com.raquo" %%% "airstream" % "0.5.1"
+"com.raquo" %%% "airstream" % "0.5.2"
 ```
 
 
@@ -399,9 +399,9 @@ Remember that this atomicity guarantee only applies to failures which would have
 
 #### Val
 
-`Val(value)` / `Val.fromTry(tryValue)` is a Signal "constant" – a Signal that never changes its value. Unlike other Signals, its value is evaluated immediately upon creation, and it exposes `now()` and `tryNow()` methods to obtain it.
+`Val(value)` / `Val.fromTry(tryValue)` is a Signal "constant" – a Signal that never changes its value. Unlike other Signals, its value is evaluated immediately upon creation, and is exposed in public `now()` and `tryNow()` methods.
 
-Val is useful when a component wants to accept either a Signal or a constant value as input. You can just wrap your constant in a Val, and have the component accept a Signal instead.
+Val is useful when a component wants to accept either a Signal or a constant value as input. You can just wrap your constant in a Val, and make the component accept a `Signal` (or a `StrictSignal`) instead.
 
 
 #### Custom Observables
