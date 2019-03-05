@@ -218,16 +218,15 @@ object Observable {
 //    }
   }
 
-//  implicit class MetaLazyObservable[A, Inner[_]](
-//    val parent: Observable[Inner[A]]
-//  ) extends AnyVal {
-//
-//    // @TODO Does this even work? Seems like type inference is broken
-//    /** @param compose Note: guarded against exceptions */
-//    @inline def flatMap[B, Inner2[_], Output[+_] <: Observable[_]](compose: Inner[A] => Inner2[B])(
-//      implicit strategy: FlattenStrategy[Observable, Inner2, Output]
-//    ): Output[B] = {
-//      strategy.flatten(parent.map(compose))
-//    }
-//  }
+  implicit class MetaLazyObservable[A](
+    val parent: Observable[A]
+  ) extends AnyVal {
+
+    /** @param compose Note: guarded against exceptions */
+    @inline def flatMap[B, Inner[_], Output[+_] <: Observable[_]](compose: A => Inner[B])(
+      implicit strategy: FlattenStrategy[Observable, Inner, Output]
+    ): Output[B] = {
+      strategy.flatten(parent.map(compose))
+    }
+  }
 }
