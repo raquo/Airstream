@@ -6,42 +6,42 @@ import com.raquo.airstream.eventstream.{ConcurrentFutureStream, EventStream, Fut
 import scala.concurrent.Future
 
 /** [[Observable.MetaObservable.flatten]] needs an instance of this trait to know how exactly to do the flattening. */
-trait FlattenStrategy[-Outer[+_] <: Observable[_], -Inner[_], Output[+_] <: Observable[_]] {
+trait FlattenStrategy[Outer[_], Inner[_], Output[_]] {
+
   /** Must not throw */
-  def flatten[A](parent: Outer[Inner[A]]): Output[A]
+  def flatMap[A, B](outer: Outer[A], project: A => Inner[B]): Output[B]
 }
 
 object FlattenStrategy {
 
-  /** See docs for [[SwitchEventStream]] */
   object SwitchStreamStrategy extends FlattenStrategy[Observable, EventStream, EventStream] {
-    override def flatten[A](parent: Observable[EventStream[A]]): EventStream[A] = {
-      new SwitchEventStream[EventStream[A], A](parent = parent, makeStream = identity)
+    override def flatMap[A, B](outer: Observable[A], project: A => EventStream[B]): EventStream[B] = {
+      new SwitchEventStream[EventStream[B], B](parent = outer.map(project), makeStream = identity)
     }
   }
 
   /** See docs for [[SwitchEventStream]] */
   object SwitchFutureStrategy extends FlattenStrategy[Observable, Future, EventStream] {
-    override def flatten[A](parent: Observable[Future[A]]): EventStream[A] = {
-      new SwitchEventStream[Future[A], A](
-        parent = parent,
-        makeStream = new FutureEventStream(_, emitIfFutureCompleted = true)
+    override def flatMap[A, B](outer: Observable[A], project: A => Future[B]): EventStream[B] = {
+      new SwitchEventStream[A, B](
+        parent = outer,
+        makeStream = a => new FutureEventStream(project(a), emitIfFutureCompleted = true)
       )
     }
   }
 
   /** See docs for [[ConcurrentFutureStream]] */
   object ConcurrentFutureStrategy extends FlattenStrategy[Observable, Future, EventStream] {
-    override def flatten[A](parent: Observable[Future[A]]): EventStream[A] = {
-      new ConcurrentFutureStream[A](parent, dropPreviousValues = false, emitIfFutureCompleted = true)
+    override def flatMap[A, B](outer: Observable[A], project: A => Future[B]): EventStream[B] = {
+      new ConcurrentFutureStream[B](outer.map(project), dropPreviousValues = false, emitIfFutureCompleted = true)
     }
   }
 
   // @TODO[Naming] this strategy needs a better name
   /** See docs for [[ConcurrentFutureStream]] */
   object OverwriteFutureStrategy extends FlattenStrategy[Observable, Future, EventStream] {
-    override def flatten[A](parent: Observable[Future[A]]): EventStream[A] = {
-      new ConcurrentFutureStream[A](parent, dropPreviousValues = true, emitIfFutureCompleted = true)
+    override def flatMap[A, B](outer: Observable[A], project: A => Future[B]): EventStream[B] = {
+      new ConcurrentFutureStream[B](outer.map(project), dropPreviousValues = true, emitIfFutureCompleted = true)
     }
   }
 }

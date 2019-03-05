@@ -198,14 +198,14 @@ object Observable {
   implicit val switchStreamStrategy: FlattenStrategy[Observable, EventStream, EventStream] = SwitchStreamStrategy
 
   // @TODO[Elegance] Maybe use implicit evidence on a method instead?
-  implicit class MetaObservable[A, Outer[+_] <: Observable[_], Inner[_]](
-    val parent: Outer[Inner[A]]
+  implicit class MetaObservable[A, Inner[_]](
+    val parent: Observable[Inner[A]]
   ) extends AnyVal {
 
-    @inline def flatten[Output[+_] <: Observable[_]](
-      implicit strategy: FlattenStrategy[Outer, Inner, Output]
+    @inline def flatten[Output[_]](
+      implicit strategy: FlattenStrategy[Observable, Inner, Output]
     ): Output[A] = {
-      strategy.flatten(parent)
+      strategy.flatMap[Inner[A], A](parent, identity)
     }
 
     // @TODO one of the problems is that Outer.map(compose) is not proven to return the same Outer container, as Observable.map returns a Self type.
@@ -223,10 +223,11 @@ object Observable {
   ) extends AnyVal {
 
     /** @param compose Note: guarded against exceptions */
-    @inline def flatMap[B, Inner[_], Output[+_] <: Observable[_]](compose: A => Inner[B])(
+    @inline def flatMap[B, Inner[_], Output[_]](compose: A => Inner[B])(
       implicit strategy: FlattenStrategy[Observable, Inner, Output]
     ): Output[B] = {
-      strategy.flatten(parent.map(compose))
+      strategy.flatMap(parent, compose)
+//      strategy.flatten(parent.map(compose))
     }
   }
 }
