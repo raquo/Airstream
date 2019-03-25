@@ -26,7 +26,7 @@ class EventStreamFlattenSpec extends AsyncSpec {
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
     subscription0.kill()
-    effects.toList shouldBe range.map(i => Effect("obs0", i*3))
+    effects.toList shouldBe range.map(i => Effect("obs0", i * 3))
   }
 
   it("sync three-level map-flatten works") {
@@ -140,7 +140,7 @@ class EventStreamFlattenSpec extends AsyncSpec {
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
     subscription0.kill()
-    effects.toList shouldBe range.map(i => Effect("obs0", i*3))
+    effects.toList shouldBe range.map(i => Effect("obs0", i * 3))
   }
 
   it("sync three-level flatMap works") {
