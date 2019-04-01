@@ -71,7 +71,10 @@ object AirstreamError {
     unhandledErrorCallbacks.foreach(fn => try {
       fn(err)
     } catch {
-      case _: Throwable => ()
+      case err: Throwable => {
+        dom.console.warn("Error processing an unhandled error callback:")
+        js.timers.setTimeout(0)(throw err)
+      }
     })
   }
 
