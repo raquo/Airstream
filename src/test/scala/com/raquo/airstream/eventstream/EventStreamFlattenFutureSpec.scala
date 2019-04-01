@@ -185,7 +185,7 @@ class EventStreamFlattenFutureSpec extends AsyncSpec {
     val promise5 = makePromise()
 
     val futureBus = new EventBus[Future[Int]]()
-    val stream = futureBus.events.flatten(OverwriteFutureStrategy)
+    val stream: EventStream[Int] = futureBus.events.flatten(OverwriteFutureStrategy)
 
     stream.addObserver(obs)
 

@@ -4,7 +4,7 @@ normalizedName := "airstream"
 
 organization := "com.raquo"
 
-scalaVersion := "2.12.6"
+scalaVersion := "2.12.8"
 
 // Scala 2.11 does not include Try.fold method which we use heavily.
 // I don't think anyone would want to use Airstream / Laminar with 2.11 anyway.

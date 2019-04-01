@@ -40,6 +40,13 @@ trait Observable[+A] {
   /** @param project Note: guarded against exceptions */
   def map[B](project: A => B): Self[B]
 
+  /** @param compose Note: guarded against exceptions */
+  @inline def flatMap[B, Inner[_], Output[+_] <: Observable[_]](compose: A => Inner[B])(
+    implicit strategy: FlattenStrategy[Self, Inner, Output]
+  ): Output[B] = {
+    strategy.flatten(map(compose))
+  }
+
   // @TODO[API] I don't like the Option[O] output type here very much. We should consider a sentinel error object instead (need to check performance). Or maybe add a recoverOrSkip method or something?
   /** @param pf Note: guarded against exceptions */
   def recover[B >: A](pf: PartialFunction[Throwable, Option[B]]): Self[B]
@@ -207,27 +214,5 @@ object Observable {
     ): Output[A] = {
       strategy.flatten(parent)
     }
-
-    // @TODO one of the problems is that Outer.map(compose) is not proven to return the same Outer container, as Observable.map returns a Self type.
-    // @TODO Does this even work? Seems like type inference is broken
-//    /** @param compose Note: guarded against exceptions */
-//    @inline def flatMap[B, Inner2[_], Output[+_] <: Observable[_]](compose: Inner[A] => Inner2[B])(
-//      implicit strategy: FlattenStrategy[Observable, Inner2, Output]
-//    ): Output[B] = {
-//      strategy.flatten[B](parent.map(inner => compose(inner))) // @TODO eh?
-//    }
   }
-
-//  implicit class MetaLazyObservable[A, Inner[_]](
-//    val parent: Observable[Inner[A]]
-//  ) extends AnyVal {
-//
-//    // @TODO Does this even work? Seems like type inference is broken
-//    /** @param compose Note: guarded against exceptions */
-//    @inline def flatMap[B, Inner2[_], Output[+_] <: Observable[_]](compose: Inner[A] => Inner2[B])(
-//      implicit strategy: FlattenStrategy[Observable, Inner2, Output]
-//    ): Output[B] = {
-//      strategy.flatten(parent.map(compose))
-//    }
-//  }
 }
