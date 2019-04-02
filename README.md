@@ -502,14 +502,19 @@ There is currently no centralized documentation on operators – they are well a
 
 Flattening generally refers to reducing the number of nested container layers. In Airstream the precise type definition can be found in the `FlattenStrategy` trait.
 
-The `def flatten[...](implicit strategy: FlattenStrategy[...])` method is available on all observables by means of `MetaObservable` implicit value class. All you need is to provide it an instance of `FlattenStrategy` that works for your specific observable's type. While you can easily implement your own flattening strategy, we have a few predefined in Airstream:
+Aside from the `def flatMap[...](implicit strategy: FlattenStrategy[...])` method on the `Observable` itself, a similar `flatten` method is available on all observables by means of `MetaObservable` implicit value class. All you need to use these methods is provide an instance of `FlattenStrategy` that works for your specific observable's type. While you can easily implement your own flattening strategy, we have a few predefined in Airstream:
 
 **`SwitchStreamStrategy`** flattens an `Observable[EventStream[A]]` into an `EventStream[A]`. The resulting stream will emit events from the latest stream emitted by the parent observable. So, as the parent observable emits a new stream, the resulting flattened stream _switches_ to imitating this last emitted stream.
 *  This strategy is the default for the parent observable type that it supports. So if you want to flatten an `Observable[EventStream[A]]` using this strategy, you don't need to pass it to `flatten` explicitly, it is provided implicitly.
 
+**`SwitchSignalStrategy`** flattens an `Signal[Signal[A]]` into a `Signal[A]`. Works similar to `SwitchStreamStrategy` but with Signal mechanics, tracking the last emitted value from the last signal emitted by the parent signal. Note: 
+* This strategy is the default for flattening `Signal[Signal[A]]`.
+* When switching to a new signal, the flattened signal emits the current value of the new signal (unless it's the same as the flattened signal's previous current value, as usual).
+* The flattened signal follows standard signal expectations – it's lazy. If you stop observing it, its current value might get stale even if the signal that it's tracking has other observers.
+
 **`SwitchFutureStrategy`** flattens an `Observable[Future[A]]` into an `EventStream[A]`. We first create an event stream from each emitted future, then flatten the result using `SwitchStreamStrategy`. So this ends up behaving very similarly, producing a stream that emits the value from the last future emitted by the parent observable, discarding the values of all previously emitted futures.
 
-To summarize, the above strategies result in a stream that imitates the latest stream / future emitted by the parent observable. So as soon as the parent observable emits a new future / stream, it stops listening for values produced by previously emitted futures / streams.
+To summarize, the above strategies result in an observable that imitates the latest stream / signal / future emitted by the parent observable. So as soon as the parent observable emits a new future / signal / stream, it stops listening for values produced by previously emitted futures / signals / streams.
 
 **`ConcurrentFutureStrategy`** also flattens an `Observable[Future[A]]` into an `EventStream[A]`. Whenever a future emitted by the parent observable completes, this stream emits that value, regardless of any other futures emitted by the parent.
 

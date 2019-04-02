@@ -2,6 +2,14 @@
 
 Breaking changes in **bold**.
 
+#### v0.6 – TBD
+
+* New: `flatMap` ([#20](https://github.com/raquo/Airstream/pull/20)) – thanks, [@yurique](https://github.com/yurique)!
+  * **API: FlattenObservable type params changed, might break your custom implementations – see diff** 
+* New: `SwitchSignalStrategy`
+* New: `MemoizedCollection` – a simple `Signal` that provides an easier way to efficiently render children nodes in Laminar.
+* New: Report failures of unhandled error callbacks
+
 #### v0.5.2 – Jan 2019
 
 * API: Make `Val` a `StrictSignal` (it already behaved like one)

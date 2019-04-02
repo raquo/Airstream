@@ -90,6 +90,8 @@ class SwitchEventStreamSpec extends FunSpec with Matchers {
 
     // --
 
+    metaBus.writer.onNext(sourceStreams(2))
+
     val sourceStream2Observer = Observer[Int](effects += Effect("source-2-obs", _))
 
     sourceStreams(2).addObserver(sourceStream2Observer)
@@ -114,7 +116,7 @@ class SwitchEventStreamSpec extends FunSpec with Matchers {
 
     // --
 
-    flattenStream.addObserver(flattenObserver)
+    flattenStream.addObserver(flattenObserver) // re-activate flattened stream
 
     calculations shouldEqual mutable.Buffer()
     effects shouldEqual mutable.Buffer()
