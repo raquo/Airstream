@@ -55,6 +55,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Transactions](#transactions)
     * [Merge Glitch-By-Design](#merge-glitch-by-design)
   * [Operators](#operators)
+    * [Splitting Observables](#splitting-observables)
     * [Flattening Observables](#flattening-observables)
   * [Error Handling](#error-handling)
 * [Limitations](#limitations)
@@ -71,7 +72,7 @@ I created Airstream because I found existing solutions were not suitable for bui
 
 ## Documentation
 
-The provided documentation is a high level overview that occasionally dives into gritty details for things that are hard to figure on your own. It is not a full replacement to discovering available methods by reading the code (which is quite simple, and has comments) or simply with an IDE's autocomplete functionality.
+The provided documentation is a high level overview that occasionally dives into gritty details for things that are hard to figure out on your own. It is not a full replacement to discovering available methods by reading the code (which is quite simple, and has comments) or simply with an IDE's autocomplete functionality.
 
 This documentation is not an introduction to functional reactive programming. Instead, it explains the specifics of one library. I therefore assume basic knowledge of streams and observables here. If you need a primer on standard reactive programming, consider [this guide](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754) by André Staltz or its [video adaptation](https://egghead.io/courses/introduction-to-reactive-programming). 
 
@@ -86,13 +87,13 @@ For examples of Airstream code, see [laminar-examples](https://github.com/raquo/
 
 EventStream is a reactive variable that represents a stream of discrete events.
 
-EventStream has no concept of "current value". It is a stream of events, and there is no such thing as a "current event". Philosophically, an event has either happened or is yet to happen.
+EventStream has no concept of "current value". It is a stream of events, and there is no such thing as a "current event".
 
-EventStream is a **lazy** observable. That means that it will not receive or process events unless it has at least one Observer (more on this below).
+EventStream is a **lazy** observable. That means that it will not receive or process events unless it has at least one Observer listening to it (more on this below).
 
-When you add an Observer to a stream, it starts to send events to the observer from now on. Different streams could potentially have custom code in them overriding this behaviour however. We strive for obviousness.
+Generally, when you add an Observer to a stream, it starts to send events to the observer from that point on. Certain special streams could potentially have custom code in them overriding this behaviour. We strive for obviousness.
 
-The result of calling `observable.addObserver(observer)(owner)` or `observable.foreach(onNext)(owner)` is a Subscription. To remove the observer manually, you can call `subscription.kill()`, but usually it's the `owner`'s job to do that. Hold that though for now, read about owners later in the [Ownership](#ownership) section.
+The result of calling `observable.addObserver(observer)(owner)` or `observable.foreach(onNext)(owner)` is a Subscription. To remove the observer manually, you can call `subscription.kill()`, but usually it's the `owner`'s job to do that. Hold that thought for now, read about owners later in the [Ownership](#ownership) section.
 
 
 ### Laziness
@@ -178,7 +179,7 @@ Unlike EventStream, Signal only fires an event when its next value is different 
 
 When adding an Observer to a Signal, it will immediately receive its current value, as well as any future values. If you don't want the observer to receive the current value, observe the stream `signal.changes` instead.
 
-Note: Signal's initial value is evaluated lazily where it is not provided explicitly. For example:
+Note: Signal's initial value is evaluated lazily. For example:
 
 ```scala
 val fooStream: EventStream[Foo] = ???
@@ -187,6 +188,8 @@ val barSignal: Signal[Bar] = fooSignal.map(fooToBar)
 ```
 
 In this example, `barSignal`'s initial value would be equal to `fooToBar(myFoo)`, but that expression will not be evaluated until it is needed (i.e. until `barSignal` acquires an observer). And once evaluated, it will not be re-evaluated again.
+
+Similarly, `myFoo` expression will _not_ be evaluated immediately as it is passed by name. It will only be evaluated if it is needed (e.g. to pass it down to an observer of `barSignal`).    
 
 #### Getting Signal's current value
 
@@ -496,7 +499,103 @@ MergeEventStream uses the same pendingObservables mechanism as CombineObservable
 
 Airstream supports standard observables operators like `map` / `filter` / etc. Some of the operators are available only on certain types of observables. For example, you currently can only `sample` an EventStream. This scarcity is sort of deliberate – we start out with the most basic / obvious operators and will expand into fancier ones as the need arises. However, some basic operators are also missing just because I didn't get to it yet (as opposed to by design), it's only for this reason there is no operator to combine more than two observables yet. 
 
-There is currently no centralized documentation on operators – they are well annotated in the source code, in `Observable`, `EventStream`, and `Signal`.
+There is currently no comprehensive documentation on operators – they are well annotated in the source code, in `Observable`, `EventStream`, and `Signal`.
+
+
+#### Splitting Observables
+
+Airstream offers a powerful `split` operator that splits an observable of `M[Input]` into an observable of `M[Output]` based on `Input => Key`. The functionality of this operator is very generic, so we will explore its properties by diving into concrete examples. 
+
+##### Example 0: Tests
+
+This operator is particularly hard to put into words, at least on my first try. You might want to read the `split signal into signals` test in `SplitEventStreamSpec.scala`
+
+And hey, don't be a stranger, remember we have [Gitter](https://gitter.im/Laminar_/Lobby) for chat.
+
+##### Example 1: Latest Version of Foo by Id
+
+_If you are familiar with Laminar, consider skipping to the second example_
+
+Suppose you have an `Signal[List[Foo]]`, and you want to get `Signal[Map[String, Signal[Foo]]]` where the keys of the map are Foo ids, and the values of the map are signals of the latest version of a Foo with that id.
+
+The important part here is the desire to obtain individual signals of Foo by id, not to transform a `List` into a `Map`. Here is how we could do this:
+
+```scala
+case class Foo(id: String, version: Int)
+val inputSignal: Signal[List[Foo]] = ???
+ 
+val outputSignal: Signal[List[(String, Signal[Foo])]] = inputSignal.split[List, Foo, (String, Signal[Foo]), String](
+  key = _.id,
+  project = (key, initialFoo, thisFooSignal) => (key, thisFooSignal)
+)
+ 
+val resultSignal: Signal[Map[String, Signal[Foo]]] = outputSignal.map(list => Map(list: _*))
+```
+
+Let's unpack all this.
+
+In this example our input is a signal of a list of Foo-s, and we `split` it into a signal of a list of `(fooId, fooSignal)` pairs. In each of those pairs, `fooSignal` is a signal that emits a new `Foo` whenever `inputSignal` emits a value that contains a Foo such that `foo.id == fooId`.
+
+So essentially each of the pairs in `outputSignal` contains a a foo id and a signal of the latest version of a Foo for this id, as found in `inputSignal`.
+
+Finally, in `resultSignal` we trivially transform `outputSignal` to convert a list to a map.
+
+##### Example 2: Dynamic Lists of Laminar Elements
+
+Suppose you want to render a list of `Foo`-s into a list of elements. You know how to render an individual `Foo` from its signal, but the list of Foo-s changes over time, and you want to avoid unnecessarily re-creating DOM elements.
+
+This is what you can do:
+
+```scala
+case class Foo(id: String, version: Int)
+   
+def renderFoo(fooId: String, initialFoo: Foo, fooSignal: Signal[Foo]): Div = div(
+  div(
+    "foo id: " + fooId,
+    "first seen foo with this id: " + initialFoo.toString,
+    "last seen foo with this id: ",
+    child <-- fooSignal.map(_.toString)
+  )
+)
+ 
+val inputSignal: Signal[List[Foo]] = ???
+val outputSignal: Signal[List[Div]] = inputSignal.split[List, Foo, Div, String](
+  key = _.id,
+  project = renderFoo
+)
+```
+
+This works somewhat similarly to React.js keys, if you're familiar with that API:
+* As soon as a `Foo` with id="123" appears in inputSignal, we call `renderFoo` to render it. This gives us a `Div` element **that we will reuse** for all future versions of this foo.
+* We remember this `Div` element. Whenever `inputSignal` updates with a new version of the id="123" foo, the `fooSignal` in `renderFoo` is updated with this new version.
+* Similarly, when other foo-s are updated in `inputSignal` their updates are scoped to their own invocations of `renderFoo`. The grouping happens by `key`, which in our case is the id of Foo.
+* When the list emitted by `inputSignal` no longer contains a Foo with id="123", we remove its Div from the output and forget it that we ever made it.
+* Thus the output signal contains a list of Div elements matching one-to-one to the Foo-s in the input signal list.
+
+So in essence, our `outputSignal` is broadly equivalent to `inputSignal.map(_.map(renderFoo))`, except that `renderFoo` requires **memoization** and **data** that simple mapping can't provide, thus the need for `split`.
+
+To drive the point home, let's see how we would likely do this without `split`:
+
+```scala
+case class Foo(id: String, version: Int)
+   
+def renderFoo(foo: Foo): Div = div(
+  div(
+    "foo id: " + foo.id,
+    "last seen foo with this id: " + foo.toString
+  )
+)
+ 
+val inputSignal: Signal[List[Foo]] = ???
+val outputSignal: Signal[List[Div]] = inputSignal.map(_.map(renderFoo))
+```
+
+Same input and output types, but the behaviour is very different.
+
+* First, renderFoo is now called every time inputSignal updates, for every Foo. This means that we are recreating the entire list of DOM nodes from scratch on every update. This is very inefficient.
+  * In contrast, with `split`, we would only call `renderFoo` whenever we would see a new Foo with a previously unseen id in `inputSignal`, and the `child <-- ...` modifier would take care of updating existing elements as new versions foo came in.
+* Second, renderFoo no longer has access to `initialFoo` and `fooSignal`. It does not know anymore if the foo it's rendering has changed over time, it can't listen for those changes, etc.
+
 
 #### Flattening Observables
 

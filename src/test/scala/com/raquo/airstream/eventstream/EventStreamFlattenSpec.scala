@@ -14,11 +14,11 @@ class EventStreamFlattenSpec extends AsyncSpec {
     implicit val owner: Owner = new TestableOwner
 
     val range = 0 to 3
-    val stream = EventStream.fromSeq(range)
+    val stream = EventStream.fromSeq(range, emitOnce = true)
     val flatStream =
       stream
         .map { v =>
-          EventStream.fromSeq(Seq(v * 3))
+          EventStream.fromSeq(Seq(v * 3), emitOnce = true)
         }
         .flatten
 
@@ -34,12 +34,12 @@ class EventStreamFlattenSpec extends AsyncSpec {
     implicit val owner: Owner = new TestableOwner
 
     val range = 0 to 3
-    val stream = EventStream.fromSeq(range)
+    val stream = EventStream.fromSeq(range, emitOnce = true)
     val flatStream =
       stream
         .map { v =>
-          EventStream.fromSeq(Seq(v * 3)).map { vv =>
-            EventStream.fromSeq(Seq(vv * 7))
+          EventStream.fromSeq(Seq(v * 3), emitOnce = true).map { vv =>
+            EventStream.fromSeq(Seq(vv * 7), emitOnce = true)
           }.flatten
         }
         .flatten
@@ -129,11 +129,11 @@ class EventStreamFlattenSpec extends AsyncSpec {
     implicit val owner: Owner = new TestableOwner
 
     val range = 0 to 3
-    val stream = EventStream.fromSeq(range)
+    val stream = EventStream.fromSeq(range, emitOnce = true)
     val flatStream =
       stream
         .flatMap { v =>
-          EventStream.fromSeq(Seq(v * 3))
+          EventStream.fromSeq(Seq(v * 3), emitOnce = true)
         }
 
     val effects = mutable.Buffer[Effect[_]]()
@@ -148,12 +148,12 @@ class EventStreamFlattenSpec extends AsyncSpec {
     implicit val owner: Owner = new TestableOwner
 
     val range = 0 to 3
-    val stream = EventStream.fromSeq(range)
+    val stream = EventStream.fromSeq(range, emitOnce = true)
     val flatStream =
       stream
         .flatMap { v =>
-          EventStream.fromSeq(Seq(v * 3)).flatMap { vv =>
-            EventStream.fromSeq(Seq(vv * 7))
+          EventStream.fromSeq(Seq(v * 3), emitOnce = true).flatMap { vv =>
+            EventStream.fromSeq(Seq(vv * 7), emitOnce = true)
           }
         }
 

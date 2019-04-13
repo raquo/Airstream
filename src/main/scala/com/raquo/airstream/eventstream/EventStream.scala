@@ -2,7 +2,7 @@ package com.raquo.airstream.eventstream
 
 import com.raquo.airstream.core.AirstreamError.ObserverError
 import com.raquo.airstream.core.{AirstreamError, Observable, Transaction}
-import com.raquo.airstream.features.CombineObservable
+import com.raquo.airstream.features.{CombineObservable, Splittable}
 import com.raquo.airstream.signal.{FoldSignal, Signal, SignalFromEventStream}
 
 import scala.concurrent.Future
@@ -48,6 +48,39 @@ trait EventStream[+A] extends Observable[A] {
     filter(pf.isDefinedAt).map(pf)
   }
 
+  override def split[M[_], Input, Output, Key](
+    key: Input => Key,
+    project: (Key, Input, EventStream[Input]) => Output
+  )(
+    implicit
+    valueEv: A <:< M[Input],
+    streamEv: EventStream[A] <:< EventStream[M[Input]],
+    splittable: Splittable[M],
+  ): EventStream[M[Output]] = {
+    new SplitEventStream[M, Input, Output, Key](
+      parent = streamEv(this),
+      key,
+      project,
+      splittable
+    )
+  }
+
+  override def splitIntoSignals[M[_], Input, Output, Key](
+    key: Input => Key,
+    project: (Key, Input, Signal[Input]) => Output
+  )(implicit
+    valueEv: A <:< M[Input],
+    streamEv: EventStream[A] <:< EventStream[M[Input]],
+    splittable: Splittable[M]
+  ): EventStream[M[Output]] = {
+    new SplitEventStream[M, Input, Output, Key](
+      parent = streamEv(this),
+      key = key,
+      project = (key, initialValue, eventStream) => project(key, initialValue, eventStream.toSignal(initialValue)),
+      splittable
+    )
+  }
+
   def delay(intervalMillis: Int = 0): EventStream[A] = {
     new DelayEventStream(parent = this, intervalMillis)
   }
@@ -78,16 +111,16 @@ trait EventStream[+A] extends Observable[A] {
     new FoldSignal(parent = this, () => initial, fn)
   }
 
-  def toSignal[B >: A](initial: B): Signal[B] = {
+  def toSignal[B >: A](initial: => B): Signal[B] = {
     toSignalWithTry(Success(initial))
   }
 
-  def toSignalWithTry[B >: A](initial: Try[B]): Signal[B] = {
+  def toSignalWithTry[B >: A](initial: => Try[B]): Signal[B] = {
     new SignalFromEventStream(parent = this, initial)
   }
 
   def toWeakSignal: Signal[Option[A]] = {
-    new SignalFromEventStream(parent = this.map(Some(_)), initialValue = Success(None))
+    new SignalFromEventStream(parent = this.map(Some(_)), lazyInitialValue = Success(None))
   }
 
   def compose[B](operator: EventStream[A] => EventStream[B]): EventStream[B] = {
@@ -184,19 +217,23 @@ trait EventStream[+A] extends Observable[A] {
 
 object EventStream {
 
-  // @TODO Are we sure we want to deprecate this?
-  @deprecated("Use fromValue (see docs)", "0.4")
-  def fromSeq[A](events: Seq[A]): EventStream[A] = {
-    new SeqEventStream[A](events.map(Success(_)))
+  /** @param emitOnce if true, the event will be emitted at most one time.
+    *                 If false, the event will be emitted every time the stream is started. */
+  @deprecated("Use fromValue (see docs)", "0.4") // @TODO Are we sure we want to deprecate this?
+  def fromSeq[A](events: Seq[A], emitOnce: Boolean): EventStream[A] = {
+    new SeqEventStream[A](events.map(Success(_)), emitOnce)
   }
 
-  def fromValue[A](event: A): EventStream[A] = {
-    new SeqEventStream[A](List(Success(event)))
+  /** @param emitOnce if true, the event will be emitted at most one time.
+    *                 If false, the event will be emitted every time the stream is started. */
+  def fromValue[A](event: A, emitOnce: Boolean): EventStream[A] = {
+    new SeqEventStream[A](List(Success(event)), emitOnce)
   }
 
-  // @TODO[API] Do we want to keep this easily exposed?
-  def fromTry[A](value: Try[A]): EventStream[A] = {
-    new SeqEventStream[A](List(value))
+  /** @param emitOnce if true, the event will be emitted at most one time.
+    *                 If false, the event will be emitted every time the stream is started. */
+  def fromTry[A](value: Try[A], emitOnce: Boolean): EventStream[A] = {
+    new SeqEventStream[A](List(value), emitOnce)
   }
 
   def fromFuture[A](future: Future[A]): EventStream[A] = {

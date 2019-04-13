@@ -8,10 +8,12 @@ import scala.util.Try
 
 class SignalFromEventStream[A](
   override protected[this] val parent: EventStream[A],
-  override protected[this] val initialValue: Try[A]
+  lazyInitialValue: => Try[A]
 ) extends Signal[A] with SingleParentObservable[A, A] with InternalTryObserver[A] {
 
   override protected[airstream] val topoRank: Int = parent.topoRank + 1
+
+  override protected lazy val initialValue: Try[A] = lazyInitialValue
 
   override protected[airstream] def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
     fireTry(nextValue, transaction)
