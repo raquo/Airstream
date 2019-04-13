@@ -1,9 +1,9 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.eventstream.EventStream
-import com.raquo.airstream.features.FlattenStrategy
+import com.raquo.airstream.features.{FlattenStrategy, Splittable}
 import com.raquo.airstream.features.FlattenStrategy.{SwitchSignalStrategy, SwitchStreamStrategy}
-import com.raquo.airstream.ownership.{Owned, Owner}
+import com.raquo.airstream.ownership.{Owner}
 import com.raquo.airstream.signal.Signal
 
 import scala.scalajs.js
@@ -40,6 +40,31 @@ trait Observable[+A] {
 
   /** @param project Note: guarded against exceptions */
   def map[B](project: A => B): Self[B]
+
+  // @TODO[API] Not sure if `distinct` `should accept A => Key or (A, A) => Boolean. We'll start with a more constrained version for now.
+  // @TODO[API] Implement this. We should consider making a slide() operator to support this
+
+  /** Emit a value unless its key matches the key of the last emitted value */
+  // def distinct[Key](key: A => Key): Self[A]
+
+  def split[M[_], Input, Output, Key](
+    key: Input => Key,
+    project: (Key, Input, Self[Input]) => Output
+  )(implicit
+    valueEv: A <:< M[Input],
+    signalEv: Self[A] <:< Self[M[Input]],
+    splittable: Splittable[M]
+  ): Self[M[Output]]
+
+  /** This type signature dedicated to Dan */
+  def splitIntoSignals[M[_], Input, Output, Key](
+    key: Input => Key,
+    project: (Key, Input, Signal[Input]) => Output
+  )(implicit
+    valueEv: A <:< M[Input],
+    signalEv: Self[A] <:< Self[M[Input]],
+    splittable: Splittable[M]
+  ): Self[M[Output]]
 
   /** @param compose Note: guarded against exceptions */
   @inline def flatMap[B, Inner[_], Output[+_] <: Observable[_]](compose: A => Inner[B])(

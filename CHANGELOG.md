@@ -4,10 +4,15 @@ Breaking changes in **bold**.
 
 #### v0.6 – TBD
 
+* **API: `fromValue`, `fromSeq`, and `fromTry` event streams now require `emitOnce` param**
+* **API: `toSignal`, `toSignalWithTry` arguments are now passed by name**
+  * This means that these values will now be evaluated only if / when the resulting Signal is started for the first time.
 * New: `flatMap` ([#20](https://github.com/raquo/Airstream/pull/20)) – thanks, [@yurique](https://github.com/yurique)!
   * **API: FlattenObservable type params changed, might break your custom implementations – see diff** 
-* New: `SwitchSignalStrategy`
-* New: `MemoizedCollection` – a simple `Signal` that provides an easier way to efficiently render children nodes in Laminar.
+* New: `SwitchSignalStrategy` to flatten signals of signals
+* New: `split` and `splitIntoSignals` operators
+  * Powerful operators letting you split any observable into multiple streams or signals. Provide an easier way to efficiently render children nodes in Laminar.
+* New: `composeChanges` operator for `Signal`
 * New: Report failures of unhandled error callbacks
 
 #### v0.5.2 – Jan 2019

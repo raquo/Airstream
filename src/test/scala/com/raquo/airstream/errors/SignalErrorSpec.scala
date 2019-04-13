@@ -191,7 +191,7 @@ class SignalErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
 
   it("map function is guarded against exceptions") {
 
-    val signal = EventStream.fromSeq(List(1, -2, 3)).map { num =>
+    val signal = EventStream.fromSeq(List(1, -2, 3), emitOnce = true).map { num =>
       if (num < 0) throw err1 else num
     }.toSignal(0).map(Calculation.log("signal", calculations))
 

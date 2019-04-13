@@ -43,7 +43,7 @@ class EventStreamErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
 
   it("map function is guarded against exceptions") {
 
-    val stream = EventStream.fromSeq(List(-1, 2)).map { num =>
+    val stream = EventStream.fromSeq(List(-1, 2), emitOnce = true).map { num =>
       if (num < 0) throw err1 else num
     }.map(Calculation.log("stream", calculations))
 
@@ -293,7 +293,7 @@ class EventStreamErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
 
   it("EventStream.fromTry") {
 
-    val stream = EventStream.fromTry(Failure(err1)).map(Calculation.log("stream", calculations))
+    val stream = EventStream.fromTry(Failure(err1), emitOnce = false).map(Calculation.log("stream", calculations))
 
     val sub = stream.addObserver(Observer.withRecover(
       effects += Effect("sub", _),
@@ -307,7 +307,7 @@ class EventStreamErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
     )
 
     errorEffects.clear()
-    sub.kill() // such a stream re-emits only when it's started again, and for that it needs to become stopped first
+    sub.kill() // such a stream (emitOnce = false) re-emits only when it's started again, and for that it needs to become stopped first
 
     stream.addObserver(Observer.withRecover(
       effects += Effect("sub2", _),
@@ -323,7 +323,7 @@ class EventStreamErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
 
   it("Error that is not handled by `recover` is unhandled") {
 
-    val stream = EventStream.fromTry(Failure(err1)).map(Calculation.log("stream", calculations))
+    val stream = EventStream.fromTry(Failure(err1), emitOnce = true).map(Calculation.log("stream", calculations))
 
     stream.addObserver(Observer.withRecover(
       effects += Effect("sub", _),

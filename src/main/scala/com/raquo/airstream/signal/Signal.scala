@@ -1,8 +1,8 @@
 package com.raquo.airstream.signal
 
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
-import com.raquo.airstream.eventstream.{EventStream, MapEventStream}
-import com.raquo.airstream.features.CombineObservable
+import com.raquo.airstream.eventstream.{EventStream, MapEventStream, SplitEventStream}
+import com.raquo.airstream.features.{CombineObservable, Splittable}
 import com.raquo.airstream.ownership.Owner
 
 import scala.concurrent.Future
@@ -29,9 +29,65 @@ trait Signal[+A] extends Observable[A] {
     new MapSignal(parent = this, project, recover = None)
   }
 
+  // Note: we can't easily have a `splitIntoStreams` on Signal
+  //  - the EventStream[Input] argument of `project` would be equivalent to `changes`, missing the initial value
+  //  - that strikes me as rather non-obvious, even though we do provide an initial value
+  //  - resolving that is actually nasty. You just can't convert a signal into a stream that emits its current value
+  //    - the crazy rules about re-emitting values when starting / stopping would be a disservice to everyone
+  @inline override def split[M[_], Input, Output, Key](
+    key: Input => Key,
+    project: (Key, Input, Signal[Input]) => Output
+  )(implicit
+    valueEv: A <:< M[Input],
+    signalEv: Signal[A] <:< Signal[M[Input]],
+    splittable: Splittable[M]
+  ): Signal[M[Output]] = splitIntoSignals(key, project)
+
+  override def splitIntoSignals[M[_], Input, Output, Key](
+    key: Input => Key,
+    project: (Key, Input, Signal[Input]) => Output
+  )(implicit
+    valueEv: A <:< M[Input],
+    signalEv: Signal[A] <:< Signal[M[Input]],
+    splittable: Splittable[M]
+  ): Signal[M[Output]] = {
+    new SplitEventStream[M, Input, Output, Key](
+      parent = signalEv(this).changes,
+      key = key,
+      project = (key, initialInput, eventStream) => project(key, initialInput, eventStream.toSignal(initialInput)),
+      splittable
+    ).toSignalWithInitialInput(lazyInitialInput = tryNow().map(valueEv))
+  }
+
   /** @param operator Note: Must not throw! */
   def compose[B](operator: Signal[A] => Signal[B]): Signal[B] = {
     operator(this)
+  }
+
+  /** @param operator Note: Must not throw! */
+  def composeChanges[B](
+    operator: EventStream[A] => EventStream[B],
+    initial: B
+  ): Signal[B] = {
+    operator(changes).toSignalWithTry(Success(initial))
+  }
+
+  /** @param operator Note: Must not throw! */
+  def composeChanges[B](
+    operator: EventStream[A] => EventStream[B],
+    initial: Try[B]
+  ): Signal[B] = {
+    operator(changes).toSignalWithTry(initial)
+  }
+
+  /** @param operator Note: Must not throw!
+    * @param makeInitial Note: Must not throw!
+    */
+  def composeChanges[B](
+    operator: EventStream[A] => EventStream[B],
+    makeInitial: Try[A] => Try[B]
+  ): Signal[B] = {
+    operator(changes).toSignalWithTry(makeInitial(tryNow()))
   }
 
   def combineWith[AA >: A, B](otherSignal: Signal[B]): CombineSignal2[AA, B, (AA, B)] = {
@@ -58,7 +114,7 @@ trait Signal[+A] extends Observable[A] {
 
   // @TODO[Naming]
   /**
-    * @param makeInitial currentParentValue => initialValue
+    * @param makeInitial currentParentValue => initialValue   Note: must not throw
     * @param fn (currentValue, nextParentValue) => nextValue
     * @return
     */
