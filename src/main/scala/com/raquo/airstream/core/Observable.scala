@@ -47,6 +47,8 @@ trait Observable[+A] {
   /** Emit a value unless its key matches the key of the last emitted value */
   // def distinct[Key](key: A => Key): Self[A]
 
+  // @TODO[API] Can we improve type inference of `split`? Maybe implicit value class? Maybe wrap stuff into Splittable?
+
   def split[M[_], Input, Output, Key](
     key: Input => Key,
     project: (Key, Input, Self[Input]) => Output

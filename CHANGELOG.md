@@ -12,7 +12,7 @@ Breaking changes in **bold**.
 * New: `SwitchSignalStrategy` to flatten signals of signals
 * New: `split` and `splitIntoSignals` operators
   * Powerful operators letting you split any observable into multiple streams or signals. Provide an easier way to efficiently render children nodes in Laminar.
-* New: `composeChanges` operator for `Signal`
+* New: `composeChanges` and `composeChangesAndInitial` operators for `Signal`
 * New: Report failures of unhandled error callbacks
 
 #### v0.5.2 – Jan 2019

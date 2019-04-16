@@ -499,7 +499,7 @@ MergeEventStream uses the same pendingObservables mechanism as CombineObservable
 
 Airstream supports standard observables operators like `map` / `filter` / etc. Some of the operators are available only on certain types of observables. For example, you currently can only `sample` an EventStream. This scarcity is sort of deliberate – we start out with the most basic / obvious operators and will expand into fancier ones as the need arises. However, some basic operators are also missing just because I didn't get to it yet (as opposed to by design), it's only for this reason there is no operator to combine more than two observables yet. 
 
-There is currently no comprehensive documentation on operators – they are well annotated in the source code, in `Observable`, `EventStream`, and `Signal`.
+There is currently no _comprehensive_ documentation on operators – they are well annotated in the source code, in `Observable`, `EventStream`, and `Signal`.
 
 
 #### Splitting Observables

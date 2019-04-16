@@ -6,7 +6,7 @@ import scala.scalajs.js
 
 /** A collection of convenience debug methods that you can plug into .map, for example:
   *
-  * $numbers.map(Debug.log("numbers"))    this will log "numbers: 1" when the observable emits value `1`
+  * numberStream.map(Debug.log("numbers"))    this will log "numbers: 1" when the observable emits value `1`
   */
 object Debug {
 
