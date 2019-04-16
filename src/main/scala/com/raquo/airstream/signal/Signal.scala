@@ -65,29 +65,20 @@ trait Signal[+A] extends Observable[A] {
   }
 
   /** @param operator Note: Must not throw! */
-  def composeChanges[B](
-    operator: EventStream[A] => EventStream[B],
-    initial: B
-  ): Signal[B] = {
-    operator(changes).toSignalWithTry(Success(initial))
-  }
-
-  /** @param operator Note: Must not throw! */
-  def composeChanges[B](
-    operator: EventStream[A] => EventStream[B],
-    initial: Try[B]
-  ): Signal[B] = {
-    operator(changes).toSignalWithTry(initial)
+  def composeChanges[AA >: A](
+    operator: EventStream[A] => EventStream[AA]
+  ): Signal[AA] = {
+    composeChangesAndInitial(operator, initialOperator = identity)
   }
 
   /** @param operator Note: Must not throw!
-    * @param makeInitial Note: Must not throw!
+    * @param initialOperator Note: Must not throw!
     */
-  def composeChanges[B](
+  def composeChangesAndInitial[B](
     operator: EventStream[A] => EventStream[B],
-    makeInitial: Try[A] => Try[B]
+    initialOperator: Try[A] => Try[B]
   ): Signal[B] = {
-    operator(changes).toSignalWithTry(makeInitial(tryNow()))
+    operator(changes).toSignalWithTry(initialOperator(tryNow()))
   }
 
   def combineWith[AA >: A, B](otherSignal: Signal[B]): CombineSignal2[AA, B, (AA, B)] = {

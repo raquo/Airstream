@@ -1,5 +1,6 @@
 package com.raquo.airstream.features
 
+import scala.collection.immutable
 import scala.scalajs.js
 
 trait Splittable[M[_]] {
@@ -25,6 +26,10 @@ object Splittable {
 
   implicit object JsArraySplittable extends Splittable[js.Array] {
     override def map[A, B](inputs: js.Array[A], project: A => B): js.Array[B] = inputs.map(project)
+  }
+
+  implicit object ImmutableSeqSplittable extends Splittable[immutable.Seq] {
+    override def map[A, B](inputs: immutable.Seq[A], project: A => B): immutable.Seq[B] = inputs.map(project)
   }
 
   implicit object SeqSplittable extends Splittable[Seq] {
