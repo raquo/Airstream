@@ -48,39 +48,6 @@ trait EventStream[+A] extends Observable[A] {
     filter(pf.isDefinedAt).map(pf)
   }
 
-  override def split[M[_], Input, Output, Key](
-    key: Input => Key,
-    project: (Key, Input, EventStream[Input]) => Output
-  )(
-    implicit
-    valueEv: A <:< M[Input],
-    streamEv: EventStream[A] <:< EventStream[M[Input]],
-    splittable: Splittable[M],
-  ): EventStream[M[Output]] = {
-    new SplitEventStream[M, Input, Output, Key](
-      parent = streamEv(this),
-      key,
-      project,
-      splittable
-    )
-  }
-
-  override def splitIntoSignals[M[_], Input, Output, Key](
-    key: Input => Key,
-    project: (Key, Input, Signal[Input]) => Output
-  )(implicit
-    valueEv: A <:< M[Input],
-    streamEv: EventStream[A] <:< EventStream[M[Input]],
-    splittable: Splittable[M]
-  ): EventStream[M[Output]] = {
-    new SplitEventStream[M, Input, Output, Key](
-      parent = streamEv(this),
-      key = key,
-      project = (key, initialValue, eventStream) => project(key, initialValue, eventStream.toSignal(initialValue)),
-      splittable
-    )
-  }
-
   def delay(intervalMillis: Int = 0): EventStream[A] = {
     new DelayEventStream(parent = this, intervalMillis)
   }
@@ -253,5 +220,9 @@ object EventStream {
 
   implicit def toTuple2Stream[A, B](stream: EventStream[(A, B)]): Tuple2EventStream[A, B] = {
     new Tuple2EventStream(stream)
+  }
+
+  implicit def toSplittableStream[M[_], Input](stream: EventStream[M[Input]]): SplittableEventStream[M, Input] = {
+    new SplittableEventStream(stream)
   }
 }

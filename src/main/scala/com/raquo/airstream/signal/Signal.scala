@@ -29,36 +29,6 @@ trait Signal[+A] extends Observable[A] {
     new MapSignal(parent = this, project, recover = None)
   }
 
-  // Note: we can't easily have a `splitIntoStreams` on Signal
-  //  - the EventStream[Input] argument of `project` would be equivalent to `changes`, missing the initial value
-  //  - that strikes me as rather non-obvious, even though we do provide an initial value
-  //  - resolving that is actually nasty. You just can't convert a signal into a stream that emits its current value
-  //    - the crazy rules about re-emitting values when starting / stopping would be a disservice to everyone
-  @inline override def split[M[_], Input, Output, Key](
-    key: Input => Key,
-    project: (Key, Input, Signal[Input]) => Output
-  )(implicit
-    valueEv: A <:< M[Input],
-    signalEv: Signal[A] <:< Signal[M[Input]],
-    splittable: Splittable[M]
-  ): Signal[M[Output]] = splitIntoSignals(key, project)
-
-  override def splitIntoSignals[M[_], Input, Output, Key](
-    key: Input => Key,
-    project: (Key, Input, Signal[Input]) => Output
-  )(implicit
-    valueEv: A <:< M[Input],
-    signalEv: Signal[A] <:< Signal[M[Input]],
-    splittable: Splittable[M]
-  ): Signal[M[Output]] = {
-    new SplitEventStream[M, Input, Output, Key](
-      parent = signalEv(this).changes,
-      key = key,
-      project = (key, initialInput, eventStream) => project(key, initialInput, eventStream.toSignal(initialInput)),
-      splittable
-    ).toSignalWithInitialInput(lazyInitialInput = tryNow().map(valueEv))
-  }
-
   /** @param operator Note: Must not throw! */
   def compose[B](operator: Signal[A] => Signal[B]): Signal[B] = {
     operator(this)
@@ -228,5 +198,9 @@ object Signal {
 
   implicit def toTuple2Signal[A, B](signal: Signal[(A, B)]): Tuple2Signal[A, B] = {
     new Tuple2Signal(signal)
+  }
+
+  implicit def toSplittableSignal[M[_], Input](signal: Signal[M[Input]]): SplittableSignal[M, Input] = {
+    new SplittableSignal(signal)
   }
 }

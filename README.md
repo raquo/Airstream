@@ -504,7 +504,9 @@ There is currently no _comprehensive_ documentation on operators – they are we
 
 #### Splitting Observables
 
-Airstream offers a powerful `split` operator that splits an observable of `M[Input]` into an observable of `M[Output]` based on `Input => Key`. The functionality of this operator is very generic, so we will explore its properties by diving into concrete examples. 
+Airstream offers powerful `split` and `splitToSignals` operators that split an observable of `M[Input]` into an observable of `M[Output]` based on `Input => Key`. The functionality of these operators is very generic, so we will explore its properties by diving into concrete examples.
+
+Note: These operators are available on qualifying streams and signals by means of `SplittableSignal` and `SplittableEventStream` value classes.
 
 ##### Example 0: Tests
 
@@ -524,8 +526,9 @@ The important part here is the desire to obtain individual signals of Foo by id,
 case class Foo(id: String, version: Int)
 val inputSignal: Signal[List[Foo]] = ???
  
-val outputSignal: Signal[List[(String, Signal[Foo])]] = inputSignal.split[List, Foo, (String, Signal[Foo]), String](
-  key = _.id,
+val outputSignal: Signal[List[(String, Signal[Foo])]] = inputSignal.split(
+  key = _.id
+)(
   project = (key, initialFoo, thisFooSignal) => (key, thisFooSignal)
 )
  
@@ -559,8 +562,9 @@ def renderFoo(fooId: String, initialFoo: Foo, fooSignal: Signal[Foo]): Div = div
 )
  
 val inputSignal: Signal[List[Foo]] = ???
-val outputSignal: Signal[List[Div]] = inputSignal.split[List, Foo, Div, String](
-  key = _.id,
+val outputSignal: Signal[List[Div]] = inputSignal.split(
+  key = _.id
+)(
   project = renderFoo
 )
 ```
