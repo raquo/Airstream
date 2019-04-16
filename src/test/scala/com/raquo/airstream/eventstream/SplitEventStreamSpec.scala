@@ -10,6 +10,7 @@ import scala.collection.mutable
 class SplitEventStreamSpec extends FunSpec with Matchers {
 
   case class Foo(id: String, version: Int)
+
   case class Bar(id: String)
 
   it("splits stream into streams") {
@@ -20,18 +21,15 @@ class SplitEventStreamSpec extends FunSpec with Matchers {
 
     val owner = new TestableOwner
 
-    val stream = bus.events.split[List, Foo, Bar, String](
-      key = _.id,
-      project = (key, initialFoo, fooStream) => {
-        assert(key == initialFoo.id, "Key does not match initial value")
-        effects += Effect("init-child", key + "-" + initialFoo.version.toString)
-        fooStream.foreach { foo =>
-          assert(key == foo.id, "Subsequent value does not match initial key")
-          effects += Effect("update-child", foo.id + "-" + foo.version.toString)
-        }(owner)
-        Bar(key)
-      }
-    )
+    val stream = bus.events.split(_.id)((key, initialFoo, fooStream) => {
+      assert(key == initialFoo.id, "Key does not match initial value")
+      effects += Effect("init-child", key + "-" + initialFoo.version.toString)
+      fooStream.foreach { foo =>
+        assert(key == foo.id, "Subsequent value does not match initial key")
+        effects += Effect("update-child", foo.id + "-" + foo.version.toString)
+      }(owner)
+      Bar(key)
+    })
 
     stream.foreach { result =>
       effects += Effect("result", result.toString)
@@ -121,18 +119,15 @@ class SplitEventStreamSpec extends FunSpec with Matchers {
 
     val owner = new TestableOwner
 
-    val stream = bus.events.splitIntoSignals[List, Foo, Bar, String](
-      key = _.id,
-      project = (key, initialFoo, fooStream) => {
-        assert(key == initialFoo.id, "Key does not match initial value")
-        effects += Effect("init-child", key + "-" + initialFoo.version.toString)
-        fooStream.foreach { foo =>
-          assert(key == foo.id, "Subsequent value does not match initial key")
-          effects += Effect("update-child", foo.id + "-" + foo.version.toString)
-        }(owner)
-        Bar(key)
-      }
-    )
+    val stream = bus.events.splitIntoSignals(_.id)(project = (key, initialFoo, fooStream) => {
+      assert(key == initialFoo.id, "Key does not match initial value")
+      effects += Effect("init-child", key + "-" + initialFoo.version.toString)
+      fooStream.foreach { foo =>
+        assert(key == foo.id, "Subsequent value does not match initial key")
+        effects += Effect("update-child", foo.id + "-" + foo.version.toString)
+      }(owner)
+      Bar(key)
+    })
 
     stream.foreach { result =>
       effects += Effect("result", result.toString)
@@ -217,18 +212,15 @@ class SplitEventStreamSpec extends FunSpec with Matchers {
 
     val owner = new TestableOwner
 
-    val signal =  myVar.signal.split[List, Foo, Bar, String](
-      key = _.id,
-      project = (key, initialFoo, fooStream) => {
-        assert(key == initialFoo.id, "Key does not match initial value")
-        effects += Effect("init-child", key + "-" + initialFoo.version.toString)
-        fooStream.foreach { foo =>
-          assert(key == foo.id, "Subsequent value does not match initial key")
-          effects += Effect("update-child", foo.id + "-" + foo.version.toString)
-        }(owner)
-        Bar(key)
-      }
-    )
+    val signal = myVar.signal.split(_.id)(project = (key, initialFoo, fooStream) => {
+      assert(key == initialFoo.id, "Key does not match initial value")
+      effects += Effect("init-child", key + "-" + initialFoo.version.toString)
+      fooStream.foreach { foo =>
+        assert(key == foo.id, "Subsequent value does not match initial key")
+        effects += Effect("update-child", foo.id + "-" + foo.version.toString)
+      }(owner)
+      Bar(key)
+    })
 
     signal.foreach { result =>
       effects += Effect("result", result.toString)
