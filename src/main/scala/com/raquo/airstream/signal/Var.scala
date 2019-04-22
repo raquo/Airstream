@@ -75,17 +75,21 @@ object Var {
   type VarTryModTuple[A] = (Var[A], Try[A] => Try[A])
 
 
+  /** Set multiple Var values in the same Transaction */
   def set(values: VarTuple[_]*): Unit = {
     // @TODO[Performance] Make sure there is no overhead for `_*`
     val tryValues: Seq[VarTryTuple[_]] = values.map(canonizeVarTuple(_))
     setTry(tryValues: _*)
   }
 
+  /** Set multiple Var values in the same Transaction */
   def setTry(values: VarTryTuple[_]*): Unit = {
     new Transaction(trx => values.foreach(setTryValue(_, trx)))
   }
 
-  /** @throws Exception if currentValue of any of the vars is a Failure.
+  /** Modify multiple Vars in the same Transaction
+    *
+    * @throws Exception if currentValue of any of the vars is a Failure.
     *                   This is atomic: an exception in any of the vars will prevent any of
     *                   the batched updates in this call from going through.
     */
@@ -94,7 +98,9 @@ object Var {
     setTry(tryValues: _*)
   }
 
-  /** Note: none of the provided mods must throw. Same atomic behaviour as `update`.
+  /** Modify multiple Vars in the same Transaction
+    *
+    * Note: none of the provided mods must throw. Same atomic behaviour as `update`.
     * @throws Exception if any of the provided `mod`s throws
     */
   def tryUpdate(mods: VarTryModTuple[_]*): Unit = {
@@ -117,7 +123,8 @@ object Var {
   /** Unlike other signals, this signal's current value is always up to date
     * because a subscription is not needed to maintain it.
     *
-    * Consequently, we expose its current value with now() / tryNow() methods.
+    * Consequently, we expose its current value with now() / tryNow() methods
+    * (see StrictSignal).
     */
   class VarSignal[A] private[Var](
     override protected[this] val initialValue: Try[A]

@@ -7,6 +7,7 @@ Breaking changes in **bold**.
 * **API: `fromValue`, `fromSeq`, and `fromTry` event streams now require `emitOnce` param**
 * **API: `toSignal`, `toSignalWithTry` arguments are now passed by name**
   * This means that these values will now be evaluated only if / when the resulting Signal is started for the first time.
+* **API: Move debugging operators from `Debug` object into `Observable` trait**
 * New: `flatMap` ([#20](https://github.com/raquo/Airstream/pull/20)) – thanks, [@yurique](https://github.com/yurique)!
   * **API: FlattenObservable type params changed, might break your custom implementations – see diff** 
 * New: `SwitchSignalStrategy` to flatten signals of signals
