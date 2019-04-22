@@ -164,22 +164,18 @@ trait Signal[+A] extends Observable[A] {
       val isError = nextValue.isFailure
       var errorReported = false
 
-      var index = 0
-      while (index < externalObservers.length) {
-        externalObservers(index).onTry(nextValue)
-        index += 1
+      externalObservers.foreach { observer =>
+        observer.onTry(nextValue)
+        if (isError && !errorReported) errorReported = true
       }
-      if (index > 0 && isError) errorReported = true
 
-      index = 0
-      while (index < internalObservers.length) {
-        internalObservers(index).onTry(nextValue, transaction)
-        index += 1
+      internalObservers.foreach { observer =>
+        observer.onTry(nextValue, transaction)
+        if (isError && !errorReported) errorReported = true
       }
-      if (index > 0 && isError) errorReported = true
 
       // This will only ever happen for special Signals that maintain their current value even without observers.
-      // Currently we only have one kind of such signals: VarSignal.
+      // Currently we only have one kind of such signal: StrictSignal.
       //
       // We want to report unhandled errors on such signals if they have no observers (including internal observers)
       // because if we don't, the error will not be reported anywhere, and I think we would usually want it.
