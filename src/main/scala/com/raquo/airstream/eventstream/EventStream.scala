@@ -48,8 +48,16 @@ trait EventStream[+A] extends Observable[A] {
     filter(pf.isDefinedAt).map(pf)
   }
 
-  def delay(intervalMillis: Int = 0): EventStream[A] = {
-    new DelayEventStream(parent = this, intervalMillis)
+  /** @param ms milliseconds of delay */
+  def delay(ms: Int = 0): EventStream[A] = {
+    new DelayEventStream(parent = this, ms)
+  }
+
+  /** Make a stream that emits this stream's values but waits for `after` stream to emit first in a given transaction.
+    * You can use this for Signals too with `Signal.composeChanges` (see docs for more details)
+    */
+  def delaySync(after: EventStream[_]): EventStream[A] = {
+    new SyncDelayEventStream[A](parent = this, after = after)
   }
 
   /** See docs for [[ThrottleEventStream]] */

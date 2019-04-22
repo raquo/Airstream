@@ -13,7 +13,7 @@ class SignalFromEventStream[A](
 
   override protected[airstream] val topoRank: Int = parent.topoRank + 1
 
-  override protected lazy val initialValue: Try[A] = lazyInitialValue
+  override protected def initialValue: Try[A] = lazyInitialValue
 
   override protected[airstream] def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
     fireTry(nextValue, transaction)

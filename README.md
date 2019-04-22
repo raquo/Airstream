@@ -55,8 +55,11 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Transactions](#transactions)
     * [Merge Glitch-By-Design](#merge-glitch-by-design)
   * [Operators](#operators)
+    * [Compose Changes](#compose-changes)
+    * [Sync Delay](#sync-delay)
     * [Splitting Observables](#splitting-observables)
     * [Flattening Observables](#flattening-observables)
+    * [Debugging Operators](#debugging-operators)
   * [Error Handling](#error-handling)
 * [Limitations](#limitations)
 * [My Related Projects](#my-related-projects)
@@ -497,9 +500,44 @@ MergeEventStream uses the same pendingObservables mechanism as CombineObservable
 
 ### Operators
 
-Airstream supports standard observables operators like `map` / `filter` / etc. Some of the operators are available only on certain types of observables. For example, you currently can only `sample` an EventStream. This scarcity is sort of deliberate – we start out with the most basic / obvious operators and will expand into fancier ones as the need arises. However, some basic operators are also missing just because I didn't get to it yet (as opposed to by design), it's only for this reason there is no operator to combine more than two observables yet. 
+Airstream offers standard observables operators like `map` / `filter` / `compose` / `combineWith` etc. You will need to read the code or use IDE autocompletion to discover those that aren't documented here or in other section of the Documentation. In the code, see `Observable`, `EventStream`, and `Signal` traits and their companion objects.
 
-There is currently no _comprehensive_ documentation on operators – they are well annotated in the source code, in `Observable`, `EventStream`, and `Signal`.
+Some of the more interesting / non-standard operators are documented below:
+
+
+#### Compose Changes
+
+Some operators are available only on Event Streams, not Signals. This is by design. For example, `filter` is not applicable to Signals because a Signal can't exist without a current value, so `signal.filter(_ => false)` would not make any sense. Similarly, you can't `delay(ms)` a signal because you can't delay its initial value.
+
+However, you can still use those operators with Signals, you just need to be explicit that you're applying them only to the Signal's changes, not to the initial value of the Signal:
+
+```scala
+val signal: Signal[Int] = ???
+val delayedSignal = signal.composeChanges(changes => changes.delay(1000)) // all updates delayed by one second
+val filteredSignal = signal.composeChanges(_.filter(_ % 2 == 0)) // only allows changes with even numbers (initial value can still be odd)
+```
+
+For more advanced transformations, `composeChangesAndInitial` operator lets you transform the Signal's initial value as well.
+
+
+#### Sync Delay
+
+Suppose you have two streams that emit in the same [Transaction](#transactions). Generally you don't know in which order they will emit, unless one of them depends on the other.
+
+If this matters to you, you can use `delaySync` operator to establish the desired order:
+
+```scala
+val stream1: EventStream[Int] = ???
+val stream2: EventStream[Int] = ???
+ 
+val stream1synced = stream1.delaySync(after = stream2)
+```
+
+`stream1synced` synchronously re-emits all values that `stream1` feeds into it. Its only guarantee is that if `stream1` and `stream2` emit in the same transaction, `stream1synced` will emit AFTER `stream2` (assuming it has observers of course, or it won't emit at all, as usual). Otherwise, if `stream2` does not affect `stream1synced` in any way. Don't confuse this with the `sample` operator.
+
+Note: `delaySync` is better than a simple `delay` because it does not introduce an asynchronous boundary. `delaySync` does not use a `setTimeout` under the hood. In Airstream terms, `stream1synced` _synchronously depends_ on `stream1`, so all events in `stream1synced` fire in the same transaction as `stream1`, which is not the case with `stream1.delay(1000)` – those events would fire in a separate Transaction, and at an async delay.
+
+Under the hood `delaySync` uses the same `pendingObservables` machinery as `combinedWith` operator – see [Topological Rank](#topological-rank) docs for an explanation. 
 
 
 #### Splitting Observables
@@ -552,14 +590,14 @@ This is what you can do:
 ```scala
 case class Foo(id: String, version: Int)
    
-def renderFoo(fooId: String, initialFoo: Foo, fooSignal: Signal[Foo]): Div = div(
+def renderFoo(fooId: String, initialFoo: Foo, fooSignal: Signal[Foo]): Div = {
   div(
     "foo id: " + fooId,
     "first seen foo with this id: " + initialFoo.toString,
     "last seen foo with this id: ",
     child <-- fooSignal.map(_.toString)
   )
-)
+}
  
 val inputSignal: Signal[List[Foo]] = ???
 val outputSignal: Signal[List[Div]] = inputSignal.split(
@@ -573,7 +611,7 @@ This works somewhat similarly to React.js keys, if you're familiar with that API
 * As soon as a `Foo` with id="123" appears in inputSignal, we call `renderFoo` to render it. This gives us a `Div` element **that we will reuse** for all future versions of this foo.
 * We remember this `Div` element. Whenever `inputSignal` updates with a new version of the id="123" foo, the `fooSignal` in `renderFoo` is updated with this new version.
 * Similarly, when other foo-s are updated in `inputSignal` their updates are scoped to their own invocations of `renderFoo`. The grouping happens by `key`, which in our case is the id of Foo.
-* When the list emitted by `inputSignal` no longer contains a Foo with id="123", we remove its Div from the output and forget it that we ever made it.
+* When the list emitted by `inputSignal` no longer contains a Foo with id="123", we remove its Div from the output and forget that we ever made it.
 * Thus the output signal contains a list of Div elements matching one-to-one to the Foo-s in the input signal list.
 
 So in essence, our `outputSignal` is broadly equivalent to `inputSignal.map(_.map(renderFoo))`, except that `renderFoo` requires **memoization** and **data** that simple mapping can't provide, thus the need for `split`.
@@ -583,12 +621,12 @@ To drive the point home, let's see how we would likely do this without `split`:
 ```scala
 case class Foo(id: String, version: Int)
    
-def renderFoo(foo: Foo): Div = div(
+def renderFoo(foo: Foo): Div = {
   div(
     "foo id: " + foo.id,
     "last seen foo with this id: " + foo.toString
   )
-)
+}
  
 val inputSignal: Signal[List[Foo]] = ???
 val outputSignal: Signal[List[Div]] = inputSignal.map(_.map(renderFoo))
@@ -626,7 +664,22 @@ To summarize, the above strategies result in an observable that imitates the lat
 All built-in strategies result in observables that emit each event in a new transaction for hopefully obvious reasons. 
 
 `SwitchFutureStrategy`, `ConcurrentFutureStrategy`, and `OverwriteFutureStrategy` treat futures slightly differently than `EventStream.fromFuture`. Namely, if the parent observable emits a future that has already resolved, it will be treated as if the future has just resolved, i.e. its value will be emitted (subject to the strategy's normal logic). This is useful to avoid "swallowing" already resolved futures and enables easy handling of use cases such as cached or default responses. If this behaviour is undesirable you can easily define an alternative flattening strategy – it's a matter of flipping a single boolean in the relevant classes.
- 
+
+
+#### Debugging Operators
+
+Observable trait includes a few operators for debugging:
+* `debugLog` (log events)
+* `debugBreak` (invoke a JS debugger on every event)
+* `debugSpy` (call a function on every event)
+
+You can actually invoke the debugger (or logger) on a subset of events, like so:
+
+```scala
+val myIntStream: EventStream[Int] = ???
+val debuggedStream: EventStream[Int] = myIntStream.debugBreak(_ % 2 == 0) // break on even numbers only
+``` 
+
 
 
 ### Error Handling

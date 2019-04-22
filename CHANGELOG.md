@@ -8,6 +8,8 @@ Breaking changes in **bold**.
 * **API: `toSignal`, `toSignalWithTry` arguments are now passed by name**
   * This means that these values will now be evaluated only if / when the resulting Signal is started for the first time.
 * **API: Move debugging operators from `Debug` object into `Observable` trait**
+* **API: Change param name of `delay` operator from `intervalMillis` to `ms`**
+* New: `delaySync` operator to control the relative order of streams emission within the same transaction
 * New: `flatMap` ([#20](https://github.com/raquo/Airstream/pull/20)) – thanks, [@yurique](https://github.com/yurique)!
   * **API: FlattenObservable type params changed, might break your custom implementations – see diff** 
 * New: `SwitchSignalStrategy` to flatten signals of signals
