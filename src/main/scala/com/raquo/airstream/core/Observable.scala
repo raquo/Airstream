@@ -34,10 +34,10 @@ trait Observable[+A] {
   /** Note: Observer can be added more than once to an Observable.
     * If so, it will observe each event as many times as it was added.
     */
-  protected[this] lazy val externalObservers: js.Array[Observer[A]] = js.Array()
+  protected[this] val externalObservers: ObserverList[Observer[A]] = new ObserverList(js.Array())
 
   /** Note: This is enforced to be a Set outside of the type system #performance */
-  protected[this] val internalObservers: js.Array[InternalObserver[A]] = js.Array()
+  protected[this] val internalObservers: ObserverList[InternalObserver[A]] = new ObserverList(js.Array())
 
   /** @param project Note: guarded against exceptions */
   def map[B](project: A => B): Self[B]
@@ -110,21 +110,6 @@ trait Observable[+A] {
 
   @inline protected def onAddedExternalObserver(observer: Observer[A]): Unit = ()
 
-  /** Note: this is core-private for subscription safety. See https://github.com/raquo/Airstream/issues/10
-    *
-    * Schedule unsubscription from an external observer in the next transaction.
-    *
-    * This will still happen synchronously, but will not interfere with
-    * iteration over the observables' lists of observers during the current
-    * transaction.
-    *
-    * Note: To completely unsubscribe an Observer from this Observable,
-    * you need to remove it as many times as you added it to this Observable.
-    */
-  @inline private[core] def removeObserver(observer: Observer[A]): Unit = {
-    Transaction.removeExternalObserver(this, observer)
-  }
-
   /** Child observable should call this method on its parents when it is started.
     * This observable calls [[onStart]] if this action has given it its first observer (internal or external).
     */
@@ -134,37 +119,25 @@ trait Observable[+A] {
     maybeStart()
   }
 
-//  @inline protected[airstream] def removeInternalObserver(observer: InternalObserver[A]): Unit = {
-//    Transaction.removeInternalObserver(observable = this, observer)
-//  }
-
   /** Child observable should call Transaction.removeInternalObserver(parent, childInternalObserver) when it is stopped.
     * This observable calls [[onStop]] if this action has removed its last observer (internal or external).
     */
-  protected[airstream] def removeInternalObserverNow(observer: InternalObserver[A]): Boolean = {
-    val index = internalObservers.indexOf(observer)
-    val shouldRemove = index != -1
-    if (shouldRemove) {
-      internalObservers.splice(index, deleteCount = 1)
+  protected[airstream] def removeInternalObserverNow(observer: InternalObserver[A]): Unit = {
+    val removed = internalObservers.removeObserverNow(observer)
+    if (removed) {
       maybeStop()
     }
-    shouldRemove
   }
 
-  /** @return whether observer was removed (`false` if it wasn't subscribed to this observable) */
-  protected[airstream] def removeExternalObserverNow(observer: Observer[A]): Boolean = {
-    val index = externalObservers.indexOf(observer)
-    val shouldRemove = index != -1
-    if (shouldRemove) {
-      externalObservers.splice(index, deleteCount = 1)
+
+  protected[airstream] def removeExternalObserverNow(observer: Observer[A]): Unit = {
+    val removed = externalObservers.removeObserverNow(observer)
+    if (removed) {
       maybeStop()
     }
-    shouldRemove
   }
 
-  private[this] def numAllObservers: Int = {
-    externalObservers.length + internalObservers.length
-  }
+  private[this] def numAllObservers: Int = externalObservers.length + internalObservers.length
 
   protected[this] def isStarted: Boolean = numAllObservers > 0
 

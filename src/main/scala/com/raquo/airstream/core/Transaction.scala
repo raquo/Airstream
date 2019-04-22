@@ -40,6 +40,14 @@ object Transaction { // extends GlobalCounter {
     * Safely remove external observer (such that it doesn't interfere with iteration over the list of observers).
     * Removal still happens synchronously, just at the end of a transaction if one is running right now, so that it
     * does not interfere with iteration over the observables' lists of observers during the current transaction.
+    *
+    * Note: The delay is necessary not just because of interference with actual while(index < observers.length)
+    * iteration, but also because on a high level it is too risky to remove observers from arbitrary observables
+    * while the propagation is running. This would mean that some graphs would not propagate fully, which would
+    * break very basic expectations of end users.
+    *
+    * Note: To completely unsubscribe an Observer from this Observable, you need to remove it as many times
+    * as you added it to this Observable.
     */
   private[core] def removeExternalObserver[A](observable: Observable[A], observer: Observer[A]): Unit = {
     if (isSafeToRemoveObserver) {

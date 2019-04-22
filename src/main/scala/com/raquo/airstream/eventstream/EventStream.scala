@@ -146,20 +146,16 @@ trait EventStream[+A] extends Observable[A] {
     // === CAUTION ===
     // The following logic must match Signal's fireTry! It is separated here for performance.
 
-    var index = 0
-    while (index < externalObservers.length) {
+    externalObservers.foreach { observer =>
       try {
-        externalObservers(index).onNext(nextValue)
+        observer.onNext(nextValue)
       } catch {
         case err: Throwable => AirstreamError.sendUnhandledError(ObserverError(err))
       }
-      index += 1
     }
 
-    index = 0
-    while (index < internalObservers.length) {
-      internalObservers(index).onNext(nextValue, transaction)
-      index += 1
+    internalObservers.foreach { observer =>
+      observer.onNext(nextValue, transaction)
     }
   }
 
@@ -169,16 +165,12 @@ trait EventStream[+A] extends Observable[A] {
     // === CAUTION ===
     // The following logic must match Signal's fireTry! It is separated here for performance.
 
-    var index = 0
-    while (index < externalObservers.length) {
-      externalObservers(index).onError(nextError)
-      index += 1
+    externalObservers.foreach { observer =>
+      observer.onError(nextError)
     }
 
-    index = 0
-    while (index < internalObservers.length) {
-      internalObservers(index).onError(nextError, transaction)
-      index += 1
+    internalObservers.foreach { observer =>
+      observer.onError(nextError, transaction)
     }
   }
 

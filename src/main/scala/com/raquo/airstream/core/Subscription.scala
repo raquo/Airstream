@@ -25,7 +25,7 @@ object Subscription {
     new Subscription(owner) {
 
       override protected[this] def onKilled(): Unit = {
-        observable.removeObserver(observer)
+        Transaction.removeExternalObserver(observable, observer)
       }
     }
   }
