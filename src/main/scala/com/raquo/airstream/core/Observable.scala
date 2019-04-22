@@ -5,6 +5,7 @@ import com.raquo.airstream.features.{FlattenStrategy, Splittable}
 import com.raquo.airstream.features.FlattenStrategy.{SwitchSignalStrategy, SwitchStreamStrategy}
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.signal.Signal
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.util.Try
@@ -52,6 +53,31 @@ trait Observable[+A] {
     implicit strategy: FlattenStrategy[Self, Inner, Output]
   ): Output[B] = {
     strategy.flatten(map(compose))
+  }
+
+  def debugLog(prefix: String = "event", when: A => Boolean = _ => true): Self[A] = {
+    map(value => {
+      if (when(value)) {
+        dom.console.log(prefix + ": ", value.asInstanceOf[js.Any])
+      }
+      value
+    })
+  }
+
+  def debugBreak(when: A => Boolean = _ => true): Self[A] = {
+    map(value => {
+      if (when(value)) {
+        js.special.debugger()
+      }
+      value
+    })
+  }
+
+  def debugSpy(fn: A => Unit): Self[A] = {
+    map(value => {
+      fn(value)
+      value
+    })
   }
 
   // @TODO[API] I don't like the Option[O] output type here very much. We should consider a sentinel error object instead (need to check performance). Or maybe add a recoverOrSkip method or something?
