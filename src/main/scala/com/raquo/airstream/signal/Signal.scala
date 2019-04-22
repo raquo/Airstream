@@ -1,8 +1,8 @@
 package com.raquo.airstream.signal
 
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
-import com.raquo.airstream.eventstream.{EventStream, MapEventStream, SplitEventStream}
-import com.raquo.airstream.features.{CombineObservable, Splittable}
+import com.raquo.airstream.eventstream.{EventStream, MapEventStream}
+import com.raquo.airstream.features.CombineObservable
 import com.raquo.airstream.ownership.Owner
 
 import scala.concurrent.Future
