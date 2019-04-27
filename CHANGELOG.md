@@ -2,7 +2,7 @@
 
 Breaking changes in **bold**.
 
-#### v0.6 – TBD
+#### v0.7 – April 2019
 
 * **API: `fromValue`, `fromSeq`, and `fromTry` event streams now require `emitOnce` param**
 * **API: `toSignal`, `toSignalWithTry` arguments are now passed by name**
@@ -17,6 +17,10 @@ Breaking changes in **bold**.
   * Powerful operators letting you split any observable into multiple streams or signals. Provide an easier way to efficiently render children nodes in Laminar.
 * New: `composeChanges` and `composeChangesAndInitial` operators for `Signal`
 * New: Report failures of unhandled error callbacks
+
+#### v0.6 – Does not Exist
+
+* Skipping this version to align versions with Laminar
 
 #### v0.5.2 – Jan 2019
 
