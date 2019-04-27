@@ -2,7 +2,7 @@
 
 Breaking changes in **bold**.
 
-#### v0.7 – April 2019
+#### v0.7 – Apr 2019
 
 * **API: `fromValue`, `fromSeq`, and `fromTry` event streams now require `emitOnce` param**
 * **API: `toSignal`, `toSignalWithTry` arguments are now passed by name**
