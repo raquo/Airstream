@@ -102,7 +102,7 @@ class EventStreamFlattenSpec extends AsyncSpec {
 
     val range1 = 1 to 3
     val range2 = 1 to 2
-    val stream = delayedStream(range1, interval = 30)
+    val stream = delayedStream(range1, interval = 40)
 
     val flatStream =
       stream
@@ -116,7 +116,7 @@ class EventStreamFlattenSpec extends AsyncSpec {
     val effects = mutable.Buffer[Effect[_]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
-    delay(150) {
+    delay(200) {
       subscription0.kill()
       effects.toList shouldBe range1.flatMap(i =>
         range2.map(j => Effect("obs0", i * j * 7))
@@ -173,7 +173,7 @@ class EventStreamFlattenSpec extends AsyncSpec {
 
     val range1 = 1 to 3
     val range2 = 1 to 2
-    val stream = delayedStream(range1, interval = 30)
+    val stream = delayedStream(range1, interval = 40)
 
     val flatStream =
       stream
@@ -184,7 +184,7 @@ class EventStreamFlattenSpec extends AsyncSpec {
     val effects = mutable.Buffer[Effect[_]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
-    delay(150) {
+    delay(200) {
       subscription0.kill()
       effects.toList shouldBe range1.flatMap(i =>
         range2.map(j =>
@@ -204,7 +204,7 @@ class EventStreamFlattenSpec extends AsyncSpec {
 
     val range1 = 1 to 3
     val range2 = 1 to 2
-    val stream = delayedStream(range1, interval = 30)
+    val stream = delayedStream(range1, interval = 40)
 
     val flatStream =
       stream
@@ -217,7 +217,7 @@ class EventStreamFlattenSpec extends AsyncSpec {
     val effects = mutable.Buffer[Effect[_]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
-    delay(150) {
+    delay(200) {
       subscription0.kill()
       effects.toList shouldBe range1.flatMap(i =>
         range2.map(j => Effect("obs0", i * j * 7))
