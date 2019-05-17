@@ -86,6 +86,12 @@ trait EventStream[+A] extends Observable[A] {
     new FoldSignal(parent = this, () => initial, fn)
   }
 
+  @inline def startWith[B >: A](initial: => B): Signal[B] = toSignal(initial)
+
+  @inline def startWithTry[B >: A](initial: => Try[B]): Signal[B] = toSignalWithTry(initial)
+
+  @inline def startWithNone: Signal[Option[A]] = toWeakSignal
+
   def toSignal[B >: A](initial: => B): Signal[B] = {
     toSignalWithTry(Success(initial))
   }
