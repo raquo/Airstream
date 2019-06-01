@@ -897,8 +897,8 @@ stream.recoverToTry.collect { case Failure(err) => err } // EventStream[Throwabl
 
 ## Limitations
 
-* Currently Airstream only runs on Scala.js because its primary intended use case is unidirectional dataflow architecture on the frontend. However, its design is very generic, and it is definitely possible to make Airstream work on JVM, but that is complicated by 1) JVM's multithreaded environment, 2) Airstream using JS-specific data structures such as js.Array that do not exist on the JVM, and 3) me having limited time, and no personal need for Airstream on the JVM. Those are solvable.
-* Airstream has no concept of observables "completing". Personally I don't think this is a limitation, but I can see it being viewed as such. If you would like to make a case for this feature, please file an issue on github.
+* Airstream only runs on Scala.js because its primary intended use case is unidirectional dataflow architecture on the frontend. I have no plans to make it run on the JVM. It would require too much of my time and too much compromise, complicating the API to support a completely different environment and use cases. 
+* Airstream has no concept of observables "completing". Personally I don't think this is a limitation, but I can see it being viewed as such. See [Issue #23](https://github.com/raquo/Airstream/issues/23).
 
 
 ## My Related Projects
