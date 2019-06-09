@@ -108,8 +108,8 @@ trait EventStream[+A] extends Observable[A] {
     operator(this)
   }
 
-  def combineWith[AA >: A, B](otherEventStream: EventStream[B]): CombineEventStream2[AA, B, (AA, B)] = {
-    new CombineEventStream2(
+  def combineWith[AA >: A, B](otherEventStream: EventStream[B]): EventStream[(AA, B)] = {
+    new CombineEventStream2[AA, B, (AA, B)](
       parent1 = this,
       parent2 = otherEventStream,
       combinator = CombineObservable.guardedCombinator((_, _))

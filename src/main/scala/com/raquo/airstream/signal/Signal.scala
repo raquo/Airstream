@@ -51,8 +51,8 @@ trait Signal[+A] extends Observable[A] {
     operator(changes).toSignalWithTry(initialOperator(tryNow()))
   }
 
-  def combineWith[AA >: A, B](otherSignal: Signal[B]): CombineSignal2[AA, B, (AA, B)] = {
-    new CombineSignal2(
+  def combineWith[AA >: A, B](otherSignal: Signal[B]): Signal[(AA, B)] = {
+    new CombineSignal2[AA, B, (AA, B)](
       parent1 = this,
       parent2 = otherSignal,
       combinator = CombineObservable.guardedCombinator((_, _))

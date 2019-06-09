@@ -2,6 +2,12 @@
 
 Breaking changes in **bold**.
 
+#### master – TBD
+
+* API: simplify `combineWith` type signature (return EventStream / Signal types instead of more specific subtypes)
+  * **Note: very small chance of breakage:** this will affect you if you relied on the return type of these methods being unnecessarily specific (`CombineSignal2` / `CombineEventStream2`). This is unlikely because these internal types don't offer you any functionality. 
+* New: add `startWith*` aliases for `toSignal*` methods on `EventStream`
+
 #### v0.7 – Apr 2019
 
 * **API: `fromValue`, `fromSeq`, and `fromTry` event streams now require `emitOnce` param**
