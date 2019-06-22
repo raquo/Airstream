@@ -16,25 +16,6 @@ trait EventStream[+A] extends Observable[A] {
     new MapEventStream(this, project, recover = None)
   }
 
-  /** `value` is passed by name, so it will be evaluated on every event.
-    * Use it to sample mutable values (e.g. myInput.ref.value in Laminar).
-    *
-    * See also: [[mapToValue]]
-    *
-    * @param value Note: guarded against exceptions
-    */
-  def mapTo[B](value: => B): EventStream[B] = {
-    new MapEventStream[A, B](parent = this, project = _ => value, recover = None)
-  }
-
-  /** `value` is evaluated only once, when this method is called.
-    *
-    * See also: [[mapTo]]
-    */
-  def mapToValue[B](value: B): EventStream[B] = {
-    new MapEventStream[A, B](parent = this, project = _ => value, recover = None)
-  }
-
   /** @param passes Note: guarded against exceptions */
   def filter(passes: A => Boolean): EventStream[A] = {
     new FilterEventStream(parent = this, passes)
