@@ -17,11 +17,15 @@ class WriteBus[A] extends Observer[A] {
     new EventBusSource(stream, sourceStream, owner)
   }
 
+  def contracomposeWriter[B](operator: EventStream[B] => EventStream[A])(implicit owner: Owner): WriteBus[B] = {
+    val mapBus = new WriteBus[B]
+    addSource(mapBus.stream.compose(operator))(owner)
+    mapBus
+  }
+
   /** Behaves similar to `contramap`, but gives you a WriteBus, not just an Observer */
   def contramapWriter[B](project: B => A)(implicit owner: Owner): WriteBus[B] = {
-    val mapBus = new WriteBus[B]
-    addSource(mapBus.stream.map(project))(owner)
-    mapBus
+    contracomposeWriter[B](_.map(project))(owner)
   }
 
   /** Behaves similar to `filter`, but gives you a WriteBus, not just an Observer */
