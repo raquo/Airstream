@@ -6,11 +6,6 @@ organization := "com.raquo"
 
 scalaVersion := "2.12.8"
 
-// Scala 2.11 does not include Try.fold method which we use heavily.
-// I don't think anyone would want to use Airstream / Laminar with 2.11 anyway.
-// Let's see if anyone complains.
-//crossScalaVersions := Seq("2.11.12", "2.12.6")
-
 homepage := Some(url("https://github.com/raquo/Airstream"))
 
 licenses += ("MIT", url("https://github.com/raquo/Airstream/blob/master/LICENSE.md"))
