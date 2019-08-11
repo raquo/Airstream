@@ -7,6 +7,7 @@ Breaking changes in **bold**.
 * API: Simplify `combineWith` type signature (return EventStream / Signal types instead of more specific subtypes)
   * **Note: very small chance of breakage:** this will affect you if you relied on the return type of these methods being unnecessarily specific (`CombineSignal2` / `CombineEventStream2`). This is unlikely because these internal types don't offer you any functionality. 
 * API: Move `mapTo` and `mapToValue` methods from `EventStream` to `Observable`
+* New: `WriteBus.contracomposeWriter` – thanks, [@vic](https://github.com/vic)!
 * New: Add `startWith*` aliases for `toSignal*` methods on `EventStream`
 
 #### v0.7 – Apr 2019

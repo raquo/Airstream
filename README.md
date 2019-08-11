@@ -347,14 +347,18 @@ EventBus is particularly useful to get a single stream of events from a dynamic 
 
 Typically you don't pass EventBus itself down to child components as it provides both read and write access. Instead, you pass down either the writer or the event stream, depending on what is needed. This security is the reason those are separate instances, by the way.
 
-WriteBus comes with a way to create new writers. Consider this:
+WriteBus comes with a few ways to create new writers. Consider this:
 
 ```scala
 val eventBus = new EventBus[Foo]
-val barWriter: WriteBus[Bar] = eventBus.writer.filterWriter(isGoodFoo).contramapWriter(barToFoo)
+val barWriter: WriteBus[Bar] = eventBus.writer
+  .filterWriter(isGoodFoo)
+  .contramapWriter(barToFoo)
 ```
 
 Now you can send `Bar` events to `barWriter`, and they will appear in `eventBus` processed with `barToFoo` then and filtered by `isGoodFoo`. This is useful when you want to get events from a child component, but the child component does not or should not know what `Foo` is. Generally if you don't need such separation of concerns, you can just `map`/`filter` the stream that's feeding the EventBus instead.
+
+WriteBus also offers a powerful `contracomposeWriter` method, which is like `contramapWriter` but with `compose` rather than `map` as the underlying transformation.
 
 
 #### Var
