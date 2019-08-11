@@ -44,14 +44,32 @@ object AirstreamError {
   /** Note: In IE, console is not defined unless the developer tools console is actually open.
     *       Some test environments might be lacking the console as well (e.g. node.js without jsdom).
     */
-  val consoleErrorCallback: Throwable => Unit = err => try {
-    dom.console.error(err.getMessage + "\n" + err.getStackTrace.mkString("\n"))
-  } catch {
-    case _: Throwable => ()
+  val consoleErrorCallback: Throwable => Unit = { err =>
+    try {
+      dom.console.error(err.getMessage + "\n" + err.getStackTrace.mkString("\n"))
+    } catch {
+      case _: Throwable => ()
+    }
   }
 
   // @TODO[API] Due to browser optimizations, function argument (err) might not be available in the console if it's not used in code. See if we run into this problem in practice.
-  val debuggerErrorCallback: Throwable => Unit = _ => js.special.debugger()
+  val debuggerErrorCallback: Throwable => Unit = { _ =>
+    js.special.debugger()
+  }
+
+  /** Note: this callback is allowed to throw, it is treated specially in
+    * `sendUnhandledError` such that other callbacks might not run after it.
+    * It's useful to fail tests in case of unhandled errors.
+    */
+  val unsafeRethrowErrorCallback: Throwable => Unit = { err =>
+    dom.console.warn("Using unsafe rethrow error callback. Note: other registered error callbacks might not run. Use with caution.")
+    throw err
+  }
+
+  /** The safe way to rethrow an unhandled error */
+  val delayedRethrowErrorCallback: Throwable => Unit = { err =>
+    js.timers.setTimeout(0)(throw err)
+  }
 
   def registerUnhandledErrorCallback(fn: Throwable => Unit): Unit = {
     unhandledErrorCallbacks.append(fn)
@@ -71,10 +89,12 @@ object AirstreamError {
     unhandledErrorCallbacks.foreach(fn => try {
       fn(err)
     } catch {
-      case err: Throwable => {
+      case err: Throwable if fn == unsafeRethrowErrorCallback =>
+        // Note: this does not let other error callbacks to execute
+        throw err
+      case err: Throwable =>
         dom.console.warn("Error processing an unhandled error callback:")
         js.timers.setTimeout(0)(throw err)
-      }
     })
   }
 
