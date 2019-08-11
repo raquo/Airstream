@@ -174,7 +174,7 @@ Signal is a reactive variable that represents a time-varying value, or an accumu
 
 Similar to EventStream, Signal is **lazy**, so everything in the [Laziness](#laziness) section applies to Signals as well.
 
-Unlike EventStream, a Signal always has a current value. For instance, you could create a Signal by calling `val signal = eventStream.toSignal(initialValue)`. In that example, `signal`'s current value would first equal to `initialValue`, and then any time `eventStream` emits a value, `signal`'s current value would be updated to the emitted value, and then `signal` would emit this new current value.
+Unlike EventStream, a Signal always has a current value. For instance, you could create a Signal by calling `val signal = eventStream.startWith(initialValue)`. In that example, `signal`'s current value would first equal to `initialValue`, and then any time `eventStream` emits a value, `signal`'s current value would be updated to the emitted value, and then `signal` would emit this new current value.
 
 However, all of that would only happen if `signal` had one or more observers (because of [Laziness](#laziness)). If `signal` had no observers, its current value would be stuck at the last current value it saved while it had observers, or at `initialValue` if it _never_ had observers.
 
@@ -186,7 +186,7 @@ Note: Signal's initial value is evaluated lazily. For example:
 
 ```scala
 val fooStream: EventStream[Foo] = ???
-val fooSignal: Signal[Foo] = fooStream.toSignal(myFoo)
+val fooSignal: Signal[Foo] = fooStream.startWith(myFoo)
 val barSignal: Signal[Bar] = fooSignal.map(fooToBar)
 ```
 
@@ -207,11 +207,11 @@ If you want to get a Signal's current value without the complications of samplin
 
 ### Relationship between EventStream and Signal
 
-Signals and EventStreams are distinct concepts, but both are Observables.
+Signals and EventStreams are distinct concepts with different use cases as described above, but both are Observables.
 
-You can `fold(initialValue)(fn)` an EventStream into a Signal, or make a Signal directly with `stream.toSignal(initialValue)`, or `stream.toWeakSignal` (which initially starts out with `None`, and has events wrapped in `Some`).
+You can `fold(initialValue)(fn)` an EventStream into a Signal, or make a Signal directly with `stream.startWith(initialValue)`, or `stream.startWithNone` (which creates a "weak" signal, one that initially starts out with `None`, and has events wrapped in `Some`).
 
-You can get an EventStream of `changes` from a Signal – this stream will re-emit whatever the parent signal emits (subject to laziness of the stream), minus the initial value.
+You can get an EventStream of changes from a Signal – `signal.changes` – this stream will re-emit whatever the parent signal emits (subject to laziness of the stream), minus the Signal's initial value.
 
 
 ### Observer
