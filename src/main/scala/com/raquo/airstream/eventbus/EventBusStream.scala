@@ -39,7 +39,7 @@ class EventBusStream[A](writeBus: WriteBus[A]) extends EventStream[A] with Inter
     // Note: We're not checking isStarted here because if this stream wasn't started, it wouldn't have been
     // fired as an internal observer. WriteBus calls this method manually, so it checks .isStarted on its own.
     // @TODO ^^^^ We should document this contract in InternalObserver
-    //println("NEW TRX from EventBusStream")
+    // println("NEW TRX from EventBusStream: " + nextValue.toString)
     new Transaction(fireValue(nextValue, _))
   }
 
