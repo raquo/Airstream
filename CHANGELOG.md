@@ -2,6 +2,10 @@
 
 Breaking changes in **bold**.
 
+#### v0.7.2 – Nov 2019
+
+* Build: Scala 2.13 Support – thanks, [@megri](https://github.com/megri)!
+
 #### v0.7.1 – Aug 2019
 
 * API: Simplify `combineWith` type signature (return EventStream / Signal types instead of more specific subtypes)
