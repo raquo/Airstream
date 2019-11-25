@@ -4,7 +4,9 @@ normalizedName := "airstream"
 
 organization := "com.raquo"
 
-crossScalaVersions := Seq("2.13.0", "2.12.9")
+scalaVersion := "2.13.1"
+
+crossScalaVersions := Seq("2.12.9", "2.13.1")
 
 homepage := Some(url("https://github.com/raquo/Airstream"))
 

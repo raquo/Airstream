@@ -32,7 +32,7 @@ object Splittable {
     override def map[A, B](inputs: immutable.Seq[A], project: A => B): immutable.Seq[B] = inputs.map(project)
   }
 
-  implicit object SeqSplittable extends Splittable[Seq] {
-    override def map[A, B](inputs: Seq[A], project: A => B): Seq[B] = inputs.map(project)
+  implicit object SeqSplittable extends Splittable[collection.Seq] {
+    override def map[A, B](inputs: collection.Seq[A], project: A => B): collection.Seq[B] = inputs.map(project)
   }
 }
