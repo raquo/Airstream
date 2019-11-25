@@ -6,7 +6,7 @@ organization := "com.raquo"
 
 scalaVersion := "2.13.1"
 
-crossScalaVersions := Seq("2.12.9", "2.13.1")
+crossScalaVersions := Seq("2.12.10", "2.13.1")
 
 homepage := Some(url("https://github.com/raquo/Airstream"))
 
