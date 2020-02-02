@@ -171,9 +171,14 @@ trait EventStream[+A] extends Observable[A] {
 
 object EventStream {
 
+  /** Event stream that never emits anything */
+  val empty: EventStream[Nothing] = {
+    new SeqEventStream[Nothing](events = Nil, emitOnce = true)
+  }
+
   /** @param emitOnce if true, the event will be emitted at most one time.
     *                 If false, the event will be emitted every time the stream is started. */
-  @deprecated("Use fromValue (see docs)", "0.4") // @TODO Are we sure we want to deprecate this?
+  @deprecated("Use `fromValue` or `empty` (see docs)", "0.4") // @TODO Are we sure we want to deprecate this?
   def fromSeq[A](events: Seq[A], emitOnce: Boolean): EventStream[A] = {
     new SeqEventStream[A](events.map(Success(_)), emitOnce)
   }

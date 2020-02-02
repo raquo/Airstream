@@ -1,14 +1,14 @@
 package com.raquo.airstream.eventstream
 
+import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Observer
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
-import org.scalatest.{FunSpec, Matchers}
 
 import scala.collection.mutable
 
 /** See also – diamond test case for this in GlitchSpec */
-class SampleCombineEventStream2Spec extends FunSpec with Matchers {
+class SampleCombineEventStream2Spec extends UnitSpec {
 
   it("gets current value of Signal") {
 

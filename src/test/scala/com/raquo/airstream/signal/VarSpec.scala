@@ -1,13 +1,14 @@
 package com.raquo.airstream.signal
 
+import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.{AirstreamError, Observer}
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
-import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
+import org.scalatest.BeforeAndAfter
 
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
-class VarSpec extends FunSpec with Matchers with BeforeAndAfter {
+class VarSpec extends UnitSpec with BeforeAndAfter {
 
   private val errorEffects = mutable.Buffer[Effect[Throwable]]()
 

@@ -1,12 +1,12 @@
 package com.raquo.airstream.util
 
+import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, TestableOwner}
-import org.scalatest.{FunSpec, Matchers}
 
 import scala.collection.mutable
 
-class RefSpec extends FunSpec with Matchers {
+class RefSpec extends UnitSpec {
 
   case class Foo(id: Int)
   case class Bar(id: Int)

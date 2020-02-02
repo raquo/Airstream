@@ -6,9 +6,9 @@ import com.raquo.airstream.features.InternalNextErrorObserver
 
 import scala.scalajs.js
 
-class EventBusStream[A](writeBus: WriteBus[A]) extends EventStream[A] with InternalNextErrorObserver[A] {
+class EventBusStream[A] private[eventbus] (writeBus: WriteBus[A]) extends EventStream[A] with InternalNextErrorObserver[A] {
 
-  private[eventbus] val sources: js.Array[EventBusSource[A]] = js.Array()
+  private[eventbus] val sourceStreams: js.Array[EventStream[A]] = js.Array()
 
   /** Made more public to allow usage from WriteBus */
   override protected[eventbus] def isStarted: Boolean = super.isStarted
@@ -16,31 +16,44 @@ class EventBusStream[A](writeBus: WriteBus[A]) extends EventStream[A] with Inter
   // @TODO document why. Basically event bus breaks the "static DAG" requirement for topo ranking
   override protected[airstream] val topoRank: Int = 1
 
-  @inline private[eventbus] def addSource(source: EventBusSource[A]): Unit = {
-    sources.push(source)
+  @inline private[eventbus] def addSource(sourceStream: EventStream[A]): Unit = {
+    sourceStreams.push(sourceStream)
     if (isStarted) {
-      source.sourceStream.addInternalObserver(this)
+      sourceStream.addInternalObserver(this)
     }
   }
 
-  private[eventbus] def removeSource(source: EventBusSource[A]): Unit = {
-    val index = sources.indexOf(source)
+  private[eventbus] def removeSource(sourceStream: EventStream[A]): Unit = {
+    val index = sourceStreams.indexOf(sourceStream)
     if (index != -1) {
-      sources.splice(index, deleteCount = 1)
+      sourceStreams.splice(index, deleteCount = 1)
       if (isStarted) {
-        Transaction.removeInternalObserver(source.sourceStream, observer = this)
+        Transaction.removeInternalObserver(sourceStream, observer = this)
       }
     }
   }
 
-  override protected[airstream] def onNext(nextValue: A, transaction: Transaction): Unit = {
+  /** @param ignoredTransaction normally EventBus emits all events in a new transaction, so it ignores whatever is provided. */
+  override protected[airstream] def onNext(nextValue: A, ignoredTransaction: Transaction): Unit = {
     //dom.console.log(s">>>>WBS.onNext($nextValue): isStarted=$isStarted")
     //dom.console.log(sources)
+
     // Note: We're not checking isStarted here because if this stream wasn't started, it wouldn't have been
     // fired as an internal observer. WriteBus calls this method manually, so it checks .isStarted on its own.
     // @TODO ^^^^ We should document this contract in InternalObserver
+
     // println("NEW TRX from EventBusStream: " + nextValue.toString)
     new Transaction(fireValue(nextValue, _))
+  }
+
+  /** Helper method to support batch emit using `WriteBus.emit` / `WriteBus.emitTry` */
+  private[eventbus] def onNextWithSharedTransaction(nextValue: A, sharedTransaction: Transaction): Unit = {
+    fireValue(nextValue, sharedTransaction)
+  }
+
+  /** Helper method to support batch emit using `WriteBus.emit` / `WriteBus.emitTry` */
+  private[eventbus] def onErrorWithSharedTransaction(nextError: Throwable, sharedTransaction: Transaction): Unit = {
+    fireError(nextError, sharedTransaction)
   }
 
   override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
@@ -48,12 +61,16 @@ class EventBusStream[A](writeBus: WriteBus[A]) extends EventStream[A] with Inter
   }
 
   override protected[this] def onStart(): Unit = {
-    sources.foreach(_.sourceStream.addInternalObserver(this))
+    sourceStreams.foreach(_.addInternalObserver(this))
   }
 
   override protected[this] def onStop(): Unit = {
     // dom.console.log("EventBusStream STOPPED!", this.toString)
-    // @TODO[Performance] Doing this in the middle of a transaction would cause source.length transactions to be created – not good
-    sources.foreach(source => Transaction.removeInternalObserver(source.sourceStream, observer = this))
+    sourceStreams.foreach(sourceStream => Transaction.removeInternalObserver(sourceStream, observer = this))
   }
+}
+
+object EventBusStream {
+
+
 }

@@ -1,20 +1,26 @@
 package com.raquo.airstream.eventbus
 
-import com.raquo.airstream.core.Observer
+import com.raquo.airstream.core.{Observer, Transaction}
 import com.raquo.airstream.eventstream.EventStream
-import com.raquo.airstream.ownership.Owner
+import com.raquo.airstream.ownership.{Owner, Subscription}
 
 import scala.util.Try
 
 class WriteBus[A] extends Observer[A] {
 
+  /** Hidden here because the public interface of WriteBus is all about writing
+    * rather than reading, but exposed in [[EventBus]]
+    */
   private[eventbus] val stream: EventBusStream[A] = new EventBusStream(this)
 
   /** Note: this source will be removed when the `owner` you provide says so.
-    * To remove this source manually, call .removeSource() on the resulting WriteBusSource.
+    * To remove this source manually, call .kill() on the resulting Subscription.
     */
-  def addSource(sourceStream: EventStream[A])(implicit owner: Owner): EventBusSource[A] = {
-    new EventBusSource(stream, sourceStream, owner)
+  def addSource(sourceStream: EventStream[A])(implicit owner: Owner): Subscription = {
+    stream.addSource(sourceStream)
+    new Subscription(owner, cleanup = () => {
+      stream.removeSource(sourceStream)
+    })
   }
 
   def contracomposeWriter[B](operator: EventStream[B] => EventStream[A])(implicit owner: Owner): WriteBus[B] = {
@@ -38,7 +44,7 @@ class WriteBus[A] extends Observer[A] {
   override def onNext(nextValue: A): Unit = {
     if (stream.isStarted) { // important check
       // @TODO[Integrity] We rely on the knowledge that EventBusStream discards the transaction it's given. Laaaame
-      stream.onNext(nextValue, transaction = null)
+      stream.onNext(nextValue, ignoredTransaction = null)
     }
     // else {
     //   println(">>>> WriteBus.onNext called, but stream is not started!")
@@ -54,5 +60,53 @@ class WriteBus[A] extends Observer[A] {
 
   override final def onTry(nextValue: Try[A]): Unit = {
     nextValue.fold(onError, onNext)
+  }
+
+  private[eventbus] def onNextWithSharedTransaction(nextValue: A, sharedTransaction: Transaction): Unit = {
+    if (stream.isStarted) {
+      stream.onNextWithSharedTransaction(nextValue, sharedTransaction)
+    }
+  }
+
+  private[eventbus] def onErrorWithSharedTransaction(nextError: Throwable, sharedTransaction: Transaction): Unit = {
+    if (stream.isStarted) {
+      stream.onErrorWithSharedTransaction(nextError, sharedTransaction)
+    }
+  }
+
+  private[eventbus] def onTryWithSharedTransaction(nextValue: Try[A], sharedTransaction: Transaction): Unit = {
+    nextValue.fold(
+      onErrorWithSharedTransaction(_, sharedTransaction),
+      onNextWithSharedTransaction(_, sharedTransaction)
+    )
+  }
+}
+
+object WriteBus {
+
+  type BusTuple[A] = (WriteBus[A], A)
+
+  type BusTryTuple[A] = (WriteBus[A], Try[A])
+
+  /** Emit events into several WriteBus-es at once (in the same transaction)
+    * Example usage: emitTry(writeBus1 -> value1, writeBus2 -> value2)
+    */
+  def emit(values: BusTuple[_]*): Unit = {
+    new Transaction(trx => values.foreach(emitValue(_, trx)))
+  }
+
+  /** Emit events into several WriteBus-es at once (in the same transaction)
+    * Example usage: emitTry(writeBus1 -> Success(value1), writeBus2 -> Failure(error2))
+    */
+  def emitTry(values: BusTryTuple[_]*): Unit = {
+    new Transaction(trx => values.foreach(emitTryValue(_, trx)))
+  }
+
+  @inline private def emitValue[A](tuple: BusTuple[A], transaction: Transaction): Unit = {
+    tuple._1.onNextWithSharedTransaction(tuple._2, transaction)
+  }
+
+  @inline private def emitTryValue[A](tuple: BusTryTuple[A], transaction: Transaction): Unit = {
+    tuple._1.onTryWithSharedTransaction(tuple._2, transaction)
   }
 }

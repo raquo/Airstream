@@ -2,42 +2,49 @@ package com.raquo.airstream.ownership
 
 import scala.scalajs.js
 
-/** Owner decides when to kill its possessions ([[Owned]]-s).
-  * - Ownership is defined at creation of the possession (the [[Owned]] instance)
+/** Owner decides when to kill its subscriptions.
+  * - Ownership is defined at creation of the [[Subscription]]
   * - Ownership is non-transferable
-  * - There is no way to unkill a possession
-  * - In other words: Owner can only own a possession once,
-  *   and a possession can only ever be owned by its initial owner
+  * - There is no way to unkill a Subscription
+  * - In other words: Owner can only own a Subscription once,
+  *   and a Subscription can only ever be owned by its initial owner
   * - Owner can still be used after calling killPossessions, but the canonical
   *   use case is for the Owner to kill its possessions when the owner itself
   *   is discarded (e.g. a UI component is unmounted).
+  *
+  * If you need something more flexible, use [[DynamicOwner]],
+  * or build your own custom logic on top of this in a similar manner.
   */
 trait Owner {
 
-  /** Note: This is enforced to be a set outside the type system. #performance */
-  protected[this] val possessions: js.Array[Owned] = js.Array()
+  /** Note: This is enforced to be a sorted set outside the type system. #performance */
+  protected[this] val subscriptions: js.Array[Subscription] = js.Array()
 
-  protected[this] def killPossessions(): Unit = {
-    possessions.foreach(_.onKilledByOwner())
-    possessions.clear()
+  protected[this] def killSubscriptions(): Unit = {
+    subscriptions.foreach(_.onKilledByOwner())
+    subscriptions.clear()
   }
+
+  // @TODO[API] This method only exists because I can't figure out how to better deal with permissions.
+  @inline private[ownership] def _killSubscriptions(): Unit = killSubscriptions()
 
   /** This method will be called when this [[Owner]] has just started owning this resource.
     * You can override it to add custom behaviour.
     * Note: You can rely on this base method being empty.
     */
-  protected[this] def onOwned(owned: Owned): Unit = ()
+  protected[this] def onOwned(subscription: Subscription): Unit = ()
 
-  /** Some possessions can be killed externally, e.g. `WriteBusSource.` */
-  def onKilledExternally(owned: Owned): Unit = {
-    val index = possessions.indexOf(owned)
+  def onKilledExternally(subscription: Subscription): Unit = {
+    val index = subscriptions.indexOf(subscription)
     if (index != -1) {
-      possessions.splice(index, deleteCount = 1)
+      subscriptions.splice(index, deleteCount = 1)
+    } else {
+      throw new Exception("Can not remove Subscription from Owner: subscription not found.")
     }
   }
 
-  private[ownership] def own(owned: Owned): Unit = {
-    possessions.push(owned)
-    onOwned(owned)
+  private[ownership] def own(subscription: Subscription): Unit = {
+    subscriptions.push(subscription)
+    onOwned(subscription)
   }
 }

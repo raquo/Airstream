@@ -1,13 +1,13 @@
 package com.raquo.airstream.eventstream
 
+import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.ownership.Owner
-import org.scalatest.{FunSpec, Matchers}
 
 import scala.collection.mutable
 
-class EventStreamSpec extends FunSpec with Matchers {
+class EventStreamSpec extends UnitSpec {
 
   it("filter") {
 

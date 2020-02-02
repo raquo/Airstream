@@ -1,14 +1,14 @@
 package com.raquo.airstream.eventstream
 
+import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Observer
 import com.raquo.airstream.eventbus.EventBus
-import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
+import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.ownership.Owner
-import org.scalatest.{FunSpec, Matchers}
 
 import scala.collection.mutable
 
-class EventBusSpec extends FunSpec with Matchers {
+class EventBusSpec extends UnitSpec {
 
   it("writer.onNext fires observers") {
 
@@ -122,7 +122,7 @@ class EventBusSpec extends FunSpec with Matchers {
 
     // --
 
-    owner2.killPossessions()
+    owner2.killSubscriptions()
 
     bus1.writer.onNext(5)
     bus2.writer.onNext(5)

@@ -1,13 +1,13 @@
 package com.raquo.airstream.signal
 
+import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Observer
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
-import org.scalatest.{FunSpec, Matchers}
 
 import scala.collection.mutable
 
-class FoldSignalSpec extends FunSpec with Matchers {
+class FoldSignalSpec extends UnitSpec {
 
   // @TODO[Test] Verify Signal.fold and State.fold as well
 

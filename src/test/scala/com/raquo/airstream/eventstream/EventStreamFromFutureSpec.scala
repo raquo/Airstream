@@ -1,6 +1,6 @@
 package com.raquo.airstream.eventstream
 
-import com.raquo.airstream.AsyncSpec
+import com.raquo.airstream.AsyncUnitSpec
 import com.raquo.airstream.core.Observer
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import org.scalatest.{Assertion, BeforeAndAfter}
@@ -8,7 +8,7 @@ import org.scalatest.{Assertion, BeforeAndAfter}
 import scala.collection.mutable
 import scala.concurrent.Promise
 
-class EventStreamFromFutureSpec extends AsyncSpec with BeforeAndAfter {
+class EventStreamFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
 
   implicit val owner = new TestableOwner
 
@@ -32,7 +32,7 @@ class EventStreamFromFutureSpec extends AsyncSpec with BeforeAndAfter {
 
 
   before {
-    owner.killPossessions()
+    owner.killSubscriptions()
     clearLogs()
   }
 

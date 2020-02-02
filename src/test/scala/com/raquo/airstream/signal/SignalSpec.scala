@@ -1,14 +1,14 @@
 package com.raquo.airstream.signal
 
+import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Observer
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
-import org.scalatest.{FunSpec, Matchers}
 
 import scala.collection.mutable
 import scala.util.Success
 
-class SignalSpec extends FunSpec with Matchers {
+class SignalSpec extends UnitSpec {
 
   it("EventStream.toSignal creates a properly wired Signal") {
 

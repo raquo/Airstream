@@ -1,6 +1,6 @@
 package com.raquo.airstream.signal
 
-import com.raquo.airstream.AsyncSpec
+import com.raquo.airstream.AsyncUnitSpec
 import com.raquo.airstream.core.Observer
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.features.FlattenStrategy.{ConcurrentFutureStrategy, OverwriteFutureStrategy, SwitchFutureStrategy}
@@ -10,7 +10,7 @@ import org.scalatest.Assertion
 import scala.collection.mutable
 import scala.concurrent.{Future, Promise}
 
-class SignalFlattenFutureSpec extends AsyncSpec {
+class SignalFlattenFutureSpec extends AsyncUnitSpec {
 
   describe("Signal.flatten(SwitchFutureStrategy)") {
 
