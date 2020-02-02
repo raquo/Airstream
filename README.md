@@ -1,6 +1,7 @@
 # Airstream
 
-[![Build Status](https://travis-ci.org/raquo/Airstream.svg?branch=master)](https://travis-ci.org/raquo/Airstream)
+[![Build Status](https://circleci.com/gh/raquo/Airstream.svg?style=svg)](https://circleci.com/gh/raquo/Airstream)
+
 [![Join the chat at https://gitter.im/Laminar_/Lobby](https://badges.gitter.im/Laminar_/Lobby.svg)](https://gitter.im/Laminar_/Lobby)
 ![Maven Central](https://img.shields.io/maven-central/v/com.raquo/airstream_sjs0.6_2.13.svg)
 
