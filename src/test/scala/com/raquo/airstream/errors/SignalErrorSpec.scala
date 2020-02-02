@@ -1,16 +1,17 @@
 package com.raquo.airstream.errors
 
+import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.{AirstreamError, Observer}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import com.raquo.airstream.signal.Var
-import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
+import org.scalatest.BeforeAndAfter
 
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
-class SignalErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
+class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
 
   implicit val owner: TestableOwner = new TestableOwner
 
@@ -38,7 +39,7 @@ class SignalErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
     calculations.clear()
     effects.clear()
     errorEffects.clear()
-    owner.killPossessions()
+    owner.killSubscriptions()
   }
 
   it("initial value Success()") {

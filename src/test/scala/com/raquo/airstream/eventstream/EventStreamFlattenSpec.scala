@@ -1,13 +1,13 @@
 package com.raquo.airstream.eventstream
 
-import com.raquo.airstream.AsyncSpec
+import com.raquo.airstream.AsyncUnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.ownership.Owner
 
 import scala.collection.mutable
 
-class EventStreamFlattenSpec extends AsyncSpec {
+class EventStreamFlattenSpec extends AsyncUnitSpec {
 
   it("sync map-flatten works") {
 

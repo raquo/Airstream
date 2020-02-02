@@ -1,14 +1,14 @@
 package com.raquo.airstream.core
 
+import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
-import org.scalatest.{FunSpec, Matchers}
 
 import scala.collection.mutable
 
 /** A collection of tests that ensure that there are no FRP glitches */
-class GlitchSpec extends FunSpec with Matchers {
+class GlitchSpec extends UnitSpec {
 
   it("diamond case has no glitch (combineWith)") {
 

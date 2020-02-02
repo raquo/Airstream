@@ -3,7 +3,7 @@ package com.raquo.airstream.core
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.features.{FlattenStrategy, Splittable}
 import com.raquo.airstream.features.FlattenStrategy.{SwitchSignalStrategy, SwitchStreamStrategy}
-import com.raquo.airstream.ownership.Owner
+import com.raquo.airstream.ownership.{Owner, Subscription}
 import com.raquo.airstream.signal.Signal
 import org.scalajs.dom
 
@@ -115,7 +115,7 @@ trait Observable[+A] {
 
   /** Subscribe an external observer to this observable */
   def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription = {
-    val subscription = Subscription(observer, this, owner)
+    val subscription = new Subscription(owner, () => Transaction.removeExternalObserver(this, observer))
     externalObservers.push(observer)
     onAddedExternalObserver(observer)
     maybeStart()

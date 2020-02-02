@@ -2,6 +2,21 @@
 
 Breaking changes in **bold**.
 
+#### v0.8 – TBD
+
+* New: Dynamic Ownership
+  * Flagship feature of this release. Dynamic ownership makes it easier to build complex Laminar-style ownership lifetimes with the ability to re-activate subscriptions after they were deactivated. If you're building a DOM manipulation library this will be very handy. See how Laminar v0.8 uses this feature for inspiration.
+  * This feature builds _on top of_ regular Ownership so it's not a breaking change in itself, except for the incidental breaking changes listed below.
+* **API: Merge `Owned` into `Subscription`**
+  * **Several API changes including new `cleanup` param instead of an `onKilled` method (yay composition) – see how `EventBusSource` uses it. Also move`Subscription` into `ownership` package**
+  * `Subscription` constructor is now public
+  * **Migration:** Replace usages of `Owned` with `Subscription` and adapt to the slightly different API.
+* **API: Eliminate `EventBusSource`, replace by `Subscription`** 
+* **API: Privatize EventBusStream constructor**
+* **API: Trying to kill an already dead Subscription now throws an exception**
+* New: `WriteBus.emit` and `WriteBus.emitTry` methods to send events to multiple WriteBus-es in a single transaction (essentially, `Var.set` but for streams)
+* New: `EventStream.empty`, a stream that never emits any events
+
 #### v0.7.2 – Nov 2019
 
 * Build: Scala 2.13 Support – thanks, [@megri](https://github.com/megri)!

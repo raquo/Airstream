@@ -1,14 +1,13 @@
 package com.raquo.airstream.eventstream
 
+import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Observer
-import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import com.raquo.airstream.signal.Var
-import org.scalatest.{FunSpec, Matchers}
 
 import scala.collection.mutable
 
-class SyncDelayEventStreamSpec extends FunSpec with Matchers {
+class SyncDelayEventStreamSpec extends UnitSpec {
 
   it("emits after designated stream") {
 

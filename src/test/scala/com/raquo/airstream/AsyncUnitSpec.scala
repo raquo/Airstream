@@ -1,12 +1,13 @@
 package com.raquo.airstream
 
-import org.scalatest.{AsyncFunSpec, Matchers}
+import org.scalatest.funspec.AsyncFunSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.scalajs.js
 import scala.util.Try
 
-class AsyncSpec extends AsyncFunSpec with Matchers {
+class AsyncUnitSpec extends AsyncFunSpec with Matchers {
 
   implicit override def executionContext: ExecutionContext = scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 

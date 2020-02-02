@@ -1,16 +1,16 @@
 package com.raquo.airstream.eventstream
 
+import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Observable.MetaObservable
 import com.raquo.airstream.core.Observer
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.features.FlattenStrategy.SwitchStreamStrategy
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import com.raquo.airstream.signal.Var
-import org.scalatest.{FunSpec, Matchers}
 
 import scala.collection.mutable
 
-class SwitchEventStreamSpec extends FunSpec with Matchers {
+class SwitchEventStreamSpec extends UnitSpec {
 
   it("EventStream: mirrors last emitted stream, but only if subscribed") {
 

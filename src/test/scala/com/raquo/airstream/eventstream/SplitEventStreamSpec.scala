@@ -1,13 +1,13 @@
 package com.raquo.airstream.eventstream
 
+import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.signal.Var
-import org.scalatest.{FunSpec, Matchers}
 
 import scala.collection.mutable
 
-class SplitEventStreamSpec extends FunSpec with Matchers {
+class SplitEventStreamSpec extends UnitSpec {
 
   case class Foo(id: String, version: Int)
 

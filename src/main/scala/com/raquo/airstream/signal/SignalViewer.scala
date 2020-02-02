@@ -1,7 +1,7 @@
 package com.raquo.airstream.signal
 
-import com.raquo.airstream.core.{Observer, Subscription}
-import com.raquo.airstream.ownership.Owner
+import com.raquo.airstream.core.Observer
+import com.raquo.airstream.ownership.{Owner, Subscription}
 
 // @TODO[Naming] SignalViewer now *IS* a Signal itself, so it's not a viewer. It's an... ObservedSignal? Or something?
 

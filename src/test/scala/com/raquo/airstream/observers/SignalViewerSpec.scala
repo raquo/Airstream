@@ -1,13 +1,13 @@
 package com.raquo.airstream.observers
 
+import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, TestableOwner}
-import org.scalatest.{FunSpec, Matchers}
 
 import scala.collection.mutable
 import scala.util.Success
 
-class SignalViewerSpec extends FunSpec with Matchers {
+class SignalViewerSpec extends UnitSpec {
 
   it("SignalViewer") {
 

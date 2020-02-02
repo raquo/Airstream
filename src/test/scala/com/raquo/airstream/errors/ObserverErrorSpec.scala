@@ -1,15 +1,16 @@
 package com.raquo.airstream.errors
 
+import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.AirstreamError.{ObserverError, ObserverErrorHandlingError}
 import com.raquo.airstream.core.{AirstreamError, Observer}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
-import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
+import org.scalatest.BeforeAndAfter
 
 import scala.collection.mutable
 
 
-class ObserverErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
+class ObserverErrorSpec extends UnitSpec with BeforeAndAfter {
 
   implicit val owner: TestableOwner = new TestableOwner
 
@@ -39,7 +40,7 @@ class ObserverErrorSpec extends FunSpec with Matchers with BeforeAndAfter {
     calculations.clear()
     effects.clear()
     errorEffects.clear()
-    owner.killPossessions()
+    owner.killSubscriptions()
   }
 
   it("observer errors do not affect other observers") {

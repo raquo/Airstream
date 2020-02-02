@@ -1,13 +1,13 @@
 package com.raquo.airstream.signal
 
+import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Observable.MetaObservable
 import com.raquo.airstream.core.Observer
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
-import org.scalatest.{FunSpec, Matchers}
 
 import scala.collection.mutable
 
-class SwitchSignalSpec extends FunSpec with Matchers {
+class SwitchSignalSpec extends UnitSpec {
 
   it("mirrors last emitted signal, but only if subscribed") {
 
