@@ -1,5 +1,9 @@
+os: linux
+
+node_js:
+  - 12
+
 language: scala
-sudo: false
 
 jdk:
   - oraclejdk11

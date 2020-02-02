@@ -88,7 +88,7 @@ class DynamicOwner {
         subscription.onDeactivate()
       }
     } else {
-      throw new Exception("Can not remove DynamicSubscription from DynamicOwner: subscription not found.")
+      throw new Exception("Can not remove DynamicSubscription from DynamicOwner: subscription not found. Did you already kill it?")
     }
   }
 }
