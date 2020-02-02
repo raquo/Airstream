@@ -25,7 +25,7 @@ useYarn := true
 
 requireJsDomEnv in Test := true
 
-// parallelExecution in Test := false
+parallelExecution in Test := false
 
 scalaJSUseMainModuleInitializer := true
 
