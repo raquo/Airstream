@@ -279,21 +279,24 @@ Regular Subscription-s can never recover from being `kill()`-ed, whereas Dynamic
 ```scala
 val stream: EventStream[Int] = ???
 val observer: Observer[Int] = ???
+ 
 val dynOwner = new DynamicOwner
+ 
 val dynSub = new DynamicSubscription(
   dynOwner,
   activate = (owner: Owner) => stream.addObserver(observer)(owner)
 )
-
+// val dynSub = dynOwner.subscribe(stream.addObserver(observer)(_)) // same but more concise
+ 
 // Run dynSub's activate method and save the resulting non-dynamic Subscription
 dynOwner.activate()
-
+ 
 // Kill the regular Subscription that we saved 
 dynOwner.deactivate()
-
+ 
 // Run dynSub's activate method again, obtaining a new Subscription
 dynOwner.activate()
-
+ 
 // Kill the new Subscription that we saved 
 dynOwner.deactivate()
 ```

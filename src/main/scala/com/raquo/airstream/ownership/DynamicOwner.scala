@@ -59,17 +59,17 @@ class DynamicOwner {
   // @TODO[API] This method is experimental. Not sure if good idea. Think about memory management and stuff
   /** Add a dependent dynamic owner as a subscription.
     * It will be activated and deactivated at the same time as this dynamic owner */
-  def addChildDynamicOwner(
-    childOwner: DynamicOwner
-  ): DynamicSubscription = {
-    new DynamicSubscription(this, owner => {
-      childOwner.activate()
-      new Subscription(
-        owner,
-        cleanup = () => childOwner.deactivate()
-      )
-    })
-  }
+//  def addChildDynamicOwner(
+//    childOwner: DynamicOwner
+//  ): DynamicSubscription = {
+//    new DynamicSubscription(this, owner => {
+//      childOwner.activate()
+//      new Subscription(
+//        owner,
+//        cleanup = () => childOwner.deactivate()
+//      )
+//    })
+//  }
 
   @inline def subscribe(activate: Owner => Subscription): DynamicSubscription = {
     new DynamicSubscription(this, activate)
