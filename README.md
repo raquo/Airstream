@@ -286,7 +286,6 @@ val dynSub = new DynamicSubscription(
   dynOwner,
   activate = (owner: Owner) => stream.addObserver(observer)(owner)
 )
-// val dynSub = dynOwner.subscribe(stream.addObserver(observer)(_)) // same but more concise
  
 // Run dynSub's activate method and save the resulting non-dynamic Subscription
 dynOwner.activate()
@@ -318,6 +317,24 @@ I created Dynamic Ownership specifically to solve this long standing Laminar [me
 Laminar v0.8 had to fix this by creating `Subscription`-s every time the element is mounted, and killing them when the element was unmounted. Long story short, Dynamic Ownership is exactly this, slightly generalized for wider use.
 
 There is really nothing special in Dynamic Ownership memory management. It's just a helper to create and destroy subscriptions repeatedly. In practice DynamicSubscription's activate method generally contains the same references that `Subscription`'s cleanup method would, so it's all the same considerations as before.
+
+##### Transferable Subscription
+
+What, a helper for subscription helpers? Yes, indeed. This one behaves like a `DynamicSubscription` that lets you transfer it from one active `DynamicOwner` to another active `DynamicOwner` without deactivating and re-activating the subscription.
+
+The API is simple:
+
+```scala
+class TransferableSubscription(
+  activate: () => Unit,
+  deactivate: () => Unit
+) { 
+  def setOwner(nextOwner: DynamicOwner): Unit
+  def clearOwner(): Unit
+}
+```
+
+Note that you don't get access to `Owner` in activate. This is the tradeoff required to achieve this flexibility safely. `TransferableSubscription` is useful in very specific cases when you only care about continuity of active ownership, such as when moving an element from one mounted parent to another mounted parent in Laminar (you wouldn't expect Unmount / Mount events to fire in this case).
 
 
 

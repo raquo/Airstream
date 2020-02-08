@@ -1,8 +1,5 @@
 package com.raquo.airstream.ownership
 
-import com.raquo.airstream.core.{Observable, Observer}
-import com.raquo.airstream.eventbus.WriteBus
-import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.ownership.DynamicOwner.PrivateOwner
 
 import scala.scalajs.js
@@ -12,7 +9,11 @@ import scala.scalajs.js
   */
 class DynamicOwner {
 
-  /** Note: this is enforced to be a sorted set outside of the type system. #performance */
+  /** Note: This is enforced to be a sorted set outside of the type system. #performance
+    * Note: This should remain private, we don't want to expose the ability to kill individual
+    *       subscriptions to code that didn't create those subscriptions.
+    *       We rely on that in TransferableSubscription for example.
+    */
   private[this] val subscriptions: js.Array[DynamicSubscription] = js.Array()
 
   private var _maybeCurrentOwner: Option[Owner] = None
@@ -42,19 +43,21 @@ class DynamicOwner {
     }
   }
 
-  def addObserver[A](
-    observable: Observable[A],
-    observer: Observer[A]
-  ): DynamicSubscription = {
-    subscribe(owner => observable.addObserver(observer)(owner))
-  }
+  // @TODO[API] is this needed?
+//  def addObserver[A](
+//    observable: Observable[A],
+//    observer: Observer[A]
+//  ): DynamicSubscription = {
+//    subscribe(owner => observable.addObserver(observer)(owner))
+//  }
 
-  def addSource[A](
-    sourceStream: EventStream[A],
-    targetBus: WriteBus[A]
-  ): DynamicSubscription = {
-    subscribe(owner => targetBus.addSource(sourceStream)(owner))
-  }
+  // @TODO[API] is this needed?
+//  def addSource[A](
+//    sourceStream: EventStream[A],
+//    targetBus: WriteBus[A]
+//  ): DynamicSubscription = {
+//    subscribe(owner => targetBus.addSource(sourceStream)(owner))
+//  }
 
   // @TODO[API] This method is experimental. Not sure if good idea. Think about memory management and stuff
   /** Add a dependent dynamic owner as a subscription.
@@ -71,7 +74,7 @@ class DynamicOwner {
 //    })
 //  }
 
-  @inline def subscribe(activate: Owner => Subscription): DynamicSubscription = {
+  @inline protected[this] def subscribe(activate: Owner => Subscription): DynamicSubscription = {
     new DynamicSubscription(this, activate)
   }
 
