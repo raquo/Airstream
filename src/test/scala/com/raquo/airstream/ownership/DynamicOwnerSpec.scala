@@ -22,7 +22,7 @@ class DynamicOwnerSpec extends UnitSpec {
 
     val dynOwner = new DynamicOwner
 
-    val dynSub1 = new DynamicSubscription(dynOwner, owner => bus1.events.addObserver(obs1)(owner))
+    val dynSub1 = DynamicSubscription(dynOwner, owner => bus1.events.addObserver(obs1)(owner))
 
     bus1.writer.onNext(100)
 
@@ -45,7 +45,7 @@ class DynamicOwnerSpec extends UnitSpec {
 
     // --
 
-    val dynSub2 = new DynamicSubscription(dynOwner, owner => var2.signal.addObserver(obs2)(owner))
+    val dynSub2 = DynamicSubscription(dynOwner, owner => var2.signal.addObserver(obs2)(owner))
     effects shouldBe mutable.Buffer(Effect("obs2", 0))
     effects.clear()
 

@@ -41,7 +41,7 @@ class TransferableSubscription(
     }
 
     // @Note the edge case of setting the same owner as current owner is necessarily a live transfer due to this
-    val isCurrentOwnerActive = maybeSubscription.exists(_.isActive)
+    val isCurrentOwnerActive = maybeSubscription.exists(_.isOwnerActive)
 
     if (isCurrentOwnerActive && nextOwner.isActive) {
       isLiveTransferInProgress = true
@@ -61,7 +61,7 @@ class TransferableSubscription(
       maybeSubscription = None
     }
 
-    val newPilotSubscription = new DynamicSubscription(
+    val newPilotSubscription = DynamicSubscription(
       nextOwner,
       activate = parentOwner => {
         // If transfer is in progress, this activate method will be called immediately

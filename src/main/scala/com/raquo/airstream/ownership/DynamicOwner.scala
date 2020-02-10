@@ -43,41 +43,6 @@ class DynamicOwner {
     }
   }
 
-  // @TODO[API] is this needed?
-//  def addObserver[A](
-//    observable: Observable[A],
-//    observer: Observer[A]
-//  ): DynamicSubscription = {
-//    subscribe(owner => observable.addObserver(observer)(owner))
-//  }
-
-  // @TODO[API] is this needed?
-//  def addSource[A](
-//    sourceStream: EventStream[A],
-//    targetBus: WriteBus[A]
-//  ): DynamicSubscription = {
-//    subscribe(owner => targetBus.addSource(sourceStream)(owner))
-//  }
-
-  // @TODO[API] This method is experimental. Not sure if good idea. Think about memory management and stuff
-  /** Add a dependent dynamic owner as a subscription.
-    * It will be activated and deactivated at the same time as this dynamic owner */
-//  def addChildDynamicOwner(
-//    childOwner: DynamicOwner
-//  ): DynamicSubscription = {
-//    new DynamicSubscription(this, owner => {
-//      childOwner.activate()
-//      new Subscription(
-//        owner,
-//        cleanup = () => childOwner.deactivate()
-//      )
-//    })
-//  }
-
-  @inline protected[this] def subscribe(activate: Owner => Subscription): DynamicSubscription = {
-    new DynamicSubscription(this, activate)
-  }
-
   private[ownership] def addSubscription(subscription: DynamicSubscription): Unit = {
     subscriptions.push(subscription)
     maybeCurrentOwner.foreach(subscription.onActivate)

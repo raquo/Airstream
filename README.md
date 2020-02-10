@@ -282,7 +282,7 @@ val observer: Observer[Int] = ???
  
 val dynOwner = new DynamicOwner
  
-val dynSub = new DynamicSubscription(
+val dynSub = DynamicSubscription(
   dynOwner,
   activate = (owner: Owner) => stream.addObserver(observer)(owner)
 )
@@ -556,7 +556,7 @@ Philosophically, a Transaction in Airstream encapsulates a part of the propagati
 
 Async streams such as `stream.delay(500)` emit their events in a new transaction because Airstream executes transactions sequentially – and there is no sense in keeping other transactions blocked until some Promise or Future decides to resolve itself.
 
-Events that come from outside of Airstream – see [Sources of Events](#sources-of-events) – each come in in a new Transaction, and those source observables have a `topoRank` of 1. I guess it makes sense why `EventStream.periodic` would behave that way, but why wouldn't `EventBus` reuse the transaction of whatever event came in from one of its source streams?
+Events that come from outside of Airstream – see [Sources of Events](#sources-of-events) – each come in a new Transaction, and those source observables have a `topoRank` of 1. I guess it makes sense why `EventStream.periodic` would behave that way, but why wouldn't `EventBus` reuse the transaction of whatever event came in from one of its source streams?
 
 And the answer is the limitation of our topological ranking approach: it does not work for loops of observables. A topoRank is a property of an observable, not of the event coming in. And an observable's topoRank is determined at its creation. EventBus on its creation has no sources, so its stream needs to emit its events in a new Transaction because there is no way to guarantee correct topological ranking to avoid glitches.
 
