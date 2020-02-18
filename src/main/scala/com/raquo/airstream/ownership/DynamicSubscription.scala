@@ -30,6 +30,8 @@ class DynamicSubscription private (
 
   @inline def isOwnerActive: Boolean = dynamicOwner.isActive
 
+  @inline def isOwnedBy(owner: DynamicOwner): Boolean = owner == dynamicOwner
+
   /** Permanently kill this subscription, deactivating if it's currently active, and removing it from the dynamic owner */
   def kill(): Unit = dynamicOwner.removeSubscription(this)
 

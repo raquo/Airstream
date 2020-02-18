@@ -29,5 +29,4 @@ parallelExecution in Test := false
 
 scalaJSUseMainModuleInitializer := true
 
-emitSourceMaps := false
-
+scalaJSLinkerConfig in (Compile, fastOptJS) ~= { _.withSourceMap(false) }

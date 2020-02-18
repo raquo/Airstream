@@ -107,6 +107,7 @@ object Transaction { // extends GlobalCounter {
       // @TODO[Integrity] Should we really throw here?
       throw new Exception("Transaction mismatch: done transaction is not first in list")
     }
+    // Remove first pending transaction which we just completed
     pendingTransactions.shift()
 
     resolvePendingObserverRemovals()
