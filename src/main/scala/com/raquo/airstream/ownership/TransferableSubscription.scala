@@ -30,9 +30,12 @@ class TransferableSubscription(
     */
   private var maybeSubscription: Option[DynamicSubscription] = None
 
-  // @TODO[Elegance] Not sure if there's a less ugly solution to keep track of this.
   /** Whether we are currently transferring this subscription from one active owner to another active owner. */
   private var isLiveTransferInProgress: Boolean = false
+
+  def hasOwner: Boolean = maybeSubscription.nonEmpty
+
+  def isCurrentOwnerActive: Boolean = maybeSubscription.exists(_.isOwnerActive)
 
   /** Update the owner of this subscription. */
   def setOwner(nextOwner: DynamicOwner): Unit = {
@@ -40,51 +43,60 @@ class TransferableSubscription(
       throw new Exception("Unable to set owner on DynamicTransferableSubscription while a transfer on this subscription is already in progress.")
     }
 
-    // @Note the edge case of setting the same owner as current owner is necessarily a live transfer due to this
-    val isCurrentOwnerActive = maybeSubscription.exists(_.isOwnerActive)
-
-    if (isCurrentOwnerActive && nextOwner.isActive) {
-      isLiveTransferInProgress = true
-    }
-
-    // It's hard to wrap your head around this isLiveTransferInProgress logic.
-    //  - essentially when transferring this subscription from one owner to another
-    //    we don't want activate() or deactivate() calls to happen because the
-    //    subscription still has an owner, we're just changing who it is.
-    //  - to achieve this we use this internal isLiveTransferInProgress flag that
-    //    we look up to see when we shouldn't make those activate() and deactivate()
-    //    calls.
-
-    // Remember that killing a subscription will only call deactivate() if we're not transferring
-    maybeSubscription.foreach { subscription =>
-      subscription.kill()
-      maybeSubscription = None
-    }
-
-    val newPilotSubscription = DynamicSubscription(
-      nextOwner,
-      activate = parentOwner => {
-        // If transfer is in progress, this activate method will be called immediately
-        // in this NEW subscription that we're creating, so we need to skip activation
-        // because there is no gap in ownership, just a transfer.
-        // (proof – the previous subscription is active)
-        if (!isLiveTransferInProgress) {
-          activate()
-        }
-        new Subscription(parentOwner, cleanup = () => {
-          // If transfer is in progress when this cleanup happens, this means this cleanup
-          // method was be called when killing the PREVIOUS subscription that we're replacing,
-          // so we need to skip deactivation here because now the NEW subscription will do it instead.
-          if (!isLiveTransferInProgress) {
-            deactivate()
-          }
-        })
+    // @Note this short-circuit is important. As explained in Laminar comments,
+    //  when activating / deactivating owners, we have to iterate through their
+    //  subscriptions and run user code for each of them. That user code will
+    //  might trigger other activations / deactivations, and those would be
+    //  processed without delay, in this half-activated state where some
+    //  subscription could be active but its owner not active, or the other way.
+    //  So to be safer, we just short circuit here instead of relying on complex
+    //  logic doing what we need in a potentially inconsistent state.
+    if (maybeSubscription.exists(_.isOwnedBy(nextOwner))) {
+      // Owner is the same – do nothing
+    } else {
+      if (isCurrentOwnerActive && nextOwner.isActive) {
+        isLiveTransferInProgress = true
       }
-    )
 
-    maybeSubscription = Some(newPilotSubscription)
+      // It's hard to wrap your head around this isLiveTransferInProgress logic.
+      //  - essentially when transferring this subscription from one owner to another
+      //    we don't want activate() or deactivate() calls to happen because the
+      //    subscription still has an owner, we're just changing who it is.
+      //  - to achieve this we use this internal isLiveTransferInProgress flag that
+      //    we look up to see when we shouldn't make those activate() and deactivate()
+      //    calls.
 
-    isLiveTransferInProgress = false
+      // Remember that killing a subscription will only call deactivate() if we're not transferring
+      maybeSubscription.foreach { subscription =>
+        subscription.kill()
+        maybeSubscription = None
+      }
+
+      val newPilotSubscription = DynamicSubscription(
+        nextOwner,
+        activate = parentOwner => {
+          // If transfer is in progress, this activate method will be called immediately
+          // in this NEW subscription that we're creating, so we need to skip activation
+          // because there is no gap in ownership, just a transfer.
+          // (proof – the previous subscription is active)
+          if (!isLiveTransferInProgress) {
+            activate()
+          }
+          new Subscription(parentOwner, cleanup = () => {
+            // If transfer is in progress when this cleanup happens, this means this cleanup
+            // method was be called when killing the PREVIOUS subscription that we're replacing,
+            // so we need to skip deactivation here because now the NEW subscription will do it instead.
+            if (!isLiveTransferInProgress) {
+              deactivate()
+            }
+          })
+        }
+      )
+
+      maybeSubscription = Some(newPilotSubscription)
+
+      isLiveTransferInProgress = false
+    }
   }
 
   def clearOwner(): Unit = {
@@ -92,9 +104,11 @@ class TransferableSubscription(
       throw new Exception("Unable to clear owner on DynamicTransferableSubscription while a transfer on this subscription is already in progress.")
     }
 
-    maybeSubscription
-      .getOrElse(throw new Exception("Unable to clear owner from DynamicTransferableSubscription: it has no subscription, thus no owner"))
-      .kill()
+    maybeSubscription.foreach { subscription =>
+      // @Warning[Fragile] Don't rush to add this check, figure out the real issue if we run into problems.
+      //  - if (subscription.isOwnerActive)
+      subscription.kill()
+    }
 
     maybeSubscription = None
   }
