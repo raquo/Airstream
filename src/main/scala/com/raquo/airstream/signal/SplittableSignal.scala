@@ -21,7 +21,8 @@ class SplittableSignal[M[_], Input](val signal: Signal[M[Input]]) extends AnyVal
   }
 
   def splitIntoSignals[Output, Key](
-    key: Input => Key)(
+    key: Input => Key
+  )(
     project: (Key, Input, Signal[Input]) => Output
   )(implicit
     splittable: Splittable[M]
