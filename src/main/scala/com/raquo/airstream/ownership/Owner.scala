@@ -36,8 +36,10 @@ trait Owner {
     }
   }
 
-  private[ownership] def own(owned: Owned): Unit = {
+  protected[this] def _own(owned: Owned): Unit = {
     possessions.push(owned)
     onOwned(owned)
   }
+
+  @inline private[ownership] def own(owned: Owned): Unit = _own(owned)
 }
