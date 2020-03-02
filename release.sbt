@@ -4,7 +4,7 @@ normalizedName := "airstream"
 
 organization := "com.raquo"
 
-scalaVersion := "2.12.10"
+scalaVersion := "2.13.1"
 
 crossScalaVersions := Seq("2.12.10", "2.13.1")
 

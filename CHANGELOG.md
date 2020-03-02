@@ -2,9 +2,9 @@
 
 Breaking changes in **bold**.
 
-#### v0.8.0 – TBD
 
-* Build: Note that this release is version `0.8.0`, not `0.8` as I would have done before
+#### v0.8.0 – Mar 2020
+
 * New: Dynamic Ownership
   * Flagship feature of this release. Dynamic ownership makes it easier to build complex Laminar-style ownership lifetimes with the ability to re-activate subscriptions after they were deactivated. If you're building a DOM manipulation library this will be very handy. See how Laminar v0.8 uses this feature for inspiration.
   * This feature builds _on top of_ regular Ownership so it's not a breaking change in itself, except for the incidental breaking changes listed below.
@@ -18,10 +18,13 @@ Breaking changes in **bold**.
 * New: `OptionSplittable` – you can now `split` observables of `Option[A]` as if it's a list of zero-to-one items
 * New: `WriteBus.emit` and `WriteBus.emitTry` methods to send events to multiple WriteBus-es in a single transaction (essentially, `Var.set` but for streams)
 * New: `EventStream.empty`, a stream that never emits any events
+* Build: Note that this release is version `0.8.0`, not `0.8` as I would have named it before
+
 
 #### v0.7.2 – Nov 2019
 
 * Build: Scala 2.13 Support – thanks, [@megri](https://github.com/megri)!
+
 
 #### v0.7.1 – Aug 2019
 
@@ -31,6 +34,7 @@ Breaking changes in **bold**.
 * New: `WriteBus.contracomposeWriter` – thanks, [@vic](https://github.com/vic)!
 * New: Add `startWith*` aliases for `toSignal*` methods on `EventStream`
 * New: `unsafeRethrowErrorCallback` and `delayedRethrowErrorCallback` for error handling
+
 
 #### v0.7 – Apr 2019
 
@@ -48,17 +52,21 @@ Breaking changes in **bold**.
 * New: `composeChanges` and `composeChangesAndInitial` operators for `Signal`
 * New: Report failures of unhandled error callbacks
 
+
 #### v0.6 – Does not Exist
 
 * Skipping this version to align versions with Laminar
+
 
 #### v0.5.2 – Jan 2019
 
 * API: Make `Val` a `StrictSignal` (it already behaved like one)
 
+
 #### v0.5.1 – Dec 2018
 
 * API: Make `FutureSignal` a `StrictSignal` (it already behaved like one)
+
 
 #### v0.5 – Dec 2018
 
@@ -89,9 +97,11 @@ Breaking changes in **bold**.
   * Companion object methods: `Var.set`, `Var.setTry`, `Var.update`, `Var.tryUpdate`
   * See new Var docs for details
 
+
 #### v0.4.1 – Dec 2018
 
 * Fix: NPE from errors unhandled by `recover` partial function
+
 
 #### v0.4 – Nov 2018
 
@@ -106,6 +116,7 @@ Breaking changes in **bold**.
   * This serves as a warning about my intention to deprecate and eventually remove the entirety of the `State` type in Airstream. Its strictness has not proved useful, and yet has plenty of drawbacks. See [Laminar#37](https://github.com/raquo/Laminar/issues/37) for details. If you want to speak up against that, now is the time.
 * New: `Ref` performance util (experimental)
 
+
 #### v0.3 – Sep 2018 
 
 * **Naming: Observer.map -> Observer.contramap**
@@ -116,6 +127,7 @@ Breaking changes in **bold**.
 * New: `LazyObservable.flatMap` (available via implicits)
 * New: `LazyObservable.map` returns a more specific type
 
+
 #### v0.2 – Apr 2018
 
 * **API: Signal only fires if `nextValue != prevValue`**
@@ -123,6 +135,7 @@ Breaking changes in **bold**.
 * New: Make `Val.now()` public
 * New: signal.Var
 * Fix: Ensure Signal's initialValue has been evaluated onStart
+
 
 #### v0.1 – Apr 2018
 
