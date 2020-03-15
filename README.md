@@ -2,7 +2,7 @@
 
 [![Build Status](https://circleci.com/gh/raquo/Airstream.svg?style=svg)](https://circleci.com/gh/raquo/Airstream)
 [![Join the chat at https://gitter.im/Laminar_/Lobby](https://badges.gitter.im/Laminar_/Lobby.svg)](https://gitter.im/Laminar_/Lobby)
-![Maven Central](https://img.shields.io/maven-central/v/com.raquo/airstream_sjs0.6_2.13.svg)
+![Maven Central](https://img.shields.io/maven-central/v/com.raquo/airstream_sjs1_2.13.svg)
 
 Airstream is a small state propagation and streaming library. Primary differences from other solutions:
 
@@ -995,6 +995,7 @@ stream.recoverToTry.collect { case Failure(err) => err } // EventStream[Throwabl
 ## My Related Projects
 
 - [Laminar](https://github.com/raquo/Laminar) – Efficient reactive UI library for Scala.js that uses Airstream
+- [Waypoint](https://github.com/raquo/Waypoint) – Efficient router for Laminar made with Airstream
 - [XStream.scala](https://github.com/raquo/XStream.scala) – streaming library used by Laminar before Airstream
 
 Other building blocks of Laminar:
@@ -1007,7 +1008,7 @@ Other building blocks of Laminar:
 
 ## Author
 
-Nikita Gazarov – [raquo.com](http://raquo.com)
+Nikita Gazarov – [@raquo](https://twitter.com/raquo)
 
 
 
