@@ -3,8 +3,10 @@
 Breaking changes in **bold**.
 
 
-#### master
+#### v0.9.0 – Mar 2020
 
+* **Build: Upgrade to scala-js-dom 1.0.0**
+  * Does not affect Airstream itself, just be aware that it's not compatible with scala-js-dom v0.9.8 
 * API: `debugLog` operator now prints with `println` instead of `dom.console.log`
 * New: `debugLogJs` operator that prints with `dom.console.log`
 
