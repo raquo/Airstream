@@ -3,6 +3,11 @@
 Breaking changes in **bold**.
 
 
+#### master
+
+* API: `debugLog` operator now prints with `println` instead of `dom.console.log`
+* New: `debugLogJs` operator that prints with `dom.console.log`
+
 #### v0.8.0 – Mar 2020
 
 * New: Dynamic Ownership

@@ -70,7 +70,20 @@ trait Observable[+A] {
     strategy.flatten(map(compose))
   }
 
+  // @TODO[API] print with dom.console.log automatically only if a JS value detected? Not sure if possible to do well.
+
+  /** print events using println - use for Scala values */
   def debugLog(prefix: String = "event", when: A => Boolean = _ => true): Self[A] = {
+    map(value => {
+      if (when(value)) {
+        println(prefix + ": ", value.asInstanceOf[js.Any])
+      }
+      value
+    })
+  }
+
+  /** print events using dom.console.log - use for JS values */
+  def debugLogJs(prefix: String = "event", when: A => Boolean = _ => true): Self[A] = {
     map(value => {
       if (when(value)) {
         dom.console.log(prefix + ": ", value.asInstanceOf[js.Any])
