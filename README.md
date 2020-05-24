@@ -77,13 +77,15 @@ I created Airstream because I found existing solutions were not suitable for bui
 
 ## Documentation
 
-The provided documentation is a high level overview that occasionally dives into gritty details for things that are hard to figure out on your own. It is not a full replacement to discovering available methods by reading the code (which is quite simple, and has comments) or simply with an IDE's autocomplete functionality.
+[API doc](https://javadoc.io/doc/com.raquo/airstream_sjs1_2.13/latest/com/raquo/airstream/index.html)
+
+The documentation provided below is a high level overview that occasionally dives into gritty details for things that are hard to figure out on your own. It is not a full replacement to discovering available methods by reading the code (which is quite simple, and has comments) or simply with an IDE's autocomplete functionality.
 
 This documentation explains how _Airstream_ works. Although I try to explain all required concepts and the rationale for doing things a certain way, if you need a primer on reactive programming using streams, consider [this guide](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754) by André Staltz or its [video adaptation](https://egghead.io/courses/introduction-to-reactive-programming). 
 
 This documentation is intended to be read top to bottom, sections further down the line assume knowledge of concepts and behaviours introduced in earlier sections.
 
-For examples of Airstream code, see [laminar-examples](https://github.com/raquo/laminar-examples), [Laminar](https://github.com/raquo/Laminar) source code, as well as Airstream tests.
+For examples of Airstream usage, see [laminar-examples](https://github.com/raquo/laminar-examples), [Laminar](https://github.com/raquo/Laminar) source code, as well as Airstream tests.
 
 
 ### EventStream
@@ -591,7 +593,7 @@ MergeEventStream uses the same pendingObservables mechanism as CombineObservable
 
 ### Operators
 
-Airstream offers standard observables operators like `map` / `filter` / `compose` / `combineWith` etc. You will need to read the code or use IDE autocompletion to discover those that aren't documented here or in other section of the Documentation. In the code, see `Observable`, `EventStream`, and `Signal` traits and their companion objects.
+Airstream offers standard observables operators like `map` / `filter` / `compose` / `combineWith` etc. You will need to read the [API doc](https://javadoc.io/doc/com.raquo/airstream_sjs1_2.13/latest/com/raquo/airstream/index.html) or the actual code or use IDE autocompletion to discover those that aren't documented here or in other section of the Documentation. In the code, see `Observable`, `EventStream`, and `Signal` traits and their companion objects.
 
 Some of the more interesting / non-standard operators are documented below:
 
