@@ -3,6 +3,11 @@
 Breaking changes in **bold**.
 
 
+#### v0.9.1 – Jul 2020
+
+* **Fix: throttle operator behaved more like debounce, it was not emitting until the parent stopped emitting for `intervalMillis`. It behaves as advertised now. ([#34](https://github.com/raquo/Airstream/issues/34))**
+
+
 #### v0.9.0 – Mar 2020
 
 * **Build: Upgrade to scala-js-dom 1.0.0**

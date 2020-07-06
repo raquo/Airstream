@@ -21,9 +21,13 @@ object ThrottleEventStream {
       val currentTimeMillis = js.Date.now()
       val timeSinceLastEventMillis = currentTimeMillis - lastEventTimeMillis
 
-      lastEventTimeMillis = currentTimeMillis
+      val shouldEmit = timeSinceLastEventMillis >= intervalMillis
 
-      timeSinceLastEventMillis >= intervalMillis
+      if (shouldEmit) {
+        lastEventTimeMillis = currentTimeMillis
+      }
+
+      shouldEmit
     })
   }
 }
