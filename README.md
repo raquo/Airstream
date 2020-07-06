@@ -224,12 +224,15 @@ Observers are intended to contain side effects, and to trigger evaluation of obs
 
 You usually create observers with `Observer.apply` or `myObservable.foreach`. There are a few more methods on Observer that support [error handling](#error-handling).
 
-Observers have a couple convenience methods:
+Observers have a few convenience methods:
 
 `def contramap[B](project: B => A): Observer[B]` – This is useful for separation of concerns. For example your Ajax service might expose an `Observer[Request]`, but you don't want a simple `UserProfile` component to know about your Ajax implementation details (`Request`), so you can instead provide it with `requestObserver.contramap(makeUpdateRequest)` which is a `Observer[User]`.
 
-`def filter(passes: A => Boolean): Observer[A]` – useful if you have an `Observable` that you need to observe while filtering out some events (there is no `Observable.filter` method).
+`def filter(passes: A => Boolean): Observer[A]` – useful if you have an `Observable` that you need to observe while filtering out some events (there is no `Observable.filter` method, only `EventStream.filter`).
 
+`contracollect[B](pf: PartialFunction[B, A]): Observer[B]` – when you want to both `contramap` and `filter` at once.
+
+`Observer.combine[A](observers: Observer[A])` creates an observer that triggers all of the observers provided to it. Unlike `Observer[A](nextValue => observers.foreach(_.onNext(nextValue)))`, the combined observer will also trigger its child observers in case of `.onError` (more about that in [Error Handling](#error-handling)).
 
 ### Ownership
 

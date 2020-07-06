@@ -25,9 +25,18 @@ trait Observer[-A] {
     * @param project Note: guarded against exceptions
     */
   def contramap[B](project: B => A): Observer[B] = {
-    Observer.withRecover(nextValue => onNext(project(nextValue)), {
-      case nextError => onError(nextError)
-    })
+    Observer.withRecover(
+      nextValue => onNext(project(nextValue)),
+      { case nextError => onError(nextError) }
+    )
+  }
+
+  /** Like `contramap` but with `collect` semantics: not calling the original observer when `pf` is not defined */
+  def contracollect[B](pf: PartialFunction[B, A]): Observer[B] = {
+    Observer.withRecover(
+      nextValue => pf.runWith(onNext)(nextValue),
+      { case nextError => onError(nextError) }
+    )
   }
 
   /** Creates another Observer such that calling its onNext will call this observer's onNext
@@ -126,6 +135,24 @@ object Observer {
               _ => AirstreamError.sendUnhandledError(ObserverError(err))
             )
         }
+      }
+    }
+  }
+
+  /** Combine several observers into one. */
+  def combine[A](observers: Observer[A]*): Observer[A] = {
+    new Observer[A] {
+
+      override def onNext(nextValue: A): Unit = {
+        observers.foreach(_.onNext(nextValue))
+      }
+
+      override def onError(err: Throwable): Unit = {
+        observers.foreach(_.onError(err))
+      }
+
+      override final def onTry(nextValue: Try[A]): Unit = {
+        nextValue.fold(onError, onNext)
       }
     }
   }
