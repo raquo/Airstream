@@ -21,7 +21,7 @@ Airstream has a very generic design, but is primarily intended to serve as a rea
 I created Airstream because I found existing solutions were not suitable for building reactive UI components. My original need for Airstream was to replace the previous reactive layer of [Laminar](https://github.com/raquo/Laminar), but I'll be happy to see it used by other reactive UI libraries as well. Another piece of Laminar you can reuse is [Scala DOM Types](https://github.com/raquo/scala-dom-types).
 
 ```
-"com.raquo" %%% "airstream" % "0.9.0"  // Scala.js 1.x only
+"com.raquo" %%% "airstream" % "0.9.1"  // Scala.js 1.x only
 ```
 
 
@@ -440,15 +440,15 @@ WriteBus also offers a powerful `contracomposeWriter` method, which is like `con
 
 ##### Batch EventBus Updates
 
-EventBus emits every event in a new transaction. However, similar to Var [batch updates](#batch-updates) you can call `WriteBus.emit` or `WriteBus.emitTry` to send values into several WriteBus-es simultaneously, within the same transaction, to avoid [glitches](#frp-glitches) downstream.
+EventBus emits every event in a new transaction. However, similar to Var [batch updates](#batch-updates) you can call `EventBus.emit` or `EventBus.emitTry` to send values into several EventBus-es simultaneously, within the same transaction, to avoid [glitches](#frp-glitches) downstream.
 
 ```scala
 val valuesEventBus = new EventBus[Int]
 val labelsEventBus = new EventBus[String]
  
-WriteBus.emit(
-  valuesEventBus.writer -> 100,
-  labelsEventBus.writer -> "users"
+EventBus.emit(
+  valuesEventBus -> 100,
+  labelsEventBus -> "users"
 )
 ```
 

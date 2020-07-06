@@ -85,14 +85,14 @@ object Var {
   }
 
   /** Set multiple Var values in the same Transaction
-    * Example usage: Var.set(var1 -> Success(value1), var2 -> Failure(error2))
+    * Example usage: Var.setTry(var1 -> Success(value1), var2 -> Failure(error2))
     */
   def setTry(values: VarTryTuple[_]*): Unit = {
     new Transaction(trx => values.foreach(setTryValue(_, trx)))
   }
 
   /** Modify multiple Vars in the same Transaction
-    * Example usage: Var.set(var1 -> value1 => value1 + 1, var2 -> value2 => value2 * 2)
+    * Example usage: Var.update(var1 -> value1 => value1 + 1, var2 -> value2 => value2 * 2)
     *
     * @throws Exception if currentValue of any of the vars is a Failure.
     *                   This is atomic: an exception in any of the vars will prevent any of
@@ -104,7 +104,7 @@ object Var {
   }
 
   /** Modify multiple Vars in the same Transaction
-    * Example usage: Var.set(var1 -> _.map(_ + 1), var2 -> _.map(_ * 2))
+    * Example usage: Var.tryUpdate(var1 -> _.map(_ + 1), var2 -> _.map(_ * 2))
     *
     * Note: none of the provided mods must throw. Same atomic behaviour as `update`.
     * @throws Exception if any of the provided `mod`s throws

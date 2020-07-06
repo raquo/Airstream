@@ -8,6 +8,8 @@ Breaking changes in **bold**.
 * **Fix: throttle operator behaved more like debounce, it was not emitting until the parent stopped emitting for `intervalMillis`. It behaves as advertised now. ([#34](https://github.com/raquo/Airstream/issues/34))**
 * New: `Observer.combine(observer1, observer2, ...)` factory
 * New: `observer.contracollect { case Foo => bar }` operator
+* New: `EventBus.emit` and `EventBus.emitTry`
+  * Just convenience wrappers over `WriteBus` methods
 
 #### v0.9.0 – Mar 2020
 
