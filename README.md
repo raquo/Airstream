@@ -735,6 +735,27 @@ Same input and output types, but the behaviour is very different.
 * Second, renderFoo no longer has access to `initialFoo` and `fooSignal`. It does not know anymore if the foo it's rendering has changed over time, it can't listen for those changes, etc.
 
 
+##### `splitOne`
+
+Now that you know how the `split` operator works, it's only a small leap to understand its special-cased cousin `splitOne`. Where `split` works on observables of `List[Foo]`, `Option[Foo]` etc., `splitOne` works on observables of Foo itself, that is, on any observable:
+
+```scala
+case class Word(text: Boolean, isImportant: Boolean)
+   
+def renderWord(isImportant: Boolean, initialWord: Word, wordSignal: Signal[Word]): Div = {
+  val tag = if (isImportant) b else span
+  tag(child.text <-- wordSignal.map(_.text))
+}
+ 
+val inputSignal: Signal[Word] = ???
+
+val outputSignal: Signal[HtmlElement] = 
+  inputSignal.split(key = _.isImportant)(project = renderWord)
+```
+
+The example is a bit contrived to demonstrate that `key` does not need to be a record ID but could be any property. In this case, `renderWord` will be called only when the next emitted word's `isImportant` value is different from that of the last emitted word.  
+
+
 #### Flattening Observables
 
 Flattening generally refers to reducing the number of nested container layers. In Airstream the precise type definition can be found in the `FlattenStrategy` trait.

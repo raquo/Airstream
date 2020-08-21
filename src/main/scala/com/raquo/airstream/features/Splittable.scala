@@ -1,5 +1,7 @@
 package com.raquo.airstream.features
 
+import com.raquo.airstream.util.Id
+
 import scala.collection.immutable
 import scala.scalajs.js
 
@@ -38,5 +40,10 @@ object Splittable {
 
   implicit object OptionSplittable extends Splittable[Option] {
     override def map[A, B](inputs: Option[A], project: A => B): Option[B] = inputs.map(project)
+  }
+
+  /** Used by `splitOne` and `splitOneIntoSignals` methods */
+  object IdSplittable extends Splittable[Id] {
+    override def map[A, B](input: A, project: A => B): B = project(input)
   }
 }

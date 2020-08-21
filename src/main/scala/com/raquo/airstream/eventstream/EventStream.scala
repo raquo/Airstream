@@ -216,4 +216,8 @@ object EventStream {
   implicit def toSplittableStream[M[_], Input](stream: EventStream[M[Input]]): SplittableEventStream[M, Input] = {
     new SplittableEventStream(stream)
   }
+
+  implicit def toSplittableOneStream[A](stream: EventStream[A]): SplittableOneEventStream[A] = {
+    new SplittableOneEventStream(stream)
+  }
 }

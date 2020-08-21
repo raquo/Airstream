@@ -4,6 +4,7 @@ import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.signal.Var
+import com.raquo.airstream.util.Id
 
 import scala.collection.mutable
 
@@ -297,6 +298,78 @@ class SplitEventStreamSpec extends UnitSpec {
     myVar.writer.onNext(Foo("b", 2) :: Nil)
 
     effects shouldEqual mutable.Buffer()
+  }
+
+  it("splitOne stream") {
+
+    val effects = mutable.Buffer[Effect[String]]()
+
+    val bus = new EventBus[Id[Foo]]
+
+    val owner = new TestableOwner
+
+    val stream = bus.events.splitOne(_.id)((key, initialFoo, fooStream) => {
+      assert(key == initialFoo.id, "Key does not match initial value")
+      effects += Effect("init-child", key + "-" + initialFoo.version.toString)
+      fooStream.foreach { foo =>
+        assert(key == foo.id, "Subsequent value does not match initial key")
+        effects += Effect("update-child", foo.id + "-" + foo.version.toString)
+      }(owner)
+      Bar(key)
+    })
+
+    stream.foreach { result =>
+      effects += Effect("result", result.toString)
+    }(owner)
+
+    effects shouldEqual mutable.Buffer()
+
+    // --
+
+    bus.writer.onNext(Foo("a", 1))
+
+    effects shouldEqual mutable.Buffer(
+      Effect("init-child", "a-1"),
+      Effect("result", "Bar(a)"),
+      Effect("update-child", "a-1")
+    )
+
+    effects.clear()
+
+    // --
+
+    bus.writer.onNext(Foo("a", 2))
+
+    effects shouldEqual mutable.Buffer(
+      Effect("result", "Bar(a)"), // this is a stream, not a signal, so it still emits this
+      Effect("update-child", "a-2")
+    )
+
+    effects.clear()
+
+    // --
+
+    bus.writer.onNext(Foo("b", 1))
+
+    effects shouldEqual mutable.Buffer(
+      Effect("init-child", "b-1"),
+      Effect("result", "Bar(b)"),
+      Effect("update-child", "b-1")
+    )
+
+    effects.clear()
+
+    // --
+
+    bus.writer.onNext(Foo("b", 2))
+
+    effects shouldEqual mutable.Buffer(
+      Effect("result", "Bar(b)"),
+      Effect("update-child", "b-2")
+    )
+
+    effects.clear()
+
   }
 
 }

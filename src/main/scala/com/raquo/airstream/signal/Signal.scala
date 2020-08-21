@@ -199,4 +199,8 @@ object Signal {
   implicit def toSplittableSignal[M[_], Input](signal: Signal[M[Input]]): SplittableSignal[M, Input] = {
     new SplittableSignal(signal)
   }
+
+  implicit def toSplittableOneSignal[A](signal: Signal[A]): SplittableOneSignal[A] = {
+    new SplittableOneSignal[A](signal)
+  }
 }
