@@ -13,7 +13,7 @@ import scala.util.Try
   * @param makeInitialValue Note: Must not throw!
   * @param fn Note: Must not throw!
   */
-class FoldSignal[A, B](
+class FoldLeftSignal[A, B](
   override protected[this] val parent: Observable[A],
   makeInitialValue: () => Try[B],
   fn: (Try[B], Try[A]) => Try[B]

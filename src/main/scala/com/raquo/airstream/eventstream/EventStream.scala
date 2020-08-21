@@ -3,7 +3,7 @@ package com.raquo.airstream.eventstream
 import com.raquo.airstream.core.AirstreamError.ObserverError
 import com.raquo.airstream.core.{AirstreamError, Observable, Transaction}
 import com.raquo.airstream.features.{CombineObservable, Splittable}
-import com.raquo.airstream.signal.{FoldSignal, Signal, SignalFromEventStream}
+import com.raquo.airstream.signal.{FoldLeftSignal, Signal, SignalFromEventStream}
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -53,18 +53,17 @@ trait EventStream[+A] extends Observable[A] {
 
   // @TODO[API] Should we introduce some kind of FoldError() wrapper?
   /** @param fn Note: guarded against exceptions */
-  def fold[B](initial: B)(fn: (B, A) => B): Signal[B] = {
-    foldRecover(
+  def foldLeft[B](initial: B)(fn: (B, A) => B): Signal[B] = {
+    foldLeftRecover(
       Success(initial)
     )(
       (currentValue, nextParentValue) => Try(fn(currentValue.get, nextParentValue.get))
     )
   }
 
-  // @TODO Naming
   /** @param fn Note: Must not throw! */
-  def foldRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
-    new FoldSignal(parent = this, () => initial, fn)
+  def foldLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
+    new FoldLeftSignal(parent = this, () => initial, fn)
   }
 
   @inline def startWith[B >: A](initial: => B): Signal[B] = toSignal(initial)

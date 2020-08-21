@@ -3,6 +3,12 @@
 Breaking changes in **bold**.
 
 
+#### v0.10 – Aug 2020
+
+* **Naming: `fold` -> `foldLeft`, `foldRecover` -> `foldLeftRecover`, `FoldSignal` -> `FoldLeftSignal`**  
+* **Naming: `composeChangesAndInitial` -> `composeAll`**
+
+
 #### v0.9.2 – Jul 2020
 
 * **Fix: EventBus.emit signature overly restrictive**

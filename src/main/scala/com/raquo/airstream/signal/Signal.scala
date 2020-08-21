@@ -38,17 +38,17 @@ trait Signal[+A] extends Observable[A] {
   def composeChanges[AA >: A](
     operator: EventStream[A] => EventStream[AA]
   ): Signal[AA] = {
-    composeChangesAndInitial(operator, initialOperator = identity)
+    composeAll(operator, initialOperator = identity)
   }
 
-  /** @param operator Note: Must not throw!
+  /** @param changesOperator Note: Must not throw!
     * @param initialOperator Note: Must not throw!
     */
-  def composeChangesAndInitial[B](
-    operator: EventStream[A] => EventStream[B],
+  def composeAll[B](
+    changesOperator: EventStream[A] => EventStream[B],
     initialOperator: Try[A] => Try[B]
   ): Signal[B] = {
-    operator(changes).toSignalWithTry(initialOperator(tryNow()))
+    changesOperator(changes).toSignalWithTry(initialOperator(tryNow()))
   }
 
   def combineWith[AA >: A, B](otherSignal: Signal[B]): Signal[(AA, B)] = {
@@ -80,7 +80,7 @@ trait Signal[+A] extends Observable[A] {
     * @return
     */
   def foldRecover[B](makeInitial: Try[A] => Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
-    new FoldSignal(
+    new FoldLeftSignal(
       parent = this,
       makeInitialValue = () => makeInitial(tryNow()),
       fn

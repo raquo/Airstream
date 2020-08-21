@@ -7,7 +7,7 @@ import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 
 import scala.collection.mutable
 
-class FoldSignalSpec extends UnitSpec {
+class FoldLeftSignalSpec extends UnitSpec {
 
   // @TODO[Test] Verify Signal.fold and State.fold as well
 
@@ -23,7 +23,7 @@ class FoldSignalSpec extends UnitSpec {
     val bus = new EventBus[Int]
 
     val signal = bus.events
-      .fold(initial = "numbers:"){ (acc, nextValue) => acc + " " + nextValue.toString }
+      .foldLeft(initial = "numbers:"){ (acc, nextValue) => acc + " " + nextValue.toString }
       .map(Calculation.log("signal", calculations))
 
     bus.writer.onNext(1)
