@@ -3,7 +3,7 @@
 Breaking changes in **bold**.
 
 
-#### master – Aug 2020
+#### v0.10.0 – Aug 2020
 
 * **Naming: `fold` -> `foldLeft`, `foldRecover` -> `foldLeftRecover`, `FoldSignal` -> `FoldLeftSignal`**  
 * **Naming: `composeChangesAndInitial` -> `composeAll`**
