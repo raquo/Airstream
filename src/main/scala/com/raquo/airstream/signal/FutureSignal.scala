@@ -30,6 +30,6 @@ class FutureSignal[A](
   )
 
   if (!future.isCompleted) {
-    future.onComplete(value => new Transaction(fireTry(value.map(Some(_)), _)))
+    future.onComplete(value => new Transaction(internal.fireTry(value.map(Some(_)), _)))
   }
 }

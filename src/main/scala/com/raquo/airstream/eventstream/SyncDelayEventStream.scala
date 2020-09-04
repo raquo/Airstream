@@ -26,7 +26,7 @@ class SyncDelayEventStream[A] (
   override private[airstream] def syncFire(transaction: Transaction): Unit = {
     maybePendingValue.foreach { pendingValue =>
       maybePendingValue = js.undefined
-      fireTry(pendingValue, transaction)
+      internal.fireTry(pendingValue, transaction)
     }
   }
 

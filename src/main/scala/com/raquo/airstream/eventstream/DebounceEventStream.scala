@@ -33,7 +33,7 @@ class DebounceEventStream[A](
     maybeLastTimeoutHandle.foreach(js.timers.clearTimeout)
     maybeLastTimeoutHandle = js.defined(
       js.timers.setTimeout(delayFromLastEventMillis) {
-        new Transaction(fireTry(nextValue, _))
+        new Transaction(internal.fireTry(nextValue, _))
       }
     )
   }

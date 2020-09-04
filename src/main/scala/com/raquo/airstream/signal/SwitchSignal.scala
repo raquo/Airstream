@@ -25,7 +25,7 @@ class SwitchSignal[A](
   private[this] var currentSignalTry: Try[Signal[A]] = parent.tryNow()
 
   private[this] val internalEventObserver: InternalObserver[A] = InternalObserver.fromTry[A](
-    onTry = (nextTry, _) => new Transaction(fireTry(nextTry, _))
+    onTry = (nextTry, _) => new Transaction(internal.fireTry(nextTry, _))
   )
 
   override protected[airstream] def onTry(nextSignalTry: Try[Signal[A]], transaction: Transaction): Unit = {
@@ -37,7 +37,7 @@ class SwitchSignal[A](
       nextSignal.addInternalObserver(internalEventObserver)
     }
     // Update this signal's value with nextSignal's current value (or an error if we don't have nextSignal)
-    new Transaction(fireTry(nextSignalTry.flatMap(_.tryNow()), _))
+    new Transaction(internal.fireTry(nextSignalTry.flatMap(_.tryNow()), _))
   }
 
   override protected[this] def onStart(): Unit = {

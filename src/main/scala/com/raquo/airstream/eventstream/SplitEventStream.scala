@@ -35,11 +35,11 @@ class SplitEventStream[M[_], Input, Output, Key](
   }
 
   override protected[airstream] def onNext(nextInputs: M[Input], transaction: Transaction): Unit = {
-    fireValue(memoizedProject(nextInputs), transaction)
+    internal.fireValue(memoizedProject(nextInputs), transaction)
   }
 
   override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
-    fireError(nextError, transaction)
+    internal.fireError(nextError, transaction)
   }
 
   def toSignalWithInitialInput(lazyInitialInput: => Try[M[Input]]): Signal[M[Output]] = {
@@ -49,7 +49,7 @@ class SplitEventStream[M[_], Input, Output, Key](
   private[this] def memoizedProject(nextInputs: M[Input]): M[Output] = {
     val nextKeysDict = mutable.HashSet.empty[Key] // HashSet has desirable performance tradeoffs
 
-    val nextOutputs = splittable.map(nextInputs, { nextInput: Input =>
+    val nextOutputs = splittable.map(nextInputs, { (nextInput: Input) =>
       val memoizedKey = key(nextInput)
       nextKeysDict += memoizedKey
 

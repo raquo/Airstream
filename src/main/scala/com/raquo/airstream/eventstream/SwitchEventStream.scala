@@ -38,8 +38,8 @@ class SwitchEventStream[I, O](
 
   // @TODO[Elegance] Maybe we should abstract away this kind of internal observer
   private[this] val internalEventObserver: InternalObserver[O] = InternalObserver[O](
-    onNext = (nextEvent, _) => new Transaction(fireValue(nextEvent, _)),
-    onError = (nextError, _) => new Transaction(fireError(nextError, _))
+    onNext = (nextEvent, _) => new Transaction(internal.fireValue(nextEvent, _)),
+    onError = (nextError, _) => new Transaction(internal.fireError(nextError, _))
   )
 
   override protected[airstream] def onNext(nextValue: I, transaction: Transaction): Unit = {

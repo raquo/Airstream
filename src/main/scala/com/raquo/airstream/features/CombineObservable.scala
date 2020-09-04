@@ -27,7 +27,7 @@ trait CombineObservable[A] extends SyncObservable[A] { self =>
   override private[airstream] def syncFire(transaction: Transaction): Unit = {
     maybeCombinedValue.foreach { combinedValue =>
       maybeCombinedValue = None
-      fireTry(combinedValue, transaction)
+      internal.fireTry(combinedValue, transaction)
     }
   }
 

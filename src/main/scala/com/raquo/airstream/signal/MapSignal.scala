@@ -30,24 +30,24 @@ class MapSignal[I, +O](
     nextParentValue.fold(
       nextError => recover.fold(
         // if no `recover` specified, fire original error
-        fireError(nextError, transaction))(
+        internal.fireError(nextError, transaction))(
         pf => Try(pf.applyOrElse(nextError, (_: Throwable) => null)).fold(
           tryError => {
             // if recover throws error, fire wrapped error
-            fireError(ErrorHandlingError(error = tryError, cause = nextError), transaction)
+            internal.fireError(ErrorHandlingError(error = tryError, cause = nextError), transaction)
           },
           nextValue => {
             if (nextValue == null) {
               // If recover was not applicable, fire original error
-              fireError(nextError, transaction)
+              internal.fireError(nextError, transaction)
             } else {
               // If recover was applicable and resulted in a new value, fire that value
-              nextValue.foreach(fireValue(_, transaction))
+              nextValue.foreach(internal.fireValue(_, transaction))
             }
           }
         )
       ),
-      _ => fireTry(nextParentValue.map(project), transaction)
+      _ => internal.fireTry(nextParentValue.map(project), transaction)
     )
   }
 

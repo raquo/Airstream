@@ -1,18 +1,76 @@
 package com.raquo.airstream.signal
 
-import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
-import com.raquo.airstream.eventstream.{EventStream, MapEventStream}
+import com.raquo.airstream.core.{ AirstreamError, Observable, Observer, Transaction }
+import com.raquo.airstream.eventstream.{ EventStream, MapEventStream }
 import com.raquo.airstream.features.CombineObservable
 import com.raquo.airstream.ownership.Owner
 
 import scala.concurrent.Future
 import scala.scalajs.js
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 /** Signal is an Observable with a current value. */
 trait Signal[+A] extends Observable[A] {
 
   override type Self[+T] = Signal[T]
+
+  protected[this] val internal: SignalObservableInternal = new SignalObservableInternal(this)
+
+  private[airstream] class SignalObservableInternal(
+    signal: Signal[Any]
+  ) extends ObservableInternal {
+
+    protected[signal] var maybeLastSeenCurrentValue: js.UndefOr[Try[Any]] = js.undefined
+
+    final def fireValue(nextValue: Any, transaction: Transaction): Unit = {
+      fireTry(Success(nextValue), transaction)
+    }
+
+    final def fireError(nextError: Throwable, transaction: Transaction): Unit = {
+      fireTry(Failure(nextError), transaction)
+    }
+
+    final def setCurrentValue(newValue: Try[Any]): Unit = {
+      maybeLastSeenCurrentValue = js.defined(newValue)
+    }
+
+
+    /** Signal propagates only if its value has changed */
+    final def fireTry(nextValue: Try[Any], transaction: Transaction): Unit = {
+      // @TODO[API] It is rather curious/unintuitive that firing external observers first seems to make more sense. Think about it some more.
+      // @TODO[Performance] This might be suboptimal for some data structures (e.g. big maps). Document this along with workarounds.
+      if (signal.tryNow() != nextValue) {
+        setCurrentValue(nextValue)
+
+        // === CAUTION ===
+        // The following logic must match EventStream's fireValue / fireError! It is separated here for performance.
+
+        val isError = nextValue.isFailure
+        var errorReported = false
+
+        externalObservers.foreach { observer =>
+          observer.onTry(nextValue)
+          if (isError && !errorReported) errorReported = true
+        }
+
+        internalObservers.foreach { observer =>
+          observer.onTry(nextValue, transaction)
+          if (isError && !errorReported) errorReported = true
+        }
+
+        // This will only ever happen for special Signals that maintain their current value even without observers.
+        // Currently we only have one kind of such signal: StrictSignal.
+        //
+        // We want to report unhandled errors on such signals if they have no observers (including internal observers)
+        // because if we don't, the error will not be reported anywhere, and I think we would usually want it.
+        if (isError && !errorReported) {
+          nextValue.fold(AirstreamError.sendUnhandledError, identity)
+        }
+      }
+    }
+
+  }
+
 
   /** Evaluate initial value of this [[Signal]].
     * This method must only be called once, when this value is first needed.
@@ -22,7 +80,6 @@ trait Signal[+A] extends Observable[A] {
   // @TODO[Integrity] ^^^ Does this memory management advice even hold water?
   protected[this] def initialValue: Try[A]
 
-  protected[this] var maybeLastSeenCurrentValue: js.UndefOr[Try[A]] = js.undefined
 
   /** @param project Note: guarded against exceptions */
   override def map[B](project: A => B): Signal[B] = {
@@ -108,11 +165,11 @@ trait Signal[+A] extends Observable[A] {
 
   /** Initial value is only evaluated if/when needed (when there are observers) */
   protected[airstream] def tryNow(): Try[A] = {
-    maybeLastSeenCurrentValue.getOrElse {
+    internal.maybeLastSeenCurrentValue.getOrElse {
       val currentValue = initialValue
-      setCurrentValue(currentValue)
+      internal.setCurrentValue(currentValue)
       currentValue
-    }
+    }.asInstanceOf[Try[A]]
   }
 
   /** See comment for [[tryNow]] right above
@@ -120,10 +177,6 @@ trait Signal[+A] extends Observable[A] {
     * @throws Exception if current value is an error
     */
   protected[airstream] def now(): A = tryNow().get
-
-  protected[this] def setCurrentValue(newValue: Try[A]): Unit = {
-    maybeLastSeenCurrentValue = js.defined(newValue)
-  }
 
   /** Here we need to ensure that Signal's default value has been evaluated.
     * It is important because if a Signal gets started by means of its .changes
@@ -143,47 +196,6 @@ trait Signal[+A] extends Observable[A] {
     observer.onTry(tryNow()) // send current value immediately
   }
 
-  override protected[this] final def fireValue(nextValue: A, transaction: Transaction): Unit = {
-    fireTry(Success(nextValue), transaction)
-  }
-
-  override protected[this] final def fireError(nextError: Throwable, transaction: Transaction): Unit = {
-    fireTry(Failure(nextError), transaction)
-  }
-
-  /** Signal propagates only if its value has changed */
-  override protected[this] def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
-    // @TODO[API] It is rather curious/unintuitive that firing external observers first seems to make more sense. Think about it some more.
-    // @TODO[Performance] This might be suboptimal for some data structures (e.g. big maps). Document this along with workarounds.
-    if (tryNow() != nextValue) {
-      setCurrentValue(nextValue)
-
-      // === CAUTION ===
-      // The following logic must match EventStream's fireValue / fireError! It is separated here for performance.
-
-      val isError = nextValue.isFailure
-      var errorReported = false
-
-      externalObservers.foreach { observer =>
-        observer.onTry(nextValue)
-        if (isError && !errorReported) errorReported = true
-      }
-
-      internalObservers.foreach { observer =>
-        observer.onTry(nextValue, transaction)
-        if (isError && !errorReported) errorReported = true
-      }
-
-      // This will only ever happen for special Signals that maintain their current value even without observers.
-      // Currently we only have one kind of such signal: StrictSignal.
-      //
-      // We want to report unhandled errors on such signals if they have no observers (including internal observers)
-      // because if we don't, the error will not be reported anywhere, and I think we would usually want it.
-      if (isError && !errorReported) {
-        nextValue.fold(AirstreamError.sendUnhandledError, identity)
-      }
-    }
-  }
 }
 
 object Signal {

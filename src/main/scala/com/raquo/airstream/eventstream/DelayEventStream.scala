@@ -15,13 +15,13 @@ class DelayEventStream[A](
 
   override protected[airstream] def onNext(nextValue: A, transaction: Transaction): Unit = {
     js.timers.setTimeout(delayMillis) {
-      new Transaction(fireValue(nextValue, _))
+      new Transaction(internal.fireValue(nextValue, _))
     }
   }
 
   override def onError(nextError: Throwable, transaction: Transaction): Unit = {
     js.timers.setTimeout(delayMillis) {
-      new Transaction(fireError(nextError, _))
+      new Transaction(internal.fireError(nextError, _))
     }
   }
 }

@@ -31,13 +31,54 @@ trait Observable[+A] {
   // @TODO[API] This needs smarter permissions. See Laminar's DomEventStream
   protected[airstream] val topoRank: Int
 
-  /** Note: Observer can be added more than once to an Observable.
-    * If so, it will observe each event as many times as it was added.
-    */
-  protected[this] val externalObservers: ObserverList[Observer[A]] = new ObserverList(js.Array())
+  private[airstream] abstract class ObservableInternal {
 
-  /** Note: This is enforced to be a Set outside of the type system #performance */
-  protected[this] val internalObservers: ObserverList[InternalObserver[A]] = new ObserverList(js.Array())
+    /** Note: Observer can be added more than once to an Observable.
+      * If so, it will observe each event as many times as it was added.
+      */
+    val externalObservers: ObserverList[Observer[Any]] = new ObserverList(js.Array())
+
+    /** Note: This is enforced to be a Set outside of the type system #performance */
+    val internalObservers: ObserverList[InternalObserver[Any]] = new ObserverList(js.Array())
+
+    // === A note on performance with error handling ===
+    //
+    // Signals remember their current value as Try[A], whereas
+    // EventStream-s normally fire plain A values and do not need them
+    // wrapped in Try. To make things more complicated, user-provided
+    // callbacks like `project` in `.map(project)` need to be wrapped in
+    // Try() for safety.
+    //
+    // A worst case performance scenario would see Airstream constantly
+    // wrapping and unwrapping the values being propagated, initializing
+    // many Success() objects as we walk along the observables dependency
+    // graph.
+    //
+    // We avoid this by keeping the values unwrapped as much as possible
+    // in event streams, but wrapping them in signals and state. When
+    // switching between streams and memory observables and vice versa
+    // we have to pay a small price to wrap or unwrap the value. It's a
+    // miniscule penalty that doesn't matter, but if you're wondering
+    // how we decide whether to implement onTry or onNext+onError in a
+    // particular InternalObserver, this is one of the main factors.
+    //
+    // With this in mind, you can see fireValue / fireError / fireTry
+    // implementations in EventStream and Signal are somewhat
+    // redundant (non-DRY), but performance friendly.
+    //
+    // You must be careful when overriding these methods however, as you
+    // don't know which one of them will be called, but they need to be
+    // implemented to produce similar results
+
+    def fireValue(nextValue: Any, transaction: Transaction): Unit
+
+    def fireError(nextError: Throwable, transaction: Transaction): Unit
+
+    def fireTry(nextValue: Try[Any], transaction: Transaction): Unit
+
+  }
+
+  protected[this] val internal: ObservableInternal
 
   /** @param project Note: guarded against exceptions */
   def map[B](project: A => B): Self[B]
@@ -72,34 +113,34 @@ trait Observable[+A] {
 
   // @TODO[API] print with dom.console.log automatically only if a JS value detected? Not sure if possible to do well.
 
-  /** print events using println - use for Scala values */
-  def debugLog(prefix: String = "event", when: A => Boolean = _ => true): Self[A] = {
-    map(value => {
-      if (when(value)) {
-        println(prefix + ": ", value.asInstanceOf[js.Any])
-      }
-      value
-    })
-  }
+//  /** print events using println - use for Scala values */
+//  def debugLog(prefix: String = "event", when: A => Boolean = _ => true): Self[A] = {
+//    map(value => {
+//      if (when(value)) {
+//        dom.console.log(prefix + ": ", value.asInstanceOf[js.Any])
+//      }
+//      value
+//    })
+//  }
+//
+//  /** print events using dom.console.log - use for JS values */
+//  def debugLogJs(prefix: String = "event", when: A => Boolean = _ => true): Self[A] = {
+//    map(value => {
+//      if (when(value)) {
+//        dom.console.log(prefix + ": ", value.asInstanceOf[js.Any])
+//      }
+//      value
+//    })
+//  }
 
-  /** print events using dom.console.log - use for JS values */
-  def debugLogJs(prefix: String = "event", when: A => Boolean = _ => true): Self[A] = {
-    map(value => {
-      if (when(value)) {
-        dom.console.log(prefix + ": ", value.asInstanceOf[js.Any])
-      }
-      value
-    })
-  }
-
-  def debugBreak(when: A => Boolean = _ => true): Self[A] = {
-    map(value => {
-      if (when(value)) {
-        js.special.debugger()
-      }
-      value
-    })
-  }
+//  def debugBreak(when: A => Boolean = _ => true): Self[A] = {
+//    map(value => {
+//      if (when(value)) {
+//        js.special.debugger()
+//      }
+//      value
+//    })
+//  }
 
   def debugSpy(fn: A => Unit): Self[A] = {
     map(value => {
@@ -129,7 +170,7 @@ trait Observable[+A] {
   /** Subscribe an external observer to this observable */
   def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription = {
     val subscription = new Subscription(owner, () => Transaction.removeExternalObserver(this, observer))
-    externalObservers.push(observer)
+    internal.externalObservers.push(observer.asInstanceOf[Observer[Any]])
     onAddedExternalObserver(observer)
     maybeStart()
     //dom.console.log(s"Adding subscription: $subscription")
@@ -143,7 +184,7 @@ trait Observable[+A] {
     */
   protected[airstream] def addInternalObserver(observer: InternalObserver[A]): Unit = {
     // @TODO Why does simple "protected" not work? Specialization?
-    internalObservers.push(observer)
+    internal.internalObservers.push(observer.asInstanceOf[InternalObserver[Any]])
     maybeStart()
   }
 
@@ -151,7 +192,7 @@ trait Observable[+A] {
     * This observable calls [[onStop]] if this action has removed its last observer (internal or external).
     */
   protected[airstream] def removeInternalObserverNow(observer: InternalObserver[A]): Unit = {
-    val removed = internalObservers.removeObserverNow(observer)
+    val removed = internal.internalObservers.removeObserverNow(observer.asInstanceOf[InternalObserver[Any]])
     if (removed) {
       maybeStop()
     }
@@ -159,13 +200,13 @@ trait Observable[+A] {
 
 
   protected[airstream] def removeExternalObserverNow(observer: Observer[A]): Unit = {
-    val removed = externalObservers.removeObserverNow(observer)
+    val removed = internal.externalObservers.removeObserverNow(observer.asInstanceOf[Observer[Any]])
     if (removed) {
       maybeStop()
     }
   }
 
-  private[this] def numAllObservers: Int = externalObservers.length + internalObservers.length
+  private[this] def numAllObservers: Int = internal.externalObservers.length + internal.internalObservers.length
 
   protected[this] def isStarted: Boolean = numAllObservers > 0
 
@@ -198,40 +239,6 @@ trait Observable[+A] {
     }
   }
 
-  // === A note on performance with error handling ===
-  //
-  // Signals remember their current value as Try[A], whereas
-  // EventStream-s normally fire plain A values and do not need them
-  // wrapped in Try. To make things more complicated, user-provided
-  // callbacks like `project` in `.map(project)` need to be wrapped in
-  // Try() for safety.
-  //
-  // A worst case performance scenario would see Airstream constantly
-  // wrapping and unwrapping the values being propagated, initializing
-  // many Success() objects as we walk along the observables dependency
-  // graph.
-  //
-  // We avoid this by keeping the values unwrapped as much as possible
-  // in event streams, but wrapping them in signals and state. When
-  // switching between streams and memory observables and vice versa
-  // we have to pay a small price to wrap or unwrap the value. It's a
-  // miniscule penalty that doesn't matter, but if you're wondering
-  // how we decide whether to implement onTry or onNext+onError in a
-  // particular InternalObserver, this is one of the main factors.
-  //
-  // With this in mind, you can see fireValue / fireError / fireTry
-  // implementations in EventStream and Signal are somewhat
-  // redundant (non-DRY), but performance friendly.
-  //
-  // You must be careful when overriding these methods however, as you
-  // don't know which one of them will be called, but they need to be
-  // implemented to produce similar results
-
-  protected[this] def fireValue(nextValue: A, transaction: Transaction): Unit
-
-  protected[this] def fireError(nextError: Throwable, transaction: Transaction): Unit
-
-  protected[this] def fireTry(nextValue: Try[A], transaction: Transaction): Unit
 }
 
 object Observable {

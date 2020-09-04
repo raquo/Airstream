@@ -43,21 +43,21 @@ class EventBusStream[A] private[eventbus] (writeBus: WriteBus[A]) extends EventS
     // @TODO ^^^^ We should document this contract in InternalObserver
 
     // println("NEW TRX from EventBusStream: " + nextValue.toString)
-    new Transaction(fireValue(nextValue, _))
+    new Transaction(internal.fireValue(nextValue, _))
   }
 
   /** Helper method to support batch emit using `WriteBus.emit` / `WriteBus.emitTry` */
   private[eventbus] def onNextWithSharedTransaction(nextValue: A, sharedTransaction: Transaction): Unit = {
-    fireValue(nextValue, sharedTransaction)
+    internal.fireValue(nextValue, sharedTransaction)
   }
 
   /** Helper method to support batch emit using `WriteBus.emit` / `WriteBus.emitTry` */
   private[eventbus] def onErrorWithSharedTransaction(nextError: Throwable, sharedTransaction: Transaction): Unit = {
-    fireError(nextError, sharedTransaction)
+    internal.fireError(nextError, sharedTransaction)
   }
 
   override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
-    new Transaction(fireError(nextError, _))
+    new Transaction(internal.fireError(nextError, _))
   }
 
   override protected[this] def onStart(): Unit = {

@@ -37,7 +37,7 @@ class ConcurrentFutureStream[A](
         if (!dropPreviousValues || (nextFutureIndex > lastEmittedValueIndex)) {
           lastEmittedValueIndex = nextFutureIndex
           // @TODO[API] Should lastEmittedValueIndex be updated only on success or also on failure?
-          new Transaction(fireTry(nextValue, _))
+          new Transaction(internal.fireTry(nextValue, _))
         }
       }
     }
@@ -50,7 +50,7 @@ class ConcurrentFutureStream[A](
       lastEmittedValueIndex = nextFutureIndex
       // @TODO[API] Should lastEmittedValueIndex be updated only on success or also on failure?
       // @TODO[Performance] We use future.onComplete to better match the timing of onNext. Perhaps this is a bit overkill.
-      Future.failed(nextError).onComplete(_ => new Transaction(fireError(nextError, _)))
+      Future.failed(nextError).onComplete(_ => new Transaction(internal.fireError(nextError, _)))
     }
   }
 }

@@ -78,16 +78,16 @@ object Var {
   /** Set multiple Var values in the same Transaction
     * Example usage: Var.set(var1 -> value1, var2 -> value2)
     */
-  def set(values: VarTuple[_]*): Unit = {
+  def set[T](values: VarTuple[T]*): Unit = {
     // @TODO[Performance] Make sure there is no overhead for `_*`
-    val tryValues: Seq[VarTryTuple[_]] = values.map(canonizeVarTuple(_))
+    val tryValues: Seq[VarTryTuple[T]] = values.map(canonizeVarTuple)
     setTry(tryValues: _*)
   }
 
   /** Set multiple Var values in the same Transaction
     * Example usage: Var.setTry(var1 -> Success(value1), var2 -> Failure(error2))
     */
-  def setTry(values: VarTryTuple[_]*): Unit = {
+  def setTry[T](values: VarTryTuple[T]*): Unit = {
     new Transaction(trx => values.foreach(setTryValue(_, trx)))
   }
 
@@ -98,8 +98,8 @@ object Var {
     *                   This is atomic: an exception in any of the vars will prevent any of
     *                   the batched updates in this call from going through.
     */
-  def update(mods: VarModTuple[_]*): Unit = {
-    val tryValues: Seq[VarTryTuple[_]] = mods.map(canonizeModTuple(_))
+  def update[T](mods: VarModTuple[T]*): Unit = {
+    val tryValues: Seq[VarTryTuple[T]] = mods.map(canonizeModTuple)
     setTry(tryValues: _*)
   }
 
@@ -109,8 +109,8 @@ object Var {
     * Note: none of the provided mods must throw. Same atomic behaviour as `update`.
     * @throws Exception if any of the provided `mod`s throws
     */
-  def tryUpdate(mods: VarTryModTuple[_]*): Unit = {
-    val tryValues: Seq[VarTryTuple[_]] = mods.map(canonizeTryModTuple(_))
+  def tryUpdate[T](mods: VarTryModTuple[T]*): Unit = {
+    val tryValues: Seq[VarTryTuple[T]] = mods.map(canonizeTryModTuple)
     setTry(tryValues: _*)
   }
 
@@ -144,7 +144,7 @@ object Var {
       * value will not be propagated anywhere further though.
       */
     private[Var] def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
-      fireTry(nextValue, transaction)
+      internal.fireTry(nextValue, transaction)
     }
   }
 }

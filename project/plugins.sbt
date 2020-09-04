@@ -4,6 +4,8 @@ addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.0.1")
 
 addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.17.0")
 
+addSbtPlugin("ch.epfl.lamp" % "sbt-dotty" % "0.4.2")
+
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.1")
 
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.8")

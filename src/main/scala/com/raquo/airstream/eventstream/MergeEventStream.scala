@@ -47,8 +47,8 @@ class MergeEventStream[A](
 
     while (pendingParentValues.nonEmpty) {
       pendingParentValues.dequeue().value.fold(
-        fireError(_, transaction),
-        fireValue(_, transaction)
+        internal.fireError(_, transaction),
+        internal.fireValue(_, transaction)
       )
     }
   }

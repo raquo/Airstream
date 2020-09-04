@@ -23,11 +23,11 @@ class FilterEventStream[A](
     // @TODO[Performance] Can / should we replace internal Try()-s with try-catch blocks?
     Try(passes(nextParentValue)).fold(
       onError(_, transaction),
-      passes => if (passes) fireValue(nextParentValue, transaction)
+      passes => if (passes) internal.fireValue(nextParentValue, transaction)
     )
   }
 
   override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
-    fireError(nextError, transaction)
+    internal.fireError(nextError, transaction)
   }
 }

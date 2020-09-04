@@ -22,8 +22,8 @@ class FutureEventStream[A](future: Future[A], emitIfFutureCompleted: Boolean) ex
   if (!future.isCompleted || emitIfFutureCompleted) {
     // @TODO[API] Do we need "isStarted" filter on these? Doesn't seem to affect anything for now...
     future.onComplete(_.fold(
-      nextError => new Transaction(fireError(nextError, _)),
-      nextValue => new Transaction(fireValue(nextValue, _))
+      nextError => new Transaction(internal.fireError(nextError, _)),
+      nextValue => new Transaction(internal.fireValue(nextValue, _))
     ))
   }
 }
