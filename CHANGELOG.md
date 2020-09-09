@@ -6,7 +6,7 @@ Breaking changes in **bold**.
 #### v0.10.1 – Sep 2020
 
 * New: `EventStream.periodic` and `PeriodicEventStream`
-* New: `EventStream.fromJsPromise`
+* New: `EventStream.fromJsPromise` and `Signal.fromJsPromise`
 
 
 #### v0.10.0 – Aug 2020

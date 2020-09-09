@@ -194,6 +194,10 @@ object Signal {
     new FutureSignal(future)
   }
 
+  @inline def fromJsPromise[A](promise: js.Promise[A]): Signal[Option[A]] = {
+    new FutureSignal(promise.toFuture)
+  }
+
   implicit def toTuple2Signal[A, B](signal: Signal[(A, B)]): Tuple2Signal[A, B] = {
     new Tuple2Signal(signal)
   }

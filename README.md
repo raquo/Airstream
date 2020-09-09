@@ -43,7 +43,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Ownership & Memory Management](#ownership--memory-management)
     * [Dynamic Ownership](#dynamic-ownership)
   * [Sources of Events](#sources-of-events)
-    * [Creating Observables from Futures](#creating-observables-from-futures)
+    * [Creating Observables from Futures and Promises](#creating-observables-from-futures)
     * [EventStream.fromSeq](#eventstreamfromseq)
     * [EventStream.periodic](#eventstreamperiodic)
     * [EventStream.empty](#eventstreamempty)
@@ -365,7 +365,11 @@ Now that you have an `Observable[Future[A]]`, you can flatten it into `Observabl
 
 A failed future results in an error (see [Error Handling](#error-handling)).
 
-#### EventStream.fromSeq
+#### `EventStream.fromJsPromise` and `Signal.fromJsPromise`
+
+Super thin wrappers over `EventStream.fromFuture` and `Signal.fromFuture` (see above) for more convenient integration with JS libraries.
+
+#### `EventStream.fromSeq`
 
 ```scala
 object EventStream {

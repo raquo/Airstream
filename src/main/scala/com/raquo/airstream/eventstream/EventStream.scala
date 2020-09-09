@@ -6,6 +6,7 @@ import com.raquo.airstream.features.{CombineObservable, Splittable}
 import com.raquo.airstream.signal.{FoldLeftSignal, Signal, SignalFromEventStream}
 
 import scala.concurrent.Future
+import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
 trait EventStream[+A] extends Observable[A] {
@@ -196,6 +197,10 @@ object EventStream {
 
   def fromFuture[A](future: Future[A]): EventStream[A] = {
     new FutureEventStream(future, emitIfFutureCompleted = false)
+  }
+
+  @inline def fromJsPromise[A](promise: js.Promise[A]): EventStream[A] = {
+    fromFuture(promise.toFuture)
   }
 
   def periodic(
