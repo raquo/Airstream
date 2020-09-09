@@ -31,7 +31,7 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
     effects.clear()
 
     for {
-      _ <- delay(5) { }
+      _ <- delay(2) { }
       _ <- delay(15) {
         effects shouldEqual mutable.Buffer(Effect("obs1", 1))
         effects.clear()
@@ -62,7 +62,7 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
         effects shouldEqual mutable.Buffer(Effect("obs1", 0))
         effects.clear()
       }
-      _ <- delay(5) { }
+      _ <- delay(2) { }
       _ <- delay(15) {
         effects shouldEqual mutable.Buffer(Effect("obs1", 1))
         effects.clear()
@@ -79,7 +79,7 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
     effects shouldEqual mutable.Buffer()
 
     for {
-      _ <- delay(5) { }
+      _ <- delay(2) { }
       _ <- delay(15) {
         effects shouldEqual mutable.Buffer(Effect("obs1", 1))
         effects.clear()
@@ -126,7 +126,7 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
     effects.clear()
 
     for {
-      _ <- delay(5) { }
+      _ <- delay(2) { }
       _ <- delay(15) {
         effects shouldEqual mutable.Buffer(Effect("obs1", 1))
         effects.clear()
@@ -157,7 +157,7 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
         effects shouldEqual mutable.Buffer(Effect("obs1", 3))
         effects.clear()
       }
-      _ <- delay(5) { }
+      _ <- delay(2) { }
       _ <- delay(15) {
         effects shouldEqual mutable.Buffer(Effect("obs1", 4))
         effects.clear()
