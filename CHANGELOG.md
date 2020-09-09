@@ -8,6 +8,11 @@ Breaking changes in **bold**.
 * New: `EventStream.periodic` and `PeriodicEventStream`
 * New: `EventStream.fromJsPromise` and `Signal.fromJsPromise`
 
+News:
+* New video: [Laminar – Smooth UI Development with Scala.js](https://www.youtube.com/watch?v=L_AHCkl6L-Q)
+  * Also talks about observables and Airstream specifically
+* You can now sponsor Airstream development on github! 
+
 
 #### v0.10.0 – Aug 2020
 
