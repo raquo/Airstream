@@ -3,6 +3,12 @@
 Breaking changes in **bold**.
 
 
+#### v0.10.1 – Sep 2020
+
+* New: `EventStream.periodic` and `PeriodicEventStream`
+* New: `EventStream.fromJsPromise`
+
+
 #### v0.10.0 – Aug 2020
 
 * **Naming: `fold` -> `foldLeft`, `foldRecover` -> `foldLeftRecover`, `FoldSignal` -> `FoldLeftSignal`**  

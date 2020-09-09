@@ -155,6 +155,8 @@ trait Signal[+A] extends Observable[A] {
   override protected[this] def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
     // @TODO[API] It is rather curious/unintuitive that firing external observers first seems to make more sense. Think about it some more.
     // @TODO[Performance] This might be suboptimal for some data structures (e.g. big maps). Document this along with workarounds.
+    // Note: This comparison is using the Scala `equals` method. Typically `equals` calls `eq` first,
+    // to check for reference equality, then proceeds to check for structural equality if needed.
     if (tryNow() != nextValue) {
       setCurrentValue(nextValue)
 

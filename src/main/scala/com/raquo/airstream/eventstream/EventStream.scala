@@ -198,6 +198,19 @@ object EventStream {
     new FutureEventStream(future, emitIfFutureCompleted = false)
   }
 
+  def periodic(
+    intervalMs: Int,
+    emitInitial: Boolean = true,
+    resetOnStop: Boolean = true
+  ): PeriodicEventStream[Int] = {
+    new PeriodicEventStream[Int](
+      initial = 0,
+      next = eventNumber => Some((eventNumber + 1, intervalMs)),
+      emitInitial = emitInitial,
+      resetOnStop = resetOnStop
+    )
+  }
+
   @inline def combine[A, B](
     stream1: EventStream[A],
     stream2: EventStream[B]

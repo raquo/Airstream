@@ -5,6 +5,7 @@ import com.raquo.airstream.util.JsPriorityQueue
 import scala.scalajs.js
 
 // @TODO[Naming] Should probably be renamed to something like "Propagation"
+/** @param code Note: Must not throw! */
 class Transaction(private[Transaction] val code: Transaction => Any) {
 
   // @TODO this is not used except for debug logging. Remove eventually
@@ -96,7 +97,7 @@ object Transaction { // extends GlobalCounter {
 
   private def run(transaction: Transaction): Unit = {
     isSafeToRemoveObserver = false
-    transaction.code(transaction)
+    transaction.code(transaction) // @TODO[API] Shouldn't we guard against exceptions in `code` here? It can be provided by the user.
     transaction.resolvePendingObservables()
     isSafeToRemoveObserver = true
     done(transaction)
