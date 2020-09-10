@@ -21,7 +21,7 @@ Airstream has a very generic design, but is primarily intended to serve as a rea
 I created Airstream because I found existing solutions were not suitable for building reactive UI components. My original need for Airstream was to replace the previous reactive layer of [Laminar](https://github.com/raquo/Laminar), but I'll be happy to see it used by other reactive UI libraries as well. Another piece of Laminar you can reuse is [Scala DOM Types](https://github.com/raquo/scala-dom-types).
 
 ```
-"com.raquo" %%% "airstream" % "0.10.1"  // Scala.js 1.x only
+"com.raquo" %%% "airstream" % "0.10.2"  // Scala.js 1.x only
 ```
 
 
@@ -770,6 +770,10 @@ Aside from the `def flatMap[...](implicit strategy: FlattenStrategy[...])` metho
 
 **`SwitchStreamStrategy`** flattens an `Observable[EventStream[A]]` into an `EventStream[A]`. The resulting stream will emit events from the latest stream emitted by the parent observable. So, as the parent observable emits a new stream, the resulting flattened stream _switches_ to imitating this last emitted stream.
 *  This strategy is the default for the parent observable type that it supports. So if you want to flatten an `Observable[EventStream[A]]` using this strategy, you don't need to pass it to `flatten` explicitly, it is provided implicitly.
+
+**`ConcurrentStreamStrategy`** is essentially a dynamic version of `EventStream.merge`.
+* The resulting stream re-emits all the events emitted by all of the streams emitted by the input observable.
+* If you stop observing the resulting stream, it will forget all of the streams it previously listened to. When you start it up again, it will start listening to the input observable from scratch, as if it's the first time you started it.
 
 **`SwitchSignalStrategy`** flattens an `Signal[Signal[A]]` into a `Signal[A]`. Works similar to `SwitchStreamStrategy` but with Signal mechanics, tracking the last emitted value from the last signal emitted by the parent signal. Note: 
 * This strategy is the default for flattening `Signal[Signal[A]]`.

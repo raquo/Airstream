@@ -1,15 +1,20 @@
 package com.raquo.airstream.eventstream
 
 import com.raquo.airstream.AsyncUnitSpec
+import com.raquo.airstream.core.Observer
 import com.raquo.airstream.eventbus.EventBus
-import com.raquo.airstream.fixtures.{Effect, TestableOwner}
+import com.raquo.airstream.features.FlattenStrategy.ConcurrentStreamStrategy
+import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import com.raquo.airstream.ownership.Owner
+import com.raquo.airstream.signal.Var
 
 import scala.collection.mutable
 
 class EventStreamFlattenSpec extends AsyncUnitSpec {
 
-  it("sync map-flatten works") {
+  private val done = assert(true)
+
+  it("sync map-flatten") {
 
     implicit val owner: Owner = new TestableOwner
 
@@ -29,7 +34,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     effects.toList shouldBe range.map(i => Effect("obs0", i * 3))
   }
 
-  it("sync three-level map-flatten works") {
+  it("sync three-level map-flatten") {
 
     implicit val owner: Owner = new TestableOwner
 
@@ -65,7 +70,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     * emitted by the inner delayedStream are processed. Just because the interval is set to 6ms
     * does not mean that this is what it will be. It's merely the lower bound.
     */
-  it("from-future map-flatten works") {
+  it("from-future map-flatten") {
     implicit val owner: Owner = new TestableOwner
 
     val range1 = 1 to 3
@@ -97,7 +102,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     * emitted by the inner delayedStream are processed. Just because the interval is set to 6ms
     * does not mean that this is what it will be. It's merely the lower bound.
     */
-  it("three-level from-future map-flatten works") {
+  it("three-level from-future map-flatten") {
     implicit val owner: Owner = new TestableOwner
 
     val range1 = 1 to 3
@@ -124,7 +129,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     }
   }
 
-  it("sync flatMap works") {
+  it("sync flatMap") {
 
     implicit val owner: Owner = new TestableOwner
 
@@ -143,7 +148,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     effects.toList shouldBe range.map(i => Effect("obs0", i * 3))
   }
 
-  it("sync three-level flatMap works") {
+  it("sync three-level flatMap") {
 
     implicit val owner: Owner = new TestableOwner
 
@@ -168,7 +173,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     * emitted by the inner delayedStream are processed. Just because the interval is set to 6ms
     * does not mean that this is what it will be. It's merely the lower bound.
     */
-  it("from-future flatMap works") {
+  it("from-future flatMap") {
     implicit val owner: Owner = new TestableOwner
 
     val range1 = 1 to 3
@@ -199,7 +204,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     * emitted by the inner delayedStream are processed. Just because the interval is set to 6ms
     * does not mean that this is what it will be. It's merely the lower bound.
     */
-  it("three-level from-future flatMap works") {
+  it("three-level from-future flatMap") {
     implicit val owner: Owner = new TestableOwner
 
     val range1 = 1 to 3
@@ -223,6 +228,223 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
         range2.map(j => Effect("obs0", i * j * 7))
       )
     }
+  }
+
+  it("ConcurrentEventStream (input=stream)") {
+    implicit val owner: Owner = new TestableOwner
+
+    val calculations = mutable.Buffer[Calculation[Int]]()
+
+    val bus1 = new EventBus[Int]
+    val bus2 = new EventBus[Int]
+    val bus3 = new EventBus[Int]
+
+    val stream1 = bus1.events.map(Calculation.log("stream1", calculations))
+    val stream2 = bus2.events.map(Calculation.log("stream2", calculations))
+    val stream3 = bus3.events.map(Calculation.log("stream3", calculations))
+
+    val mergeBus = new EventBus[EventStream[Int]]
+
+    val mergeStream = mergeBus.events.flatten(ConcurrentStreamStrategy).map(Calculation.log("merge", calculations))
+
+    val sub1 = mergeStream.addObserver(Observer.empty)
+
+    calculations shouldBe mutable.Buffer()
+
+    // --
+
+    bus1.writer.onNext(0)
+    calculations shouldBe mutable.Buffer()
+
+    // --
+
+    mergeBus.writer.onNext(stream1)
+    calculations shouldBe mutable.Buffer()
+
+    // --
+
+    bus1.writer.onNext(1)
+    calculations shouldBe mutable.Buffer(
+      Calculation("stream1", 1),
+      Calculation("merge", 1)
+    )
+    calculations.clear()
+
+    // --
+
+    bus1.writer.onNext(2)
+    calculations shouldBe mutable.Buffer(
+      Calculation("stream1", 2),
+      Calculation("merge", 2)
+    )
+    calculations.clear()
+
+    // --
+
+    mergeBus.writer.onNext(stream2)
+    mergeBus.writer.onNext(stream3)
+    bus1.writer.onNext(3)
+    bus2.writer.onNext(10)
+    bus3.writer.onNext(100)
+    calculations shouldBe mutable.Buffer(
+      Calculation("stream1", 3),
+      Calculation("merge", 3),
+      Calculation("stream2", 10),
+      Calculation("merge", 10),
+      Calculation("stream3", 100),
+      Calculation("merge", 100)
+    )
+    calculations.clear()
+
+    // --
+
+    bus2.writer.onNext(20)
+    calculations shouldBe mutable.Buffer(
+      Calculation("stream2", 20),
+      Calculation("merge", 20)
+    )
+    calculations.clear()
+
+    // --
+
+    sub1.kill()
+    bus1.writer.onNext(4)
+    calculations shouldBe mutable.Buffer()
+
+    // --
+
+    val sub2 = mergeStream.addObserver(Observer.empty)
+    bus1.writer.onNext(5)
+    bus2.writer.onNext(30)
+    bus3.writer.onNext(200)
+    calculations shouldBe mutable.Buffer()
+
+    // --
+
+    mergeBus.writer.onNext(stream1)
+    bus1.writer.onNext(6)
+    bus1.writer.onNext(7)
+    calculations shouldBe mutable.Buffer(
+      Calculation("stream1", 6),
+      Calculation("merge", 6),
+      Calculation("stream1", 7),
+      Calculation("merge", 7)
+    )
+
+    done
+  }
+
+  it("ConcurrentEventStream (input=signal)") {
+    implicit val owner: Owner = new TestableOwner
+
+    val calculations = mutable.Buffer[Calculation[Int]]()
+
+    val bus1 = new EventBus[Int]
+    val bus2 = new EventBus[Int]
+    val bus3 = new EventBus[Int]
+
+    val stream1 = bus1.events.map(Calculation.log("stream1", calculations))
+    val stream2 = bus2.events.map(Calculation.log("stream2", calculations))
+    val stream3 = bus3.events.map(Calculation.log("stream3", calculations))
+
+    val mergeVar = Var[EventStream[Int]](stream1)
+
+    val mergeSignal = mergeVar.signal.flatten(ConcurrentStreamStrategy).map(Calculation.log("merge", calculations))
+
+    val sub1 = mergeSignal.addObserver(Observer.empty)
+
+    calculations shouldBe mutable.Buffer()
+
+    // --
+
+    bus1.writer.onNext(0) // writing to initial stream
+    bus2.writer.onNext(-1) // writing to unrelated stream
+    calculations shouldBe mutable.Buffer(
+      Calculation("stream1", 0),
+      Calculation("merge", 0)
+    )
+    calculations.clear()
+
+    // --
+
+    mergeVar.writer.onNext(stream1)
+    calculations shouldBe mutable.Buffer()
+
+    // --
+
+    bus1.writer.onNext(1)
+    calculations shouldBe mutable.Buffer(
+      Calculation("stream1", 1),
+      Calculation("merge", 1)
+    )
+    calculations.clear()
+
+    // --
+
+    bus1.writer.onNext(2)
+    calculations shouldBe mutable.Buffer(
+      Calculation("stream1", 2),
+      Calculation("merge", 2)
+    )
+    calculations.clear()
+
+    // --
+
+    mergeVar.writer.onNext(stream2)
+    mergeVar.writer.onNext(stream3)
+    bus1.writer.onNext(3)
+    bus2.writer.onNext(10)
+    bus3.writer.onNext(100)
+    calculations shouldBe mutable.Buffer(
+      Calculation("stream1", 3),
+      Calculation("merge", 3),
+      Calculation("stream2", 10),
+      Calculation("merge", 10),
+      Calculation("stream3", 100),
+      Calculation("merge", 100)
+    )
+    calculations.clear()
+
+    // --
+
+    bus2.writer.onNext(20)
+    calculations shouldBe mutable.Buffer(
+      Calculation("stream2", 20),
+      Calculation("merge", 20)
+    )
+    calculations.clear()
+
+    // --
+
+    sub1.kill()
+    bus1.writer.onNext(4)
+    calculations shouldBe mutable.Buffer()
+
+    // --
+
+    val sub2 = mergeSignal.addObserver(Observer.empty)
+    bus1.writer.onNext(5)
+    bus2.writer.onNext(30)
+    bus3.writer.onNext(200) // `stream3` is current value of mergeSignal
+    calculations shouldBe mutable.Buffer(
+      Calculation("stream3", 200),
+      Calculation("merge", 200)
+    )
+    calculations.clear()
+
+    // --
+
+    mergeVar.writer.onNext(stream1)
+    bus1.writer.onNext(6)
+    bus1.writer.onNext(7)
+    calculations shouldBe mutable.Buffer(
+      Calculation("stream1", 6),
+      Calculation("merge", 6),
+      Calculation("stream1", 7),
+      Calculation("merge", 7)
+    )
+
+    done
   }
 
 }
