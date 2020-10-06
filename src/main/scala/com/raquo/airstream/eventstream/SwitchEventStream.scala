@@ -38,7 +38,10 @@ class SwitchEventStream[I, O](
 
   // @TODO[Elegance] Maybe we should abstract away this kind of internal observer
   private[this] val internalEventObserver: InternalObserver[O] = InternalObserver[O](
-    onNext = (nextEvent, _) => new Transaction(fireValue(nextEvent, _)),
+    onNext = (nextEvent, _) => {
+      //println(s"> init trx from SwitchEventStream.onValue(${nextEvent})")
+      new Transaction(fireValue(nextEvent, _))
+    },
     onError = (nextError, _) => new Transaction(fireError(nextError, _))
   )
 

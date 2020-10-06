@@ -18,8 +18,9 @@ class Var[A] private(private[this] var currentValue: Try[A]) {
 
   val signal: StrictSignal[A] = _varSignal
 
-  val writer: Observer[A] = Observer.fromTry {
-    case nextTry => new Transaction(setCurrentValue(nextTry, _))
+  val writer: Observer[A] = Observer.fromTry { case nextTry => // Note: `case` syntax needed for Scala 2.12
+    //println(s"> init trx from Var.writer(${nextTry})")
+    new Transaction(setCurrentValue(nextTry, _))
   }
 
   @inline def set(value: A): Unit = writer.onNext(value)
@@ -35,17 +36,23 @@ class Var[A] private(private[this] var currentValue: Try[A]) {
     //      err => throw VarUpdateError(cause = err),
     //      value => Try(mod(value))
     //    ))
-    val unsafeValue = now()
-    val nextValue = Try(mod(unsafeValue)) // Warning: This line will throw if mod throws, DO NOT move it inside the Transaction
-    new Transaction(setCurrentValue(nextValue, _))
+    //println(s"> init trx from Var.update")
+    new Transaction(trx => {
+      val unsafeValue = now()
+      val nextValue = Try(mod(unsafeValue)) // Note: this does catch exceptions in mod(unsafeValue)
+      setCurrentValue(nextValue, trx)
+    })
   }
 
   /** @param mod Note: must not throw
     * @throws Exception if `mod` throws
     */
   def tryUpdate(mod: Try[A] => Try[A]): Unit = {
-    val nextValue = mod(currentValue) // Warning: This line will throw if mod throws, DO NOT move it inside the Transaction
-    new Transaction(setCurrentValue(nextValue, _))
+    //println(s"> init trx from Var.tryUpdate")
+    new Transaction(trx => {
+      val nextValue = mod(currentValue) // Note: this does catch exceptions in mod(unsafeValue)
+      setCurrentValue(nextValue, trx)
+    })
   }
 
   @inline def tryNow(): Try[A] = signal.tryNow()
@@ -74,13 +81,18 @@ object Var {
 
   type VarTryModTuple[A] = (Var[A], Try[A] => Try[A])
 
+  // @nc users should not be able to use Var.set and similar methods to send more than one event into the same Var in the same transaciton
+  //  - !!!! Fix this.
 
   /** Set multiple Var values in the same Transaction
     * Example usage: Var.set(var1 -> value1, var2 -> value2)
     */
   def set(values: VarTuple[_]*): Unit = {
     // @TODO[Performance] Make sure there is no overhead for `_*`
-    val tryValues: Seq[VarTryTuple[_]] = values.map(canonizeVarTuple(_))
+    val tryValues: Seq[VarTryTuple[_]] = values.map(toTryTuple(_))
+    if (tryValues.exists(_._2.isFailure)) {
+      throw new Exception(s"Unable to Var.set because one of the ${values.length} Var(s) would have failed, or was failed from the start. Use Var.setTry if this is really what you want.")
+    }
     setTry(tryValues: _*)
   }
 
@@ -88,6 +100,7 @@ object Var {
     * Example usage: Var.setTry(var1 -> Success(value1), var2 -> Failure(error2))
     */
   def setTry(values: VarTryTuple[_]*): Unit = {
+    //println(s"> init trx from Var.set/setTry")
     new Transaction(trx => values.foreach(setTryValue(_, trx)))
   }
 
@@ -99,8 +112,15 @@ object Var {
     *                   the batched updates in this call from going through.
     */
   def update(mods: VarModTuple[_]*): Unit = {
-    val tryValues: Seq[VarTryTuple[_]] = mods.map(canonizeModTuple(_))
-    setTry(tryValues: _*)
+    val tryMods: Seq[VarTryModTuple[_]] = mods.map(modToTryModTuple(_))
+    //println(s"> init trx from Var.update")
+    new Transaction(trx => {
+      val tryValues: Seq[VarTryTuple[_]] = tryMods.map(tryModToTryTuple(_))
+      if (tryValues.exists(_._2.isFailure)) {
+        throw new Exception(s"Unable to Var.update because one of the ${mods.length} Var(s) would have failed, or was failed from the start. Use Var.tryUpdate if this is really what you want.")
+      }
+      tryValues.foreach(setTryValue(_, trx))
+    })
   }
 
   /** Modify multiple Vars in the same Transaction
@@ -110,16 +130,18 @@ object Var {
     * @throws Exception if any of the provided `mod`s throws
     */
   def tryUpdate(mods: VarTryModTuple[_]*): Unit = {
-    val tryValues: Seq[VarTryTuple[_]] = mods.map(canonizeTryModTuple(_))
-    setTry(tryValues: _*)
+    //println(s"> init trx from Var.tryUpdate")
+    new Transaction(trx => {
+      val tryValues: Seq[VarTryTuple[_]] = mods.map(tryModToTryTuple(_))
+      tryValues.foreach(setTryValue(_, trx))
+    })
   }
 
+  @inline private def toTryTuple[A](varTuple: VarTuple[A]): VarTryTuple[A] = (varTuple._1, Success(varTuple._2))
 
-  @inline private def canonizeVarTuple[A](varTuple: VarTuple[A]): VarTryTuple[A] = (varTuple._1, Success(varTuple._2))
+  @inline private def modToTryModTuple[A](modTuple: VarModTuple[A]): VarTryModTuple[A] = (modTuple._1, _.map(curr => modTuple._2(curr)))
 
-  @inline private def canonizeModTuple[A](modTuple: VarModTuple[A]): VarTryTuple[A] = (modTuple._1, Success(modTuple._2(modTuple._1.now())))
-
-  @inline private def canonizeTryModTuple[A](modTuple: VarTryModTuple[A]): VarTryTuple[A] = (modTuple._1, modTuple._2(modTuple._1.tryNow()))
+  @inline private def tryModToTryTuple[A](modTuple: VarTryModTuple[A]): VarTryTuple[A] = (modTuple._1, modTuple._2(modTuple._1.tryNow()))
 
   @inline private def setTryValue[A](tuple: VarTryTuple[A], transaction: Transaction): Unit = {
     tuple._1.setCurrentValue(tuple._2, transaction)
@@ -147,5 +169,6 @@ object Var {
       fireTry(nextValue, transaction)
     }
   }
+
 }
 
