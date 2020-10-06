@@ -19,7 +19,10 @@ class SeqEventStream[A](events: Seq[Try[A]], emitOnce: Boolean) extends EventStr
   override protected[this] def onStart(): Unit = {
     super.onStart()
     if (!emitOnce || !hasEmitted) {
-      events.foreach(event => new Transaction(fireTry(event, _)))
+      events.foreach { event =>
+        //println(s"> init trx from SeqEventStream(${event})")
+        new Transaction(fireTry(event, _))
+      }
     }
     if (!hasEmitted) {
       hasEmitted = true

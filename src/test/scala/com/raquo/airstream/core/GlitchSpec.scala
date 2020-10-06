@@ -4,6 +4,8 @@ import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
+import com.raquo.airstream.ownership.Owner
+import com.raquo.airstream.signal.Var
 
 import scala.collection.mutable
 
@@ -345,4 +347,141 @@ class GlitchSpec extends UnitSpec {
     //    as well as different events on the soft-sync-ed output stream
   }
 
+  // see https://github.com/raquo/Airstream/issues/39
+  it("No glitch when double Var update – with Var.update and two subs") {
+
+    val owner = new TestableOwner
+    val bus = new EventBus[Int]
+    val log = Var[List[Int]](Nil)
+    val stream1 = bus.events
+    val stream2 = bus.events.map(_ * 100)
+    val obs = Observer[Int] { num =>
+      log.update(_ :+ num)
+    }
+    stream1.addObserver(obs)(owner)
+    stream2.addObserver(obs)(owner)
+
+    bus.writer.onNext(1)
+
+    log.now() shouldBe List(1, 100) // Fails, is actually List(100)
+
+    // --
+
+    bus.writer.onNext(2)
+
+    log.now() shouldBe List(1, 100, 2, 200)
+
+    // --
+
+    bus.writer.onNext(3)
+
+    log.now() shouldBe List(1, 100, 2, 200, 3, 300)
+  }
+
+  // see https://github.com/raquo/Airstream/issues/39
+  it("No glitch when double Var update - with double Var.update in foreach") {
+
+    val owner = new TestableOwner
+
+    var n = 0
+    val clickBus = new EventBus[Unit]
+    val log = Var[List[Int]](Nil)
+    clickBus
+      .events
+      .foreach { _ =>
+        n = n + 2
+        log.update(_ :+ (n - 2))
+        log.update(_ :+ (n - 1))
+      }(owner)
+
+    clickBus.writer.onNext(())
+
+    log.now() shouldBe List(0, 1)
+
+    // --
+
+    clickBus.writer.onNext(())
+
+    log.now() shouldBe List(0, 1, 2, 3)
+
+    // --
+
+    clickBus.writer.onNext(())
+
+    log.now() shouldBe List(0, 1, 2, 3, 4, 5)
+  }
+
+  // see https://github.com/raquo/Airstream/issues/39
+  it("No glitch when double Var update - with EventStream.merge") {
+
+    val owner = new TestableOwner
+
+    sealed trait Action
+    case class Append(i: Int) extends Action
+
+    case class State(
+      seq: Seq[Int]
+    )
+
+    val clickBus = new EventBus[Unit]
+
+    val stateVar = Var(State(Nil))
+
+    var n = 0
+    val actions: EventStream[Action] = clickBus.events.flatMap { _ =>
+      n += 2
+      EventStream.merge(
+        EventStream.fromValue(n - 2, emitOnce = true),
+        EventStream.fromValue(n - 1, emitOnce = true)
+      ).map(Append)
+    }
+
+    val updatedState =
+      actions
+        .withCurrentValueOf(stateVar.signal)
+        .map {
+          case (Append(i), State(seq)) => State(seq :+ i)
+        }
+
+    updatedState.addObserver(stateVar.writer)(owner)
+
+    clickBus.writer.onNext(())
+
+    stateVar.now() shouldBe State(List(0, 1))
+  }
+
+  it("Nested transactions order and correctness") {
+
+    val owner = new TestableOwner
+
+    var n = 0
+    val clickBus = new EventBus[Unit]
+    val log = Var[List[Int]](Nil)
+    clickBus
+      .events
+      .foreach { _ =>
+        n = n + 2
+        log.update(curr => {
+          log.update(curr => curr :+ -1)
+          log.update(curr => {
+            log.update(curr => curr :+ -3)
+            log.update(curr => curr :+ -4)
+            curr :+ -2
+          })
+          log.update(curr => curr :+ -5)
+          curr :+ (n - 2)
+        })
+        log.update(curr => curr :+ (n - 1))
+      }(owner)
+
+    clickBus.writer.onNext(())
+
+    log.now() shouldBe List(0, -1, -2, -3, -4, -5, 1)
+
+    // --
+
+    clickBus.writer.onNext(())
+
+    log.now() shouldBe List(0, -1, -2, -3, -4, -5, 1, 2, -1, -2, -3, -4, -5, 3)
+  }
 }

@@ -2,6 +2,7 @@ package com.raquo.airstream.core
 
 import com.raquo.airstream.util.JsPriorityQueue
 
+import scala.collection.mutable
 import scala.scalajs.js
 
 // @TODO[Naming] Should probably be renamed to something like "Propagation"
@@ -9,7 +10,9 @@ import scala.scalajs.js
 class Transaction(private[Transaction] val code: Transaction => Any) {
 
   // @TODO this is not used except for debug logging. Remove eventually
-  // val id: Int = Transaction.nextId()
+  //val id: Int = Transaction.nextId()
+
+  //println(s"  - create trx $id")
 
   /** Priority queue of pending observables: sorted by their topoRank.
     *
@@ -17,7 +20,7 @@ class Transaction(private[Transaction] val code: Transaction => Any) {
     */
   private[airstream] val pendingObservables: JsPriorityQueue[SyncObservable[_]] = new JsPriorityQueue(_.topoRank)
 
-  Transaction.add(this)
+  Transaction.pendingTransactions.add(this)
 
   @inline private[Transaction] def resolvePendingObservables(): Unit = {
     while (pendingObservables.nonEmpty) {
@@ -30,9 +33,139 @@ class Transaction(private[Transaction] val code: Transaction => Any) {
 
 object Transaction { // extends GlobalCounter {
 
+  //private var lastId: Int = 0;
+
+  //private def nextId(): Int = {
+  //  lastId += 1
+  //  lastId
+  //}
+
+  private object pendingTransactions {
+
+    /** first transaction is the top of the stack, currently running */
+    private var stack: List[Transaction] = Nil
+
+    private val children: mutable.Map[Transaction, List[Transaction]] = mutable.Map.empty
+
+    def add(newTransaction: Transaction): Unit = {
+      // 1. Regarding calling `run`:
+      //    If a transaction is currently running, the new transaction will be triggered
+      //    from the .done() call after the current transaction finishes.
+      //    Otherwise, if there are no pending transactions other than this new transaction,
+      //    we need to run this transaction right now because no one will do it for us.
+      // 2. Regarding the queue:
+      //    If a transaction is currently running, add newTransaction to its children.
+      //    They will run after the current transaction finishes.
+      peekStack().fold {
+        pushToStack(newTransaction)
+        run(newTransaction)
+      }{ currentTransaction =>
+        enqueueChild(parent = currentTransaction, newChild = newTransaction)
+      }
+    }
+
+    def done(transaction: Transaction): Unit = {
+      //if (lastId > 50) {
+      //  throw new Exception(">>> Overflow!!!!!")
+      //}
+      //println("current stack (LEFT is first): " + stack.map(_.id))
+      //println("current children: " + pendingTransactions.children.map(t => (t._1.id, t._2.map(_.id))))
+      if (!peekStack().contains(transaction)) {
+        // @TODO[Integrity] Should we really throw here?
+        throw new Exception("Transaction queue error: Completed transaction is not the first in stack. This is a bug in Airstream.")
+      }
+
+      // Do this first on the off chance that some super custom observable creates a new transaction here,
+      // which would be crazy, but if it does happen, it would be handled correctly.
+      resolvePendingObserverRemovals()
+
+      putNextTransactionOnStack(doneTransaction = transaction)
+
+      peekStack().fold {
+        if (children.nonEmpty) {
+          //println(s"Stack is empty but children remain: ${children.map(t => (t._1.id, t._2.map(_.id)))}")
+          throw new Exception(s"Transaction queue error: Stack cleared, but a total of ${children.foldLeft(0)((acc, t) => acc + t._2.size)} children for ${children.size} transactions remain. This is a bug in Airstream.")
+        }
+      }{ nextTransaction =>
+        run(nextTransaction)
+      }
+    }
+
+    /* If this transaction has children remaining, set first child to be run next.
+     * Otherwise, remove transaction from the stack and do the same for next transaction on stack.
+     */
+    def putNextTransactionOnStack(doneTransaction: Transaction): Unit = {
+      // We use depth-first because of https://github.com/raquo/Airstream/issues/39
+      dequeueChild(parent = doneTransaction).fold[Unit] {
+        // No children, this transaction is truly done now, remove it from the stack.
+        popStack()
+        // If any transactions left in the stack, recurse
+        peekStack().foreach { parentTransaction =>
+          putNextTransactionOnStack(doneTransaction = parentTransaction)
+        }
+      }{ nextChild =>
+        // Found a child transaction, so put it on the stack, so that it wil run next.
+        // Once that child is all done, it will be popped from the stack, and we will
+        //
+        //
+        pushToStack(nextChild)
+      }
+    }
+
+    private def childrenFor(transaction: Transaction): List[Transaction] = {
+      children.getOrElse(transaction, Nil)
+    }
+
+    private def pushToStack(transaction: Transaction): Unit = {
+      //println(s"pushToStack ${transaction.id}")
+      stack = transaction :: stack
+    }
+
+    private def popStack(): Option[Transaction] = {
+      //println(s"popStack")
+      val result = stack.headOption
+      if (result.nonEmpty) {
+        //println("- was nonEmpty")
+        stack = stack.tail
+      }
+      result
+    }
+
+    private def peekStack(): Option[Transaction] = {
+      stack.headOption
+    }
+
+    private def enqueueChild(parent: Transaction, newChild: Transaction): Unit = {
+      //println(s"enqueueChild parent = ${parent.id} newChild = ${newChild.id}")
+      val newChildren = childrenFor(parent) :+ newChild
+      children.update(parent, newChildren)
+    }
+
+    private def dequeueChild(parent: Transaction): Option[Transaction] = {
+      //println(s"dequeueChild parent = ${parent.id}")
+      val parentChildren = childrenFor(parent)
+      if (parentChildren.nonEmpty) {
+        //println("- found some children")
+        val nextChild = parentChildren.head
+        val updatedChildren = parentChildren.tail
+        if (updatedChildren.nonEmpty) {
+          children.update(parent, updatedChildren)
+          //println("- removed child, some remaining")
+        } else {
+          children -= parent
+          //println("- no children left for this parent, removed parent.")
+        }
+        Some(nextChild)
+      } else {
+        //println("- no children")
+        None
+      }
+    }
+  }
+
   private var isSafeToRemoveObserver: Boolean = true
 
-  private[this] val pendingTransactions: js.Array[Transaction] = js.Array()
+  //private[this] val pendingTransactions: js.Array[Transaction] = js.Array()
 
   private[this] val pendingObserverRemovals: js.Array[() => Unit] = js.Array()
 
@@ -83,39 +216,46 @@ object Transaction { // extends GlobalCounter {
     pendingObserverRemovals.clear()
   }
 
-  private def add(transaction: Transaction): Unit = {
-    // If a transaction is currently running, the new transaction will be triggered
-    // from the .done() call after the current transaction finishes.
-    // Otherwise, if there are no pending transactions other than this new transaction,
-    // we need to run this transaction right now because no one will do it for us.
-    val hasPendingTransactions = pendingTransactions.length > 0
-    pendingTransactions.push(transaction)
-    if (!hasPendingTransactions) {
-      run(transaction)
-    }
-  }
+  //private def add(transaction: Transaction): Unit = {
+  //
+  //  // @nc should we check currentTransaction.nonEmpty instead?
+  //  val hasPendingTransactions = pendingTransactions.length > 0
+  //  pendingTransactions.push(transaction)
+  //  if (!hasPendingTransactions) {
+  //    run(transaction)
+  //  }
+  //}
 
   private def run(transaction: Transaction): Unit = {
+    //println(s"--start trx ${transaction.id}")
+    //currentTransaction = Some(transaction)
     isSafeToRemoveObserver = false
-    transaction.code(transaction) // @TODO[API] Shouldn't we guard against exceptions in `code` here? It can be provided by the user.
-    transaction.resolvePendingObservables()
-    isSafeToRemoveObserver = true
-    done(transaction)
+    // @nc we should probably clear currentTransaction if `code` fails? Think this through... Anything else we need to cleanup?
+    try {
+      transaction.code(transaction) // @TODO[API] Shouldn't we guard against exceptions in `code` here? It can be provided by the user.
+      transaction.resolvePendingObservables()
+    } finally {
+      isSafeToRemoveObserver = true
+      //println(s"--end trx ${transaction.id}")
+      pendingTransactions.done(transaction)
+    }
+
+    //currentTransaction = None
   }
 
-  private def done(transaction: Transaction): Unit = {
-    if (pendingTransactions.head != transaction) {
-      // @TODO[Integrity] Should we really throw here?
-      throw new Exception("Transaction mismatch: done transaction is not first in list")
-    }
-    // Remove first pending transaction which we just completed
-    pendingTransactions.shift()
-
-    resolvePendingObserverRemovals()
-
-    if (pendingTransactions.length > 0) {
-      run(pendingTransactions.head)
-    }
-  }
+  //private def done(transaction: Transaction): Unit = {
+  //  if (pendingTransactions.head != transaction) {
+  //    // @TODO[Integrity] Should we really throw here?
+  //    throw new Exception("Transaction mismatch: done transaction is not first in list")
+  //  }
+  //  // Remove first pending transaction which we just completed
+  //  pendingTransactions.shift()
+  //
+  //  resolvePendingObserverRemovals()
+  //
+  //  if (pendingTransactions.length > 0) {
+  //    run(pendingTransactions.head)
+  //  }
+  //}
 
 }

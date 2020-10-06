@@ -30,6 +30,9 @@ class FutureSignal[A](
   )
 
   if (!future.isCompleted) {
-    future.onComplete(value => new Transaction(fireTry(value.map(Some(_)), _)))
+    future.onComplete(value => {
+      //println(s"> init trx from FutureSignal($value)")
+      new Transaction(fireTry(value.map(Some(_)), _))
+    })
   }
 }

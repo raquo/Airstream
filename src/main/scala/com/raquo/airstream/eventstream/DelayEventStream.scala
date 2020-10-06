@@ -15,6 +15,7 @@ class DelayEventStream[A](
 
   override protected[airstream] def onNext(nextValue: A, transaction: Transaction): Unit = {
     js.timers.setTimeout(delayMillis) {
+      //println(s"> init trx from DelayEventStream.onNext($nextValue)")
       new Transaction(fireValue(nextValue, _))
     }
   }

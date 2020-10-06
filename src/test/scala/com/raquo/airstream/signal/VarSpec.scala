@@ -231,14 +231,30 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     // @TODO[API] Figure out if there is an elegant solution that would allow for type inference here
     val result = Try(Var.update(
       x -> ((_: Int) => 4),
-      y -> ((x: Int) => x + 100)
+      y -> ((curr: Int) => curr + 100)
     ))
 
     // Can't update 'x' because it's failed.
     // Both updates will fail because of atomicity. All Vars will retain their previous values.
-    assert(result.isFailure)
     assert(x.tryNow() == Failure(err1))
     assert(y.now() == 300)
+    assert(result.isFailure)
+
+    // --
+
+    // Same as above but ordered differently
+    val result2 = Try(Var.update(
+      y -> ((curr: Int) => curr + 100),
+      x -> ((_: Int) => 4)
+    ))
+
+    // Can't update 'x' because it's failed.
+    // Both updates will fail because of atomicity. All Vars will retain their previous values.
+    assert(x.tryNow() == Failure(err1))
+    assert(y.now() == 300)
+    assert(result2.isFailure)
+
+    // --
 
     Var.tryUpdate(
       x -> ((_: Try[Int]) => Success(5)),

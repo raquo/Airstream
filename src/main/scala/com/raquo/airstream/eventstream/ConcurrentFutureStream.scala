@@ -37,6 +37,7 @@ class ConcurrentFutureStream[A](
         if (!dropPreviousValues || (nextFutureIndex > lastEmittedValueIndex)) {
           lastEmittedValueIndex = nextFutureIndex
           // @TODO[API] Should lastEmittedValueIndex be updated only on success or also on failure?
+          //println(s"> init trx from ConcurrentFutureStream.onNext")
           new Transaction(fireTry(nextValue, _))
         }
       }
