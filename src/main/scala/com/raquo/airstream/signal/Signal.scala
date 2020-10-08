@@ -65,8 +65,8 @@ trait Signal[+A] extends Observable[A] {
     * @param makeInitial Note: guarded against exceptions
     * @param fn Note: guarded against exceptions
     */
-  def fold[B](makeInitial: A => B)(fn: (B, A) => B): Signal[B] = {
-    foldRecover(
+  def foldLeft[B](makeInitial: A => B)(fn: (B, A) => B): Signal[B] = {
+    foldLeftRecover(
       parentInitial => parentInitial.map(makeInitial)
     )(
       (currentValue, nextParentValue) => Try(fn(currentValue.get, nextParentValue.get))
@@ -79,7 +79,7 @@ trait Signal[+A] extends Observable[A] {
     * @param fn (currentValue, nextParentValue) => nextValue
     * @return
     */
-  def foldRecover[B](makeInitial: Try[A] => Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
+  def foldLeftRecover[B](makeInitial: Try[A] => Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
     new FoldLeftSignal(
       parent = this,
       makeInitialValue = () => makeInitial(tryNow()),
