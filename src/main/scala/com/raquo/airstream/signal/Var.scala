@@ -2,6 +2,7 @@ package com.raquo.airstream.signal
 
 import com.raquo.airstream.core.{Observer, Transaction}
 import com.raquo.airstream.signal.Var.VarSignal
+import com.raquo.airstream.util.hasDuplicateTupleKeys
 
 import scala.util.{Success, Try}
 
@@ -81,18 +82,11 @@ object Var {
 
   type VarTryModTuple[A] = (Var[A], Try[A] => Try[A])
 
-  // @nc users should not be able to use Var.set and similar methods to send more than one event into the same Var in the same transaciton
-  //  - !!!! Fix this.
-
   /** Set multiple Var values in the same Transaction
     * Example usage: Var.set(var1 -> value1, var2 -> value2)
     */
   def set(values: VarTuple[_]*): Unit = {
-    // @TODO[Performance] Make sure there is no overhead for `_*`
     val tryValues: Seq[VarTryTuple[_]] = values.map(toTryTuple(_))
-    if (tryValues.exists(_._2.isFailure)) {
-      throw new Exception(s"Unable to Var.set because one of the ${values.length} Var(s) would have failed, or was failed from the start. Use Var.setTry if this is really what you want.")
-    }
     setTry(tryValues: _*)
   }
 
@@ -101,6 +95,9 @@ object Var {
     */
   def setTry(values: VarTryTuple[_]*): Unit = {
     //println(s"> init trx from Var.set/setTry")
+    if (hasDuplicateTupleKeys(values)) {
+      throw new Exception("Unable to Var.set/setTry: the provided list of vars has duplicates")
+    }
     new Transaction(trx => values.foreach(setTryValue(_, trx)))
   }
 
@@ -112,6 +109,9 @@ object Var {
     *                   the batched updates in this call from going through.
     */
   def update(mods: VarModTuple[_]*): Unit = {
+    if (hasDuplicateTupleKeys(mods)) {
+      throw new Exception("Unable to Var.update: the provided list of vars has duplicates")
+    }
     val tryMods: Seq[VarTryModTuple[_]] = mods.map(modToTryModTuple(_))
     //println(s"> init trx from Var.update")
     new Transaction(trx => {
@@ -131,6 +131,9 @@ object Var {
     */
   def tryUpdate(mods: VarTryModTuple[_]*): Unit = {
     //println(s"> init trx from Var.tryUpdate")
+    if (hasDuplicateTupleKeys(mods)) {
+      throw new Exception("Unable to Var.tryUpdate: the provided list of vars has duplicates")
+    }
     new Transaction(trx => {
       val tryValues: Seq[VarTryTuple[_]] = mods.map(tryModToTryTuple(_))
       tryValues.foreach(setTryValue(_, trx))

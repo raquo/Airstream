@@ -7,6 +7,7 @@ import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.ownership.Owner
 
 import scala.collection.mutable
+import scala.util.{Failure, Success, Try}
 
 class EventBusSpec extends UnitSpec {
 
@@ -130,4 +131,41 @@ class EventBusSpec extends UnitSpec {
     effects shouldEqual mutable.Buffer()
   }
 
+  it("disallow duplicate event buses in EventBus.emit and EventBus.emitTry") {
+    // If we allowed this, you would be able to send two events into the same Var
+    // in the same transaction, which breaks Airstream contract.
+    val bus1 = new EventBus[Int]
+    val bus2 = new EventBus[Int]
+    val bus3 = new EventBus[Int]
+
+    // -- should not fail
+
+    EventBus.emitTry(
+      bus1 -> Success(1),
+      bus2 -> Success(1),
+      bus3 -> Failure(new Exception("Var 3 is broken"))
+    )
+
+    EventBus.emit(
+      bus1 -> 1,
+      bus2 -> 1,
+      bus3 -> 1
+    )
+
+    // --
+
+    Try(EventBus.emit(
+      bus1 -> 2,
+      bus2 -> 2,
+      bus1 -> 2
+    )).isFailure shouldBe true
+
+    // --
+
+    Try(EventBus.emitTry(
+      bus1 -> Success(3),
+      bus2 -> Success(4),
+      bus2 -> Success(5)
+    )).isFailure shouldBe true
+  }
 }

@@ -161,13 +161,17 @@ object Transaction { // extends GlobalCounter {
         None
       }
     }
+
+    private[core] def isClearState: Boolean = stack.isEmpty && children.isEmpty
   }
 
   private var isSafeToRemoveObserver: Boolean = true
 
-  //private[this] val pendingTransactions: js.Array[Transaction] = js.Array()
-
   private[this] val pendingObserverRemovals: js.Array[() => Unit] = js.Array()
+
+  private[core] def isClearState: Boolean = {
+    pendingTransactions.isClearState && pendingObserverRemovals.isEmpty
+  }
 
   /** Note: this is core-private for subscription safety. See https://github.com/raquo/Airstream/issues/10
     *
@@ -216,21 +220,9 @@ object Transaction { // extends GlobalCounter {
     pendingObserverRemovals.clear()
   }
 
-  //private def add(transaction: Transaction): Unit = {
-  //
-  //  // @nc should we check currentTransaction.nonEmpty instead?
-  //  val hasPendingTransactions = pendingTransactions.length > 0
-  //  pendingTransactions.push(transaction)
-  //  if (!hasPendingTransactions) {
-  //    run(transaction)
-  //  }
-  //}
-
   private def run(transaction: Transaction): Unit = {
     //println(s"--start trx ${transaction.id}")
-    //currentTransaction = Some(transaction)
     isSafeToRemoveObserver = false
-    // @nc we should probably clear currentTransaction if `code` fails? Think this through... Anything else we need to cleanup?
     try {
       transaction.code(transaction) // @TODO[API] Shouldn't we guard against exceptions in `code` here? It can be provided by the user.
       transaction.resolvePendingObservables()
@@ -239,23 +231,6 @@ object Transaction { // extends GlobalCounter {
       //println(s"--end trx ${transaction.id}")
       pendingTransactions.done(transaction)
     }
-
-    //currentTransaction = None
   }
-
-  //private def done(transaction: Transaction): Unit = {
-  //  if (pendingTransactions.head != transaction) {
-  //    // @TODO[Integrity] Should we really throw here?
-  //    throw new Exception("Transaction mismatch: done transaction is not first in list")
-  //  }
-  //  // Remove first pending transaction which we just completed
-  //  pendingTransactions.shift()
-  //
-  //  resolvePendingObserverRemovals()
-  //
-  //  if (pendingTransactions.length > 0) {
-  //    run(pendingTransactions.head)
-  //  }
-  //}
 
 }

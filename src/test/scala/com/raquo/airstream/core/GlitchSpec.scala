@@ -449,39 +449,4 @@ class GlitchSpec extends UnitSpec {
 
     stateVar.now() shouldBe State(List(0, 1))
   }
-
-  it("Nested transactions order and correctness") {
-
-    val owner = new TestableOwner
-
-    var n = 0
-    val clickBus = new EventBus[Unit]
-    val log = Var[List[Int]](Nil)
-    clickBus
-      .events
-      .foreach { _ =>
-        n = n + 2
-        log.update(curr => {
-          log.update(curr => curr :+ -1)
-          log.update(curr => {
-            log.update(curr => curr :+ -3)
-            log.update(curr => curr :+ -4)
-            curr :+ -2
-          })
-          log.update(curr => curr :+ -5)
-          curr :+ (n - 2)
-        })
-        log.update(curr => curr :+ (n - 1))
-      }(owner)
-
-    clickBus.writer.onNext(())
-
-    log.now() shouldBe List(0, -1, -2, -3, -4, -5, 1)
-
-    // --
-
-    clickBus.writer.onNext(())
-
-    log.now() shouldBe List(0, -1, -2, -3, -4, -5, 1, 2, -1, -2, -3, -4, -5, 3)
-  }
 }
