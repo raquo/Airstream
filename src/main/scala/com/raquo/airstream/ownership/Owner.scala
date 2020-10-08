@@ -34,7 +34,7 @@ trait Owner {
     */
   protected[this] def onOwned(subscription: Subscription): Unit = ()
 
-  def onKilledExternally(subscription: Subscription): Unit = {
+  private[ownership] def onKilledExternally(subscription: Subscription): Unit = {
     val index = subscriptions.indexOf(subscription)
     if (index != -1) {
       subscriptions.splice(index, deleteCount = 1)
