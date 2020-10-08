@@ -303,4 +303,63 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     effects.clear()
   }
 
+  it("disallow duplicate vars in Var.set and such") {
+    // If we allowed this, you would be able to send two events into the same Var
+    // in the same transaction, which breaks Airstream contract.
+    val var1 = Var(0)
+    val var2 = Var(0)
+    val var3 = Var(0)
+
+    // -- should not fail
+
+    Var.setTry(
+      var1 -> Success(1),
+      var2 -> Success(1),
+      var3 -> Failure(new Exception("Var 3 is broken"))
+    )
+
+    Var.set(
+      var1 -> 1,
+      var2 -> 1,
+      var3 -> 1
+    )
+
+    // --
+
+    Try(Var.set(
+      var1 -> 2,
+      var2 -> 2,
+      var1 -> 2
+    )).isFailure shouldBe true
+
+    // --
+
+    Try(Var.setTry(
+      var1 -> Success(3),
+      var2 -> Success(4),
+      var2 -> Success(5)
+    )).isFailure shouldBe true
+
+    // --
+
+    Try(Var.update(
+      var1 -> ((_: Int) + 1),
+      var2 -> ((_: Int) + 2),
+      var2 -> ((_: Int) + 3)
+    )).isFailure shouldBe true
+
+    // --
+
+    Try(Var.tryUpdate(
+      var1 -> ((_: Try[Int]).map(_ + 1)),
+      var2 -> ((_: Try[Int]).map(_ + 2)),
+      var2 -> ((_: Try[Int]).map(_ + 3))
+    )).isFailure shouldBe true
+
+    // --
+
+    var1.now() shouldBe 1
+    var2.now() shouldBe 1
+    var3.now() shouldBe 1
+  }
 }
