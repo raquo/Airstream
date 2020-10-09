@@ -12,8 +12,13 @@ import scala.scalajs.js
 
 /** DynamicOwner manages [[DynamicSubscription]]-s similarly to how Owner manages `Subscription`s,
   * except `DynamicSubscription` can be activated and deactivated repeatedly.
+  *
+  * @param onAccessAfterKilled
+  *          Called if you attempt to use any Owner created by this DynamicOwner
+  *          after that Owner was killed.
+  *          It's intended to log and/or throw for reporting / debugging purposes.
   */
-class DynamicOwner {
+class DynamicOwner(onAccessAfterKilled: () => Unit) {
 
   /** Note: This is enforced to be a sorted set outside of the type system. #performance
     * Note: This should remain private, we don't want to expose the ability to kill individual
@@ -45,7 +50,7 @@ class DynamicOwner {
   def activate(): Unit = {
     //println(s"> activate $this (numSubs=${subscriptions.length})")
     if (!isActive) {
-      val newOwner = new PrivateOwner
+      val newOwner = new OneTimeOwner(onAccessAfterKilled)
       // @Note If activating a subscription adds another subscription, we must make sure to call onActivate on it.
       //  - foreach implementation does not do this because it fetches array length only once, at the beginning.
       //  - it is instead done by addSubscription by virtue of _maybeCurrentOwner being already defined at this point.

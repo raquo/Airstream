@@ -1,7 +1,6 @@
 package com.raquo.airstream.ownership
 
-import com.raquo.airstream.core.{Observable, Observer, Transaction}
-
+// @TODO[API] Change cleanup from () => Unit to : => Unit? WOuld it be possible to override such a field?
 /** Represents a leaky resource that needs to be cleaned up.
   *
   * Subscription is linked for its life to a given owner.

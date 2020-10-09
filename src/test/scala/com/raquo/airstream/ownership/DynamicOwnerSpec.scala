@@ -20,7 +20,7 @@ class DynamicOwnerSpec extends UnitSpec {
     val obs1 = Observer[Int](effects += Effect("obs1", _))
     val obs2 = Observer[Int](effects += Effect("obs2", _))
 
-    val dynOwner = new DynamicOwner
+    val dynOwner = new DynamicOwner(() => fail("Attempted to use permakilled owner!"))
 
     val dynSub1 = DynamicSubscription(dynOwner, owner => bus1.events.addObserver(obs1)(owner))
 

@@ -4,12 +4,16 @@ import com.raquo.airstream.UnitSpec
 
 class TransferableSubscriptionSpec extends UnitSpec {
 
+  private def makeDynamicOwner(): DynamicOwner = {
+    new DynamicOwner(() => fail("Attempted to use permakilled owner!"))
+  }
+
   it("none -> p1.inactive -> p1.activate -> p1.deactivate -> none") {
 
     var activationCounter = 0
     var deactivationCounter = 0
 
-    val parentOwner1 = new DynamicOwner
+    val parentOwner1 = makeDynamicOwner()
 
     // --
 
@@ -56,7 +60,7 @@ class TransferableSubscriptionSpec extends UnitSpec {
     var activationCounter = 0
     var deactivationCounter = 0
 
-    val parentOwner1 = new DynamicOwner
+    val parentOwner1 = makeDynamicOwner()
 
     parentOwner1.activate()
 
@@ -109,9 +113,9 @@ class TransferableSubscriptionSpec extends UnitSpec {
     var activationCounter = 0
     var deactivationCounter = 0
 
-    val parentOwner1 = new DynamicOwner
-    val parentOwner2 = new DynamicOwner
-    val parentOwner3 = new DynamicOwner
+    val parentOwner1 = makeDynamicOwner()
+    val parentOwner2 = makeDynamicOwner()
+    val parentOwner3 = makeDynamicOwner()
 
     parentOwner1.activate()
     parentOwner3.activate()
@@ -172,9 +176,9 @@ class TransferableSubscriptionSpec extends UnitSpec {
     var activationCounter = 0
     var deactivationCounter = 0
 
-    val parentOwner1 = new DynamicOwner
-    val parentOwner2 = new DynamicOwner
-    val parentOwner3 = new DynamicOwner
+    val parentOwner1 = makeDynamicOwner()
+    val parentOwner2 = makeDynamicOwner()
+    val parentOwner3 = makeDynamicOwner()
 
     parentOwner1.activate()
     parentOwner2.activate()
