@@ -81,7 +81,7 @@ class GlitchSpec extends UnitSpec {
     val bus = new EventBus[Int]
 
     val tens = bus.events.map(_ * 10)
-    val hundreds = tens.map(_ * 10).toSignal(0)
+    val hundreds = tens.map(_ * 10).toSignal(initial = 0)
 
     val tuples = tens.withCurrentValueOf(hundreds)
       .map(Calculation.log("tuples", calculations))

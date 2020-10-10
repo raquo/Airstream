@@ -70,6 +70,20 @@ trait Observable[+A] {
     strategy.flatten(map(compose))
   }
 
+  def toSignal[AA >: A](initialIfStream: => AA): Signal[AA] = {
+    this match {
+      case s: Signal[A @unchecked] => s
+      case s: EventStream[A @unchecked] => s.startWith(initialIfStream)
+    }
+  }
+
+  def toStreamOrSignalChanges: EventStream[A] = {
+    this match {
+      case s: EventStream[A @unchecked] => s
+      case s: Signal[A @unchecked] => s.changes
+    }
+  }
+
   // @TODO[API] print with dom.console.log automatically only if a JS value detected? Not sure if possible to do well.
 
   /** print events using println - use for Scala values */
