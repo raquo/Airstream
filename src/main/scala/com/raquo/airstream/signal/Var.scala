@@ -104,6 +104,10 @@ object Var {
   /** Modify multiple Vars in the same Transaction
     * Example usage: Var.update(var1 -> value1 => value1 + 1, var2 -> value2 => value2 * 2)
     *
+    * Mod functions should be PURE and MUST NOT THROW.
+    * If you try to update a failed Var, or if some of the mods throw,
+    * `Var.update` will throw and none of the Vars will update.
+    *
     * @throws Exception if currentValue of any of the vars is a Failure.
     *                   This is atomic: an exception in any of the vars will prevent any of
     *                   the batched updates in this call from going through.

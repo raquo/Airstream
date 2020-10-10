@@ -73,7 +73,7 @@ trait EventStream[+A] extends Observable[A] {
 
   @inline def startWithNone: Signal[Option[A]] = toWeakSignal
 
-  def toSignal[B >: A](initial: => B): Signal[B] = {
+  override def toSignal[B >: A](initial: => B): Signal[B] = {
     toSignalWithTry(Success(initial))
   }
 
