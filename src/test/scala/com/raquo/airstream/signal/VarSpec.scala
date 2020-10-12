@@ -362,4 +362,236 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     var2.now() shouldBe 1
     var3.now() shouldBe 1
   }
+
+  it("updating Var which is in a failed state") {
+    val err = new Exception("Known Var error")
+    val v = Var(1)
+    val v2 = Var(2)
+
+    def reset(): Unit = {
+      v.setTry(Failure(err))
+      v2.set(2)
+      v.tryNow() shouldBe Failure(err)
+      v2.tryNow() shouldBe Success(2)
+    }
+
+    // --
+
+    reset()
+
+    // --
+
+    v.set(-1)
+    v.tryNow() shouldBe Success(-1)
+    reset()
+
+    // --
+
+    v.setTry(Success(-11))
+    v.tryNow() shouldBe Success(-11)
+    reset()
+
+    // --
+
+    Var.set(
+      v -> -10,
+      v2 -> -20
+    )
+    v.tryNow() shouldBe Success(-10)
+    v2.tryNow() shouldBe Success(-20)
+    reset()
+
+    // --
+
+    Var.setTry(
+      v -> Success(-1),
+      v2 -> Success(-2)
+    )
+    v.tryNow() shouldBe Success(-1)
+    v2.tryNow() shouldBe Success(-2)
+    reset()
+
+    // --
+
+    Try(v.update(_ * 10)).isFailure shouldBe true
+    v.tryNow() shouldBe Failure(err)
+    reset()
+
+    // --
+
+    v.tryUpdate(_.map(_ * 10))
+    v.tryNow() shouldBe Failure(err)
+    reset()
+
+    // --
+
+    Try(Var.update(
+      v -> ((_: Int) * 10),
+      v2 -> ((_: Int) * 10)
+    )).isFailure shouldBe true
+    v.tryNow() shouldBe Failure(err)
+    v2.tryNow() shouldBe Success(2)
+    reset()
+
+    // -- diff order
+
+    Try(Var.update(
+      v2 -> ((_: Int) * 10),
+      v -> ((_: Int) * 10),
+    )).isFailure shouldBe true
+    v.tryNow() shouldBe Failure(err)
+    v2.tryNow() shouldBe Success(2)
+    reset()
+
+    // --
+
+    Var.tryUpdate(
+      v -> ((_: Try[Int]).map(_ * 10)),
+      v2 -> ((_: Try[Int]).map(_ * 10))
+    )
+    v.tryNow() shouldBe Failure(err)
+    v2.tryNow() shouldBe Success(20)
+    reset()
+
+    // -- diff order
+
+    Var.tryUpdate(
+      v2 -> ((_: Try[Int]).map(_ * 10)),
+      v -> ((_: Try[Int]).map(_ * 10))
+    )
+    v.tryNow() shouldBe Failure(err)
+    v2.tryNow() shouldBe Success(20)
+    reset()
+
+  }
+
+  it("updating Var with a failed value") {
+    val err = new Exception("Known Var error")
+    val v = Var(1)
+    val v2 = Var(2)
+
+    def reset(): Unit = {
+      v.set(1)
+      v2.set(2)
+      v.tryNow() shouldBe Success(1)
+      v2.tryNow() shouldBe Success(2)
+    }
+
+    // --
+
+    reset()
+
+    // --
+
+    v.setTry(Failure(err))
+    v.tryNow() shouldBe Failure(err)
+    reset()
+
+    // --
+
+    Var.setTry(
+      v -> Failure(err),
+      v2 -> Success(-2)
+    )
+    v.tryNow() shouldBe Failure(err)
+    v2.tryNow() shouldBe Success(-2)
+    reset()
+
+    // --
+
+    v.tryUpdate(_ => Failure(err))
+    v.tryNow() shouldBe Failure(err)
+    reset()
+
+    // --
+
+    Var.tryUpdate(
+      v -> ((_: Try[Int]) => Failure(err)),
+      v2 -> ((_: Try[Int]).map(_ * 10))
+    )
+    v.tryNow() shouldBe Failure(err)
+    v2.tryNow() shouldBe Success(20)
+    reset()
+
+    // -- diff order
+
+    Var.tryUpdate(
+      v2 -> ((_: Try[Int]).map(_ * 10)),
+      v -> ((_: Try[Int]) => Failure(err))
+    )
+    v.tryNow() shouldBe Failure(err)
+    v2.tryNow() shouldBe Success(20)
+    reset()
+
+  }
+
+  it("throwing in Var update mods") {
+    val err = new Exception("Known Var error")
+    val v = Var(1)
+    val v2 = Var(2)
+
+    def reset(): Unit = {
+      v.set(1)
+      v2.set(2)
+      v.tryNow() shouldBe Success(1)
+      v2.tryNow() shouldBe Success(2)
+    }
+
+    // --
+
+    reset()
+
+    // --
+
+    v.update(_ => throw err)
+    v.tryNow() shouldBe Failure(err)
+    reset()
+
+    // --
+
+    Try(v.tryUpdate(_ => throw err)).isFailure shouldBe true
+    v.tryNow() shouldBe Success(1)
+    reset()
+
+    // --
+
+    Var.update(
+      v -> ((_: Int) => throw err),
+      v2 -> ((_: Int) * 10)
+    )
+    v.tryNow() shouldBe Failure(err)
+    v2.tryNow() shouldBe Success(20)
+    reset()
+
+    // -- diff order
+
+    Var.update(
+      v2 -> ((_: Int) * 10),
+      v -> ((_: Int) => throw err)
+    )
+    v.tryNow() shouldBe Failure(err)
+    v2.tryNow() shouldBe Success(20)
+    reset()
+
+    // --
+
+    Try(Var.tryUpdate(
+      v -> ((_: Try[Int]) => throw err),
+      v2 -> ((_: Try[Int]).map(_ * 10))
+    )).isFailure shouldBe true
+    v.tryNow() shouldBe Success(1)
+    v2.tryNow() shouldBe Success(2)
+    reset()
+
+    // -- diff order
+
+    Try(Var.tryUpdate(
+      v2 -> ((_: Try[Int]).map(_ * 10)),
+      v -> ((_: Try[Int]) => throw err)
+    )).isFailure shouldBe true
+    v.tryNow() shouldBe Success(1)
+    v2.tryNow() shouldBe Success(2)
+    reset()
+
+  }
 }

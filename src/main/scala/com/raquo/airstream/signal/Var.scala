@@ -39,8 +39,12 @@ class Var[A] private(private[this] var currentValue: Try[A]) {
     //    ))
     //println(s"> init trx from Var.update")
     new Transaction(trx => {
-      val unsafeValue = now()
-      val nextValue = Try(mod(unsafeValue)) // Note: this does catch exceptions in mod(unsafeValue)
+      val unsafeValue = try {
+        now()
+      } catch { case err: Throwable =>
+        throw new Exception("Unable to update a failed Var. Consider Var#tryUpdate instead.", err)
+      }
+      val nextValue = Try(mod(unsafeValue)) // this does catch exceptions in mod(unsafeValue)
       setCurrentValue(nextValue, trx)
     })
   }
@@ -84,6 +88,8 @@ object Var {
 
   /** Set multiple Var values in the same Transaction
     * Example usage: Var.set(var1 -> value1, var2 -> value2)
+    *
+    * @throws Exception if input contains duplicate vars. Airstream allows a maximum of one event per observable per transaction.
     */
   def set(values: VarTuple[_]*): Unit = {
     val tryValues: Seq[VarTryTuple[_]] = values.map(toTryTuple(_))
@@ -92,6 +98,8 @@ object Var {
 
   /** Set multiple Var values in the same Transaction
     * Example usage: Var.setTry(var1 -> Success(value1), var2 -> Failure(error2))
+    *
+    * @throws Exception if input contains duplicate vars. Airstream allows a maximum of one event per observable per transaction.
     */
   def setTry(values: VarTryTuple[_]*): Unit = {
     //println(s"> init trx from Var.set/setTry")
@@ -104,13 +112,14 @@ object Var {
   /** Modify multiple Vars in the same Transaction
     * Example usage: Var.update(var1 -> value1 => value1 + 1, var2 -> value2 => value2 * 2)
     *
-    * Mod functions should be PURE and MUST NOT THROW.
-    * If you try to update a failed Var, or if some of the mods throw,
-    * `Var.update` will throw and none of the Vars will update.
+    * Mod functions should be PURE.
+    * - If a mod throws, the var will be set to a failed state.
+    * - If you try to update a failed Var, `Var.update` will throw and none of the Vars will update.
     *
-    * @throws Exception if currentValue of any of the vars is a Failure.
-    *                   This is atomic: an exception in any of the vars will prevent any of
-    *                   the batched updates in this call from going through.
+    * @throws Exception 1) if currentValue of any of the vars is a Failure.
+    *                      This is atomic: an exception in any of the vars will prevent any of
+    *                      the batched updates in this call from going through.
+    *                   2) if input contains duplicate vars. Airstream allows a maximum of one event per observable per transaction.
     */
   def update(mods: VarModTuple[_]*): Unit = {
     if (hasDuplicateTupleKeys(mods)) {
@@ -119,10 +128,13 @@ object Var {
     val tryMods: Seq[VarTryModTuple[_]] = mods.map(modToTryModTuple(_))
     //println(s"> init trx from Var.update")
     new Transaction(trx => {
-      val tryValues: Seq[VarTryTuple[_]] = tryMods.map(tryModToTryTuple(_))
-      if (tryValues.exists(_._2.isFailure)) {
-        throw new Exception(s"Unable to Var.update because one of the ${mods.length} Var(s) would have failed, or was failed from the start. Use Var.tryUpdate if this is really what you want.")
+      val vars= mods.map(_._1)
+      try {
+        vars.foreach(_.now())
+      } catch { case err: Throwable =>
+        throw new Exception("Unable to Var.update a failed Var. Consider Var.tryUpdate instead.", err)
       }
+      val tryValues: Seq[VarTryTuple[_]] = tryMods.map(tryModToTryTuple(_))
       tryValues.foreach(setTryValue(_, trx))
     })
   }
@@ -130,8 +142,8 @@ object Var {
   /** Modify multiple Vars in the same Transaction
     * Example usage: Var.tryUpdate(var1 -> _.map(_ + 1), var2 -> _.map(_ * 2))
     *
-    * Note: none of the provided mods must throw. Same atomic behaviour as `update`.
-    * @throws Exception if any of the provided `mod`s throws
+    * Note: provided mods MUST NOT THROW.
+    * @throws Exception if input contains duplicate vars. Airstream allows a maximum of one event per observable per transaction.
     */
   def tryUpdate(mods: VarTryModTuple[_]*): Unit = {
     //println(s"> init trx from Var.tryUpdate")
