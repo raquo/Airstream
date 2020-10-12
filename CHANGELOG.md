@@ -1,7 +1,12 @@
-# Changelog
+# Changelog (pre-v0.11.0)
 
 Breaking changes in **bold**.
 
+---
+
+#### For versions v0.11.0 and up, see [laminar.dev/blog](https://laminar.dev/blog)
+
+---
 
 #### v0.10.2 – Sep 2020
 
