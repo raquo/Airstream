@@ -18,10 +18,10 @@ Airstream is a small state propagation and streaming library. Primary difference
 
 Airstream has a very generic design, but is primarily intended to serve as a reactive layer for unidirectional dataflow architecture in UI components. As such, it is not burdened by features that cause more problems than they solve in frontend development, such as backpressure and typed effects.
 
-I created Airstream because I found existing solutions were not suitable for building reactive UI components. My original need for Airstream was to replace the previous reactive layer of [Laminar](https://github.com/raquo/Laminar), but I'll be happy to see it used by other reactive UI libraries as well. Another piece of Laminar you can reuse is [Scala DOM Types](https://github.com/raquo/scala-dom-types).
+I created Airstream because I found existing solutions were not suitable for building reactive UI components. My original need for Airstream was to replace the previous reactive layer of [Laminar](https://laminar.dev), but I'll be happy to see it used by other reactive UI libraries as well. Another piece of Laminar you can reuse is [Scala DOM Types](https://github.com/raquo/scala-dom-types).
 
 ```
-"com.raquo" %%% "airstream" % "0.10.2"  // Scala.js 1.x only
+"com.raquo" %%% "airstream" % "0.11.0"  // Scala.js 1.x only
 ```
 
 
@@ -41,6 +41,8 @@ I created Airstream because I found existing solutions were not suitable for bui
   * [Observer](#observer)
   * [Ownership](#ownership)
     * [Ownership & Memory Management](#ownership--memory-management)
+    * [OneTimeOwner](#onetimeowner)
+    * [ManualOwner](#manualowner)
     * [Dynamic Ownership](#dynamic-ownership)
   * [Sources of Events](#sources-of-events)
     * [Creating Observables from Futures and Promises](#creating-observables-from-futures)
@@ -56,6 +58,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Topological Rank](#topological-rank)
     * [Transactions](#transactions)
     * [Merge Glitch-By-Design](#merge-glitch-by-design)
+    * [Scheduling of Transactions](#scheduling-of-transactions)
   * [Operators](#operators)
     * [Compose Changes](#compose-changes)
     * [Sync Delay](#sync-delay)
@@ -70,7 +73,7 @@ I created Airstream because I found existing solutions were not suitable for bui
 
 ## Community
 
-* [Gitter](https://gitter.im/Laminar_/Lobby) for chat and random questions (Airstream shares this room with [Laminar](https://github.com/raquo/Laminar))
+* [Gitter](https://gitter.im/Laminar_/Lobby) for chat and random questions (Airstream shares this room with [Laminar](https://laminar.dev))
 * [Github issues](https://github.com/raquo/Airstream/issues) for bugs, feature requests, and more in-depth discussions
 
 
@@ -215,6 +218,8 @@ You can `foldLeft(initialValue)(fn)` an EventStream into a Signal, or make a Sig
 
 You can get an EventStream of changes from a Signal – `signal.changes` – this stream will re-emit whatever the parent signal emits (subject to laziness of the stream), minus the Signal's initial value.
 
+If you have an observable, you can refine it to a Signal with `Observable#toSignal(initialIfStream)`, and to a Stream with `Observable#toStreamOrSignalChanges`. As the latter name suggests, if the observable is a Signal, the output stream will contain its changes, not the initial value. 
+
 
 ### Observer
 
@@ -272,6 +277,26 @@ In practice, Airstream's memory management has no magic to it. It uses Javascrip
 For example, a Subscription created by `observable.addObserver` method keeps references to both the Observable and the Observer (via the function passed as its `cleanup` param). That means that if you're keeping a reference to a Subscription, you're also keeping those references. Given that the Subscription has a `kill` method that lets you remove the observer from the observable, the presence of these references should be obvious. So like I said – no magic, you just need to internalize the basic ideas of lazy observables, just like you've already internalized the basic ideas of classes and functions.
 
 
+#### OneTimeOwner
+
+The basic `Owner` trait provides a high degree of flexibility, and therefore lacks some behaviour that you might expect in Owners.
+
+For example, you can kill an `Owner` multiple times. Every time you do, its subscriptions will be killed, and the list of subscriptions cleared, but the `Owner` will remain usable after that, letting you add more subscriptions and kill them again later.
+
+If you want an Owner that can only be killed once, and does not let you add subscriptions to it after it was killed, use the `OneTimeOwner` class instead. DynamicOwner below uses OneTimeOwner, and that is how Laminar provides element Owners that can not be used after the element is unmounted and its owner is killed.
+
+If you try to create a subscription that uses a OneTimeOwner, the subscription will be killed immediately, and `OneTimeOwner`'s `onAccessAfterKilled` callback will be fired. You can throw in that callback, then subscription initialization will throw too.
+
+Note that the subscription itself does not contain any activation logic (i.e. what needs to happen when subscription is activated), that user-provided logic is external to subscription initialization, and is typically run **before** the subscription is initialized, so before `OneTimeOwner` can prevent that from happening. So when try to use a dead OneTimeOwner, instead of completely ignoring the effective payload of the subscription, unless you take special measures, it will still execute, but the subscription will be cancelled and cleaned up immediately. But if the subscription's payload was to e.g. make a network request, you can't put that back in the bottle.
+
+Bottom line, you should not be deliberately sending events to dead `OneTimeOwner`-s. They just fix what otherwise could be a memory leak, not completely prevent your code from running. They report the error so that you can fix your code that's doing this.
+
+
+#### ManualOwner
+
+The basic `Owner` trait also doesn't allow external code to kill it, because some owners are supposed to manage themselves. All you need to overcome that is expose the `killSubscriptions` method to the public, or just use the `ManualOwner` class that does this. 
+
+
 #### Dynamic Ownership
 
 Dynamic Ownership is not a replacement for standard Ownership described above. Rather, it is a self-contained feature built on top of regular Ownership. No APIs in Airstream itself require Dynamic Ownership, it is intended to be consumed by the user or by other libraries depending on Airstream.
@@ -304,7 +329,7 @@ dynOwner.activate()
 dynOwner.deactivate()
 ```
 
-Every time a `DynamicOwner` is `activate()`-d, it creates a new `Owner`, and uses it to `activate` every `DynamicSubscription` that it owns. It saves the resulting non-dynamic `Subscription`, which the `DynamicOwner` later `kills()` when it's `deactivate()`-d.
+Every time a `DynamicOwner` is `activate()`-d, it creates a new `OneTimeOwner`, and uses it to `activate` every `DynamicSubscription` that it owns. It saves the resulting non-dynamic `Subscription`, which the `DynamicOwner` later `kills()` when it's `deactivate()`-d.
 
 Now you can see how this integrates with regular ownership. Anything that requires a non-dynamic `Owner` produces a `Subscription`. So to create a `DynamicSubscription` you need to provide an `activate` method that does this. That could be a call to `addObserver`, `addSource`, etc.
 
@@ -316,7 +341,7 @@ Note that a `DynamicSubscription` is not automatically activated upon creation. 
 
 ##### Dynamic Ownership & Memory Management
 
-I created Dynamic Ownership specifically to solve this long standing Laminar [memory management issue](https://github.com/raquo/Laminar/issues/33): if a non-dynamic Subscription is created when ReactiveElement is initialized, and killed when that element is unmounted, what happens to elements that get initialized but are never mounted into the DOM? That's right, their subscriptions are never killed and so they are essentially never garbage collected.
+I created Dynamic Ownership specifically to solve this long-standing Laminar [memory management issue](https://github.com/raquo/Laminar/issues/33): if a non-dynamic Subscription is created when ReactiveElement is initialized, and killed when that element is unmounted, what happens to elements that get initialized but are never mounted into the DOM? That's right, their subscriptions are never killed and so they are essentially never garbage collected.
 
 Laminar v0.8 had to fix this by creating `Subscription`-s every time the element is mounted, and killing them when the element was unmounted. Long story short, Dynamic Ownership is exactly this, slightly generalized for wider use.
 
@@ -458,6 +483,8 @@ EventBus.emit(
 )
 ```
 
+Similar to Vars, you can't emit more than one event into the same EventBus in the same transaction. Airstream will throw if you attempt to do this, so you can't have duplicate inputs like `EventBus.emit(bus1 -> ev1, bus1 -> ev2, bus2 -> ev3)`. If you need to emit more than one event into the same EventBus, just call the method twice, and they will be sent in separate transactions.
+
 
 #### Var
 
@@ -477,11 +504,11 @@ You can get the Var's current value using `now()` and `tryNow()`. Similar to `up
 
 Var follows **strict** (not lazy) execution – it will update its current value as instructed even if its signal has no observers. Unlike most other signals, the Var's signal is also strict – its current value matches the Var's current value at all times regardless of whether it has observers. Of course, any downstream observables that depend on the Var's signal are still lazy as usual.
 
-Being a `StrictSignal`, the signal also exposes `now` and `tryNow` methods, so if you need to provide your code with read-only access to a Var, sharing its signal only is the way to go. 
+Being a `StrictSignal`, the signal also exposes `now` and `tryNow` methods, so if you need to provide your code with read-only access to a Var, sharing only its signal is the way to go. 
 
 ##### Batch Updates
 
-Similar to EventBus, Var emits each event in a new [transaction](#transactions). However, similar to `WriteBus.emit`, you can put values into multiple Vars "at the same time", in the same transaction, to avoid [glitches](#frp-glitches) downstream. To do that, use the `set` / `setTry` / `update` / `tryUpdate` methods on the Var **companion object**. For example:
+Similar to EventBus, Var emits each event in a new [transaction](#transactions). However, similar to `EventBus.emit`, you can put values into multiple Vars "at the same time", in the same transaction, to avoid [glitches](#frp-glitches) downstream. To do that, use the `set` / `setTry` / `update` / `tryUpdate` methods on the Var **companion object**. For example:
 
 ```scala
 val value = Var(1)
@@ -495,9 +522,12 @@ Var.set(x -> 2, y -> true)
 
 With such a batched update, `sumSignal` will only emit `(1, false)` and `(2, true)`. It will **not** emit an inconsistent value like `(1, true)` or `(2, false)`.
 
-Batch updates are also atomic in terms of the following errors:
-* `update` throws if the Var's current value is an error
-* `tryUpdate` throws if the provided mod function throws
+Batch updates are also atomic in the following ways:
+* `update` and `tryUpdate` will only execute the provided mods when the transaction is actually executed, not immediately as it's scheduled. This ensures that the mods operate on the latest available Var state.
+* Similar to `Var#update`, `Var.update` throws if you try to apply `mod` to a failed Var. In the batch case _none_ of the input Vars will be updated, although _some_ of the mod functions will be executed. For this reason, mod functions should be pure of side effects. Use `tryUpdate`when you need more control over error handling.
+* Similar to `Var#tryUpdate`, `Var.tryUpdate` throws if any of the provided mods throw. None of the Vars will update in this case. You should return Failure() from your mod instead of throwing if this is not what you want.
+
+Also, since an Airstream observable can't emit more than once per transaction, the inputs to batch Var methods must have no duplicate vars. For example, you can't do this: `Var.set(var1 -> 1, var1 -> 2, var2 -> 3)`. Airstream will detect that you're attempting to put two events into `var1` in the same transaction, and will throw. Use two separate calls if you want to send two updates into the same Var.  
 
 Those are the only ways in which setting / updating a Var can throw an error. If any of those happen when batch-updating Var values, Airstream will throw an error, and all of the involved Vars will fail to update, keeping their current value.
 
@@ -562,19 +592,19 @@ So this is how Airstream avoids the glitch in the diamond-combine case.
 
 Before we dive into other kinds of glitches (ha! you thought that was it!?), we need to know what a Transaction is.
 
-Philosophically, a Transaction in Airstream encapsulates a part of the propagation that 1) happens **synchronously**, and 2) contains **no loops** of observables. Within the confines of a single Transaction Airstream guarantees **no glitches**.
+Philosophically, a Transaction in Airstream encapsulates a part of the propagation that 1) happens **synchronously**, and 2) contains **no loops** of observables. Within the confines of a single Transaction Airstream guarantees a) **no glitches**, and b) that no observable will emit more than once.
 
 Async streams such as `stream.delay(500)` emit their events in a new transaction because Airstream executes transactions sequentially – and there is no sense in keeping other transactions blocked until some Promise or Future decides to resolve itself.
 
 Events that come from outside of Airstream – see [Sources of Events](#sources-of-events) – each come in a new Transaction, and those source observables have a `topoRank` of 1. I guess it makes sense why `EventStream.periodic` would behave that way, but why wouldn't `EventBus` reuse the transaction of whatever event came in from one of its source streams?
 
-And the answer is the limitation of our topological ranking approach: it does not work for loops of observables. A topoRank is a property of an observable, not of the event coming in. And an observable's topoRank is determined at its creation. EventBus on its creation has no sources, so its stream needs to emit its events in a new Transaction because there is no way to guarantee correct topological ranking to avoid glitches.
+And the answer is the limitation of our topological ranking approach: it does not work for loops of observables. A topoRank is a property of an observable, not of the event coming in. And an observable's topoRank is static, determined at its creation. EventBus on its creation has no sources, and allows you to fire events into it manually, so its stream needs to emit all those events in a new Transaction because there is no way to guarantee correct topological ranking to avoid glitches.
 
-That said, in practice this is not a big deal because the events that an EventBus receives from different sources should be usually independent of each other because they are coming from different child components.
+That said, in practice this is not a big deal because the events that an EventBus receives from different sources should be usually independent of each other because they are coming from different child components or from different browser events.
 
 Apart from EventBus there is another way to create a loop – the `eventStream.flatten` method. And that one too, produces an event stream that emits all events in a new transaction, for all the same reasons.
 
-Loops necessarily break transactions as a tradeoff. Some other libraries do some kinds of dynamic topological sorting which is less predictable and whose performance worsens as your observables graph gets more complicated, but with Airstream there are no such costs. The only – and tiny – cost is when Airstream inserts a CombineObservable into the list of pending observables – that list is sorted by a static `topoRank` field, so it takes O(n) where n is the number of currently pending observables, which is usually zero or not much more than that.
+Loops and potentially-loopy constructs necessarily require a new transaction as a tradeoff. Some other libraries do some kinds of dynamic topological sorting which is less predictable and whose performance worsens as your observables graph gets more complicated, but with Airstream there are no such costs. The only – and tiny – cost is when Airstream inserts a CombineObservable into the list of pending observables – that list is sorted by a static `topoRank` field, so it takes O(n) where n is the number of currently pending observables, which is usually zero or not much more than that.
 
 Lastly, keep in mind that emitting events inside Observer-s will necessarily happen in a new transaction as you will need to use EventBus / Var APIs that create new transactions. Observers are generally intended for side effects. Those effects might be emitting other events, but in that case we consider them independent events, not a continuation of the current transaction. Philosophically, Observers should not know what they're observing (and they can observe multiple things at a time).
 
@@ -598,6 +628,65 @@ TODO[API] Consider ordering synchronous events by the order their streams are gi
 In Airstream, MergeEventStream will not emit more than one event in the same Transaction, because a Transaction by its very definition is about propagating a single event (that it happens to sometimes be split into multiple branches e.g. `tens` and `hundreds` is irrelevant, it's still the same change propagating), whereas a merged stream is capable of creating new events out of thin air as shown here. So in this example `multiples` will emit 10 in the same transaction that `numbers` emitted 1 in, and it will then create a new transaction which will emit 100 when it gets its turn.
 
 MergeEventStream uses the same pendingObservables mechanism as CombineObservable because both extend SyncObservable.
+
+
+#### Scheduling of Transactions
+
+When you call methods like `Var#set`, `EventBus.emit`, etc. we create a new transaction. If another transaction is currently executing, which is often the case (e.g. if you're doing this inside a `stream.foreach` callback), this transaction will not be executed immediately, but will be scheduled to be executed later, because to avoid glitches, the current transaction needs to finish first before any other transaction can put more events onto the observable graph.
+
+So if you set a Var's value, you will not be able to read it in the same transaction, because this instruction will only be executed after the current transaction finishes:
+
+```scala
+val logVar: Var[List[Event]] = ???
+stream.foreach { ev =>
+  logVar.set(logVar.now() :+ ev)
+  logVar.set(logVar.now() :+ ev)
+  println(logVar.now())
+  // NONE of the logVar.now() calls here will contain any `ev`
+  // because they are all executed before the .set transaction executes.
+  // Because of this, after all of the transactions are executed,
+  // logVar will only contain one instance of `ev`, not two.
+}
+```
+
+If you need to read of Var after writing to it, you can use `Var#update`, which will evaluate its mod only when its transaction runs, so it will always look at the freshest state of the Var:
+
+```scala
+val logVar = Var(List[Event]())
+stream.foreach { ev =>
+  logVar.update(_ :+ ev)
+  logVar.update(_ :+ ev)
+  // After both transactions execute, logVar will have two `ev`-s in it
+}
+```
+
+Let's expand our example above:
+
+```scala
+val bus = new EventBus[Event]
+val logVar = Var(List[Event]())
+val countVar = Var(0)
+bus.events.foreach { ev =>
+  logVar.update(_ :+ ev)
+  logVar.update(_ :+ ev)
+  // After both transactions execute, logVar will have two `ev`-s in it
+}
+logVar.signal.foreach { log =>
+  sideEffect(log.size)
+  countVar.update(_ += 1)
+}
+```
+
+Let's say you fires an event into `bus`, and its transaction A started executing. The callback provided to `bus.events.foreach` will schedule two transactions to update `logVar`, B and C. After that, transaction A will finish as there are no other listeners.
+
+Transaction B will immediately start executing. `ev` will be appended to `logVar` state, then this new state will be propagated to `logVar.signal`. `sideEffect(1)` will be called, and another transaction D to update `countVar` will be scheduled. After that, transaction B will finish as there are no other listeners.
+
+Now, which transaction will execute next, C (the second update to `logVar`), or D (update to `countVar`)? Since Airstream v0.11.0, D will execute next, because its considered to be a child of the transaction B that just finished, **because it was scheduled while transaction B was running**. After a transaction finishes, Airstream first executes any pending transactions that were scheduled while it was running, in the order in which they were scheduled. This is recursive, so effectively we iterate over an hierarchy of transactions in a depth-first search.
+
+In practice, this makes sense: in the code, the first `logVar.update(_ :+ ev)` is seen before the second `logVar.update(_ :+ ev)`, so the first transaction will completely finish, including any descendant transactions it creates, before we hand over control to its sibling transaction.
+
+Remember that all of this happens synchronously. There can be no async boundaries within a transaction. Any event fires after an async delay is necessarily fired in a new transaction that is initialized / scheduled **after** the async delay, so it's not part of the pending transaction queue until the async delay resolves, and when it does, it's guaranteed that there are no pending transactions in the queue as Javascript is single-threaded.
+
 
 
 ### Operators
@@ -1030,14 +1119,13 @@ stream.recoverToTry.collect { case Failure(err) => err } // EventStream[Throwabl
 
 ## My Related Projects
 
-- [Laminar](https://github.com/raquo/Laminar) – Efficient reactive UI library for Scala.js that uses Airstream
+- [Laminar](https://laminar.dev) – Efficient reactive UI library for Scala.js that uses Airstream
 - [Waypoint](https://github.com/raquo/Waypoint) – Efficient router for Laminar made with Airstream
 - [XStream.scala](https://github.com/raquo/XStream.scala) – streaming library used by Laminar before Airstream
 
 Other building blocks of Laminar:
 
 - [Scala DOM Types](https://github.com/raquo/scala-dom-types) – Type definitions that we use for all the HTML tags, attributes, properties, and styles
-- [Scala DOM Builder](https://github.com/raquo/scala-dom-builder) – Low-level Scala & Scala.js library for building and manipulating DOM trees that Laminar used before v0.8
 - [Scala DOM TestUtils](https://github.com/raquo/scala-dom-testutils) – Test that your Javascript DOM nodes match your expectations
 
 
