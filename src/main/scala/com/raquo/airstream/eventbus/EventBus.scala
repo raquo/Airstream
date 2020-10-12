@@ -2,7 +2,6 @@ package com.raquo.airstream.eventbus
 
 import com.raquo.airstream.eventbus.WriteBus.{BusTryTuple, BusTuple}
 import com.raquo.airstream.eventstream.EventStream
-import com.raquo.airstream.util.hasDuplicateTupleKeys
 
 import scala.util.Try
 
@@ -33,9 +32,6 @@ object EventBus {
   def emit(
     values: EventBusTuple[_]*
   ): Unit = {
-    if (hasDuplicateTupleKeys(values)) {
-      throw new Exception("Unable to EventBus.emit: the provided list of event buses has duplicates")
-    }
     WriteBus.emit(values.map(value => (value._1.writer, value._2).asInstanceOf[BusTuple[_]]): _*)
   }
 
@@ -45,9 +41,6 @@ object EventBus {
   def emitTry[A](
     values: EventBusTryTuple[A]*
   ): Unit = {
-    if (hasDuplicateTupleKeys(values)) {
-      throw new Exception("Unable to EventBus.emitTry: the provided list of event buses has duplicates")
-    }
     WriteBus.emitTry(values.map(value => (value._1.writer, value._2).asInstanceOf[BusTryTuple[_]]): _*)
   }
 }
