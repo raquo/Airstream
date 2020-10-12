@@ -3,8 +3,8 @@ enablePlugins(ScalaJSPlugin)
 enablePlugins(ScalaJSBundlerPlugin)
 
 libraryDependencies ++= Seq(
-  "org.scala-js" %%% "scalajs-dom" % "1.0.0", // This has no runtime cost. We only use it for `Debug.log` // @TODO[Elegance] Reconsider
-  "org.scalatest" %%% "scalatest" % "3.1.1" % Test
+  "org.scala-js" %%% "scalajs-dom" % "1.1.0", // This has no runtime cost. We only use it for `Debug.log` // @TODO[Elegance] Reconsider
+  "org.scalatest" %%% "scalatest" % "3.2.0" % Test
 )
 
 scalacOptions ++= Seq(
