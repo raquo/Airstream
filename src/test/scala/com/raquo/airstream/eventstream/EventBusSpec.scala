@@ -2,7 +2,7 @@ package com.raquo.airstream.eventstream
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Observer
-import com.raquo.airstream.eventbus.EventBus
+import com.raquo.airstream.eventbus.{EventBus, WriteBus}
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.ownership.Owner
 
@@ -166,6 +166,44 @@ class EventBusSpec extends UnitSpec {
       bus1 -> Success(3),
       bus2 -> Success(4),
       bus2 -> Success(5)
+    )).isFailure shouldBe true
+  }
+
+  it("disallow duplicate event buses in WriteBus.emit and WriteBus.emitTry") {
+    // If we allowed this, you would be able to send two events into the same Var
+    // in the same transaction, which breaks Airstream contract.
+    val bus1 = new EventBus[Int]
+    val bus2 = new EventBus[Int]
+    val bus3 = new EventBus[Int]
+
+    // -- should not fail
+
+    WriteBus.emitTry(
+      bus1.writer -> Success(1),
+      bus2.writer -> Success(1),
+      bus3.writer -> Failure(new Exception("Var 3 is broken"))
+    )
+
+    WriteBus.emit(
+      bus1.writer -> 1,
+      bus2.writer -> 1,
+      bus3.writer -> 1
+    )
+
+    // --
+
+    Try(WriteBus.emit(
+      bus1.writer -> 2,
+      bus2.writer -> 2,
+      bus1.writer -> 2
+    )).isFailure shouldBe true
+
+    // --
+
+    Try(WriteBus.emitTry(
+      bus1.writer -> Success(3),
+      bus2.writer -> Success(4),
+      bus2.writer -> Success(5)
     )).isFailure shouldBe true
   }
 }

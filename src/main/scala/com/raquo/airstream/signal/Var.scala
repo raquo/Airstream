@@ -96,7 +96,7 @@ object Var {
   def setTry(values: VarTryTuple[_]*): Unit = {
     //println(s"> init trx from Var.set/setTry")
     if (hasDuplicateTupleKeys(values)) {
-      throw new Exception("Unable to Var.set/setTry: the provided list of vars has duplicates")
+      throw new Exception("Unable to Var.{set,setTry}: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.")
     }
     new Transaction(trx => values.foreach(setTryValue(_, trx)))
   }
@@ -114,7 +114,7 @@ object Var {
     */
   def update(mods: VarModTuple[_]*): Unit = {
     if (hasDuplicateTupleKeys(mods)) {
-      throw new Exception("Unable to Var.update: the provided list of vars has duplicates")
+      throw new Exception("Unable to Var.update: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.")
     }
     val tryMods: Seq[VarTryModTuple[_]] = mods.map(modToTryModTuple(_))
     //println(s"> init trx from Var.update")
@@ -136,7 +136,7 @@ object Var {
   def tryUpdate(mods: VarTryModTuple[_]*): Unit = {
     //println(s"> init trx from Var.tryUpdate")
     if (hasDuplicateTupleKeys(mods)) {
-      throw new Exception("Unable to Var.tryUpdate: the provided list of vars has duplicates")
+      throw new Exception("Unable to Var.tryUpdate: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.")
     }
     new Transaction(trx => {
       val tryValues: Seq[VarTryTuple[_]] = mods.map(tryModToTryTuple(_))
