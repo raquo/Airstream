@@ -4,7 +4,7 @@ package object util {
 
   type Id[A] = A
 
-  def hasDuplicateTupleKeys[K](tuples: Seq[(K, _)]): Boolean = {
+  def hasDuplicateTupleKeys[K[_]](tuples: Seq[(K[_], _)]): Boolean = {
     tuples.size != tuples.map(_._1).toSet.size
   }
 }
