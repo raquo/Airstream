@@ -6,6 +6,7 @@ import com.raquo.airstream.core.{AirstreamError, Observer}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
+import com.raquo.airstream.signal.Var
 import org.scalatest.BeforeAndAfter
 
 import scala.collection.mutable
@@ -337,5 +338,88 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
     errorEffects shouldEqual mutable.Buffer(
       Effect("unhandled", err1)
     )
+  }
+
+  it("flatMap propagates error in parent observable") {
+
+    val owner = new TestableOwner
+
+    val err = new Exception("No stream")
+
+    val bus  = new EventBus[Int]
+
+    val stream = bus.events.flatMap(EventStream.fromValue(_, emitOnce = true))
+
+    val effects = mutable.Buffer[Effect[_]]()
+
+    stream.addObserver(Observer.withRecover(
+      onNext = ev => effects += Effect("onNext", ev),
+      onError = { case err => effects += Effect("onError", err.getMessage) }
+    ))(owner)
+
+    // --
+
+    // @TODO[Airstream] EventBus should have an `emit` method, jeez
+    bus.writer.onNext(1)
+
+    effects shouldBe mutable.Buffer(Effect("onNext", 1))
+    effects.clear()
+
+    // --
+
+    bus.writer.onError(err)
+    effects shouldBe mutable.Buffer(Effect("onError", err.getMessage))
+    effects.clear()
+
+    // --
+
+    bus.writer.onNext(2)
+
+    effects shouldBe mutable.Buffer(Effect("onNext", 2))
+    effects.clear()
+
+  }
+
+  it("flatMap propagates error in parent signal's initial value") {
+
+    val owner = new TestableOwner
+
+    val err = new Exception("No stream")
+
+    val myVar  = Var.fromTry[Int](Failure(err))
+
+    val stream = myVar.signal.flatMap(EventStream.fromValue(_, emitOnce = true))
+
+    val effects = mutable.Buffer[Effect[_]]()
+
+    stream.addObserver(Observer.withRecover(
+      onNext = ev => effects += Effect("onNext", ev),
+      onError = { case err => effects += Effect("onError", err.getMessage) }
+    ))(owner)
+
+    // -- initial failed state should propagate as an error
+
+    effects shouldBe mutable.Buffer(Effect("onError", err.getMessage))
+    effects.clear()
+
+    // --
+
+    myVar.set(1)
+
+    effects shouldBe mutable.Buffer(Effect("onNext", 1))
+    effects.clear()
+
+    // --
+
+    myVar.setError(err)
+    effects shouldBe mutable.Buffer(Effect("onError", err.getMessage))
+    effects.clear()
+
+    // --
+
+    myVar.set(2)
+
+    effects shouldBe mutable.Buffer(Effect("onNext", 2))
+    effects.clear()
   }
 }

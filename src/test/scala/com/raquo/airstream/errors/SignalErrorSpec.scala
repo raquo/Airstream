@@ -5,7 +5,7 @@ import com.raquo.airstream.core.{AirstreamError, Observer}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
-import com.raquo.airstream.signal.Var
+import com.raquo.airstream.signal.{Val, Var}
 import org.scalatest.BeforeAndAfter
 
 import scala.collection.mutable
@@ -334,4 +334,91 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     effects.clear()
   }
 
+  it("flatMap propagates error in parent signal") {
+
+    val owner = new TestableOwner
+
+    val err = new Exception("No signal")
+
+    val myVar  = Var(0)
+
+    // @TODO[Airstream] Add Signal.fromValue / fromTry that creates a Val
+    val stream = myVar.signal.flatMap(Val(_))
+
+    val effects = mutable.Buffer[Effect[_]]()
+
+    stream.addObserver(Observer.withRecover(
+      onNext = ev => effects += Effect("onNext", ev),
+      onError = { case err => effects += Effect("onError", err.getMessage) }
+    ))(owner)
+
+    // -- initial value
+
+    effects shouldBe mutable.Buffer(Effect("onNext", 0))
+    effects.clear()
+
+    // --
+
+    myVar.set(1)
+
+    effects shouldBe mutable.Buffer(Effect("onNext", 1))
+    effects.clear()
+
+    // --
+
+    myVar.setError(err)
+    effects shouldBe mutable.Buffer(Effect("onError", err.getMessage))
+    effects.clear()
+
+    // --
+
+    myVar.set(2)
+
+    effects shouldBe mutable.Buffer(Effect("onNext", 2))
+    effects.clear()
+  }
+
+  it("flatMap propagates error in parent signal's initial value") {
+
+    val owner = new TestableOwner
+
+    val err = new Exception("No signal")
+
+    val myVar  = Var.fromTry[Int](Failure(err))
+
+    // @TODO[Airstream] Add Signal.fromValue / fromTry that creates a Val
+    val stream = myVar.signal.flatMap(Val(_))
+
+    val effects = mutable.Buffer[Effect[_]]()
+
+    stream.addObserver(Observer.withRecover(
+      onNext = ev => effects += Effect("onNext", ev),
+      onError = { case err => effects += Effect("onError", err.getMessage) }
+    ))(owner)
+
+    // -- initial value
+
+    effects shouldBe mutable.Buffer(Effect("onError", err.getMessage))
+    effects.clear()
+
+    // --
+
+    myVar.set(1)
+
+    effects shouldBe mutable.Buffer(Effect("onNext", 1))
+    effects.clear()
+
+    // --
+
+    myVar.setError(err)
+    effects shouldBe mutable.Buffer(Effect("onError", err.getMessage))
+    effects.clear()
+
+    // --
+
+    myVar.set(2)
+
+    effects shouldBe mutable.Buffer(Effect("onNext", 2))
+    effects.clear()
+  }
 }

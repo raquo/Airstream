@@ -17,6 +17,11 @@ import scala.util.{Failure, Success, Try}
   *
   * If parent stream emits an error, this stream re-emits that error and unsubscribes from the last emitted stream
   *
+  * If the stream created with makeStream emits an error, this stream re-emits it in a new transaction.
+  *
+  * If parent is a signal in a failed state when SwitchEventStream is created, parent's error is re-emitted in a new
+  * transaction, as if makeStream returned a stream that emitted this error.
+  *
   * Warning: Similar to [[com.raquo.airstream.eventbus.EventBus]], this stream emits events in
   * a new transaction because its proper topoRank would need to be dynamic, which we don't support.
   *
@@ -56,10 +61,14 @@ class SwitchEventStream[I, O](
   override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
     removeInternalObserverFromCurrentEventStream()
     maybeCurrentEventStream = Failure(nextError)
+    fireError(nextError, transaction)
   }
 
   override protected[this] def onStart(): Unit = {
-    maybeCurrentEventStream.foreach(_.foreach(_.addInternalObserver(internalEventObserver)))
+    maybeCurrentEventStream.foreach { streamTry =>
+      val initialStream = streamTry.fold(err => EventStream.fromTry(Failure(err), emitOnce = true), identity)
+      initialStream.addInternalObserver(internalEventObserver)
+    }
     super.onStart()
   }
 
