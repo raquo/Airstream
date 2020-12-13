@@ -496,7 +496,26 @@ Creating a Var is straightforward: `Var(initialValue)`, `Var.fromTry(tryValue)`.
 
 You can update a Var using one of its methods: `set(value)`, `setTry(Try(value))`, `update(currentValue => nextValue)`, `tryUpdate(currentValueTry => Try(nextValue))`. Note that `update` will throw if the Var's current value is an error (thus `tryUpdate`).
 
-Every Var also provides an Observer (`.writer`) that you can use where an Observer is expected, or if you want to provide your code with write-only access to a Var.
+##### Observers Feeding into Var
+
+Every Var provides a `writer` which is an Observer that writes input values into the Var. It may be useful to provide your code with write-only access to a Var, or to a subset of the data in the Var by means of the Observer's `contramap` method.
+
+In addition to `writer`, Var also offers `updater`s, making it easy to create an Observer that updates the Var based on both the Observer's input value and the Var's current value:
+
+```scala
+val v = Var(List(1, 2, 3))
+val adder = v.updater[Int]((currValue, nextInput) => currValue :+ nextInput)
+
+adder.onNext(4)
+v.now() // List(1, 2, 3, 4)
+
+val inputStream: EventStream[Int] = ???
+
+inputStream.foreach(adder)
+inputStream --> adder // Laminar syntax
+``` 
+
+`updater` will fail to update if the Var is in a failed state, for those cases we have `tryUpdater`.
 
 ##### Reading Values from a Var
 

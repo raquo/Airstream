@@ -594,4 +594,139 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     reset()
 
   }
+
+  it("updater") {
+
+    val err1 = new Exception("err1")
+
+    val err2 = new Exception("err2")
+
+    val v = Var(List(1))
+
+    val adder = v.updater[Int]((acc, newItem) => acc :+ newItem)
+
+    val failedUpdater = v.updater[Int]((_, _) => throw err1)
+
+    val doubler = v.updater[Unit]((acc, _) => acc ++ acc)
+
+    // --
+
+    v.now() shouldBe List(1)
+
+    // --
+
+    adder.onNext(2)
+
+    v.now() shouldBe List(1, 2)
+
+    // --
+
+    adder.onError(err2)
+
+    v.tryNow() shouldBe Failure(err2)
+
+    // --
+
+    adder.onNext(3)
+
+    v.tryNow() shouldBe Failure(err2)
+
+    // --
+
+    v.set(List(0))
+
+    v.now() shouldBe List(0)
+
+    // --
+
+    failedUpdater.onNext(1)
+
+    v.tryNow() shouldBe Failure(err1)
+
+    // --
+
+    failedUpdater.onNext(1)
+
+    v.tryNow() shouldBe Failure(err1)
+
+    // --
+
+    v.set(List(1, 2))
+    doubler.onNext(())
+
+    v.now() shouldBe List(1, 2, 1, 2)
+  }
+
+  it("tryUpdater") {
+
+    val err1 = new Exception("err1")
+
+    val err2 = new Exception("err2")
+
+    val resetErr = new Exception("resetErr")
+
+    val v = Var(List(1))
+
+    val adder = v.tryUpdater[Int] { (acc, newItem) =>
+      println(acc)
+      acc
+        .map(_ :+ newItem)
+        .recover { case `resetErr` => List(0) }
+    }
+
+    val errer = v.tryUpdater[Int]((_, _) => Failure(resetErr))
+
+    // --
+
+    v.now() shouldBe List(1)
+
+    // --
+
+    adder.onNext(2)
+
+    v.now() shouldBe List(1, 2)
+
+    // --
+
+    errer.onNext(3)
+
+    v.tryNow() shouldBe Failure(resetErr)
+
+    // --
+
+    adder.onNext(1)
+
+    v.tryNow() shouldBe Success(List(0))
+
+    // --
+
+    adder.onError(err1)
+
+    v.tryNow() shouldBe Failure(err1)
+
+    // --
+
+    v.set(List(-1))
+
+    v.now() shouldBe List(-1)
+
+    // --
+
+    errer.onNext(1)
+
+    v.tryNow() shouldBe Failure(resetErr)
+
+    // --
+
+    errer.onNext(1)
+
+    v.tryNow() shouldBe Failure(resetErr)
+
+    // --
+
+    v.set(List(1, 2))
+    adder.onNext(3)
+
+    v.now() shouldBe List(1, 2, 3)
+  }
 }
