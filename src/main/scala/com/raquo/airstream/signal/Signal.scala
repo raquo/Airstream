@@ -59,6 +59,22 @@ trait Signal[+A] extends Observable[A] {
     )
   }
 
+  def withCurrentValueOf[B](signal: Signal[B]): Signal[(A, B)] = {
+    new SampleCombineSignal2[A, B, (A, B)](
+      samplingSignal = this,
+      sampledSignal = signal,
+      combinator = CombineObservable.guardedCombinator((_, _))
+    )
+  }
+
+  def sample[B](signal: Signal[B]): Signal[B] = {
+    new SampleCombineSignal2[A, B, B](
+      samplingSignal = this,
+      sampledSignal = signal,
+      combinator = CombineObservable.guardedCombinator((_, sampledValue) => sampledValue)
+    )
+  }
+
   def changes: EventStream[A] = new MapEventStream[A, A](parent = this, project = identity, recover = None)
 
   /**

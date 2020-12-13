@@ -207,6 +207,8 @@ You can use `stream.withCurrentValueOf(signal).map((lastStreamEvent, signalCurre
 
 If you don't need lastStreamEvent, use `stream.sample(signal).map(signalCurrentValue => ???)` instead. Note: both of these output streams will emit only when `stream` emits, as documented in the code. If you want updates from signal to also trigger an event, look into the `combineWith` operator.
 
+`withCurrentValueOf` and `sample` operators are also available on signals, not just streams.
+
 If you want to get a Signal's current value without the complications of sampling, or even if you just want to make sure that a Signal is started, just call `observe` on it. That will add a noop observer to the signal, and return a `SignalViewer` instance which being a `StrictSignal`, does expose `now()` and `tryNow()` methods that safely provide you with its current value.
 
 
