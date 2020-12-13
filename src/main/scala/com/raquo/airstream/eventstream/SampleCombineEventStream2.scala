@@ -26,12 +26,15 @@ class SampleCombineEventStream2[A, B, O](
   parentObservers.push(
     InternalParentObserver.fromTry[A](samplingStream, (nextSamplingValue, transaction) => {
       maybeSamplingValue = Some(nextSamplingValue)
+      // Update `maybeCombinedValue` and mark the combined observable as pending
       internalObserver.onTry(combinator(nextSamplingValue, sampledSignal.tryNow()), transaction)
     }),
     InternalParentObserver.fromTry[B](sampledSignal, (nextSampledValue, _) => {
       // Update combined value, but only if sampling stream already emitted a value.
       // So we only update the value if we know that this observable will syncFire.
       maybeSamplingValue.foreach { lastSamplingValue =>
+        // Update `maybeCombinedValue`
+        // - We need this if `sampledSignal` fires after the combined observable has already been marked as pending
         maybeCombinedValue = Some(combinator(lastSamplingValue, nextSampledValue))
       }
     })
