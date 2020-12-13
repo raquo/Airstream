@@ -4,7 +4,7 @@ import com.raquo.airstream.core.{Observer, Transaction}
 import com.raquo.airstream.signal.Var.VarSignal
 import com.raquo.airstream.util.hasDuplicateTupleKeys
 
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 /** Var is a container for a Writeable Signal – sort of like EventBus, but for Signals.
   *
@@ -24,6 +24,45 @@ class Var[A] private(private[this] var currentValue: Try[A]) {
     new Transaction(setCurrentValue(nextTry, _))
   }
 
+  /** An observer much like writer, but can compose input events with the current value of the var, for example:
+    *
+    * val v = Var(List(1, 2, 3))
+    * val appender = v.updater((acc, nextItem) => acc :+ nextItem)
+    * appender.onNext(4) // v now contains List(1, 2, 3, 4)
+    *
+    * @param mod (currValue, nextInput) => nextValue
+    */
+  def updater[B](mod: (A, B) => A): Observer[B] = Observer.fromTry { case nextInputTry =>
+    new Transaction(trx => nextInputTry match {
+      case Success(nextInput) =>
+        val unsafeValue = try {
+          now()
+        } catch {
+          case err: Throwable =>
+            throw new Exception("Unable to update a failed Var. Consider Var#tryUpdater instead.", err)
+        }
+        val nextValue = Try(mod(unsafeValue, nextInput)) // this does catch exceptions in mod
+        setCurrentValue(nextValue, trx)
+      case Failure(err) =>
+        setCurrentValue(Failure[A](err), trx)
+    })
+  }
+
+  // @TODO[Scala3] When we don't need 2.12, remove 'case' from all PartialFunction instances that don't need it (e.g. Observer.fromTry)
+
+  /** @param mod (currValue, nextInput) => nextValue
+    *            Note: Must not throw!
+    */
+  def tryUpdater[B](mod: (Try[A], B) => Try[A]): Observer[B] = Observer.fromTry { case nextInputTry =>
+    new Transaction(trx => nextInputTry match {
+      case Success(nextInput) =>
+        val nextValue = mod(currentValue, nextInput)
+        setCurrentValue(nextValue, trx)
+      case Failure(err) =>
+        setCurrentValue(Failure[A](err), trx)
+    })
+  }
+
   @inline def set(value: A): Unit = writer.onNext(value)
 
   @inline def setTry(tryValue: Try[A]): Unit = writer.onTry(tryValue)
@@ -33,10 +72,6 @@ class Var[A] private(private[this] var currentValue: Try[A]) {
   /** @param mod Note: guarded against exceptions
     * @throws Exception if currentValue is a Failure */
   def update(mod: A => A): Unit = {
-    //    setCurrentValue(currentValue.fold[Try[A]](
-    //      err => throw VarUpdateError(cause = err),
-    //      value => Try(mod(value))
-    //    ))
     //println(s"> init trx from Var.update")
     new Transaction(trx => {
       val unsafeValue = try {
@@ -55,7 +90,7 @@ class Var[A] private(private[this] var currentValue: Try[A]) {
   def tryUpdate(mod: Try[A] => Try[A]): Unit = {
     //println(s"> init trx from Var.tryUpdate")
     new Transaction(trx => {
-      val nextValue = mod(currentValue) // Note: this does catch exceptions in mod(unsafeValue)
+      val nextValue = mod(currentValue)
       setCurrentValue(nextValue, trx)
     })
   }
