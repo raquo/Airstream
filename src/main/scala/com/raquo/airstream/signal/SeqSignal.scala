@@ -10,7 +10,11 @@ class SeqSignal[A](
 ) extends Signal[Seq[A]]
     with CombineObservable[Seq[A]] {
 
-  override protected[airstream] val topoRank: Int = parents.map(_.topoRank).maxOption.fold(0)(_ + 1)
+  override protected[airstream] val topoRank: Int = if (parents.nonEmpty) {
+    parents.map(_.topoRank).max + 1
+  } else {
+    1
+  }
 
   parentObservers.push(
     parents.zipWithIndex.map { case (parent, index) =>
