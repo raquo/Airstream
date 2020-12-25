@@ -42,6 +42,13 @@ Test / sourceGenerators += Def.task {
   )
 }.taskValue
 
+mappings in (Compile, packageSrc) ++= {
+  val base  = (sourceManaged in Compile).value
+  val files = (managedSources in Compile).value
+  files.map { f =>
+    (f, f.relativeTo(base / "scala").get.getPath)
+  }
+}
 
 version in installJsdom := "16.4.0"
 
