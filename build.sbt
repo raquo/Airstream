@@ -25,6 +25,24 @@ scalacOptions in (Compile, doc) ++= Seq(
   "-no-link-warnings" // Suppress scaladoc "Could not find any member to link for" warnings
 )
 
+Compile / sourceGenerators += Def.task {
+  Seq.concat(
+    (2 to 22).flatMap(n =>
+      new ZipSignalGenerator((Compile / sourceManaged).value, n).generate()
+    ),
+    new SignalZipsGenerator((Compile / sourceManaged).value, from = 2, to = 22).generate()
+  )
+}.taskValue
+
+Test / sourceGenerators += Def.task {
+  Seq.concat(
+    (2 to 22).flatMap(n =>
+      new ZipSignalTestGenerator((Test / sourceManaged).value, from = 2, to = 22).generate()
+    )
+  )
+}.taskValue
+
+
 version in installJsdom := "16.4.0"
 
 useYarn := true
