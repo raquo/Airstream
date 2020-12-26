@@ -1,0 +1,75 @@
+package com.raquo.airstream.eventstream
+
+import com.raquo.airstream.AsyncUnitSpec
+import com.raquo.airstream.core.Observer
+import com.raquo.airstream.eventbus.EventBus
+import com.raquo.airstream.fixtures.{Effect, TestableOwner}
+import org.scalatest.BeforeAndAfter
+
+import scala.collection.mutable
+
+class DelayEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
+
+  implicit val owner = new TestableOwner
+
+  val effects = mutable.Buffer[Effect[Int]]()
+
+  val obs1 = Observer[Int](effects += Effect("obs1", _))
+
+  before {
+    owner.killSubscriptions()
+    effects.clear()
+  }
+
+
+  it("events are delayed, and purged on stop") {
+    val bus = new EventBus[Int]
+    val stream = bus.events.delay(30)
+
+    val sub = stream.addObserver(obs1)
+
+    delay {
+      effects shouldEqual mutable.Buffer()
+
+      // --
+
+      bus.writer.onNext(1)
+
+      effects shouldEqual mutable.Buffer()
+
+    }.flatMap[Unit] { _ =>
+      delay(30) {
+        effects shouldEqual mutable.Buffer(Effect("obs1", 1))
+        effects.clear()
+
+        bus.writer.onNext(2)
+        bus.writer.onNext(3)
+
+        effects shouldEqual mutable.Buffer()
+      }
+    }.flatMap[Unit] { _ =>
+      delay(30) {
+        effects shouldEqual mutable.Buffer(Effect("obs1", 2), Effect("obs1", 3))
+        effects.clear()
+
+        bus.writer.onNext(4)
+        bus.writer.onNext(5)
+
+        sub.kill() // this kills pending events even if we immediately restart
+
+        effects shouldEqual mutable.Buffer()
+
+        stream.addObserver(obs1)
+
+        bus.writer.onNext(6)
+      }
+    }.flatMap { _ =>
+      delay(40) { // a bit extra margin for the last check just to be sure that we caught any events
+        effects shouldEqual mutable.Buffer(Effect("obs1", 6))
+        effects.clear()
+        assert(true)
+      }
+    }
+  }
+
+}
