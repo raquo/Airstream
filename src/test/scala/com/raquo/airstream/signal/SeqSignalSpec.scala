@@ -38,7 +38,7 @@ class SeqSignalSpec extends UnitSpec {
     for (iteration <- 0 until 10) {
       for (signalToUpdate <- vars.indices) {
         vars(signalToUpdate).update(_ + 1)
-        effects.toList.last shouldEqual
+        effects.toList should ===(List(
           Effect("combined",
             vars.indices.map { index =>
               if (index > signalToUpdate) {
@@ -51,6 +51,7 @@ class SeqSignalSpec extends UnitSpec {
               }
             }
           )
+        ))
       }
     }
     subscription.kill()

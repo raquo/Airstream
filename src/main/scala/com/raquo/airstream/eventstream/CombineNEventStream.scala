@@ -1,9 +1,8 @@
 package com.raquo.airstream.eventstream
 
-import com.raquo.airstream.core.AirstreamError.CombinedError
 import com.raquo.airstream.features.{ CombineObservable, InternalParentObserver }
 
-import scala.util.{ Failure, Success, Try }
+import scala.util.Try
 
 abstract class CombineNEventStream[A, Out](
   protected[this] val parents: Seq[EventStream[A]]

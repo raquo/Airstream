@@ -191,6 +191,8 @@ object EventStream extends EventStreamCombines {
     )
   }
 
+  def seq[A](streams: Seq[EventStream[A]]): EventStream[Seq[A]] = new SeqJoinEventStream[A](streams)
+
   /** @param emitOnce if true, the event will be emitted at most one time.
     *                 If false, the event will be emitted every time the stream is started. */
   def fromSeq[A](events: Seq[A], emitOnce: Boolean): EventStream[A] = {
