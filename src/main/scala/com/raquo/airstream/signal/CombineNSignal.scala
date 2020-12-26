@@ -1,9 +1,8 @@
 package com.raquo.airstream.signal
 
-import com.raquo.airstream.core.AirstreamError.CombinedError
 import com.raquo.airstream.features.{ CombineObservable, InternalParentObserver }
 
-import scala.util.{ Failure, Success, Try }
+import scala.util.Try
 
 abstract class CombineNSignal[A, Out](
   protected[this] val parents: Seq[Signal[A]]
@@ -31,7 +30,7 @@ abstract class CombineNSignal[A, Out](
           }
 
           internalObserver.onTry(
-            guarded(trys),
+            CombineObservable.guardedSeqCombinator(trys, toOut),
             transaction
           )
         }
@@ -41,15 +40,8 @@ abstract class CombineNSignal[A, Out](
 
   protected def toOut(seq: Seq[A]): Out
 
-  private def guarded(trys: Seq[Try[A]]): Try[Out] =
-    if (trys.forall(_.isSuccess)) {
-      Success(toOut(trys.map(_.get)))
-    } else {
-      Failure(CombinedError(trys.map(_.failed.toOption)))
-    }
-
   override protected[this] def initialValue: Try[Out] = {
-    guarded(parents.map(_.tryNow()))
+    CombineObservable.guardedSeqCombinator(parents.map(_.tryNow()), toOut)
   }
 
 }

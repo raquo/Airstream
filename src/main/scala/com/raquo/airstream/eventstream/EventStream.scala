@@ -172,7 +172,7 @@ trait EventStream[+A] extends Observable[A] {
   }
 }
 
-object EventStream {
+object EventStream extends EventStreamCombines {
 
   /** Event stream that never emits anything */
   val empty: EventStream[Nothing] = {

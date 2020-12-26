@@ -33,13 +33,18 @@ Compile / sourceGenerators += Def.task {
     (generateTupleCombinatorsFrom to generateTupleCombinatorsTo).flatMap(n =>
       new CombineSignalGenerator((Compile / sourceManaged).value, n).generate()
     ),
-    new SignalCombinesGenerator((Compile / sourceManaged).value, from = generateTupleCombinatorsFrom, to = generateTupleCombinatorsTo).generate()
+    (generateTupleCombinatorsFrom to generateTupleCombinatorsTo).flatMap(n =>
+      new CombineEventStreamGenerator((Compile / sourceManaged).value, n).generate()
+    ),
+    new SignalCombinesGenerator((Compile / sourceManaged).value, from = generateTupleCombinatorsFrom, to = generateTupleCombinatorsTo).generate(),
+    new EventStreamCombinesGenerator((Compile / sourceManaged).value, from = generateTupleCombinatorsFrom, to = generateTupleCombinatorsTo).generate(),
   )
 }.taskValue
 
 Test / sourceGenerators += Def.task {
   Seq.concat(
-    new CombineSignalTestGenerator((Test / sourceManaged).value, from = generateTupleCombinatorsFrom, to = generateTupleCombinatorsTo).generate()
+    new CombineSignalTestGenerator((Test / sourceManaged).value, from = generateTupleCombinatorsFrom, to = generateTupleCombinatorsTo).generate(),
+    new CombineEventStreamTestGenerator((Test / sourceManaged).value, from = generateTupleCombinatorsFrom, to = generateTupleCombinatorsTo).generate(),
   )
 }.taskValue
 
