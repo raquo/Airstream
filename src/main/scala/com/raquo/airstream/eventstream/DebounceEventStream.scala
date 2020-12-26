@@ -38,4 +38,10 @@ class DebounceEventStream[A](
       }
     )
   }
+
+  override protected[this] def onStop(): Unit = {
+    maybeLastTimeoutHandle.foreach(js.timers.clearTimeout)
+    maybeLastTimeoutHandle = js.undefined
+    super.onStop()
+  }
 }
