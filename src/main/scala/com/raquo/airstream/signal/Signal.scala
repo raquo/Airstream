@@ -206,11 +206,14 @@ trait Signal[+A] extends Observable[A] {
   }
 }
 
-object Signal extends SignalZips {
+object Signal extends SignalCombines {
 
   @inline def seq[A](signals: Seq[Signal[A]]): Signal[Seq[A]] = {
     new SeqSignal[A](signals)
   }
+
+  @inline
+  def combine[T1, T2](s1: Signal[T1], s2: Signal[T2]): Signal[(T1, T2)] = s1.combineWith(s2)
 
   def fromValue[A](value: A): Val[A] = Val(value)
 

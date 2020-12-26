@@ -4,7 +4,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.PrintStream
 
-abstract class TuplezSourceGenerator(file: File) {
+abstract class SourceGenerator(file: File) {
 
   file.getParentFile.mkdirs()
   private val printStream = new PrintStream(new FileOutputStream(file))

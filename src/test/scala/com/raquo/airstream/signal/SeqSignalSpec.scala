@@ -8,15 +8,6 @@ import scala.collection.mutable
 
 class SeqSignalSpec extends UnitSpec {
 
-  Signal.zip(
-    Var("").signal,
-    Var("").signal,
-    Var("").signal,
-    Var("").signal,
-    Var("").signal,
-    Var("").signal,
-  )
-
   it("should work as expected") {
 
     implicit val testOwner: TestableOwner = new TestableOwner

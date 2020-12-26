@@ -2,9 +2,9 @@ import sbt._
 
 import java.io.File
 
-class ZipSignalTestGenerator(sourceManaged: File, from: Int, to: Int)
-    extends TuplezSourceGenerator(
-      sourceManaged / "scala" / "com" / "raquo" / "airstream" / "signal" / s"ZipSignalSpec.scala"
+class CombineSignalTestGenerator(sourceManaged: File, from: Int, to: Int)
+    extends SourceGenerator(
+      sourceManaged / "scala" / "com" / "raquo" / "airstream" / "signal" / s"CombineSignalSpec.scala"
     ) {
 
   def doGenerate(): Unit = {
@@ -15,14 +15,14 @@ class ZipSignalTestGenerator(sourceManaged: File, from: Int, to: Int)
     println("""import com.raquo.airstream.fixtures.TestableOwner""")
     println("""import scala.collection.mutable""")
     println()
-    enter(s"""class ZipSignalSpec extends UnitSpec {""")
+    enter(s"""class CombineSignalSpec extends UnitSpec {""")
     println()
     for (i <- 1 to to) {
       println(s"""case class T${i}(v: Int) { def inc: T${i} = T${i}(v+1) }""")
     }
     println()
     for (n <- from to to) {
-      enter(s"""it("ZipSignal${n} should work as expected") {""")
+      enter(s"""it("CombineSignal${n} should work as expected") {""")
       println()
       println("""implicit val testOwner: TestableOwner = new TestableOwner""")
       println()
@@ -30,7 +30,7 @@ class ZipSignalTestGenerator(sourceManaged: File, from: Int, to: Int)
         println(s"""val var${i} = Var(T${i}(1))""")
       }
       println()
-      println(s"""val combinedSignal = Signal.zip(${tupleType(n, "var", ".signal")})""")
+      println(s"""val combinedSignal = Signal.combine(${tupleType(n, "var", ".signal")})""")
       println()
       println(s"""val effects = mutable.Buffer[(${tupleType(n)})]()""")
       println()
