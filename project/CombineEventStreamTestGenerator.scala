@@ -4,7 +4,7 @@ import java.io.File
 
 class CombineEventStreamTestGenerator(sourceManaged: File, from: Int, to: Int)
     extends SourceGenerator(
-      sourceManaged / "scala" / "com" / "raquo" / "airstream" / "signal" / s"CombineEventStreamSpec.scala"
+      sourceManaged / "scala" / "com" / "raquo" / "airstream" / "eventstream" / s"CombineEventStreamSpec.scala"
     ) {
 
   def doGenerate(): Unit = {

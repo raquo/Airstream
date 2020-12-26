@@ -23,7 +23,9 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
   }
 
   it("emitInitial=true, resetOnStop=true") {
-    val stream = EventStream.periodic(intervalMs = 15, emitInitial = true, resetOnStop = true)
+    val testInterval = 50
+
+    val stream = EventStream.periodic(intervalMs = testInterval, emitInitial = true, resetOnStop = true)
 
     val sub1 = stream.addObserver(obs1)
 
@@ -32,15 +34,15 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
 
     for {
       _ <- delay(2) { }
-      _ <- delay(15) {
+      _ <- delay(testInterval) {
         effects shouldEqual mutable.Buffer(Effect("obs1", 1))
         effects.clear()
       }
-      _ <- delay(15) {
+      _ <- delay(testInterval) {
         effects shouldEqual mutable.Buffer(Effect("obs1", 2))
         effects.clear()
       }
-      _ <- delay(15) {
+      _ <- delay(testInterval) {
         effects shouldEqual mutable.Buffer(Effect("obs1", 3))
         effects.clear()
       }
@@ -49,12 +51,12 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
         effects shouldEqual mutable.Buffer(Effect("obs1", 1))
         effects.clear()
       }
-      _ <- delay(15) {
+      _ <- delay(testInterval) {
         effects shouldEqual mutable.Buffer(Effect("obs1", 2))
         effects.clear()
       }
       _ = sub1.kill()
-      _ <- delay(20) {
+      _ <- delay(testInterval + testInterval) {
         effects shouldEqual mutable.Buffer()
       }
       _ = stream.addObserver(obs1)
@@ -63,11 +65,11 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
         effects.clear()
       }
       _ <- delay(2) { }
-      _ <- delay(15) {
+      _ <- delay(testInterval) {
         effects shouldEqual mutable.Buffer(Effect("obs1", 1))
         effects.clear()
       }
-
+      _ = sub2.kill()
     } yield done
   }
 

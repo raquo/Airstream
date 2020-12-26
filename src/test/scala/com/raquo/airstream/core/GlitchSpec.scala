@@ -23,7 +23,7 @@ class GlitchSpec extends UnitSpec {
     val tens = bus.events.map(_ * 10)
     val hundreds = tens.map(_ * 10)
 
-    val tuples = hundreds.combineWith(tens)
+    val tuples = hundreds.combine(tens)
       .map(Calculation.log("tuples", calculations))
 
     tuples.foreach(effects += Effect("tuples", _))
@@ -226,12 +226,12 @@ class GlitchSpec extends UnitSpec {
     // E = C + A
     // X = D + E
 
-    val streamTupleAB = busA.events.combineWith(busB.events)
+    val streamTupleAB = busA.events.combine(busB.events)
     val streamC = streamTupleAB.map2(_ + _).map(Calculation.log("C", calculations))
-    val streamD = busB.events.combineWith(streamC).map2(_ + _).map(Calculation.log("D", calculations))
-    val streamE = busA.events.combineWith(streamC).map2(_ + _).map(Calculation.log("E", calculations))
+    val streamD = busB.events.combine(streamC).map2(_ + _).map(Calculation.log("D", calculations))
+    val streamE = busA.events.combine(streamC).map2(_ + _).map(Calculation.log("E", calculations))
 
-    val streamX = streamD.combineWith(streamE).map2(_ + _)
+    val streamX = streamD.combine(streamE).map2(_ + _)
       .map(Calculation.log("X", calculations))
 
     streamX.foreach(effects += Effect("X", _))
@@ -311,7 +311,7 @@ class GlitchSpec extends UnitSpec {
     busA.writer.addSource(streamB.map(_ * 10).map(Calculation.log("B x 10", calculations)))
     busB.writer.addSource(streamA.filter(_ <= 100).map(_ + 1))
 
-    val streamD = streamA.combineWith(streamB).map2((x, y) => {
+    val streamD = streamA.combine(streamB).map2((x, y) => {
       // println(x, y)
       x + y
     })

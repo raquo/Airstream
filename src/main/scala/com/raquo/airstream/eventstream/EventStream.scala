@@ -1,5 +1,6 @@
 package com.raquo.airstream.eventstream
 
+import com.raquo.airstream.composition.Composition
 import com.raquo.airstream.core.AirstreamError.ObserverError
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
 import com.raquo.airstream.custom.CustomSource._
@@ -10,7 +11,7 @@ import com.raquo.airstream.signal.{FoldLeftSignal, Signal, SignalFromEventStream
 
 import scala.concurrent.Future
 import scala.scalajs.js
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 trait EventStream[+A] extends Observable[A] {
 
@@ -92,20 +93,27 @@ trait EventStream[+A] extends Observable[A] {
     operator(this)
   }
 
-  def combineWith[AA >: A, B](otherEventStream: EventStream[B]): EventStream[(AA, B)] = {
-    new CombineEventStream2[AA, B, (AA, B)](
+  def combineWith[B, C](otherEventStream: EventStream[B])(project: (A, B) => C): EventStream[C] = {
+    new CombineEventStream2[A, B, C](
       parent1 = this,
       parent2 = otherEventStream,
-      combinator = CombineObservable.guardedCombinator((_, _))
+      combinator = CombineObservable.guardedCombinator(project)
     )
   }
 
-  def withCurrentValueOf[B](signal: Signal[B]): EventStream[(A, B)] = {
-    new SampleCombineEventStream2[A, B, (A, B)](
+  @inline def combine[B](otherEventStream: EventStream[B])(implicit composition: Composition[A, B]): EventStream[composition.Composed] =
+    combineWith(otherEventStream)(composition.compose)
+
+  def withCurrentValueOfWith[B, C](signal: Signal[B])(project: (A, B) => C): EventStream[C] = {
+    new SampleCombineEventStream2[A, B, C](
       samplingStream = this,
       sampledSignal = signal,
-      combinator = CombineObservable.guardedCombinator((_, _))
+      combinator = CombineObservable.guardedCombinator(project)
     )
+  }
+
+  @inline def withCurrentValueOf[B](signal: Signal[B])(implicit composition: Composition[A, B]): EventStream[composition.Composed] = {
+    withCurrentValueOfWith(signal)(composition.compose)
   }
 
   def sample[B](signal: Signal[B]): EventStream[B] = {
@@ -279,7 +287,7 @@ object EventStream extends EventStreamCombines {
     stream1: EventStream[A],
     stream2: EventStream[B]
   ): EventStream[(A, B)] = {
-    stream1.combineWith(stream2)
+    stream1.combine(stream2)
   }
 
   def merge[A](streams: EventStream[A]*): EventStream[A] = {

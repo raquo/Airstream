@@ -277,7 +277,7 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     val x = Var(1)
     val y = Var(100)
 
-    val sumSignal = x.signal.combineWith(y.signal).map2(_ + _).map(Calculation.log("signal", calculations))
+    val sumSignal = x.signal.combine(y.signal).map2(_ + _).map(Calculation.log("signal", calculations))
 
     assert(calculations == mutable.Buffer())
     assert(effects == mutable.Buffer())

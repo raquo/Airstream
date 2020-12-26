@@ -38,6 +38,9 @@ Compile / sourceGenerators += Def.task {
     ),
     new SignalCombinesGenerator((Compile / sourceManaged).value, from = generateTupleCombinatorsFrom, to = generateTupleCombinatorsTo).generate(),
     new EventStreamCombinesGenerator((Compile / sourceManaged).value, from = generateTupleCombinatorsFrom, to = generateTupleCombinatorsTo).generate(),
+    new TupleGenerator((Compile / sourceManaged).value).generate(),
+    new NonTupleGenerator((Compile / sourceManaged).value).generate(),
+    new TupleCompositionGenerator((Compile / sourceManaged).value).generate()
   )
 }.taskValue
 
@@ -45,6 +48,7 @@ Test / sourceGenerators += Def.task {
   Seq.concat(
     new CombineSignalTestGenerator((Test / sourceManaged).value, from = generateTupleCombinatorsFrom, to = generateTupleCombinatorsTo).generate(),
     new CombineEventStreamTestGenerator((Test / sourceManaged).value, from = generateTupleCombinatorsFrom, to = generateTupleCombinatorsTo).generate(),
+    new CompositionTestGenerator((Test / sourceManaged).value).generate()
   )
 }.taskValue
 

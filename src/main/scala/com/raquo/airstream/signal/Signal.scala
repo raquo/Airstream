@@ -1,5 +1,6 @@
 package com.raquo.airstream.signal
 
+import com.raquo.airstream.composition.{Composition, TupleComposition}
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.custom.CustomSource._
@@ -53,12 +54,16 @@ trait Signal[+A] extends Observable[A] {
     changesOperator(changes).toSignalWithTry(initialOperator(tryNow()))
   }
 
-  def combineWith[AA >: A, B](otherSignal: Signal[B]): Signal[(AA, B)] = {
-    new CombineSignal2[AA, B, (AA, B)](
+  def combineWith[B, C](otherSignal: Signal[B])(project: (A, B) => C): Signal[C] = {
+    new CombineSignal2[A, B, C](
       parent1 = this,
       parent2 = otherSignal,
-      combinator = CombineObservable.guardedCombinator((_, _))
+      combinator = CombineObservable.guardedCombinator(project)
     )
+  }
+
+  @inline def combine[B](otherSignal: Signal[B])(implicit composition: Composition[A, B]): Signal[composition.Composed] = {
+    combineWith(otherSignal)(composition.compose)
   }
 
   def withCurrentValueOf[B](signal: Signal[B]): Signal[(A, B)] = {
@@ -213,7 +218,7 @@ object Signal extends SignalCombines {
   }
 
   @inline
-  def combine[T1, T2](s1: Signal[T1], s2: Signal[T2]): Signal[(T1, T2)] = s1.combineWith(s2)
+  def combine[T1, T2](s1: Signal[T1], s2: Signal[T2]): Signal[(T1, T2)] = s1.withCurrentValueOf(s2)
 
   def fromValue[A](value: A): Val[A] = Val(value)
 

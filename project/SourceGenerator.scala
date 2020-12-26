@@ -43,6 +43,12 @@ abstract class SourceGenerator(file: File) {
   protected def tupleType(size: Int, prefix: String = "T", suffix: String = ""): String =
     tupleTypeRaw(size, prefix, suffix).mkString(", ")
 
+  protected def tupleAccessRaw(size: Int, varName: String): Seq[String] =
+    (1 to size).map(i => s"${varName}._${i}")
+
+  protected def tupleAccess(size: Int, varName: String): String =
+    tupleAccessRaw(size, varName).mkString(", ")
+
   final def generate(): Seq[File] = {
     doGenerate()
     done()
