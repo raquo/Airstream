@@ -37,6 +37,7 @@ class SeqSignalSpec extends UnitSpec {
 
     for (iteration <- 0 until 10) {
       for (signalToUpdate <- vars.indices) {
+        effects.clear()
         vars(signalToUpdate).update(_ + 1)
         effects.toList should ===(List(
           Effect("combined",
