@@ -25,11 +25,15 @@ class AjaxEventStream(
 
   protected[airstream] val topoRank: Int = 1
 
+  private var pendingRequest: Option[dom.XMLHttpRequest] = None
+
   override protected[this] def onStart(): Unit = {
     // the implementation mirrors dom.ext.Ajax.apply
     val req = new dom.XMLHttpRequest
+    pendingRequest = Some(req)
     req.onreadystatechange = (_: dom.Event) => {
-      if (isStarted && req.readyState == 4) {
+      if (pendingRequest.contains(req) && req.readyState == 4) {
+        pendingRequest = None
         val status = req.status
         if ((status >= 200 && status < 300) || status == 304)
           new Transaction(fireValue(req, _))
@@ -43,6 +47,11 @@ class AjaxEventStream(
     req.withCredentials = withCredentials
     headers.foreach(Function.tupled(req.setRequestHeader))
     if (data == null) req.send() else req.send(data)
+  }
+
+  override protected[this] def onStop(): Unit = {
+    pendingRequest = None
+    super.onStop()
   }
 }
 
