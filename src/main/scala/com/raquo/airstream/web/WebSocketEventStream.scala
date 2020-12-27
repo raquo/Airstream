@@ -14,7 +14,8 @@ import scala.scalajs.js
   * Lifecycle:
   *  - A new connection is established when this stream is started.
   *  - Upstream messages, if any, are transmitted on this connection.
-  *  - Server [[dom.MessageEvent messages]] and connection [[DomError errors]] are propagated downstream.
+  *  - Server messages are propagated downstream.
+  *  - Connection termination, not initiated by this stream, is propagated downstream as an error.
   *  - The connection is closed when this stream is stopped.
   */
 class WebSocketEventStream[A](override val parent: EventStream[A], url: String)(implicit T: Transmitter[A])
@@ -42,20 +43,20 @@ class WebSocketEventStream[A](override val parent: EventStream[A], url: String)(
     // initialize new socket
     T.initialize(socket)
 
-    // update local reference
+    // register callbacks and update local reference
     socket.onopen =
       (_: dom.Event) => if (jsSocket.isEmpty) {
 
-        // propagate connection termination error
+        // https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_client_applications#Creating_a_WebSocket_object
+        // as per documentation, "onclose" is called right after "onerror"
+        // so register callback for "onclose" only
+
+        // propagate connection close event as error
         socket.onclose =
           (e: dom.CloseEvent) => if (jsSocket.nonEmpty) {
             jsSocket = js.undefined
-            new Transaction(fireError(DomError(e), _))
+            new Transaction(fireError(WebSocketClosedError(e), _))
           }
-
-        // propagate connection error
-        socket.onerror =
-          (e: dom.Event) => if (jsSocket.nonEmpty) new Transaction(fireError(DomError(e), _))
 
         // propagate message received
         socket.onmessage =
@@ -69,7 +70,7 @@ class WebSocketEventStream[A](override val parent: EventStream[A], url: String)(
 
   override protected[this] def onStop(): Unit = {
     // Is "close" async?
-    // just to be safe, reset local reference before closing to prevent error propagation in "onclose"
+    // just to be safe, reset local reference before closing to prevent error propagation in "onclose" callback
     val socket = jsSocket
     jsSocket = js.undefined
     socket.foreach(_.close())
@@ -82,7 +83,7 @@ object WebSocketEventStream {
   /**
     * Returns an [[EventStream]] that emits [[dom.MessageEvent messages]] from a [[dom.WebSocket]] connection.
     *
-    * Websocket [[dom.Event errors]], including [[dom.CloseEvent termination]], are propagated as [[DomError]]s.
+    * Connection termination, not initiated by this stream, is reported as a [[WebSocketClosedError]].
     *
     * @param url '''absolute''' URL of the websocket endpoint,
     *            use [[websocketUrl]] to construct an absolute URL from a relative one
@@ -93,7 +94,7 @@ object WebSocketEventStream {
   /**
     * Returns an [[EventStream]] that emits [[dom.MessageEvent messages]] from a [[dom.WebSocket]] connection.
     *
-    * Websocket [[dom.Event errors]], including [[dom.CloseEvent termination]], are propagated as [[DomError]]s.
+    * Connection termination, not initiated by this stream, is reported as a [[WebSocketClosedError]].
     *
     * @param url '''absolute''' URL of the websocket endpoint,
     *            use [[websocketUrl]] to construct an absolute URL from a relative one

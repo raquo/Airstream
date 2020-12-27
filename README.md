@@ -617,9 +617,10 @@ val s4: EventStream[dom.MessageEvent] = WebSocketEventStream(url, src4)
 ```
 
 The behavior of the returned stream is as follows:
- - A new websocket connection is established when the stream is started.
+ - A new connection is established when this stream is started.
  - Upstream messages, if any, are transmitted on this connection.
- - Server messages and connection errors (including termination) are propagated downstream.
+ - Server messages are propagated downstream.
+ - Connection termination, not initiated by this stream, is propagated downstream as an error.
  - The connection is closed when this stream is stopped.
 
 ### DOM Events
