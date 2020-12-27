@@ -85,7 +85,7 @@ object WebSocketEventStream {
     *            use [[websocketUrl]] to construct an absolute URL from a relative one
     */
   def apply(url: String): EventStream[dom.MessageEvent] =
-    apply[Void](url)
+    apply[Void](url, EventStream.empty)
 
   /**
     * Returns an [[EventStream]] that emits [[dom.MessageEvent messages]] from a [[dom.WebSocket]] connection.
