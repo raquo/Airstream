@@ -81,8 +81,8 @@ object WebSocketEventStream {
     *
     * Websocket [[dom.Event errors]], including [[dom.CloseEvent termination]], are propagated as [[DomError]]s.
     *
-    * @param url        '''absolute''' URL of the websocket endpoint,
-    *                   use [[websocketPath]] to construct an absolute URL from a relative one
+    * @param url '''absolute''' URL of the websocket endpoint,
+    *            use [[websocketUrl]] to construct an absolute URL from a relative one
     * @param transmit   stream of messages to be transmitted to the websocket endpoint
     */
   def apply[A: Transmitter](url: String, transmit: EventStream[A] = EventStream.empty): EventStream[dom.MessageEvent] =

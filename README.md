@@ -597,7 +597,7 @@ import org.scalajs.dom
 import scala.scalajs.js.typedarray.ArrayBuffer
 
 // absolute URL is required
-// use com.raquo.airstream.web.websocketPath to construct an absolute URL from a relative one
+// use com.raquo.airstream.web.websocketUrl to construct an absolute URL from a relative one
 val url: String = ???
 
 // uni-directional, server -> client
