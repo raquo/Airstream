@@ -42,24 +42,27 @@ class WebSocketEventStream[A](override val parent: EventStream[A], url: String)(
     // initialize new socket
     T.initialize(socket)
 
-    // propagate connection termination error
-    socket.onclose =
-      (e: dom.CloseEvent) => if (jsSocket.nonEmpty) {
-        jsSocket = js.undefined
-        new Transaction(fireError(DomError(e), _))
-      }
-
-    // propagate connection error
-    socket.onerror =
-      (e: dom.Event) => if (jsSocket.nonEmpty) new Transaction(fireError(DomError(e), _))
-
-    // propagate message received
-    socket.onmessage =
-      (e: dom.MessageEvent) => if (jsSocket.nonEmpty) new Transaction(fireValue(e, _))
-
     // update local reference
     socket.onopen =
-      (_: dom.Event) => if (jsSocket.isEmpty) jsSocket = socket
+      (_: dom.Event) => if (jsSocket.isEmpty) {
+
+        // propagate connection termination error
+        socket.onclose =
+          (e: dom.CloseEvent) => if (jsSocket.nonEmpty) {
+            jsSocket = js.undefined
+            new Transaction(fireError(DomError(e), _))
+          }
+
+        // propagate connection error
+        socket.onerror =
+          (e: dom.Event) => if (jsSocket.nonEmpty) new Transaction(fireError(DomError(e), _))
+
+        // propagate message received
+        socket.onmessage =
+          (e: dom.MessageEvent) => if (jsSocket.nonEmpty) new Transaction(fireValue(e, _))
+
+        jsSocket = socket
+      }
 
     super.onStart()
   }
