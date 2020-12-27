@@ -52,6 +52,9 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [EventBus](#eventbus)
     * [Var](#var)
     * [Val](#val)
+    * [Ajax](#ajax)
+    * [Websockets](#websockets)
+    * [DOM Events](#dom-events)
     * [Custom Observables](#custom-observables)
   * [FRP Glitches](#frp-glitches)
     * [Other Libraries](#other-libraries)
@@ -563,11 +566,53 @@ Remember that this atomicity guarantee only applies to failures which would have
 Val is useful when a component wants to accept either a Signal or a constant value as input. You can just wrap your constant in a Val, and make the component accept a `Signal` (or a `StrictSignal`) instead.
 
 
+
+#### Ajax
+
+Airstream now has a built-in way to perform Ajax requests:
+
+```scala
+AjaxEventStream
+  .get("/api/kittens") // EventStream[dom.XMLHttpRequest]
+  .map(req => req.responseText) // EventStream[String]
+```
+
+Methods for POST, PUT, PATCH, and DELETE are also available.
+
+The request is made every time the stream is started. If the stream is stopped while the request is pending, the request will not be cancelled, but its result will be discarded.
+
+The implementation follows that of `org.scalajs.dom.ext.Ajax.apply`, but is adjusted slightly to be better behaved in Airstream.
+
+
+
+### Websockets
+
+Airstream has no official websockets integration yet.
+
+For several users' implementations, search Laminar gitter room, and the issues in this repo.
+
+
+
+### DOM Events
+
+`DomEventStream` previously available in Laminar now lives in Airstream.
+
+```scala
+val element: dom.Element = ???
+DomEventStream(element, "click") // EventStream[dom.MouseEvent]
+``` 
+
+This stream, when started, registers a `click` event listener on `element`, and emits all events the listener receives until it is stopped, at which point the listener is removed.
+
+
+
 #### Custom Observables
 
 EventBus is a very generic solution that should suit most needs, even if perhaps not very elegantly sometimes.
 
 You can create your own observables that emit events in their own unique way by wrapping or extending EventBus (easier) or extending Observable (more work and knowledge required, but rewarded with better behavior)).
+
+If extending Observable, you will need to make the `topoRank` field public to be able to override it. See [#37](https://github.com/raquo/Airstream/issues/37).
 
 Unfortunately I don't have enough time to describe how to create custom observables in detail right now. You will need to read the rest of the documentation and the source code – you will see how other observables such as MapEventStream or FilterEventStream are implemented. Airstream's source code should be easy to comprehend. It is clean, small (a bit more than 1K LoC with all the operators), and does not use complicated implicits or hardcore functional stuff.
 
