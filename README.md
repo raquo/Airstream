@@ -587,11 +587,40 @@ The implementation follows that of `org.scalajs.dom.ext.ajax.apply`, but is adju
 
 ### Websockets
 
-Airstream has no official websockets integration yet.
+Airstream supports uni-directional and bi-directional websockets.
 
-For several users' implementations, search Laminar gitter room, and the issues in this repo.
+```scala
+import com.raquo.airstream.eventstream.EventStream
+import com.raquo.airstream.web.WebSocketEventStream
+import org.scalajs.dom
 
+import scala.scalajs.js.typedarray.ArrayBuffer
 
+// absolute URL is required
+// use com.raquo.airstream.web.websocketPath to construct an absolute URL from a relative one
+val url: String = ???
+
+// uni-directional, server -> client
+val s1: EventStream[dom.MessageEvent] = WebSocketEventStream(url)
+
+// bi-directional, transmit text from client -> server
+val src2: EventStream[String] = ???
+val s2: EventStream[dom.MessageEvent] = WebSocketEventStream(url, src2)
+
+// bi-directional, transmit binary from client -> server
+val src3: EventStream[ArrayBuffer] = ???
+val s3: EventStream[dom.MessageEvent] = WebSocketEventStream(url, src3)
+
+// bi-directional, transmit blob from client -> server
+val src4: EventStream[dom.Blob] = ???
+val s4: EventStream[dom.MessageEvent] = WebSocketEventStream(url, src4)
+```
+
+The behavior of the returned stream is as follows:
+ - A new websocket connection is established when the stream is started.
+ - Upstream messages, if any, are transmitted on this connection.
+ - Server messages and connection errors (including termination) are propagated downstream.
+ - The connection is closed when this stream is stopped.
 
 ### DOM Events
 
