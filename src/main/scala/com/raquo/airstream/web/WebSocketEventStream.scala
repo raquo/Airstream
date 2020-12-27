@@ -83,9 +83,20 @@ object WebSocketEventStream {
     *
     * @param url '''absolute''' URL of the websocket endpoint,
     *            use [[websocketUrl]] to construct an absolute URL from a relative one
+    */
+  def apply(url: String): EventStream[dom.MessageEvent] =
+    apply[Void](url)
+
+  /**
+    * Returns an [[EventStream]] that emits [[dom.MessageEvent messages]] from a [[dom.WebSocket]] connection.
+    *
+    * Websocket [[dom.Event errors]], including [[dom.CloseEvent termination]], are propagated as [[DomError]]s.
+    *
+    * @param url '''absolute''' URL of the websocket endpoint,
+    *            use [[websocketUrl]] to construct an absolute URL from a relative one
     * @param transmit   stream of messages to be transmitted to the websocket endpoint
     */
-  def apply[A: Transmitter](url: String, transmit: EventStream[A] = EventStream.empty): EventStream[dom.MessageEvent] =
+  def apply[A: Transmitter](url: String, transmit: EventStream[A]): EventStream[dom.MessageEvent] =
     new WebSocketEventStream(transmit, url)
 
   sealed abstract class Transmitter[A] {
@@ -111,5 +122,6 @@ object WebSocketEventStream {
     implicit val binaryTransmitter: Transmitter[js.typedarray.ArrayBuffer]  = binary(_ send _, "arraybuffer")
     implicit val blobTransmitter: Transmitter[dom.Blob]                     = binary(_ send _, "blob")
     implicit val stringTransmitter: Transmitter[String]                     = simple(_ send _)
+    implicit val voidTransmitter: Transmitter[Void]                         = simple((_, _) => ())
   }
 }
