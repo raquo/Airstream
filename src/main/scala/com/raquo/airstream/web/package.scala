@@ -4,6 +4,8 @@ import org.scalajs.dom
 
 package object web {
 
+  type WebSocketClosed = WebSocketError[dom.CloseEvent]
+
   /**
     * Constructs and returns an absolute websocket URL from a relative one.
     */

@@ -643,12 +643,16 @@ Transmission is supported for the following types:
  - `dom.raw.Blob`
  - `String`
 
+#### Errors
+ - A connection termination is propagated as a `WebSocketClosed` error.
+ - Transmission attempt on a terminated connection is propagated as a `WebSocketError` (with the message to be transmitted).
 
 #### Stream lifecycle
  - A new websocket connection is established on start.
  - Outgoing messages, if any, are sent on this connection.
+   - Transmission failures, due to connection termination, are propagated as errors.
+ - Connection termination, not initiated by this stream, is propagated as an error.
  - Incoming messages are propagated as events.
- - Connection termination, not initiated by this stream, is propagated as `WebSocketClosedError` error.
  - The connection is closed on stop.
 
 ### DOM Events

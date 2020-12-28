@@ -15,8 +15,9 @@ import scala.util.{Success, Try}
   * Stream lifecycle:
   *  - A new websocket connection is established on start.
   *  - Outgoing messages, if any, are sent on this connection.
+  *    - Transmission failures, due to connection termination, are propagated as errors.
+  *  - Connection termination, not initiated by this stream, is propagated as an error.
   *  - Incoming messages are propagated as events.
-  *  - Connection termination, not initiated by this stream, is propagated as [[WebSocketClosedError error]].
   *  - The connection is closed on stop.
   */
 class WebSocketEventStream[I, O](
@@ -35,7 +36,7 @@ class WebSocketEventStream[I, O](
 
   protected[airstream] def onNext(nextValue: I, transaction: Transaction): Unit = {
     // transmit upstream message, no guard required since driver is trusted
-    jsSocket.foreach(D.transmit(_, nextValue))
+    jsSocket.fold(fireError(WebSocketError(nextValue), transaction))(D.transmit(_, nextValue))
   }
 
   override protected[this] def onStart(): Unit = {
@@ -57,7 +58,7 @@ class WebSocketEventStream[I, O](
         socket.onclose =
           (e: dom.CloseEvent) => if (jsSocket.nonEmpty) {
             jsSocket = js.undefined
-            new Transaction(fireError(WebSocketClosedError(e), _))
+            new Transaction(fireError(WebSocketError(e), _))
           }
 
         // propagate message received
@@ -138,8 +139,9 @@ object WebSocketEventStream {
       * Stream lifecycle:
       *  - A new websocket connection is established on start.
       *  - Outgoing messages, if any, are sent on this connection.
+      *    - Transmission failures, due to connection termination, are propagated as errors.
+      *  - Connection termination, not initiated by this stream, is propagated as an error.
       *  - Incoming messages are propagated as events.
-      *  - Connection termination, not initiated by this stream, is propagated as [[WebSocketClosedError error]].
       *  - The connection is closed on stop.
       */
     def raw: EventStream[dom.MessageEvent] =
