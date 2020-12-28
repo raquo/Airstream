@@ -644,7 +644,7 @@ Transmission is supported for the following types:
  - `String`
 
 #### Errors
- - A connection termination is propagated as a `WebSocketClosed` error.
+ - A connection termination is propagated as a `WebSocketError` (with a `dom.CloseEvent`).
  - Transmission attempt on a terminated connection is propagated as a `WebSocketError` (with the message to be transmitted).
 
 #### Stream lifecycle
