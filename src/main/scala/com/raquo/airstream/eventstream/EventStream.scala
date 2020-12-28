@@ -1,9 +1,11 @@
 package com.raquo.airstream.eventstream
 
 import com.raquo.airstream.core.AirstreamError.ObserverError
-import com.raquo.airstream.core.{AirstreamError, Observable, Transaction}
+import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
+import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.features.CombineObservable
 import com.raquo.airstream.signal.{FoldLeftSignal, Signal, SignalFromEventStream}
+
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
@@ -199,6 +201,24 @@ object EventStream {
 
   @inline def fromJsPromise[A](promise: js.Promise[A]): EventStream[A] = {
     fromFuture(promise.toFuture)
+  }
+
+  /** Create a stream and a callback that, when fired, makes that stream emit. */
+  def withCallback[A]: (EventStream[A], A => Unit) = {
+    val bus = new EventBus[A]
+    (bus.events, bus.writer.onNext)
+  }
+
+  /** Create a stream and a JS callback that, when fired, makes that stream emit. */
+  def withJsCallback[A]: (EventStream[A], js.Function1[A, Unit]) = {
+    val bus = new EventBus[A]
+    (bus.events, bus.writer.onNext)
+  }
+
+  /** Create a stream and an observer that, when receiving an event or an error, makes that stream emit. */
+  def withObserver[A]: (EventStream[A], Observer[A]) = {
+    val bus = new EventBus[A]
+    (bus.events, bus.writer)
   }
 
   def periodic(
