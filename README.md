@@ -587,41 +587,69 @@ The implementation follows that of `org.scalajs.dom.ext.ajax.apply`, but is adju
 
 ### Websockets
 
-Airstream supports uni-directional and bi-directional websockets.
+Airstream supports unidirectional and bidirectional websockets.
 
+#### Absolute URL is required
+```scala
+import com.raquo.airstream.web.websocketUrl
+
+val url: String = websocketUrl("relative/url")
+```
+
+#### Unidirectional websocket stream
 ```scala
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.web.WebSocketEventStream
 import org.scalajs.dom
 
-import scala.scalajs.js.typedarray.ArrayBuffer
+// builder for creating unidirectional stream
+val builder = WebSocketEventStream("absolute/url")
 
-// absolute URL is required
-// use com.raquo.airstream.web.websocketUrl to construct an absolute URL from a relative one
-val url: String = ???
+// raw websocket messages
+val raw: EventStream[dom.MessageEvent] = builder.raw
 
-// uni-directional, server -> client
-val s1: EventStream[dom.MessageEvent] = WebSocketEventStream(url)
+// extract and cast dom.MessageEvent.data
+val data: EventStream[String] = builder.data[String]
 
-// bi-directional, transmit text from client -> server
-val src2: EventStream[String] = ???
-val s2: EventStream[dom.MessageEvent] = WebSocketEventStream(url, src2)
-
-// bi-directional, transmit binary from client -> server
-val src3: EventStream[ArrayBuffer] = ???
-val s3: EventStream[dom.MessageEvent] = WebSocketEventStream(url, src3)
-
-// bi-directional, transmit blob from client -> server
-val src4: EventStream[dom.Blob] = ???
-val s4: EventStream[dom.MessageEvent] = WebSocketEventStream(url, src4)
+// alias for the common usecase (data[String])
+val text: EventStream[String] = builder.text
 ```
 
-The behavior of the returned stream is as follows:
- - A new connection is established when this stream is started.
- - Upstream messages, if any, are transmitted on this connection.
- - Server messages are propagated downstream.
- - Connection termination, not initiated by this stream, is propagated downstream as an error.
- - The connection is closed when this stream is stopped.
+#### Bidirectional websocket stream
+Usage:
+```scala
+import com.raquo.airstream.eventstream.EventStream
+import com.raquo.airstream.web.WebSocketEventStream
+import org.scalajs.dom
+
+// messages to be transmitted
+val transmit: EventStream[String] = ???
+
+// builder for creating bidirectional stream
+val builder = WebSocketEventStream("absolute/url", transmit)
+
+// raw websocket messages
+val raw: EventStream[dom.MessageEvent] = builder.raw
+
+// extract and cast dom.MessageEvent.data
+val data: EventStream[String] = builder.data[String]
+
+// alias for the common usecase (data[String])
+val text: EventStream[String] = builder.text
+```
+
+Transmission is supported for the following types:
+ - `js.typedarray.ArrayBuffer`
+ - `dom.raw.Blob`
+ - `String`
+
+
+#### Stream lifecycle
+ - A new websocket connection is established on start.
+ - Outgoing messages, if any, are sent on this connection.
+ - Incoming messages are propagated as events.
+ - Connection termination, not initiated by this stream, is propagated as `WebSocketClosedError` error.
+ - The connection is closed on stop.
 
 ### DOM Events
 

@@ -3,25 +3,27 @@ package com.raquo.airstream.web
 import com.raquo.airstream.core.Transaction
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.features.{InternalNextErrorObserver, SingleParentObservable}
-import com.raquo.airstream.web.WebSocketEventStream.Transmitter
+import com.raquo.airstream.web.WebSocketEventStream.Driver
 import org.scalajs.dom
 
 import scala.scalajs.js
+import scala.util.{Success, Try}
 
 /**
-  * [[WebSocketEventStream]] emits messages from a [[dom.WebSocket]] connection.
+  * An event source that emits messages from a [[dom.WebSocket]] connection.
   *
-  * Lifecycle:
-  *  - A new connection is established when this stream is started.
-  *  - Upstream messages, if any, are transmitted on this connection.
-  *  - Server messages are propagated downstream.
-  *  - Connection termination, not initiated by this stream, is propagated downstream as an error.
-  *  - The connection is closed when this stream is stopped.
+  * Stream lifecycle:
+  *  - A new websocket connection is established on start.
+  *  - Outgoing messages, if any, are sent on this connection.
+  *  - Incoming messages are propagated as events.
+  *  - Connection termination, not initiated by this stream, is propagated as [[WebSocketClosedError error]].
+  *  - The connection is closed on stop.
   */
-class WebSocketEventStream[A](override val parent: EventStream[A], url: String)(implicit T: Transmitter[A])
-  extends EventStream[dom.MessageEvent]
-    with SingleParentObservable[A, dom.MessageEvent]
-    with InternalNextErrorObserver[A] {
+class WebSocketEventStream[I, O](
+  override val parent: EventStream[I],
+  project: dom.MessageEvent => Try[O],
+  url: String
+)(implicit D: Driver[I]) extends EventStream[O] with SingleParentObservable[I, O] with InternalNextErrorObserver[I] {
 
   protected[airstream] val topoRank: Int = 1
 
@@ -31,9 +33,9 @@ class WebSocketEventStream[A](override val parent: EventStream[A], url: String)(
     // noop
   }
 
-  protected[airstream] def onNext(nextValue: A, transaction: Transaction): Unit = {
+  protected[airstream] def onNext(nextValue: I, transaction: Transaction): Unit = {
     // transmit upstream message, no guard required since transmitter is trusted
-    jsSocket.foreach(T.transmit(_, nextValue))
+    jsSocket.foreach(D.transmit(_, nextValue))
   }
 
   override protected[this] def onStart(): Unit = {
@@ -41,7 +43,7 @@ class WebSocketEventStream[A](override val parent: EventStream[A], url: String)(
     val socket = new dom.WebSocket(url)
 
     // initialize new socket
-    T.initialize(socket)
+    D.initialize(socket)
 
     // register callbacks and update local reference
     socket.onopen =
@@ -60,7 +62,9 @@ class WebSocketEventStream[A](override val parent: EventStream[A], url: String)(
 
         // propagate message received
         socket.onmessage =
-          (e: dom.MessageEvent) => if (jsSocket.nonEmpty) new Transaction(fireValue(e, _))
+          (e: dom.MessageEvent) => if (jsSocket.nonEmpty) {
+            project(e).fold(e => new Transaction(fireError(e, _)), o => new Transaction(fireValue(o, _)))
+          }
 
         jsSocket = socket
       }
@@ -81,51 +85,96 @@ class WebSocketEventStream[A](override val parent: EventStream[A], url: String)(
 object WebSocketEventStream {
 
   /**
-    * Returns an [[EventStream]] that emits [[dom.MessageEvent messages]] from a [[dom.WebSocket]] connection.
+    * Builder for unidirectional websocket stream.
     *
-    * Connection termination, not initiated by this stream, is reported as a [[WebSocketClosedError]].
-    *
-    * @param url '''absolute''' URL of the websocket endpoint,
+    * @param url absolute URL of a websocket endpoint,
     *            use [[websocketUrl]] to construct an absolute URL from a relative one
     */
-  def apply(url: String): EventStream[dom.MessageEvent] =
-    apply[Void](url, EventStream.empty)
+  def apply(url: String): Builder[Void] =
+    new Builder[Void](EventStream.empty, url)
 
   /**
-    * Returns an [[EventStream]] that emits [[dom.MessageEvent messages]] from a [[dom.WebSocket]] connection.
+    * Builder for bidirectional websocket stream.
     *
-    * Connection termination, not initiated by this stream, is reported as a [[WebSocketClosedError]].
+    * Transmission is supported for the following types:
+    *  - [[js.typedarray.ArrayBuffer]]
+    *  - [[dom.raw.Blob]]
+    *  - [[String]]
     *
-    * @param url '''absolute''' URL of the websocket endpoint,
+    * @param url absolute URL of a websocket endpoint,
     *            use [[websocketUrl]] to construct an absolute URL from a relative one
-    * @param transmit   stream of messages to be transmitted to the websocket endpoint
+    * @param transmit message to be transmitted from client to server
     */
-  def apply[A: Transmitter](url: String, transmit: EventStream[A]): EventStream[dom.MessageEvent] =
-    new WebSocketEventStream(transmit, url)
+  def apply[I: Driver](url: String, transmit: EventStream[I]): Builder[I] =
+    new Builder(transmit, url)
 
-  sealed abstract class Transmitter[A] {
+  private def apply[I: Driver, O](
+    transmit: EventStream[I],
+    project: dom.MessageEvent => Try[O],
+    url: String
+  ): EventStream[O] =
+    new WebSocketEventStream(transmit, project, url)
+
+  sealed abstract class Driver[A] {
 
     def initialize(socket: dom.WebSocket): Unit
+
     def transmit(socket: dom.WebSocket, data: A): Unit
   }
 
-  object Transmitter {
+  final class Builder[I: Driver](transmit: EventStream[I], url: String) {
 
-    private def binary[A](send: (dom.WebSocket, A) => Unit, binaryType: String): Transmitter[A] =
-      new Transmitter[A] {
-        final def initialize(socket: dom.WebSocket): Unit         = socket.binaryType = binaryType
-        final def transmit(socket: dom.WebSocket, data: A): Unit  = send(socket, data)
+    /**
+      * Returns a stream that extracts data from raw [[dom.MessageEvent messages]] and emits them.
+      *
+      * @see [[raw]]
+      */
+    def data[O]: EventStream[O] =
+      WebSocketEventStream(transmit, m => Try(m.data.asInstanceOf[O]), url)
+
+    /**
+      * Returns a stream that emits [[dom.MessageEvent messages]] from a [[dom.WebSocket websocket]] connection.
+      *
+      * Stream lifecycle:
+      *  - A new websocket connection is established on start.
+      *  - Outgoing messages, if any, are sent on this connection.
+      *  - Incoming messages are propagated as events.
+      *  - Connection termination, not initiated by this stream, is propagated as [[WebSocketClosedError error]].
+      *  - The connection is closed on stop.
+      */
+    def raw: EventStream[dom.MessageEvent] =
+      WebSocketEventStream(transmit, Success.apply, url)
+
+    /**
+      * Returns a stream that extracts text data from raw [[dom.MessageEvent messages]] and emits them.
+      *
+      * @see [[raw]]
+      */
+    def text: EventStream[String] =
+      data[String]
+  }
+
+  object Driver {
+
+    implicit val binaryTransmitter: Driver[js.typedarray.ArrayBuffer] = binary(_ send _, "arraybuffer")
+    implicit val blobTransmitter: Driver[dom.Blob] = binary(_ send _, "blob")
+    implicit val stringTransmitter: Driver[String] = simple(_ send _)
+    implicit val voidTransmitter: Driver[Void] = simple((_, _) => ())
+
+    private def binary[A](send: (dom.WebSocket, A) => Unit, binaryType: String): Driver[A] =
+      new Driver[A] {
+
+        final def initialize(socket: dom.WebSocket): Unit = socket.binaryType = binaryType
+
+        final def transmit(socket: dom.WebSocket, data: A): Unit = send(socket, data)
       }
 
-    private def simple[A](send: (dom.WebSocket, A) => Unit): Transmitter[A] =
-      new Transmitter[A] {
-        final def initialize(socket: dom.WebSocket): Unit         = ()
-        final def transmit(socket: dom.WebSocket, data: A): Unit  = send(socket, data)
-      }
+    private def simple[A](send: (dom.WebSocket, A) => Unit): Driver[A] =
+      new Driver[A] {
 
-    implicit val binaryTransmitter: Transmitter[js.typedarray.ArrayBuffer]  = binary(_ send _, "arraybuffer")
-    implicit val blobTransmitter: Transmitter[dom.Blob]                     = binary(_ send _, "blob")
-    implicit val stringTransmitter: Transmitter[String]                     = simple(_ send _)
-    implicit val voidTransmitter: Transmitter[Void]                         = simple((_, _) => ())
+        final def initialize(socket: dom.WebSocket): Unit = ()
+
+        final def transmit(socket: dom.WebSocket, data: A): Unit = send(socket, data)
+      }
   }
 }
