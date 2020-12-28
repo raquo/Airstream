@@ -49,6 +49,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [EventStream.fromSeq](#eventstreamfromseq)
     * [EventStream.periodic](#eventstreamperiodic)
     * [EventStream.empty](#eventstreamempty)
+    * [EventStream.withCallback and withObserver](#eventstreamwithcallback-and-withobserver)
     * [EventBus](#eventbus)
     * [Var](#var)
     * [Val](#val)
@@ -437,6 +438,22 @@ The underlying `PeriodicEventStream` class offers more functionality, including 
 #### `EventStream.empty`
 
 A stream that never emits any events.
+
+
+#### `EventStream.withCallback` and `withObserver`
+
+`EventStream.withCallback[A]` Creates and returns a stream and an `A => Unit` callback that, when called, passes the input value to that stream. Of course, as streams are lazy, the stream will only emit if it has observers.
+
+```scala
+val (stream, callback) = EventStream.withCallback[Int]
+callback(1) // nothing happens because stream has no observers
+stream.foreach(println)
+callback(2) // `2` will be printed  
+```
+
+`EventStream.withJsCallback[A]` works similarly except it returns a js.Function for easier integration with Javascript libraries.
+
+`EventStream.withObserver[A]` works similarly but creates an observer, which among other conveniences passes the errors that it receives into the stream.
 
 
 #### EventBus
@@ -1180,7 +1197,7 @@ stream.recoverToTry.collect { case Failure(err) => err } // EventStream[Throwabl
 ## Limitations
 
 * Airstream only runs on Scala.js because its primary intended use case is unidirectional dataflow architecture on the frontend. I have no plans to make it run on the JVM. It would require too much of my time and too much compromise, complicating the API to support a completely different environment and use cases. 
-* Airstream has no concept of observables "completing". Personally I don't think this is a limitation, but I can see it being viewed as such. See [Issue #23](https://github.com/raquo/Airstream/issues/23).
+* Airstream has no concept of observables "completing". Personally I don't think this is much of a limitation, but I can see it being viewed as such. See [Issue #23](https://github.com/raquo/Airstream/issues/23).
 
 
 ## My Related Projects
