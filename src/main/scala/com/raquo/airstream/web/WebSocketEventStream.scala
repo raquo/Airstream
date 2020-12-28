@@ -34,7 +34,7 @@ class WebSocketEventStream[I, O](
   }
 
   protected[airstream] def onNext(nextValue: I, transaction: Transaction): Unit = {
-    // transmit upstream message, no guard required since transmitter is trusted
+    // transmit upstream message, no guard required since driver is trusted
     jsSocket.foreach(D.transmit(_, nextValue))
   }
 
@@ -156,10 +156,10 @@ object WebSocketEventStream {
 
   object Driver {
 
-    implicit val binaryTransmitter: Driver[js.typedarray.ArrayBuffer] = binary(_ send _, "arraybuffer")
-    implicit val blobTransmitter: Driver[dom.Blob] = binary(_ send _, "blob")
-    implicit val stringTransmitter: Driver[String] = simple(_ send _)
-    implicit val voidTransmitter: Driver[Void] = simple((_, _) => ())
+    implicit val binaryDriver: Driver[js.typedarray.ArrayBuffer] = binary(_ send _, "arraybuffer")
+    implicit val blobDriver: Driver[dom.Blob] = binary(_ send _, "blob")
+    implicit val stringDriver: Driver[String] = simple(_ send _)
+    implicit val voidDriver: Driver[Void] = simple((_, _) => ())
 
     private def binary[A](send: (dom.WebSocket, A) => Unit, binaryType: String): Driver[A] =
       new Driver[A] {
