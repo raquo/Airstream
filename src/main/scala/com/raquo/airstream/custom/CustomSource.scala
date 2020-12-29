@@ -102,7 +102,7 @@ object CustomSource {
 
   type FireError = Throwable => Unit
 
-  type SetCurrentValue[A] = Try[A] => ()
+  type SetCurrentValue[A] = Try[A] => Unit
 
   type GetCurrentValue[A] = () => Try[A]
 
