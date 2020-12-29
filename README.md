@@ -596,9 +596,27 @@ AjaxEventStream
 
 Methods for POST, PUT, PATCH, and DELETE are also available.
 
-The request is made every time the stream is started. If the stream is stopped while the request is pending, the request will not be cancelled, but its result will be discarded.
+The request is made every time the stream is started. If the stream is stopped while the request is pending, the old request will not be cancelled, but its result will be discarded.
 
-The implementation follows that of `org.scalajs.dom.ext.Ajax.apply`, but is adjusted slightly to be better behaved in Airstream.
+If the request times out, is aborted, returns an HTTP status code that isn't 2xx or 304, or fails in any other way, the stream will emit an `AjaxStreamError`.
+
+If you want a stream that never fails, a stream that emits an event regardless of all those errors, call `.completeEvents` on your ajax stream.
+
+You can listen for `progress` or `readyStateChange` events by passing in the corresponding observers to `AjaxEventStream.get` et al, for example:
+
+```scala
+val (progressObserver, $progress) = EventStream.withObserver[(dom.XMLHttpRequest, dom.ProgressEvent)]
+
+val $request = AjaxEventStream.get(
+  url = "/api/kittens",
+  progressObserver = progressObserver
+)
+
+val $bytesLoaded = $progress.map2((xhr, ev) => ev.loaded)
+```
+
+Warning: dom.XmlHttpRequest is an ugly, imperative JS construct. We set event callbacks for onload, onerror, onabort, ontimeout, and if requested, also for onprogress and onreadystatechange. Make sure you don't override Airstream's listeners, or this stream will not work properly.
+
 
 
 
@@ -612,14 +630,16 @@ For several users' implementations, search Laminar gitter room, and the issues i
 
 ### DOM Events
 
-`DomEventStream` previously available in Laminar now lives in Airstream.
-
 ```scala
 val element: dom.Element = ???
-DomEventStream(element, "click") // EventStream[dom.MouseEvent]
+DomEventStream[dom.MouseEvent](element, "click") // EventStream[dom.MouseEvent]
 ``` 
 
-This stream, when started, registers a `click` event listener on `element`, and emits all events the listener receives until it is stopped, at which point the listener is removed.
+This stream, when started, registers a `click` event listener on `element`, and emits all events the listener receives until the stream is stopped, at which point the listener is removed.
+
+Airstream does not know the names & types of DOM events, so you need to manually specify both. You can get those manually from MDN or programmatically from event props such as `onClick` available in Laminar. 
+
+`DomEventStream` works not just on elements but on any `dom.raw.EventTarget`. However, make sure to check browser compatibility for fancy EventTarget-s such as XMLHttpRequest.
 
 
 

@@ -2,9 +2,12 @@ package com.raquo.airstream.core
 
 import com.raquo.airstream.core.AirstreamError.{ObserverError, ObserverErrorHandlingError}
 
+import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
 trait Observer[-A] {
+
+  lazy val toJsFn1: js.Function1[A, Unit] = onNext
 
   /** Note: must not throw! */
   def onNext(nextValue: A): Unit

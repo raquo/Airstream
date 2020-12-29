@@ -2,6 +2,8 @@ package com.raquo.airstream.eventstream
 
 import com.raquo.airstream.core.AirstreamError.ObserverError
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
+import com.raquo.airstream.custom.CustomSource._
+import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.features.CombineObservable
 import com.raquo.airstream.signal.{FoldLeftSignal, Signal, SignalFromEventStream}
@@ -174,33 +176,72 @@ object EventStream {
 
   /** Event stream that never emits anything */
   val empty: EventStream[Nothing] = {
-    new SeqEventStream[Nothing](events = Nil, emitOnce = true)
+    fromCustomSource[Nothing](
+      shouldStart = _ => false,
+      start = (_, _, _, _) => (),
+      stop = _ => ()
+    )
   }
 
   /** @param emitOnce if true, the event will be emitted at most one time.
     *                 If false, the event will be emitted every time the stream is started. */
   def fromSeq[A](events: Seq[A], emitOnce: Boolean): EventStream[A] = {
-    new SeqEventStream[A](events.map(Success(_)), emitOnce)
+    fromCustomSource[A](
+      shouldStart = startIndex => if (emitOnce) startIndex == 1 else true,
+      start = (fireEvent, _, _, _) => events.foreach(fireEvent),
+      stop = _ => ()
+    )
   }
 
   /** @param emitOnce if true, the event will be emitted at most one time.
     *                 If false, the event will be emitted every time the stream is started. */
   def fromValue[A](event: A, emitOnce: Boolean): EventStream[A] = {
-    new SeqEventStream[A](List(Success(event)), emitOnce)
+    fromCustomSource[A](
+      shouldStart = startIndex => if (emitOnce) startIndex == 1 else true,
+      start = (fireEvent, _, _, _) => fireEvent(event),
+      stop = _ => ()
+    )
   }
 
   /** @param emitOnce if true, the event will be emitted at most one time.
     *                 If false, the event will be emitted every time the stream is started. */
   def fromTry[A](value: Try[A], emitOnce: Boolean): EventStream[A] = {
-    new SeqEventStream[A](List(value), emitOnce)
+    fromCustomSource[A](
+      shouldStart = startIndex => if (emitOnce) startIndex == 1 else true,
+      start = (fireEvent, fireError, _, _) => value.fold(fireError, fireEvent),
+      stop = _ => ()
+    )
   }
 
-  def fromFuture[A](future: Future[A]): EventStream[A] = {
-    new FutureEventStream(future, emitIfFutureCompleted = false)
+  def fromFuture[A](future: Future[A], emitFutureIfCompleted: Boolean = false): EventStream[A] = {
+    new FutureEventStream[A](future, emitFutureIfCompleted)
   }
 
   @inline def fromJsPromise[A](promise: js.Promise[A]): EventStream[A] = {
     fromFuture(promise.toFuture)
+  }
+
+  /** Easy helper for custom events. See [[CustomStreamSource]] for docs.
+    *
+    * @param stop MUST NOT THROW!
+    */
+  def fromCustomSource[A](
+    shouldStart: StartIndex => Boolean = _ => true,
+    start: (FireValue[A], FireError, GetStartIndex, GetIsStarted) => Unit,
+    stop: StartIndex => Unit
+  ): EventStream[A] = {
+    CustomStreamSource[A] { (fireValue, fireError, getStartIndex, getIsStarted) =>
+      CustomSource.Config(
+        onStart = {
+          start(fireValue, fireError, getStartIndex, getIsStarted)
+        },
+        onStop = {
+          stop(getStartIndex())
+        }
+      ).when {
+        () => shouldStart(getStartIndex())
+      }
+    }
   }
 
   /** Create a stream and a callback that, when fired, makes that stream emit. */

@@ -12,7 +12,6 @@ class EventBusStream[A] private[eventbus] () extends EventStream[A] with Interna
   /** Made more public to allow usage from WriteBus */
   override protected[eventbus] def isStarted: Boolean = super.isStarted
 
-  // @TODO document why. Basically event bus breaks the "static DAG" requirement for topo ranking
   override protected[airstream] val topoRank: Int = 1
 
   @inline private[eventbus] def addSource(sourceStream: EventStream[A]): Unit = {
