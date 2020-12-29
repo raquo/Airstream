@@ -1,7 +1,7 @@
 package com.raquo.airstream.features
 
 import com.raquo.airstream.core.Observable
-import com.raquo.airstream.eventstream.{ConcurrentEventStream, ConcurrentFutureStream, EventStream, FutureEventStream, SwitchEventStream}
+import com.raquo.airstream.eventstream.{ConcurrentEventStream, ConcurrentFutureStream, EventStream, SwitchEventStream}
 import com.raquo.airstream.signal.{Signal, SwitchSignal}
 
 import scala.concurrent.Future
@@ -33,7 +33,7 @@ object FlattenStrategy {
     override def flatten[A](parent: Observable[Future[A]]): EventStream[A] = {
       new SwitchEventStream[Future[A], A](
         parent = parent,
-        makeStream = new FutureEventStream(_, emitIfFutureCompleted = true)
+        makeStream = EventStream.fromFuture(_, emitFutureIfCompleted = true)
       )
     }
   }
