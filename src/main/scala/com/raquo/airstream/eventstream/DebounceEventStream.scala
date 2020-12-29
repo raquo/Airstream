@@ -35,7 +35,6 @@ class DebounceEventStream[A](
       js.timers.setTimeout(delayFromLastEventMillis.toDouble) {
         //println(s"> init trx from DebounceEventStream.onTry($nextValue)")
         new Transaction(fireTry(nextValue, _))
-        ()
       }
     )
   }

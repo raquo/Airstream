@@ -195,7 +195,6 @@ object Transaction { // extends GlobalCounter {
       // schedule removal to happen at the end of the transaction
       // (don't want to interfere with iteration over the list of observers)
       pendingObserverRemovals.push(() => observable.removeExternalObserverNow(observer))
-      ()
     }
   }
 
@@ -210,7 +209,6 @@ object Transaction { // extends GlobalCounter {
       // schedule removal to happen at the end of the transaction
       // (don't want to interfere with iteration over observables' lists of observers)
       pendingObserverRemovals.push(() => observable.removeInternalObserverNow(observer))
-      ()
     }
   }
 

@@ -10,7 +10,6 @@ class ObserverList[Obs](private val observers: js.Array[Obs]) extends AnyVal {
 
   @inline def push(observer: Obs): Unit = {
     observers.push(observer)
-    ()
   }
 
   /** @return whether observer was removed (`false` if it wasn't in the list) */

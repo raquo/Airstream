@@ -373,7 +373,6 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
       v2.set(2)
       v.tryNow() shouldBe Failure(err)
       v2.tryNow() shouldBe Success(2)
-      ()
     }
 
     // --
@@ -476,7 +475,6 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
       v2.set(2)
       v.tryNow() shouldBe Success(1)
       v2.tryNow() shouldBe Success(2)
-      ()
     }
 
     // --
@@ -537,7 +535,6 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
       v2.set(2)
       v.tryNow() shouldBe Success(1)
       v2.tryNow() shouldBe Success(2)
-      ()
     }
 
     // --

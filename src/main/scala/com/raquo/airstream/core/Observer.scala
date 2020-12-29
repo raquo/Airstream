@@ -36,7 +36,6 @@ trait Observer[-A] {
     Observer.withRecover(
       nextValue => {
         pf.runWith(onNext)(nextValue)
-        ()
       },
       { case nextError => onError(nextError) }
     )

@@ -3,11 +3,9 @@ package com.raquo.airstream.eventbus
 import com.raquo.airstream.core.Transaction
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.features.InternalNextErrorObserver
-
-import scala.annotation.unused
 import scala.scalajs.js
 
-class EventBusStream[A] private[eventbus] (@unused writeBus: WriteBus[A]) extends EventStream[A] with InternalNextErrorObserver[A] {
+class EventBusStream[A] private[eventbus] () extends EventStream[A] with InternalNextErrorObserver[A] {
 
   private[eventbus] val sourceStreams: js.Array[EventStream[A]] = js.Array()
 
@@ -46,7 +44,6 @@ class EventBusStream[A] private[eventbus] (@unused writeBus: WriteBus[A]) extend
     //println(s"> init trx from EventBusStream(${nextValue})")
 
     new Transaction(fireValue(nextValue, _))
-    ()
   }
 
   /** Helper method to support batch emit using `WriteBus.emit` / `WriteBus.emitTry` */
@@ -61,7 +58,6 @@ class EventBusStream[A] private[eventbus] (@unused writeBus: WriteBus[A]) extend
 
   override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
     new Transaction(fireError(nextError, _))
-    ()
   }
 
   override protected[this] def onStart(): Unit = {
@@ -72,9 +68,4 @@ class EventBusStream[A] private[eventbus] (@unused writeBus: WriteBus[A]) extend
     // dom.console.log("EventBusStream STOPPED!", this.toString)
     sourceStreams.foreach(sourceStream => Transaction.removeInternalObserver(sourceStream, observer = this))
   }
-}
-
-object EventBusStream {
-
-
 }

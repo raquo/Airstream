@@ -31,6 +31,7 @@ class DelayEventStream[A](
     timerHandle = js.timers.setTimeout(delayMillis.toDouble) {
       timerHandles.splice(timerHandles.indexOf(timerHandle), deleteCount = 1) // Remove handle
       new Transaction(fireError(nextError, _))
+      ()
     }
     timerHandles.push(timerHandle)
   }

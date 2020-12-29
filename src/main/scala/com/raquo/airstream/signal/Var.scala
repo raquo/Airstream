@@ -22,7 +22,6 @@ class Var[A] private(private[this] var currentValue: Try[A]) {
   val writer: Observer[A] = Observer.fromTry { case nextTry => // Note: `case` syntax needed for Scala 2.12
     //println(s"> init trx from Var.writer(${nextTry})")
     new Transaction(setCurrentValue(nextTry, _))
-    ()
   }
 
   /** An observer much like writer, but can compose input events with the current value of the var, for example:
@@ -83,7 +82,6 @@ class Var[A] private(private[this] var currentValue: Try[A]) {
       val nextValue = Try(mod(unsafeValue)) // this does catch exceptions in mod(unsafeValue)
       setCurrentValue(nextValue, trx)
     })
-    ()
   }
 
   /** @param mod Note: must not throw
@@ -95,7 +93,6 @@ class Var[A] private(private[this] var currentValue: Try[A]) {
       val nextValue = mod(currentValue)
       setCurrentValue(nextValue, trx)
     })
-    ()
   }
 
   @inline def tryNow(): Try[A] = signal.tryNow()
@@ -145,7 +142,6 @@ object Var {
       throw new Exception("Unable to Var.{set,setTry}: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.")
     }
     new Transaction(trx => values.foreach(setTryValue(_, trx)))
-    ()
   }
 
   /** Modify multiple Vars in the same Transaction
@@ -176,7 +172,6 @@ object Var {
       val tryValues: Seq[VarTryTuple[_]] = tryMods.map(tryModToTryTuple(_))
       tryValues.foreach(setTryValue(_, trx))
     })
-    ()
   }
 
   /** Modify multiple Vars in the same Transaction
@@ -194,7 +189,6 @@ object Var {
       val tryValues: Seq[VarTryTuple[_]] = mods.map(tryModToTryTuple(_))
       tryValues.foreach(setTryValue(_, trx))
     })
-    ()
   }
 
   @inline private def toTryTuple[A](varTuple: VarTuple[A]): VarTryTuple[A] = (varTuple._1, Success(varTuple._2))

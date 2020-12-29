@@ -104,7 +104,6 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
       removeSubscriptionNow(subscription)
     } else {
       pendingSubscriptionRemovals.push(subscription)
-      ()
     }
   }
 

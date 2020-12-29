@@ -21,7 +21,6 @@ class JsPriorityQueue[A](getRank: A => Int) {
       insertAtIndex += 1
     }
     queue.splice(index = insertAtIndex, deleteCount = 0, item) // insert at index
-    ()
   }
 
   /** Note: throws exception if there are no items in the queue */

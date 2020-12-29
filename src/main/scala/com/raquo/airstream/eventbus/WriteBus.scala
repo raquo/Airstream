@@ -12,7 +12,7 @@ class WriteBus[A] extends Observer[A] {
   /** Hidden here because the public interface of WriteBus is all about writing
     * rather than reading, but exposed in [[EventBus]]
     */
-  private[eventbus] val stream: EventBusStream[A] = new EventBusStream(this)
+  private[eventbus] val stream: EventBusStream[A] = new EventBusStream()
 
   /** Note: this source will be removed when the `owner` you provide says so.
     * To remove this source manually, call .kill() on the resulting Subscription.
@@ -98,7 +98,6 @@ object WriteBus {
       throw new Exception("Unable to {EventBus,WriteBus}.emit: the provided list of event buses has duplicates. You can't make an observable emit more than one event per transaction.")
     }
     new Transaction(trx => values.foreach(emitValue(_, trx)))
-    ()
   }
 
   /** Emit events into several WriteBus-es at once (in the same transaction)
@@ -110,7 +109,6 @@ object WriteBus {
       throw new Exception("Unable to {EventBus,WriteBus}.emitTry: the provided list of event buses has duplicates. You can't make an observable emit more than one event per transaction.")
     }
     new Transaction(trx => values.foreach(emitTryValue(_, trx)))
-    ()
   }
 
   @inline private def emitValue[A](tuple: BusTuple[A], transaction: Transaction): Unit = {

@@ -69,7 +69,6 @@ class TransactionSpec extends UnitSpec {
         new Transaction(_ => {
           throw new Exception("Random error in transaction")
         })
-        ()
       } else {
         log.update(_ :+ num)
       }

@@ -22,14 +22,9 @@ class ConcurrentEventStream[A](
   private val accumulatedStreams: js.Array[EventStream[A]] = js.Array()
 
   private val internalEventObserver: InternalObserver[A] = InternalObserver[A](
-    onNext = (nextEvent, _) => {
-      new Transaction(fireValue(nextEvent, _))
-      ()
-    },
-    onError = (nextError, _) => {
-      new Transaction(fireError(nextError, _))
-      ()
-    }
+    onNext = (nextEvent, _) => new Transaction(fireValue(nextEvent, _))
+    ,
+    onError = (nextError, _) => new Transaction(fireError(nextError, _))
   )
 
   override protected[airstream] val topoRank: Int = 1

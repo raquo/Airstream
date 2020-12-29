@@ -69,19 +69,16 @@ object AirstreamError {
   /** The safe way to rethrow an unhandled error */
   val delayedRethrowErrorCallback: Throwable => Unit = { err =>
     js.timers.setTimeout(0)(throw err)
-    ()
   }
 
   def registerUnhandledErrorCallback(fn: Throwable => Unit): Unit = {
     unhandledErrorCallbacks.append(fn)
-    ()
   }
 
   def unregisterUnhandledErrorCallback(fn: Throwable => Unit): Unit = {
     val ix = unhandledErrorCallbacks.indexOf(fn)
     if (ix >= 0) {
       unhandledErrorCallbacks.remove(ix)
-      ()
     } else {
       throw new Exception("This function is not currently registered as unhandled error callback. Make sure you're not accidentally creating a new function value when calling this.")
     }

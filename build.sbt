@@ -7,12 +7,13 @@ libraryDependencies ++= Seq(
   "org.scalatest" %%% "scalatest" % "3.2.0" % Test
 )
 
-scalacOptions ++= Seq(
-  // "-deprecation",
-  "-feature",
-  "-language:higherKinds",
-  "-language:implicitConversions"
-)
+val filterScalacOptions = { options: Seq[String] =>
+  options.filter(Set(
+    "-Ywarn-value-discard"
+  ))
+}
+
+scalacOptions ~= filterScalacOptions
 
 // @TODO[Build] Why does this need " in (Compile, doc)" while other options don't?
 scalacOptions in (Compile, doc) ++= Seq(
