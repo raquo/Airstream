@@ -14,6 +14,10 @@ val filterScalacOptions = { options: Seq[String] =>
   ))
 }
 
+scalaVersion := "2.13.4"
+
+crossScalaVersions := Seq("2.12.11", "2.13.4")
+
 scalacOptions ~= filterScalacOptions
 
 // @TODO[Build] Why does this need " in (Compile, doc)" while other options don't?
