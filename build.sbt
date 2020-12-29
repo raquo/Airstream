@@ -8,8 +8,9 @@ libraryDependencies ++= Seq(
 )
 
 val filterScalacOptions = { options: Seq[String] =>
-  options.filter(Set(
-    "-Ywarn-value-discard"
+  options.filterNot(Set(
+    "-Ywarn-value-discard",
+    "-Wvalue-discard"
   ))
 }
 
