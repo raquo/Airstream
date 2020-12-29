@@ -101,7 +101,7 @@ trait Observable[+A] {
   def debugLogJs(prefix: String = "event", when: A => Boolean = _ => true): Self[A] = {
     map(value => {
       if (when(value)) {
-        dom.console.log(prefix + ": " + value.asInstanceOf[js.Any])
+        dom.console.log(prefix + ": ", value.asInstanceOf[js.Any])
       }
       value
     })
