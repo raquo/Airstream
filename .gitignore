@@ -6,4 +6,3 @@ target
 yarn.lock
 
 /.bsp
-sbt
