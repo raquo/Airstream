@@ -46,8 +46,12 @@ class SwitchEventStream[I, O](
     onNext = (nextEvent, _) => {
       //println(s"> init trx from SwitchEventStream.onValue(${nextEvent})")
       new Transaction(fireValue(nextEvent, _))
+      ()
     },
-    onError = (nextError, _) => new Transaction(fireError(nextError, _))
+    onError = (nextError, _) => {
+      new Transaction(fireError(nextError, _))
+      ()
+    }
   )
 
   override protected[airstream] def onNext(nextValue: I, transaction: Transaction): Unit = {

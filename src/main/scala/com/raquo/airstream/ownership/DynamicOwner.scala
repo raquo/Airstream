@@ -1,7 +1,5 @@
 package com.raquo.airstream.ownership
 
-import com.raquo.airstream.ownership.DynamicOwner.PrivateOwner
-
 import scala.scalajs.js
 
 // @Warning[Fragile]
@@ -106,6 +104,7 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
       removeSubscriptionNow(subscription)
     } else {
       pendingSubscriptionRemovals.push(subscription)
+      ()
     }
   }
 
@@ -127,10 +126,4 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
       removeSubscriptionNow(subscriptionToRemove)
     }
   }
-}
-
-object DynamicOwner {
-
-  /** This owner has no special logic, it is managed by the containing DynamicOwner */
-  private class PrivateOwner extends Owner {}
 }

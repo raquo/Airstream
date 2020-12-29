@@ -10,15 +10,15 @@ import scala.concurrent.Promise
 
 class EventStreamFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
 
-  implicit val owner = new TestableOwner
+  implicit val owner: TestableOwner = new TestableOwner
 
-  val calculations = mutable.Buffer[Calculation[Int]]()
-  val effects = mutable.Buffer[Effect[Int]]()
+  private val calculations = mutable.Buffer[Calculation[Int]]()
+  private val effects = mutable.Buffer[Effect[Int]]()
 
-  val obs1 = Observer[Int](effects += Effect("obs1", _))
-  val obs2 = Observer[Int](effects += Effect("obs2", _))
+  private val obs1 = Observer[Int](effects += Effect("obs1", _))
+  private val obs2 = Observer[Int](effects += Effect("obs2", _))
 
-  def makePromise() = Promise[Int]()
+  def makePromise(): Promise[Int] = Promise[Int]()
 
   def clearLogs(): Assertion = {
     calculations.clear()
@@ -26,7 +26,7 @@ class EventStreamFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     assert(true)
   }
 
-  def makeStream(promise: Promise[Int]) = EventStream
+  def makeStream(promise: Promise[Int]): EventStream[Int] = EventStream
     .fromFuture(promise.future)
     .map(Calculation.log("stream", calculations))
 

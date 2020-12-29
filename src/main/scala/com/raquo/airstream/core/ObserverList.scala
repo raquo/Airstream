@@ -8,7 +8,10 @@ class ObserverList[Obs](private val observers: js.Array[Obs]) extends AnyVal {
 
   @inline def apply(index: Int): Obs = observers(index)
 
-  @inline def push(observer: Obs): Unit = observers.push(observer)
+  @inline def push(observer: Obs): Unit = {
+    observers.push(observer)
+    ()
+  }
 
   /** @return whether observer was removed (`false` if it wasn't in the list) */
   def removeObserverNow(observer: Obs): Boolean = {

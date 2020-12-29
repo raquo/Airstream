@@ -48,6 +48,8 @@ class PeriodicEventStream[A](
       }
       setNext()
     })
+
+    ()
   }
 
   private def setNext(): Unit = {
@@ -61,6 +63,7 @@ class PeriodicEventStream[A](
         resetTo(initial, tickNext = false)
       case Failure(err) =>
         new Transaction(fireError(err, _))
+        ()
     }
   }
 

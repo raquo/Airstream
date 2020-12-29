@@ -4,3 +4,6 @@ target
 .DS_Store
 
 yarn.lock
+
+/.bsp
+sbt

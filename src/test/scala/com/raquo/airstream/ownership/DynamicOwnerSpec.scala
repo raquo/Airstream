@@ -22,7 +22,7 @@ class DynamicOwnerSpec extends UnitSpec {
 
     val dynOwner = new DynamicOwner(() => fail("Attempted to use permakilled owner!"))
 
-    val dynSub1 = DynamicSubscription(dynOwner, owner => bus1.events.addObserver(obs1)(owner))
+    DynamicSubscription(dynOwner, owner => bus1.events.addObserver(obs1)(owner))
 
     bus1.writer.onNext(100)
 

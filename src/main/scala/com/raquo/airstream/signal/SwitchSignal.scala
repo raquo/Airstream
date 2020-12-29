@@ -28,6 +28,7 @@ class SwitchSignal[A](
     onTry = (nextTry, _) => {
       //println(s"> init trx from SwitchSignal.onValue($nextTry)")
       new Transaction(fireTry(nextTry, _))
+      ()
     }
   )
 
@@ -42,6 +43,7 @@ class SwitchSignal[A](
     //println(s"> init trx from SwitchSignal.onTry")
     // Update this signal's value with nextSignal's current value (or an error if we don't have nextSignal)
     new Transaction(fireTry(nextSignalTry.flatMap(_.tryNow()), _))
+    ()
   }
 
   override protected[this] def onStart(): Unit = {
