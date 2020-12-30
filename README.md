@@ -617,13 +617,13 @@ import com.raquo.airstream.web.WebSocketEventStream
 import org.scalajs.dom
 
 // messages to be transmitted
-val transmit: EventStream[String] = ???
+val out: EventStream[String] = ???
 
 // raw websocket messages
-val raw: EventStream[dom.MessageEvent] = WebSocketEventStream.raw("absolute/url", transmit)
+val raw: EventStream[dom.MessageEvent] = WebSocketEventStream.raw("absolute/url", out)
 
 // extract text data from raw websocket messages
-val text: EventStream[String] = WebSocketEventStream.text("absolute/url", transmit)
+val text: EventStream[String] = WebSocketEventStream.text("absolute/url", out)
 ```
 
 Transmission is supported for the following types:
