@@ -661,8 +661,6 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
 
     val err1 = new Exception("err1")
 
-    val err2 = new Exception("err2")
-
     val resetErr = new Exception("resetErr")
 
     val v = Var(List(1))

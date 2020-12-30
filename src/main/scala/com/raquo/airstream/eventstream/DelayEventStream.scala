@@ -22,6 +22,7 @@ class DelayEventStream[A](
       //println(s"> init trx from DelayEventStream.onNext($nextValue)")
       timerHandles.splice(timerHandles.indexOf(timerHandle), deleteCount = 1) // Remove handle
       new Transaction(fireValue(nextValue, _))
+      ()
     }
     timerHandles.push(timerHandle)
   }

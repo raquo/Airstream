@@ -34,9 +34,7 @@ trait Observer[-A] {
   /** Like `contramap` but with `collect` semantics: not calling the original observer when `pf` is not defined */
   def contracollect[B](pf: PartialFunction[B, A]): Observer[B] = {
     Observer.withRecover(
-      nextValue => {
-        pf.runWith(onNext)(nextValue)
-      },
+      nextValue => pf.runWith(onNext)(nextValue),
       { case nextError => onError(nextError) }
     )
   }

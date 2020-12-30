@@ -2,7 +2,6 @@ package com.raquo.airstream.signal
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Observer
-import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 
 import scala.collection.mutable

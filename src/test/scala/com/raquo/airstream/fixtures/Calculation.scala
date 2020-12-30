@@ -13,5 +13,3 @@ object Calculation {
     value
   }
 }
-
-case class Effect[V](name: String, value: V)

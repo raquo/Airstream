@@ -16,7 +16,7 @@ val filterScalacOptions = { options: Seq[String] =>
 
 scalaVersion := "2.13.4"
 
-crossScalaVersions := Seq("2.12.11", "2.13.4")
+crossScalaVersions := Seq("2.12.12", "2.13.4")
 
 scalacOptions ~= filterScalacOptions
 

@@ -39,7 +39,6 @@ trait Owner {
     val index = subscriptions.indexOf(subscription)
     if (index != -1) {
       subscriptions.splice(index, deleteCount = 1)
-      ()
     } else {
       throw new Exception("Can not remove Subscription from Owner: subscription not found.")
     }
