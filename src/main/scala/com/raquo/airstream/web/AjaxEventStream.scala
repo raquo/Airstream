@@ -26,8 +26,9 @@ import scala.scalajs.js
   *
   * @see [[dom.raw.XMLHttpRequest]] for a description of the parameters
   *
-  * @param progressObserver         - optional, pass Observer.empty if not needed.
-  * @param readyStateChangeObserver - optional, pass Observer.empty if not needed.
+  * @param requestObserver          - called just before the request is sent
+  * @param progressObserver         - called when progress is reported
+  * @param readyStateChangeObserver - called when readyState changes
   */
 class AjaxEventStream(
   method: String,
@@ -37,6 +38,7 @@ class AjaxEventStream(
   headers: Map[String, String],
   withCredentials: Boolean,
   responseType: String,
+  requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
   progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
   readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
 ) extends EventStream[dom.XMLHttpRequest] {
@@ -46,7 +48,7 @@ class AjaxEventStream(
   private var pendingRequest: Option[dom.XMLHttpRequest] = None
 
   override protected[this] def onStart(): Unit = {
-    val request = AjaxEventStream.openRequest(method, url, timeout, headers, withCredentials, responseType)
+    val request = AjaxEventStream.initRequest(timeout, headers, withCredentials, responseType)
 
     pendingRequest = Some(request)
 
@@ -64,14 +66,19 @@ class AjaxEventStream(
         if ((status >= 200 && status < 300) || status == 304)
           new Transaction(fireValue(request, _))
         else
-          new Transaction(fireError(AjaxError(request, s"Bad HTTP response status code: $status"), _))
+          new Transaction(fireError(AjaxError(request, s"Ajax request failed: $status ${request.statusText}"), _))
       }
     }
 
-    request.onerror = (ev: dom.ErrorEvent) => {
+    request.onerror = (_: dom.Event) => {
       if (pendingRequest.contains(request)) {
         pendingRequest = None
-        new Transaction(fireError(AjaxError(request, ev.message), _))
+
+        // @TODO I can't figure out how to get a detailed error message in this case.
+        //  - `ev` is not actually a dom.ErrorEvent, but a useless dom.ProgressEvent
+        //  - Reasons could be network, DNS, CORS, etc.
+
+        new Transaction(fireError(AjaxError(request, s"Ajax request failed: unknown reason."), _))
       }
     }
 
@@ -107,7 +114,12 @@ class AjaxEventStream(
       }
     }
 
-    AjaxEventStream.sendRequest(request, data)
+    if (requestObserver != Observer.empty) {
+      requestObserver.onNext(request)
+    }
+
+    // Actually initiate the network request
+    AjaxEventStream.sendRequest(request, method, url, data)
   }
 
   /** This stream will emit at most one event per request regardless of the outcome.
@@ -129,13 +141,20 @@ class AjaxEventStream(
 object AjaxEventStream {
 
   /** A more detailed version of [[dom.ext.AjaxException]] (no relation) */
-  sealed abstract class AjaxStreamException(val xhr: dom.XMLHttpRequest) extends Exception
+  sealed abstract class AjaxStreamException(val xhr: dom.XMLHttpRequest, message: String) extends Exception(message)
 
-  final case class AjaxError(override val xhr: dom.XMLHttpRequest, message: String) extends AjaxStreamException(xhr)
+  final case class AjaxError(override val xhr: dom.XMLHttpRequest, message: String) extends AjaxStreamException(xhr, message)
 
-  final case class AjaxTimeout(override val xhr: dom.XMLHttpRequest) extends AjaxStreamException(xhr)
+  final case class AjaxTimeout(override val xhr: dom.XMLHttpRequest) extends AjaxStreamException(xhr, "Ajax request timed out.")
 
-  final case class AjaxAbort(override val xhr: dom.XMLHttpRequest) extends AjaxStreamException(xhr)
+  final case class AjaxAbort(override val xhr: dom.XMLHttpRequest) extends AjaxStreamException(xhr, "Ajax request was aborted.")
+
+  // @TODO[API] I'm not sure that creating an Ajax request should result in a stream of responses.
+  //  - Another alternative is that it should result in an object that exposes several streams, e.g. responseStream,
+  //    progressStream, etc. - but it seems that with such an approach the usage would get more complicated as
+  //    it would be hard to manage timing and laziness properly (e.g. for progressStream)
+
+  // @TODO[API] Consider API like AjaxEventStream(_.GET, url, ...) using something like dom.experimental.HttpMethod
 
   /**
     * Returns an [[EventStream]] that performs an HTTP `GET` request.
@@ -149,10 +168,22 @@ object AjaxEventStream {
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = "",
+    requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
     progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
     readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
   ): AjaxEventStream = {
-    new AjaxEventStream("GET", url, data, timeout, headers, withCredentials, responseType, progressObserver, readyStateChangeObserver)
+    new AjaxEventStream(
+      "GET",
+      url,
+      data,
+      timeout,
+      headers,
+      withCredentials,
+      responseType,
+      requestObserver,
+      progressObserver,
+      readyStateChangeObserver
+    )
   }
 
   /**
@@ -167,10 +198,22 @@ object AjaxEventStream {
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = "",
+    requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
     progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
     readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
   ): AjaxEventStream = {
-    new AjaxEventStream("POST", url, data, timeout, headers, withCredentials, responseType, progressObserver, readyStateChangeObserver)
+    new AjaxEventStream(
+      "POST",
+      url,
+      data,
+      timeout,
+      headers,
+      withCredentials,
+      responseType,
+      requestObserver,
+      progressObserver,
+      readyStateChangeObserver
+    )
   }
 
   /**
@@ -185,10 +228,22 @@ object AjaxEventStream {
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = "",
+    requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
     progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
     readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
   ): AjaxEventStream = {
-    new AjaxEventStream("PUT", url, data, timeout, headers, withCredentials, responseType, progressObserver, readyStateChangeObserver)
+    new AjaxEventStream(
+      "PUT",
+      url,
+      data,
+      timeout,
+      headers,
+      withCredentials,
+      responseType,
+      requestObserver,
+      progressObserver,
+      readyStateChangeObserver
+    )
   }
 
   /**
@@ -203,10 +258,22 @@ object AjaxEventStream {
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = "",
+    requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
     progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
     readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
   ): AjaxEventStream = {
-    new AjaxEventStream("PATCH", url, data, timeout, headers, withCredentials, responseType, progressObserver, readyStateChangeObserver)
+    new AjaxEventStream(
+      "PATCH",
+      url,
+      data,
+      timeout,
+      headers,
+      withCredentials,
+      responseType,
+      requestObserver,
+      progressObserver,
+      readyStateChangeObserver
+    )
   }
 
   /**
@@ -221,28 +288,37 @@ object AjaxEventStream {
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = "",
+    requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
     progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
     readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
   ): AjaxEventStream = {
-    new AjaxEventStream("DELETE", url, data, timeout, headers, withCredentials, responseType, progressObserver, readyStateChangeObserver)
+    new AjaxEventStream(
+      "DELETE",
+      url,
+      data,
+      timeout,
+      headers,
+      withCredentials,
+      responseType,
+      requestObserver,
+      progressObserver,
+      readyStateChangeObserver
+    )
   }
 
   /** Initializes and configures the XmlHttpRequest. This does not cause any network activity.
     *
-    * Note: `data` is added later, when actually sending the request.
+    * Note: after initializing the request, you need to openRequest(), and then sendRequest()
     *
     * AjaxEventStream already does this internally. This is provided as a building block for custom logic.
     */
-  def openRequest(
-    method: String,
-    url: String,
+  def initRequest(
     timeout: Int = 0,
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = ""
   ): dom.XMLHttpRequest = {
     val request = new dom.XMLHttpRequest
-    request.open(method, url)
     request.responseType = responseType
     request.timeout = timeout.toDouble
     request.withCredentials = withCredentials
@@ -250,14 +326,17 @@ object AjaxEventStream {
     request
   }
 
-  /** Initiates network request. The request should be configured with all the callbacks by this point.
+  /** The request should be initialized and configured with all the callbacks by this point.
     *
     * AjaxEventStream already does this internally. This is provided as a building block for custom logic.
     */
   def sendRequest(
     request: dom.XMLHttpRequest,
+    method: String,
+    url: String,
     data: dom.ext.Ajax.InputData = null
   ): Unit = {
+    request.open(method, url)
     if (data == null) request.send() else request.send(data)
   }
 }

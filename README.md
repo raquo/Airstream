@@ -615,6 +615,8 @@ val $request = AjaxEventStream.get(
 val $bytesLoaded = $progress.map2((xhr, ev) => ev.loaded)
 ```
 
+In a similar manner, you can pass a `requestObserver` that will be called with the newly created `dom.XMLHttpRequest` just before the request is sent. This way you can save the pending request into a Var and e.g. `abort()` it if needed.
+
 Warning: dom.XmlHttpRequest is an ugly, imperative JS construct. We set event callbacks for onload, onerror, onabort, ontimeout, and if requested, also for onprogress and onreadystatechange. Make sure you don't override Airstream's listeners, or this stream will not work properly.
 
 
