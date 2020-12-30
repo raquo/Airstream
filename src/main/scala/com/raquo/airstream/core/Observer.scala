@@ -126,7 +126,7 @@ object Observer {
           if (onTryParam.isDefinedAt(nextValue)) {
             onTryParam(nextValue)
           } else {
-            nextValue.fold(err => AirstreamError.sendUnhandledError(err), identity)
+            nextValue.fold(err => AirstreamError.sendUnhandledError(err), _ => ())
           }
         } catch {
           case err: Throwable =>

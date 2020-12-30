@@ -2,9 +2,8 @@ package com.raquo.airstream.eventstream
 
 import com.raquo.airstream.core.AirstreamError.ObserverError
 import com.raquo.airstream.core.{AirstreamError, Observable, Transaction}
-import com.raquo.airstream.features.{CombineObservable, Splittable}
+import com.raquo.airstream.features.CombineObservable
 import com.raquo.airstream.signal.{FoldLeftSignal, Signal, SignalFromEventStream}
-
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
@@ -178,7 +177,6 @@ object EventStream {
 
   /** @param emitOnce if true, the event will be emitted at most one time.
     *                 If false, the event will be emitted every time the stream is started. */
-  @deprecated("Use `fromValue` or `empty` (see docs)", "0.4") // @TODO Are we sure we want to deprecate this?
   def fromSeq[A](events: Seq[A], emitOnce: Boolean): EventStream[A] = {
     new SeqEventStream[A](events.map(Success(_)), emitOnce)
   }

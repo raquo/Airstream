@@ -3,10 +3,9 @@ package com.raquo.airstream.eventbus
 import com.raquo.airstream.core.Transaction
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.features.InternalNextErrorObserver
-
 import scala.scalajs.js
 
-class EventBusStream[A] private[eventbus] (writeBus: WriteBus[A]) extends EventStream[A] with InternalNextErrorObserver[A] {
+class EventBusStream[A] private[eventbus] () extends EventStream[A] with InternalNextErrorObserver[A] {
 
   private[eventbus] val sourceStreams: js.Array[EventStream[A]] = js.Array()
 
@@ -69,9 +68,4 @@ class EventBusStream[A] private[eventbus] (writeBus: WriteBus[A]) extends EventS
     // dom.console.log("EventBusStream STOPPED!", this.toString)
     sourceStreams.foreach(sourceStream => Transaction.removeInternalObserver(sourceStream, observer = this))
   }
-}
-
-object EventBusStream {
-
-
 }

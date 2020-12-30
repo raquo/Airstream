@@ -60,7 +60,7 @@ class ObserverErrorSpec extends UnitSpec with BeforeAndAfter {
 
     signal.addObserver(Observer.withRecover(
       num => if (num % 2 == 0) effects += Effect("sub3", num) else throw err3,
-      { case err => throw err31 }
+      { case _ => throw err31 }
     ))
 
     signal.addObserver(Observer.withRecover(

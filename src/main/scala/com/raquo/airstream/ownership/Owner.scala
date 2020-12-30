@@ -1,5 +1,6 @@
 package com.raquo.airstream.ownership
 
+import scala.annotation.unused
 import scala.scalajs.js
 
 /** Owner decides when to kill its subscriptions.
@@ -32,7 +33,7 @@ trait Owner {
     * You can override it to add custom behaviour.
     * Note: You can rely on this base method being empty.
     */
-  protected[this] def onOwned(subscription: Subscription): Unit = ()
+  protected[this] def onOwned(@unused subscription: Subscription): Unit = ()
 
   private[ownership] def onKilledExternally(subscription: Subscription): Unit = {
     val index = subscriptions.indexOf(subscription)
