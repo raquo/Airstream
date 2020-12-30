@@ -34,6 +34,11 @@ trait Observer[-A] {
     )
   }
 
+  /** Available only on Observers of Option, this is a shortcut for contramap[B](Some(_)) */
+  def contramapSome[V](implicit evidence: Option[V] <:< A): Observer[V] = {
+    contramap[V](value => evidence(Some(value)))
+  }
+
   /** Like `contramap` but with `collect` semantics: not calling the original observer when `pf` is not defined */
   def contracollect[B](pf: PartialFunction[B, A]): Observer[B] = {
     Observer.withRecover(
@@ -55,7 +60,6 @@ trait Observer[-A] {
 }
 
 object Observer {
-
 
   /** An observer that does nothing. Use it to ensure that an Observable is started
     *
