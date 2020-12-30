@@ -313,7 +313,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
 
     // --
 
-    val sub2 = mergeStream.addObserver(Observer.empty)
+    mergeStream.addObserver(Observer.empty)
     bus1.writer.onNext(5)
     bus2.writer.onNext(30)
     bus3.writer.onNext(200)
@@ -422,7 +422,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
 
     // --
 
-    val sub2 = mergeSignal.addObserver(Observer.empty)
+    mergeSignal.addObserver(Observer.empty)
     bus1.writer.onNext(5)
     bus2.writer.onNext(30)
     bus3.writer.onNext(200) // `stream3` is current value of mergeSignal

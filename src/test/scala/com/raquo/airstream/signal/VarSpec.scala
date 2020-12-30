@@ -115,7 +115,7 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
 
     x.writer.onNext(4)
 
-    val sub2 = signal.addObserver(obs)(owner)
+    signal.addObserver(obs)(owner)
 
     // Emit a value to the new external observer. Standard Signal behaviour.
     assert(calculations == mutable.Buffer())
@@ -162,7 +162,7 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
 
     // --
 
-    val sub1 = signal.addObserver(obs)(owner)
+    signal.addObserver(obs)(owner)
 
     // Error values are propagated to new observers
     assert(errorEffects == mutable.Buffer(Effect("signal-err", err1)))
@@ -660,8 +660,6 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
   it("tryUpdater") {
 
     val err1 = new Exception("err1")
-
-    val err2 = new Exception("err2")
 
     val resetErr = new Exception("resetErr")
 

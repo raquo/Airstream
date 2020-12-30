@@ -198,7 +198,7 @@ trait Signal[+A] extends Observable[A] {
       // We want to report unhandled errors on such signals if they have no observers (including internal observers)
       // because if we don't, the error will not be reported anywhere, and I think we would usually want it.
       if (isError && !errorReported) {
-        nextValue.fold(AirstreamError.sendUnhandledError, identity)
+        nextValue.fold(AirstreamError.sendUnhandledError, _ => ())
       }
     }
   }

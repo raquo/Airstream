@@ -57,7 +57,7 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
       _ <- delay(20) {
         effects shouldEqual mutable.Buffer()
       }
-      sub2 = stream.addObserver(obs1)
+      _ = stream.addObserver(obs1)
       _ = {
         effects shouldEqual mutable.Buffer(Effect("obs1", 0))
         effects.clear()
@@ -104,7 +104,7 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
       _ <- delay(20) {
         effects shouldEqual mutable.Buffer()
       }
-      sub2 = stream.addObserver(obs1)
+      _ = stream.addObserver(obs1)
       _ = {
         effects shouldEqual mutable.Buffer()
       }
@@ -152,7 +152,7 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
       _ <- delay(20) {
         effects shouldEqual mutable.Buffer()
       }
-      sub2 = stream.addObserver(obs1)
+      _ = stream.addObserver(obs1)
       _ = {
         effects shouldEqual mutable.Buffer(Effect("obs1", 3))
         effects.clear()
@@ -200,7 +200,7 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
       _ <- delay(20) {
         effects shouldEqual mutable.Buffer()
       }
-      sub2 = stream.addObserver(obs1)
+      _ = stream.addObserver(obs1)
       _ = {
         effects shouldEqual mutable.Buffer()
       }
@@ -220,7 +220,7 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
         if (index < 5) {
           val nextIndex = index + 1
           val nextInterval = if (index <= 1) 15 else 30
-          Some(nextIndex, nextInterval)
+          Some((nextIndex, nextInterval))
         } else {
           None
         }
@@ -260,7 +260,7 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
         effects shouldEqual mutable.Buffer()
       }
       _ = sub1.kill()
-      sub2 = stream.addObserver(obs1)
+      _ = stream.addObserver(obs1)
       _ <- delay(5) {
         effects shouldEqual mutable.Buffer(Effect("obs1", 0))
         effects.clear()

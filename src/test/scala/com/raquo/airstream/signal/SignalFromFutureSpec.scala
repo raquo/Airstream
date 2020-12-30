@@ -10,15 +10,15 @@ import scala.concurrent.Promise
 
 class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
 
-  implicit val owner = new TestableOwner
+  implicit val owner: TestableOwner = new TestableOwner
 
-  val calculations = mutable.Buffer[Calculation[Option[Int]]]()
-  val effects = mutable.Buffer[Effect[Option[Int]]]()
+  private val calculations = mutable.Buffer[Calculation[Option[Int]]]()
+  private val effects = mutable.Buffer[Effect[Option[Int]]]()
 
-  val obs1 = Observer[Option[Int]](effects += Effect("obs1", _))
-  val obs2 = Observer[Option[Int]](effects += Effect("obs2", _))
+  private val obs1 = Observer[Option[Int]](effects += Effect("obs1", _))
+  private val obs2 = Observer[Option[Int]](effects += Effect("obs2", _))
 
-  def makePromise() = Promise[Int]()
+  def makePromise(): Promise[Int] = Promise[Int]()
 
   def clearLogs(): Assertion = {
     calculations.clear()
@@ -26,7 +26,7 @@ class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     assert(true)
   }
 
-  def makeSignal(promise: Promise[Int]) = Signal
+  def makeSignal(promise: Promise[Int]): Signal[Option[Int]] = Signal
     .fromFuture(promise.future)
     .map(Calculation.log("signal", calculations))
 
@@ -117,15 +117,15 @@ class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     val promise = makePromise()
     val signal = Signal.fromFuture(promise.future) // Don't use `makeSignal` here, we need the _original_, strict signal
 
-    assert(signal.now() == None)
+    assert(signal.now().isEmpty)
 
     promise.success(100)
 
     // @TODO[API] Well, this here is not very desirable, but I don't see a way around it
-    assert(signal.now() == None)
+    assert(signal.now().isEmpty)
 
     delay {
-      assert(signal.now() == Some(100))
+      assert(signal.now().contains(100))
     }
   }
 
@@ -135,6 +135,6 @@ class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
 
     val signal = Signal.fromFuture(promise.future) // Don't use `makeSignal` here, we need the _original_, strict signal
 
-    assert(signal.now() == Some(100))
+    assert(signal.now().contains(100))
   }
 }

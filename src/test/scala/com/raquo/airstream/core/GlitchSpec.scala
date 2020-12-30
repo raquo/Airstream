@@ -4,7 +4,6 @@ import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
-import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.signal.Var
 
 import scala.collection.mutable

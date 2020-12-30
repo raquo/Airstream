@@ -14,7 +14,7 @@ class SwitchEventStreamSpec extends UnitSpec {
 
   it("EventStream: mirrors last emitted stream, but only if subscribed") {
 
-    implicit val owner = new TestableOwner
+    implicit val owner: TestableOwner = new TestableOwner
 
     val calculations = mutable.Buffer[Calculation[Int]]()
     val effects = mutable.Buffer[Effect[Int]]()
@@ -141,7 +141,7 @@ class SwitchEventStreamSpec extends UnitSpec {
 
   it("Signal: mirrors last emitted stream, but only if subscribed") {
 
-    implicit val owner = new TestableOwner
+    implicit val owner: TestableOwner = new TestableOwner
 
     val calculations = mutable.Buffer[Calculation[Int]]()
     val effects = mutable.Buffer[Effect[Int]]()
