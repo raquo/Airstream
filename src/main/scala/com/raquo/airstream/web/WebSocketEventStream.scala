@@ -20,7 +20,7 @@ import scala.util.{Success, Try}
   *  - Incoming messages are propagated as events.
   *  - The connection is closed on stop.
   */
-class WebSocketEventStream[I, O](
+class WebSocketEventStream[I, O] private(
   override val parent: EventStream[I],
   project: dom.MessageEvent => Try[O],
   url: String
@@ -85,39 +85,7 @@ class WebSocketEventStream[I, O](
 
 object WebSocketEventStream {
 
-  /**
-    * Builder for unidirectional websocket stream.
-    *
-    * @param url absolute URL of a websocket endpoint,
-    *            use [[websocketUrl]] to construct an absolute URL from a relative one
-    */
-  def apply(url: String): Builder[Void] =
-    new Builder[Void](EventStream.empty, url)
-
-  /**
-    * Builder for bidirectional websocket stream.
-    *
-    * Transmission is supported for the following types:
-    *  - [[js.typedarray.ArrayBuffer]]
-    *  - [[dom.raw.Blob]]
-    *  - [[String]]
-    *
-    * @param url absolute URL of a websocket endpoint,
-    *            use [[websocketUrl]] to construct an absolute URL from a relative one
-    * @param transmit message to be transmitted from client to server
-    */
-  def apply[I: Driver](url: String, transmit: EventStream[I]): Builder[I] =
-    new Builder(transmit, url)
-
-  private def apply[I: Driver, O](
-    transmit: EventStream[I],
-    project: dom.MessageEvent => Try[O],
-    url: String
-  ): EventStream[O] =
-    new WebSocketEventStream(transmit, project, url)
-
   sealed abstract class WebSocketStreamException extends Exception
-
   final case class WebSocketClosed(event: dom.Event) extends WebSocketStreamException
   final case class WebSocketError[I](input: I) extends WebSocketStreamException
 
@@ -128,45 +96,12 @@ object WebSocketEventStream {
     def transmit(socket: dom.WebSocket, data: A): Unit
   }
 
-  final class Builder[I: Driver](transmit: EventStream[I], url: String) {
+  final object Driver {
 
-    /**
-      * Returns a stream that extracts data from raw [[dom.MessageEvent messages]] and emits them.
-      *
-      * @see [[raw]]
-      */
-    def data[O]: EventStream[O] =
-      WebSocketEventStream(transmit, m => Try(m.data.asInstanceOf[O]), url)
-
-    /**
-      * Returns a stream that emits [[dom.MessageEvent messages]] from a [[dom.WebSocket websocket]] connection.
-      *
-      * Stream lifecycle:
-      *  - A new websocket connection is established on start.
-      *  - Outgoing messages, if any, are sent on this connection.
-      *    - Transmission failures, due to connection termination, are propagated as errors.
-      *  - Connection termination, not initiated by this stream, is propagated as an error.
-      *  - Incoming messages are propagated as events.
-      *  - The connection is closed on stop.
-      */
-    def raw: EventStream[dom.MessageEvent] =
-      WebSocketEventStream(transmit, Success.apply, url)
-
-    /**
-      * Returns a stream that extracts text data from raw [[dom.MessageEvent messages]] and emits them.
-      *
-      * @see [[raw]]
-      */
-    def text: EventStream[String] =
-      data[String]
-  }
-
-  object Driver {
-
-    implicit val binaryDriver: Driver[js.typedarray.ArrayBuffer] = binary(_ send _, "arraybuffer")
-    implicit val blobDriver: Driver[dom.Blob] = binary(_ send _, "blob")
-    implicit val stringDriver: Driver[String] = simple(_ send _)
-    implicit val voidDriver: Driver[Void] = simple((_, _) => ())
+    implicit val arrayBufferDriver: Driver[js.typedarray.ArrayBuffer] = binary(_ send _, "arraybuffer")
+    implicit val blobDriver: Driver[dom.Blob]                         = binary(_ send _, "blob")
+    implicit val stringDriver: Driver[String]                         = simple(_ send _)
+    implicit val voidDriver: Driver[Void]                             = simple((_, _) => ())
 
     private def binary[A](send: (dom.WebSocket, A) => Unit, binaryType: String): Driver[A] =
       new Driver[A] {
@@ -184,4 +119,51 @@ object WebSocketEventStream {
         final def transmit(socket: dom.WebSocket, data: A): Unit = send(socket, data)
       }
   }
+
+  private sealed abstract class extract[O](project: dom.MessageEvent => Try[O]) {
+
+    /**
+      * Returns a stream that emits messages of type `O` from a [[dom.WebSocket websocket]] connection.
+      *
+      * Stream lifecycle:
+      *  - A new websocket connection is established on start.
+      *  - Connection termination, not initiated by this stream, is propagated as an error.
+      *  - Incoming messages are propagated as events.
+      *  - The connection is closed on stop.
+      *
+      * @param url absolute URL of websocket endpoint
+      */
+    def apply(url: String): EventStream[O] =
+      apply[Void](url, EventStream.empty)
+
+    /**
+      * Returns a stream that emits messages of type `O` from a [[dom.WebSocket websocket]] connection.
+      *
+      * Transmission is supported for the following types:
+      *  - [[js.typedarray.ArrayBuffer]]
+      *  - [[dom.raw.Blob]]
+      *  - [[String]]
+      *
+      * Stream lifecycle:
+      *  - A new websocket connection is established on start.
+      *  - Outgoing messages, if any, are sent on this connection.
+      *    - Transmission failures, due to connection termination, are propagated as errors.
+      *  - Connection termination, not initiated by this stream, is propagated as an error.
+      *  - Incoming messages are propagated as events.
+      *  - The connection is closed on stop.
+      *
+      * @param url      absolute URL of websocket endpoint
+      * @param transmit messages to send to the websocket endpoint
+      */
+    def apply[I: Driver](url: String, transmit: EventStream[I]): EventStream[O] =
+      new WebSocketEventStream(transmit, project, url)
+  }
+
+  private sealed abstract class data[O] extends extract(e => Try(e.data.asInstanceOf[String]))
+
+  /** Builder for streams that emit [[dom.MessageEvent messages]] from a websocket connection */
+  final case object raw extends extract(Success(_))
+
+  /** Builder for streams that extract and emit text [[dom.MessageEvent#data data]] from a websocket connection */
+  final case object text extends data[String]
 }

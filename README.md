@@ -602,17 +602,11 @@ import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.web.WebSocketEventStream
 import org.scalajs.dom
 
-// builder for creating unidirectional stream
-val builder = WebSocketEventStream("absolute/url")
-
 // raw websocket messages
-val raw: EventStream[dom.MessageEvent] = builder.raw
+val raw: EventStream[dom.MessageEvent] = WebSocketEventStream.raw("absolute/url")
 
-// extract and cast dom.MessageEvent.data
-val data: EventStream[String] = builder.data[String]
-
-// alias for the common usecase (data[String])
-val text: EventStream[String] = builder.text
+// extract and emit text data from raw websocket messages
+val text: EventStream[String] = WebSocketEventStream.text("absolute/url")
 ```
 
 #### Bidirectional websocket stream
@@ -625,17 +619,11 @@ import org.scalajs.dom
 // messages to be transmitted
 val transmit: EventStream[String] = ???
 
-// builder for creating bidirectional stream
-val builder = WebSocketEventStream("absolute/url", transmit)
-
 // raw websocket messages
-val raw: EventStream[dom.MessageEvent] = builder.raw
+val raw: EventStream[dom.MessageEvent] = WebSocketEventStream.raw("absolute/url", transmit)
 
-// extract and cast dom.MessageEvent.data
-val data: EventStream[String] = builder.data[String]
-
-// alias for the common usecase (data[String])
-val text: EventStream[String] = builder.text
+// extract and emit text data from raw websocket messages
+val text: EventStream[String] = WebSocketEventStream.text("absolute/url", transmit)
 ```
 
 Transmission is supported for the following types:
