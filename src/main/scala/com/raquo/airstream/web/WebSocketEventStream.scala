@@ -120,7 +120,7 @@ object WebSocketEventStream {
       }
   }
 
-  private sealed abstract class extract[O](project: dom.MessageEvent => Try[O]) {
+  sealed abstract class extract[O](project: dom.MessageEvent => Try[O]) {
 
     /**
       * Returns a stream that emits messages of type `O` from a [[dom.WebSocket websocket]] connection.
@@ -159,11 +159,11 @@ object WebSocketEventStream {
       new WebSocketEventStream(transmit, project, url)
   }
 
-  private sealed abstract class data[O] extends extract(e => Try(e.data.asInstanceOf[String]))
+  sealed abstract class data[O] extends extract(e => Try(e.data.asInstanceOf[String]))
 
   /** Builder for streams that emit [[dom.MessageEvent messages]] from a websocket connection */
   final case object raw extends extract(Success(_))
 
-  /** Builder for streams that extract and emit text [[dom.MessageEvent#data data]] from a websocket connection */
+  /** Builder for streams that extract text [[dom.raw.MessageEvent.data data]] from a websocket connection */
   final case object text extends data[String]
 }

@@ -605,7 +605,7 @@ import org.scalajs.dom
 // raw websocket messages
 val raw: EventStream[dom.MessageEvent] = WebSocketEventStream.raw("absolute/url")
 
-// extract and emit text data from raw websocket messages
+// extract text data from raw websocket messages
 val text: EventStream[String] = WebSocketEventStream.text("absolute/url")
 ```
 
@@ -622,7 +622,7 @@ val transmit: EventStream[String] = ???
 // raw websocket messages
 val raw: EventStream[dom.MessageEvent] = WebSocketEventStream.raw("absolute/url", transmit)
 
-// extract and emit text data from raw websocket messages
+// extract text data from raw websocket messages
 val text: EventStream[String] = WebSocketEventStream.text("absolute/url", transmit)
 ```
 
