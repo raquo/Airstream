@@ -21,7 +21,7 @@ import scala.util.{Success, Try}
   *  - The connection is closed on stop.
   *
   * '''Warning''': [[dom.WebSocket]] is an ugly, imperative JS construct. We set event callbacks for
-  * onclose, onmessage, and if requested, also for onopen.
+  * `onclose`, `onmessage`, and if requested, also for `onopen`.
   * Make sure you don't override Airstream's listeners, or this stream will not work properly.
   *
   * @param parent             stream of outgoing messages
@@ -113,7 +113,8 @@ object WebSocketEventStream {
     def transmit(socket: dom.WebSocket, data: A): Unit
   }
 
-  sealed abstract class extract[O](project: dom.MessageEvent => Try[O]) {
+  /** Transforms websocket [[dom.MessageEvent messages]] */
+  sealed abstract class transform[O](project: dom.MessageEvent => Try[O]) {
 
     /**
       * Returns a stream that emits messages of type `O` from a [[dom.WebSocket websocket]] connection.
@@ -156,7 +157,8 @@ object WebSocketEventStream {
       new WebSocketEventStream(stream, project, url, socketObserver, socketOpenObserver)
   }
 
-  sealed abstract class data[O] extends extract(e => Try(e.data.asInstanceOf[String]))
+  /** Extracts the data from a [[dom.MessageEvent message]] */
+  sealed abstract class data[O] extends transform(e => Try(e.data.asInstanceOf[O]))
 
   final case class WebSocketClosed(event: dom.Event) extends WebSocketStreamException
 
@@ -164,8 +166,8 @@ object WebSocketEventStream {
 
   final object Driver {
 
-    implicit val arrayBufferDriver: Driver[js.typedarray.ArrayBuffer] = binary(_ send _, "arraybuffer")
     implicit val blobDriver: Driver[dom.Blob] = binary(_ send _, "blob")
+    implicit val binaryDriver: Driver[js.typedarray.ArrayBuffer] = binary(_ send _, "arraybuffer")
     implicit val stringDriver: Driver[String] = simple(_ send _)
     implicit val voidDriver: Driver[Void] = simple((_, _) => ())
 
@@ -186,10 +188,16 @@ object WebSocketEventStream {
       }
   }
 
-  /** Builder for streams that emit [[dom.MessageEvent messages]] from a websocket connection */
-  final case object raw extends extract(Success(_))
+  /** Extracts [[js.typedarray.ArrayBuffer binary]] data from a [[dom.MessageEvent message]] */
+  final case object binary extends data[js.typedarray.ArrayBuffer]
 
-  /** Builder for streams that extract text [[dom.raw.MessageEvent.data data]] from a websocket connection */
+  /** Extracts [[dom.Blob blob]] data from a [[dom.MessageEvent message]] */
+  final case object blob extends data[dom.Blob]
+
+  /** Returns [[dom.MessageEvent messages]] as is */
+  final case object raw extends transform(Success(_))
+
+  /** Extracts [[String text]] data from a [[dom.MessageEvent message]] */
   final case object text extends data[String]
 
 }

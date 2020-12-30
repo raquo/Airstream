@@ -602,10 +602,14 @@ import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.web.WebSocketEventStream
 import org.scalajs.dom
 
+import scala.scalajs.js
+
 // raw websocket messages
 val raw: EventStream[dom.MessageEvent] = WebSocketEventStream.raw("absolute/url")
 
-// extract text data from raw websocket messages
+// or use one of the extractors to access just the data
+val binary: EventStream[js.typedarray.ArrayBuffer] = WebSocketEventStream.binary("absolute/url")
+val blob: EventStream[dom.Blob] = WebSocketEventStream.blob("absolute/url")
 val text: EventStream[String] = WebSocketEventStream.text("absolute/url")
 ```
 
@@ -616,17 +620,22 @@ import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.web.WebSocketEventStream
 import org.scalajs.dom
 
+import scala.scalajs.js
+
 // messages to be transmitted
 val out: EventStream[String] = ???
 
 // raw websocket messages
 val raw: EventStream[dom.MessageEvent] = WebSocketEventStream.raw("absolute/url", out)
 
-// extract text data from raw websocket messages
+// or use one of the extractors to access just the data
+val binary: EventStream[js.typedarray.ArrayBuffer] = WebSocketEventStream.binary("absolute/url", out)
+val blob: EventStream[dom.Blob] = WebSocketEventStream.blob("absolute/url", out)
 val text: EventStream[String] = WebSocketEventStream.text("absolute/url", out)
 ```
 
-Transmission is supported for the following types:
+#### Supported types
+The following types are supported for transmission/reception:
  - `js.typedarray.ArrayBuffer`
  - `dom.raw.Blob`
  - `String`
