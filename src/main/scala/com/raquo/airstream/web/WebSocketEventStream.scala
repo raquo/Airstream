@@ -3,7 +3,7 @@ package com.raquo.airstream.web
 import com.raquo.airstream.core.Transaction
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.features.{InternalNextErrorObserver, SingleParentObservable}
-import com.raquo.airstream.web.WebSocketEventStream.Driver
+import com.raquo.airstream.web.WebSocketEventStream.{Driver, WebSocketClosed, WebSocketError}
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -58,7 +58,7 @@ class WebSocketEventStream[I, O](
         socket.onclose =
           (e: dom.CloseEvent) => if (jsSocket.nonEmpty) {
             jsSocket = js.undefined
-            new Transaction(fireError(WebSocketError(e), _))
+            new Transaction(fireError(WebSocketClosed(e), _))
           }
 
         // propagate message received
@@ -115,6 +115,11 @@ object WebSocketEventStream {
     url: String
   ): EventStream[O] =
     new WebSocketEventStream(transmit, project, url)
+
+  sealed abstract class WebSocketStreamException extends Exception
+
+  final case class WebSocketClosed(event: dom.Event) extends WebSocketStreamException
+  final case class WebSocketError[I](input: I) extends WebSocketStreamException
 
   sealed abstract class Driver[A] {
 
