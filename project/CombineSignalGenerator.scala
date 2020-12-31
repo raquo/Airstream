@@ -2,29 +2,31 @@ import sbt._
 
 import java.io.File
 
-class CombineSignalGenerator(sourceManaged: File, n: Int)
-    extends SourceGenerator(
-      sourceManaged / "scala" / "com" / "raquo" / "airstream" / "signal" / s"CombineSignal${n}.scala"
-    ) {
+class CombineSignalGenerator(sourceDir: File, n: Int) extends SourceGenerator(
+  sourceDir / "scala" / "com" / "raquo" / "airstream" / "combine" / "generated" / s"CombineSignal${n}.scala"
+) {
 
-  def doGenerate(): Unit = {
-    println("""package com.raquo.airstream.signal""")
+  override def doGenerate(): Unit = {
+    println("package com.raquo.airstream.combine.generated")
     println()
-    println(s"""class CombineSignal${n}[${tupleType(n)}](""")
+    println("import com.raquo.airstream.combine.CombineSignalN")
+    println("import com.raquo.airstream.signal.Signal")
+    println()
+    println("/** @param combinator Must not throw!*/")
+    enter(s"""class CombineSignal${n}[${tupleType(n)}, Out](""")
     for (i <- 1 to n) {
-      println(s"""  protected[this] val parent${i}: Signal[T${i}]${if (i < n) "," else ""}""".stripMargin)
+      println(s"protected[this] val parent${i}: Signal[T${i}],")
     }
-    println(s") extends CombineNSignal[Any, (${tupleType(n)})](")
-    println("  Seq(" + tupleType(n, "parent") + ")")
-    enter(s"){")
-    println()
-
-    println(s"""def toOut(seq: Seq[Any]): (${tupleType(n)}) = """)
-    println(s"""  (${(0 until n).map(i => s"""seq(${i})""").mkString(", ")}).asInstanceOf[(${tupleType(n)})]""")
-
-    println()
-
-    leave("""}""")
+    println(s"combinator: (${tupleType(n)}) => Out")
+    leave()
+    enter(s") extends CombineSignalN[Any, Out](")
+    println("parents = List(" + tupleType(n, "parent") + "),")
+    enter("combinator = seq => combinator(")
+    for (i <- 1 to n) {
+      println(s"seq(${i - 1}).asInstanceOf[T${i}],")
+    }
+    leave(")")
+    leave(")")
   }
 
 }

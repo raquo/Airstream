@@ -1,11 +1,12 @@
 package com.raquo.airstream.signal
 
-import com.raquo.airstream.composition.{Composition, TupleComposition}
+import app.tulz.tuplez.Composition
+import com.raquo.airstream.combine.generated.{CombineSignal2, SignalCombineMethods}
+import com.raquo.airstream.combine.{CombineObservable, CombineSignalN, SampleCombineSignal2}
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.eventstream.{EventStream, MapEventStream}
-import com.raquo.airstream.features.CombineObservable
 import com.raquo.airstream.ownership.Owner
 
 import scala.concurrent.Future
@@ -54,15 +55,15 @@ trait Signal[+A] extends Observable[A] {
     changesOperator(changes).toSignalWithTry(initialOperator(tryNow()))
   }
 
-  def combineWith[B, C](otherSignal: Signal[B])(project: (A, B) => C): Signal[C] = {
+  def combineWith[B, C](otherSignal: Signal[B])(combinator: (A, B) => C): Signal[C] = {
     new CombineSignal2[A, B, C](
       parent1 = this,
       parent2 = otherSignal,
-      combinator = CombineObservable.guardedCombinator(project)
+      combinator = combinator
     )
   }
 
-  @inline def combine[B](otherSignal: Signal[B])(implicit composition: Composition[A, B]): Signal[composition.Composed] = {
+  def combine[B](otherSignal: Signal[B])(implicit composition: Composition[A, B]): Signal[composition.Composed] = {
     combineWith(otherSignal)(composition.compose)
   }
 
@@ -70,7 +71,7 @@ trait Signal[+A] extends Observable[A] {
     new SampleCombineSignal2[A, B, (A, B)](
       samplingSignal = this,
       sampledSignal = signal,
-      combinator = CombineObservable.guardedCombinator((_, _))
+      combinator = CombineObservable.tupleCombinator((_, _))
     )
   }
 
@@ -78,7 +79,7 @@ trait Signal[+A] extends Observable[A] {
     new SampleCombineSignal2[A, B, B](
       samplingSignal = this,
       sampledSignal = signal,
-      combinator = CombineObservable.guardedCombinator((_, sampledValue) => sampledValue)
+      combinator = CombineObservable.tupleCombinator((_, sampledValue) => sampledValue)
     )
   }
 
@@ -211,22 +212,17 @@ trait Signal[+A] extends Observable[A] {
   }
 }
 
-object Signal extends SignalCombines {
-
-  @inline def seq[A](signals: Seq[Signal[A]]): Signal[Seq[A]] = new SeqSignal[A](signals)
-
-  @inline
-  def combine[T1, T2](s1: Signal[T1], s2: Signal[T2]): Signal[(T1, T2)] = s1.combine(s2)
+object Signal extends SignalCombineMethods {
 
   def fromValue[A](value: A): Val[A] = Val(value)
 
   def fromTry[A](value: Try[A]): Val[A] = Val.fromTry(value)
 
-  @inline def fromFuture[A](future: Future[A]): Signal[Option[A]] = {
+  def fromFuture[A](future: Future[A]): Signal[Option[A]] = {
     new FutureSignal(future)
   }
 
-  @inline def fromJsPromise[A](promise: js.Promise[A]): Signal[Option[A]] = {
+  def fromJsPromise[A](promise: js.Promise[A]): Signal[Option[A]] = {
     new FutureSignal(promise.toFuture)
   }
 
@@ -245,6 +241,29 @@ object Signal extends SignalCombines {
         onStop = stop(getStartIndex())
       )
     })
+  }
+
+  def combine[T1, T2](
+    signal1: Signal[T1],
+    signal2: Signal[T2]
+  ): Signal[(T1, T2)] = {
+    combineWith(signal1, signal2)(Tuple2.apply[T1, T2])
+  }
+
+  /** @param combinator Must not throw! */
+  def combineWith[T1, T2, Out](
+    signal1: Signal[T1],
+    signal2: Signal[T2]
+  )(
+    combinator: (T1, T2) => Out
+  ): Signal[Out] = {
+    new CombineSignal2(signal1, signal2, combinator)
+  }
+
+  def combineSeq[A](
+    signals: Seq[Signal[A]]
+  ): Signal[Seq[A]] = {
+    new CombineSignalN[A, Seq[A]](signals, identity)
   }
 
   implicit def toTuple2Signal[A, B](signal: Signal[(A, B)]): Tuple2Signal[A, B] = {

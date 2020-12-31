@@ -1,13 +1,14 @@
-package com.raquo.airstream.eventstream
+package com.raquo.airstream.combine
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Observer
 import com.raquo.airstream.eventbus.EventBus
-import com.raquo.airstream.fixtures.{ Effect, TestableOwner }
+import com.raquo.airstream.eventstream.EventStream
+import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 
 import scala.collection.mutable
 
-class SeqJoinEventStreamSpec extends UnitSpec {
+class CombineSeqEventStreamSpec extends UnitSpec {
 
   it("should work as expected") {
 
@@ -16,7 +17,7 @@ class SeqJoinEventStreamSpec extends UnitSpec {
     val numStreams = 10
 
     val buses = (1 to numStreams).map(_ => new EventBus[Int])
-    val seqStream = EventStream.seq(buses.map(_.events))
+    val seqStream = EventStream.combineSeq(buses.map(_.events))
 
     val effects = mutable.Buffer[Effect[Seq[Int]]]()
 

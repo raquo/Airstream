@@ -59,7 +59,7 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
       _ <- delay(testInterval + testInterval) {
         effects shouldEqual mutable.Buffer()
       }
-      _ = stream.addObserver(obs1)
+      sub2 = stream.addObserver(obs1)
       _ = {
         effects shouldEqual mutable.Buffer(Effect("obs1", 0))
         effects.clear()

@@ -1,19 +1,20 @@
-package com.raquo.airstream.signal
+package com.raquo.airstream.combine
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Observer
-import com.raquo.airstream.fixtures.{ Calculation, Effect, TestableOwner }
+import com.raquo.airstream.fixtures.{Effect, TestableOwner}
+import com.raquo.airstream.signal.{Signal, Var}
 
 import scala.collection.mutable
 
-class SeqSignalSpec extends UnitSpec {
+class CombineSeqSignalSpec extends UnitSpec {
 
   it("should work as expected") {
 
     implicit val testOwner: TestableOwner = new TestableOwner
 
     val vars = (1 to 10).map(Var(_))
-    val seqSignal = Signal.seq(vars.map(_.signal))
+    val seqSignal = Signal.combineSeq(vars.map(_.signal))
 
     val effects = mutable.Buffer[Effect[Seq[Int]]]()
 
