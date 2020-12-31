@@ -2,78 +2,83 @@ import sbt._
 
 import java.io.File
 
-class CombineSignalTestGenerator(sourceManaged: File, from: Int, to: Int)
-    extends SourceGenerator(
-      sourceManaged / "scala" / "com" / "raquo" / "airstream" / "signal" / s"CombineSignalSpec.scala"
-    ) {
+class CombineSignalTestGenerator(
+  testSourceDir: File,
+  from: Int,
+  to: Int
+) extends SourceGenerator(
+  testSourceDir / "scala" / "com" / "raquo" / "airstream" / "combine" / "generated" / s"CombineSignalSpec.scala"
+) {
 
-  def doGenerate(): Unit = {
-    println("""package com.raquo.airstream.signal""")
-    println()
-    println("""import com.raquo.airstream.UnitSpec""")
-    println("""import com.raquo.airstream.core.Observer""")
-    println("""import com.raquo.airstream.fixtures.TestableOwner""")
-    println("""import scala.collection.mutable""")
-    println()
-    enter(s"""class CombineSignalSpec extends UnitSpec {""")
-    println()
+  override def doGenerate(): Unit = {
+    line("package com.raquo.airstream.combine.generated")
+    line()
+    line("import com.raquo.airstream.UnitSpec")
+    line("import com.raquo.airstream.core.Observer")
+    line("import com.raquo.airstream.fixtures.TestableOwner")
+    line("import com.raquo.airstream.signal.{Signal, Var}")
+    line()
+    line("import scala.collection.mutable")
+    line()
+    enter(s"class CombineSignalSpec extends UnitSpec {")
+    line()
     for (i <- 1 to to) {
-      println(s"""case class T${i}(v: Int) { def inc: T${i} = T${i}(v+1) }""")
+      line(s"case class T${i}(v: Int) { def inc: T${i} = T${i}(v+1) }")
     }
-    println()
+    line()
     for (n <- from to to) {
-      enter(s"""it("CombineSignal${n} should work as expected") {""")
-      println()
-      println("""implicit val testOwner: TestableOwner = new TestableOwner""")
-      println()
+      enter(s"""it("CombineSignal${n} works") {""")
+      line()
+      line("implicit val testOwner: TestableOwner = new TestableOwner")
+      line()
       for (i <- 1 to n) {
-        println(s"""val var${i} = Var(T${i}(1))""")
+        line(s"val var${i} = Var(T${i}(1))")
       }
-      println()
-      println(s"""val combinedSignal = Signal.combine(${tupleType(n, "var", ".signal")})""")
-      println()
-      println(s"""val effects = mutable.Buffer[(${tupleType(n)})]()""")
-      println()
-      println(s"""val observer = Observer[(${tupleType(n)})](effects += _)""")
-      println()
-      println("""// --""")
-      println()
-      println("""effects.toList shouldBe empty""")
-      println()
-      println("""// --""")
-      println()
-      println("""val subscription = combinedSignal.addObserver(observer)""")
-      println()
-      println("""// --""")
-      println()
-      enter("""effects.toList should ===(List(""")
-      println(s"(${(1 to n).map(i => s"T${i}(1)").mkString(", ")})")
+      line()
+      line(s"val combinedSignal = Signal.combine(${tupleType(n, "var", ".signal")})")
+      line()
+      line(s"val effects = mutable.Buffer[(${tupleType(n)})]()")
+      line()
+      line(s"val observer = Observer[(${tupleType(n)})](effects += _)")
+      line()
+      line("// --")
+      line()
+      line("effects.toList shouldBe empty")
+      line()
+      line("// --")
+      line()
+      line("val subscription = combinedSignal.addObserver(observer)")
+      line()
+      line("// --")
+      line()
+      enter("effects.toList should ===(List(")
+      line(s"(${(1 to n).map(i => s"T${i}(1)").mkString(", ")})")
       leave("))")
-      println()
-      println("""// --""")
-      println()
+      line()
+      line("// --")
+      line()
 
-      enter("""for (iteration <- 0 until 10) {""")
-      println("""effects.clear()""")
+      enter("for (iteration <- 0 until 10) {")
+      line("effects.clear()")
       for (i <- 1 to n) {
-        println(s"""var${i}.update(_.inc)""")
+        line(s"var${i}.update(_.inc)")
       }
-      enter("""effects.toList should ===(""")
-      enter("""List(""")
+      enter("effects.toList should ===(")
+      enter("List(")
       for (i <- 1 to n) {
-        println(s"""(${(1 to n).map(j => s"""T${j}(1 + iteration${if (j <= i) " + 1" else ""})""").mkString(", ")})${if (i < n) "," else ""}""")
+        line(s"(${(1 to n).map(j => s"T${j}(1 + iteration${if (j <= i) " + 1" else ""})").mkString(", ")})${if (i < n) "," else ""}")
       }
-      leave(""")""")
-      leave(""")""")
-      leave("""}""")
-      println()
-      println("""subscription.kill()""")
+      leave(")")
+      leave(")")
+      leave("}")
+      line()
+      line("subscription.kill()")
 
-      leave("""}""")
-      println()
+      leave("}")
+      line()
     }
-    println()
-    leave("""}""")
+    line()
+    leave("}")
   }
 
 }

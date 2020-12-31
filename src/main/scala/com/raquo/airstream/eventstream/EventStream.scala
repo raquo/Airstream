@@ -94,6 +94,10 @@ trait EventStream[+A] extends Observable[A] {
     operator(this)
   }
 
+  @inline def combine[B](otherEventStream: EventStream[B])(implicit composition: Composition[A, B]): EventStream[composition.Composed] = {
+    combineWith(otherEventStream)(composition.compose)
+  }
+
   def combineWith[B, C](otherEventStream: EventStream[B])(combinator: (A, B) => C): EventStream[C] = {
     new CombineEventStream2[A, B, C](
       parent1 = this,
@@ -102,16 +106,12 @@ trait EventStream[+A] extends Observable[A] {
     )
   }
 
-  @inline def combine[B](otherEventStream: EventStream[B])(implicit composition: Composition[A, B]): EventStream[composition.Composed] = {
-    combineWith(otherEventStream)(composition.compose)
-  }
-
-  /** @param project MUST NOT THROW! */
-  def withCurrentValueOfWith[B, C](signal: Signal[B])(project: (A, B) => C): EventStream[C] = {
+  /** @param combinator MUST NOT THROW! */
+  def withCurrentValueOfWith[B, C](signal: Signal[B])(combinator: (A, B) => C): EventStream[C] = {
     new SampleCombineEventStream2[A, B, C](
       samplingStream = this,
       sampledSignal = signal,
-      combinator = CombineObservable.tupleCombinator(project)
+      combinator = CombineObservable.tupleCombinator(combinator)
     )
   }
 

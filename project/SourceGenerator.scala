@@ -7,11 +7,13 @@ import java.io.PrintStream
 abstract class SourceGenerator(file: File) {
 
   file.getParentFile.mkdirs()
+
   private val printStream = new PrintStream(new FileOutputStream(file))
+
   private var indent      = ""
 
   protected def enter(s: String = ""): Unit = {
-    println(s)
+    line(s)
     indent = indent + "  "
   }
 
@@ -21,15 +23,15 @@ abstract class SourceGenerator(file: File) {
 
   protected def leave(s: String): Unit = {
     indent = indent.substring(0, indent.length - 2)
-    println(s)
+    line(s)
   }
 
-  protected def println(s: String): Unit = {
+  protected def line(s: String): Unit = {
     printStream.print(indent)
     printStream.println(s)
   }
 
-  protected def println(): Unit = {
+  protected def line(): Unit = {
     printStream.println()
   }
 

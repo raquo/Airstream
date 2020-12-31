@@ -3,7 +3,8 @@ enablePlugins(ScalaJSPlugin)
 enablePlugins(ScalaJSBundlerPlugin)
 
 libraryDependencies ++= Seq(
-  "org.scala-js" %%% "scalajs-dom" % "1.1.0", // This has no runtime cost. We only use it for `Debug.log` // @TODO[Elegance] Reconsider
+  "org.scala-js" %%% "scalajs-dom" % "1.1.0",
+  "app.tulz" %%% "tuplez-full-light" % "0.3.0",
   "org.scalatest" %%% "scalatest" % "3.2.0" % Test
 )
 
@@ -46,26 +47,24 @@ Compile / sourceGenerators += Def.task {
       (Compile / sourceDirectory).value,
       from = generateExtraTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
-    ).generate(),
-    //new TupleGenerator((Compile / sourceManaged).value).generate(),
-    //new NonTupleGenerator((Compile / sourceManaged).value).generate(),
-    new TupleCompositionGenerator(
-      (Compile / sourceManaged).value,
-      generateConcats = false,
-      generatePrepends = false,
-      to = generateTupleCombinatorsTo
     ).generate()
   )
 }.taskValue
 
-// @nc bring this back
-//Test / sourceGenerators += Def.task {
-//  Seq.concat(
-//    new CombineSignalTestGenerator((Test / sourceManaged).value, from = generateTupleCombinatorsFrom, to = generateTupleCombinatorsTo).generate(),
-//    new CombineEventStreamTestGenerator((Test / sourceManaged).value, from = generateTupleCombinatorsFrom, to = generateTupleCombinatorsTo).generate(),
-//    new CompositionTestGenerator((Test / sourceManaged).value).generate()
-//  )
-//}.taskValue
+Test / sourceGenerators += Def.task {
+  Seq.concat(
+    new CombineSignalTestGenerator(
+      (Test / sourceDirectory).value,
+      from = generateTupleCombinatorsFrom,
+      to = generateTupleCombinatorsTo
+    ).generate(),
+    new CombineEventStreamTestGenerator(
+      (Test / sourceDirectory).value,
+      from = generateTupleCombinatorsFrom,
+      to = generateTupleCombinatorsTo
+    ).generate()
+  )
+}.taskValue
 
 mappings in (Compile, packageSrc) ++= {
   val base  = (sourceManaged in Compile).value
