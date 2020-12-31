@@ -2,40 +2,41 @@ import sbt._
 
 import java.io.File
 
-class CombineSignalTestGenerator(
+case class GenerateCombineEventStreamsTest(
   testSourceDir: File,
   from: Int,
   to: Int
 ) extends SourceGenerator(
-  testSourceDir / "scala" / "com" / "raquo" / "airstream" / "combine" / "generated" / s"CombineSignalSpec.scala"
+  testSourceDir / "scala" / "com" / "raquo" / "airstream" / "combine" / "generated" / s"CombineEventStreamsSpec.scala"
 ) {
 
-  override def doGenerate(): Unit = {
+  def apply(): Unit = {
     line("package com.raquo.airstream.combine.generated")
     line()
     line("import com.raquo.airstream.UnitSpec")
     line("import com.raquo.airstream.core.Observer")
+    line("import com.raquo.airstream.eventbus.EventBus")
+    line("import com.raquo.airstream.eventstream.EventStream")
     line("import com.raquo.airstream.fixtures.TestableOwner")
-    line("import com.raquo.airstream.signal.{Signal, Var}")
     line()
     line("import scala.collection.mutable")
     line()
-    enter(s"class CombineSignalSpec extends UnitSpec {")
+    enter(s"class CombineEventStreamsSpec extends UnitSpec {")
     line()
     for (i <- 1 to to) {
-      line(s"case class T${i}(v: Int) { def inc: T${i} = T${i}(v+1) }")
+      line(s"case class T${i}(v: Int)")
     }
     line()
     for (n <- from to to) {
-      enter(s"""it("CombineSignal${n} works") {""")
+      enter(s"""it("CombineEventStream${n} works") {""")
       line()
       line("implicit val testOwner: TestableOwner = new TestableOwner")
       line()
       for (i <- 1 to n) {
-        line(s"val var${i} = Var(T${i}(1))")
+        line(s"val bus${i} = new EventBus[T${i}]()")
       }
       line()
-      line(s"val combinedSignal = Signal.combine(${tupleType(n, "var", ".signal")})")
+      line(s"val combinedStream = EventStream.combine(${tupleType(n, "bus", ".events")})")
       line()
       line(s"val effects = mutable.Buffer[(${tupleType(n)})]()")
       line()
@@ -46,27 +47,35 @@ class CombineSignalTestGenerator(
       line("effects.toList shouldBe empty")
       line()
       line("// --")
-      line()
-      line("val subscription = combinedSignal.addObserver(observer)")
-      line()
-      line("// --")
-      line()
-      enter("effects.toList should ===(List(")
-      line(s"(${(1 to n).map(i => s"T${i}(1)").mkString(", ")})")
-      leave("))")
+      line("val subscription = combinedStream.addObserver(observer)")
+      line("effects.toList shouldBe empty")
       line()
       line("// --")
       line()
 
-      enter("for (iteration <- 0 until 10) {")
+      for (i <- 1 to n) {
+        line(s"bus${i}.writer.onNext(T${i}(0))")
+        if (i < n) {
+          line("effects.toList shouldBe empty")
+        } else {
+          enter("effects.toList shouldEqual List(")
+          line(s"(${(1 to n).map(i => s"T${i}(0)").mkString(", ")})")
+          leave(")")
+        }
+        line()
+      }
+
+      line("// --")
+
+      enter("for (iteration <- 1 to 10) {")
       line("effects.clear()")
       for (i <- 1 to n) {
-        line(s"var${i}.update(_.inc)")
+        line(s"bus${i}.writer.onNext(T${i}(iteration))")
       }
       enter("effects.toList should ===(")
       enter("List(")
       for (i <- 1 to n) {
-        line(s"(${(1 to n).map(j => s"T${j}(1 + iteration${if (j <= i) " + 1" else ""})").mkString(", ")})${if (i < n) "," else ""}")
+        line(s"(${(1 to n).map(j => s"T${j}(iteration${if (j <= i) "" else " - 1"})").mkString(", ")})${if (i < n) "," else ""}")
       }
       leave(")")
       leave(")")

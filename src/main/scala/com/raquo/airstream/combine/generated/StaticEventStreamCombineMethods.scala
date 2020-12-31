@@ -2,7 +2,7 @@ package com.raquo.airstream.combine.generated
 
 import com.raquo.airstream.eventstream.EventStream
 
-private[airstream] trait EventStreamCombineMethods {
+private[airstream] trait StaticEventStreamCombineMethods {
 
   def combine[T1, T2, T3](
     s1: EventStream[T1], s2: EventStream[T2], s3: EventStream[T3]

@@ -8,7 +8,7 @@ import com.raquo.airstream.fixtures.TestableOwner
 
 import scala.collection.mutable
 
-class CombineEventStreamSpec extends UnitSpec {
+class CombineEventStreamsSpec extends UnitSpec {
 
   case class T1(v: Int)
   case class T2(v: Int)
@@ -21,7 +21,7 @@ class CombineEventStreamSpec extends UnitSpec {
   case class T9(v: Int)
   case class T10(v: Int)
 
-  "it("CombineEventStream2 works") {"
+  it("CombineEventStream2 works") {
 
     implicit val testOwner: TestableOwner = new TestableOwner
 
@@ -68,7 +68,7 @@ class CombineEventStreamSpec extends UnitSpec {
     subscription.kill()
   }
 
-  "it("CombineEventStream3 works") {"
+  it("CombineEventStream3 works") {
 
     implicit val testOwner: TestableOwner = new TestableOwner
 
@@ -121,7 +121,7 @@ class CombineEventStreamSpec extends UnitSpec {
     subscription.kill()
   }
 
-  "it("CombineEventStream4 works") {"
+  it("CombineEventStream4 works") {
 
     implicit val testOwner: TestableOwner = new TestableOwner
 
@@ -180,7 +180,7 @@ class CombineEventStreamSpec extends UnitSpec {
     subscription.kill()
   }
 
-  "it("CombineEventStream5 works") {"
+  it("CombineEventStream5 works") {
 
     implicit val testOwner: TestableOwner = new TestableOwner
 
@@ -245,7 +245,7 @@ class CombineEventStreamSpec extends UnitSpec {
     subscription.kill()
   }
 
-  "it("CombineEventStream6 works") {"
+  it("CombineEventStream6 works") {
 
     implicit val testOwner: TestableOwner = new TestableOwner
 
@@ -316,7 +316,7 @@ class CombineEventStreamSpec extends UnitSpec {
     subscription.kill()
   }
 
-  "it("CombineEventStream7 works") {"
+  it("CombineEventStream7 works") {
 
     implicit val testOwner: TestableOwner = new TestableOwner
 
@@ -393,7 +393,7 @@ class CombineEventStreamSpec extends UnitSpec {
     subscription.kill()
   }
 
-  "it("CombineEventStream8 works") {"
+  it("CombineEventStream8 works") {
 
     implicit val testOwner: TestableOwner = new TestableOwner
 
@@ -476,7 +476,7 @@ class CombineEventStreamSpec extends UnitSpec {
     subscription.kill()
   }
 
-  "it("CombineEventStream9 works") {"
+  it("CombineEventStream9 works") {
 
     implicit val testOwner: TestableOwner = new TestableOwner
 
@@ -565,7 +565,7 @@ class CombineEventStreamSpec extends UnitSpec {
     subscription.kill()
   }
 
-  "it("CombineEventStream10 works") {"
+  it("CombineEventStream10 works") {
 
     implicit val testOwner: TestableOwner = new TestableOwner
 

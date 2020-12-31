@@ -32,37 +32,51 @@ val generateTupleCombinatorsTo = 10
 
 Compile / sourceGenerators += Def.task {
   Seq.concat(
-    (generateTupleCombinatorsFrom to generateTupleCombinatorsTo).flatMap(n =>
-      new CombineEventStreamGenerator((Compile / sourceDirectory).value, n).generate()
-    ),
-    (generateTupleCombinatorsFrom to generateTupleCombinatorsTo).flatMap(n =>
-      new CombineSignalGenerator((Compile / sourceDirectory).value, n).generate()
-    ),
-    new EventStreamCombineMethodsGenerator(
+    GenerateCombineEventStreams(
+      (Compile / sourceDirectory).value,
+      from = generateTupleCombinatorsFrom,
+      to = generateTupleCombinatorsTo
+    ).run,
+    GenerateCombineSignals(
+      (Compile / sourceDirectory).value,
+      from = generateTupleCombinatorsFrom,
+      to = generateTupleCombinatorsTo
+    ).run,
+    GenerateSampleCombineEventStreams(
+      (Compile / sourceDirectory).value,
+      from = generateTupleCombinatorsFrom,
+      to = generateTupleCombinatorsTo
+    ).run,
+    GenerateSampleCombineSignals(
+      (Compile / sourceDirectory).value,
+      from = generateTupleCombinatorsFrom,
+      to = generateTupleCombinatorsTo
+    ).run,
+    GenerateStaticEventStreamCombineMethods(
       (Compile / sourceDirectory).value,
       from = generateExtraTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
-    ).generate(),
-    new SignalCombineMethodsGenerator(
+    ).run,
+    GenerateStaticSignalCombineMethods(
       (Compile / sourceDirectory).value,
       from = generateExtraTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
-    ).generate()
+    ).run
   )
 }.taskValue
 
 Test / sourceGenerators += Def.task {
   Seq.concat(
-    new CombineSignalTestGenerator(
+    GenerateCombineSignalsTest(
       (Test / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
-    ).generate(),
-    new CombineEventStreamTestGenerator(
+    ).run,
+    GenerateCombineEventStreamsTest(
       (Test / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
-    ).generate()
+    ).run
   )
 }.taskValue
 

@@ -8,8 +8,8 @@ import scala.util.Try
 
 /** @param combinator Must not throw! */
 class CombineEventStreamN[A, Out](
-  protected[this] val parents: Seq[EventStream[A]],
-  protected[this] val combinator: Seq[A] => Out
+  parents: Seq[EventStream[A]],
+  combinator: Seq[A] => Out
 ) extends EventStream[Out] with CombineObservable[Out] {
 
   // @TODO[API] Maybe this should throw if parents.isEmpty

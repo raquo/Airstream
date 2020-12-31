@@ -7,7 +7,7 @@ import com.raquo.airstream.signal.{Signal, Var}
 
 import scala.collection.mutable
 
-class CombineSignalSpec extends UnitSpec {
+class CombineSignalsSpec extends UnitSpec {
 
   case class T1(v: Int) { def inc: T1 = T1(v+1) }
   case class T2(v: Int) { def inc: T2 = T2(v+1) }

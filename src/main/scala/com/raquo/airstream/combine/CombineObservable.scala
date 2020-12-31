@@ -18,6 +18,7 @@ trait CombineObservable[A] extends SyncObservable[A] { self =>
   /** Parent observers are not immediately active. onStart/onStop regulates that. */
   protected[this] val parentObservers: js.Array[InternalParentObserver[_]] = js.Array()
 
+  // @TODO[Elegance] Not a fan of how inputsReady couples this to its subclasses
   /** Check whether inputs (parent observables' values) are all available to be combined. */
   protected[this] def inputsReady: Boolean
 

@@ -2,7 +2,7 @@ package com.raquo.airstream.combine.generated
 
 import com.raquo.airstream.signal.Signal
 
-private[airstream] trait SignalCombineMethods {
+private[airstream] trait StaticSignalCombineMethods {
 
   def combine[T1, T2, T3](
     s1: Signal[T1], s2: Signal[T2], s3: Signal[T3]

@@ -1,11 +1,11 @@
 package com.raquo.airstream.signal
 
 import app.tulz.tuplez.Composition
-import com.raquo.airstream.combine.generated.{CombineSignal2, SignalCombineMethods}
-import com.raquo.airstream.combine.{CombineObservable, CombineSignalN, SampleCombineSignal2}
+import com.raquo.airstream.combine.CombineSignalN
+import com.raquo.airstream.combine.generated.{CombineSignal2, SampleCombineSignal2, StaticSignalCombineMethods}
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
-import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.custom.CustomSource._
+import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.eventstream.{EventStream, MapEventStream}
 import com.raquo.airstream.ownership.Owner
 
@@ -70,16 +70,16 @@ trait Signal[+A] extends Observable[A] {
   def withCurrentValueOf[B](signal: Signal[B]): Signal[(A, B)] = {
     new SampleCombineSignal2[A, B, (A, B)](
       samplingSignal = this,
-      sampledSignal = signal,
-      combinator = CombineObservable.tupleCombinator((_, _))
+      sampledSignal1 = signal,
+      combinator = Tuple2.apply[A, B]
     )
   }
 
   def sample[B](signal: Signal[B]): Signal[B] = {
     new SampleCombineSignal2[A, B, B](
       samplingSignal = this,
-      sampledSignal = signal,
-      combinator = CombineObservable.tupleCombinator((_, sampledValue) => sampledValue)
+      sampledSignal1 = signal,
+      combinator = (_, sampledValue) => sampledValue
     )
   }
 
@@ -212,7 +212,7 @@ trait Signal[+A] extends Observable[A] {
   }
 }
 
-object Signal extends SignalCombineMethods {
+object Signal extends StaticSignalCombineMethods {
 
   def fromValue[A](value: A): Val[A] = Val(value)
 

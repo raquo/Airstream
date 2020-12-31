@@ -1,8 +1,8 @@
 package com.raquo.airstream.eventstream
 
 import app.tulz.tuplez.Composition
-import com.raquo.airstream.combine.generated.{CombineEventStream2, EventStreamCombineMethods}
-import com.raquo.airstream.combine.{CombineEventStreamN, CombineObservable, SampleCombineEventStream2}
+import com.raquo.airstream.combine.CombineEventStreamN
+import com.raquo.airstream.combine.generated.{CombineEventStream2, SampleCombineEventStream2, StaticEventStreamCombineMethods}
 import com.raquo.airstream.core.AirstreamError.ObserverError
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
 import com.raquo.airstream.custom.CustomSource._
@@ -94,10 +94,11 @@ trait EventStream[+A] extends Observable[A] {
     operator(this)
   }
 
-  @inline def combine[B](otherEventStream: EventStream[B])(implicit composition: Composition[A, B]): EventStream[composition.Composed] = {
+  def combine[B](otherEventStream: EventStream[B])(implicit composition: Composition[A, B]): EventStream[composition.Composed] = {
     combineWith(otherEventStream)(composition.compose)
   }
 
+  /** @param combinator Must not throw! */
   def combineWith[B, C](otherEventStream: EventStream[B])(combinator: (A, B) => C): EventStream[C] = {
     new CombineEventStream2[A, B, C](
       parent1 = this,
@@ -106,24 +107,19 @@ trait EventStream[+A] extends Observable[A] {
     )
   }
 
-  /** @param combinator MUST NOT THROW! */
-  def withCurrentValueOfWith[B, C](signal: Signal[B])(combinator: (A, B) => C): EventStream[C] = {
-    new SampleCombineEventStream2[A, B, C](
+  def withCurrentValueOf[B](signal: Signal[B])(implicit composition: Composition[A, B]): EventStream[composition.Composed] = {
+    new SampleCombineEventStream2[A, B, composition.Composed](
       samplingStream = this,
-      sampledSignal = signal,
-      combinator = CombineObservable.tupleCombinator(combinator)
+      sampledSignal1 = signal,
+      combinator = composition.compose
     )
-  }
-
-  @inline def withCurrentValueOf[B](signal: Signal[B])(implicit composition: Composition[A, B]): EventStream[composition.Composed] = {
-    withCurrentValueOfWith(signal)(composition.compose)
   }
 
   def sample[B](signal: Signal[B]): EventStream[B] = {
     new SampleCombineEventStream2[A, B, B](
       samplingStream = this,
-      sampledSignal = signal,
-      combinator = CombineObservable.tupleCombinator((_, sampledValue) => sampledValue)
+      sampledSignal1 = signal,
+      combinator = (_, sampledValue) => sampledValue
     )
   }
 
@@ -183,7 +179,7 @@ trait EventStream[+A] extends Observable[A] {
   }
 }
 
-object EventStream extends EventStreamCombineMethods {
+object EventStream extends StaticEventStreamCombineMethods {
 
   /** Event stream that never emits anything */
   val empty: EventStream[Nothing] = {

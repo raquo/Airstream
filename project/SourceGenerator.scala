@@ -51,12 +51,12 @@ abstract class SourceGenerator(file: File) {
   protected def tupleAccess(size: Int, varName: String): String =
     tupleAccessRaw(size, varName).mkString(", ")
 
-  final def generate(): Seq[File] = {
-    doGenerate()
+  final def run: Seq[File] = {
+    apply()
     done()
     Seq(file)
   }
 
-  protected def doGenerate(): Unit
+  protected def apply(): Unit
 
 }
