@@ -121,7 +121,7 @@ object WebSocketEventStream {
       *
       * @param url absolute URL of websocket endpoint
       */
-    def apply(url: String): EventStream[O] =
+    final def apply(url: String): EventStream[O] =
       apply(url, Observer.empty, Observer.empty)
 
     /**
@@ -131,7 +131,7 @@ object WebSocketEventStream {
       * @param socketObserver     called when a websocket connection is created
       * @param socketOpenObserver called when a websocket connection is open
       */
-    def apply(url: String,
+    final def apply(url: String,
                 socketObserver: Observer[dom.WebSocket],
                 socketOpenObserver: Observer[dom.WebSocket]): EventStream[O] =
       apply[Void](url, EventStream.empty, socketObserver, socketOpenObserver)
@@ -149,7 +149,7 @@ object WebSocketEventStream {
       * @param socketObserver     called when a websocket connection is created
       * @param socketOpenObserver called when a websocket connection is open
       */
-    def apply[I: Driver](
+    final def apply[I: Driver](
       url: String,
       writer: EventStream[I],
       socketObserver: Observer[dom.WebSocket] = Observer.empty,
@@ -164,7 +164,7 @@ object WebSocketEventStream {
 
   final case class WebSocketError[I](input: I) extends WebSocketStreamException
 
-  final object Driver {
+  object Driver {
 
     implicit val blobDriver: Driver[dom.Blob] = binary(_ send _, "blob")
     implicit val binaryDriver: Driver[js.typedarray.ArrayBuffer] = binary(_ send _, "arraybuffer")
@@ -189,15 +189,15 @@ object WebSocketEventStream {
   }
 
   /** Extracts [[js.typedarray.ArrayBuffer binary]] data from a [[dom.MessageEvent message]] */
-  final case object binary extends data[js.typedarray.ArrayBuffer]
+  object binary extends data[js.typedarray.ArrayBuffer]
 
   /** Extracts [[dom.Blob blob]] data from a [[dom.MessageEvent message]] */
-  final case object blob extends data[dom.Blob]
+  object blob extends data[dom.Blob]
 
   /** Returns [[dom.MessageEvent messages]] as is */
-  final case object raw extends reader(Success(_))
+  object raw extends reader(Success(_))
 
   /** Extracts [[String text]] data from a [[dom.MessageEvent message]] */
-  final case object text extends data[String]
+  object text extends data[String]
 
 }
