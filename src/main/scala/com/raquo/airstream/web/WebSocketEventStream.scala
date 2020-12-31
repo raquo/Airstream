@@ -113,8 +113,8 @@ object WebSocketEventStream {
     def transmit(socket: dom.WebSocket, data: A): Unit
   }
 
-  /** Transforms websocket [[dom.MessageEvent messages]] */
-  sealed abstract class transform[O](project: dom.MessageEvent => Try[O]) {
+  /** Reads websocket [[dom.MessageEvent messages]] */
+  sealed abstract class reader[O](project: dom.MessageEvent => Try[O]) {
 
     /**
       * Returns a stream that emits messages of type `O` from a [[dom.WebSocket websocket]] connection.
@@ -145,20 +145,20 @@ object WebSocketEventStream {
       *  - [[String]]
       *
       * @param url                absolute URL of websocket endpoint
-      * @param stream             stream of outgoing messages
+      * @param writer             stream of outgoing messages
       * @param socketObserver     called when a websocket connection is created
       * @param socketOpenObserver called when a websocket connection is open
       */
     def apply[I: Driver](
       url: String,
-      stream: EventStream[I],
+      writer: EventStream[I],
       socketObserver: Observer[dom.WebSocket] = Observer.empty,
       socketOpenObserver: Observer[dom.WebSocket] = Observer.empty): EventStream[O] =
-      new WebSocketEventStream(stream, project, url, socketObserver, socketOpenObserver)
+      new WebSocketEventStream(writer, project, url, socketObserver, socketOpenObserver)
   }
 
   /** Extracts the data from a [[dom.MessageEvent message]] */
-  sealed abstract class data[O] extends transform(e => Try(e.data.asInstanceOf[O]))
+  sealed abstract class data[O] extends reader(e => Try(e.data.asInstanceOf[O]))
 
   final case class WebSocketClosed(event: dom.Event) extends WebSocketStreamException
 
@@ -195,7 +195,7 @@ object WebSocketEventStream {
   final case object blob extends data[dom.Blob]
 
   /** Returns [[dom.MessageEvent messages]] as is */
-  final case object raw extends transform(Success(_))
+  final case object raw extends reader(Success(_))
 
   /** Extracts [[String text]] data from a [[dom.MessageEvent message]] */
   final case object text extends data[String]
