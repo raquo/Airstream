@@ -3,7 +3,6 @@ package com.raquo.airstream.combine
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.features.InternalParentObserver
 
-import scala.collection.immutable.ArraySeq
 import scala.util.Try
 
 /** @param combinator Must not throw! */
@@ -23,7 +22,8 @@ class CombineEventStreamN[A, Out](
   }
 
   override protected[this] def combinedValue: Try[Out] = {
-    CombineObservable.seqCombinator(ArraySeq.unsafeWrapArray(maybeLastParentValues).map(_.get), combinator)
+    // @TODO[Scala3] When we don't need Scala 2.12, use ArraySeq.unsafeWrapArray(maybeLastParentValues) for perf?
+    CombineObservable.seqCombinator(maybeLastParentValues.toIndexedSeq.map(_.get), combinator)
   }
 
   parentObservers.push(
