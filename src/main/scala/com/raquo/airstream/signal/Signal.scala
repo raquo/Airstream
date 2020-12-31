@@ -2,7 +2,7 @@ package com.raquo.airstream.signal
 
 import app.tulz.tuplez.Composition
 import com.raquo.airstream.combine.CombineSignalN
-import com.raquo.airstream.combine.generated.{CombineSignal2, SampleCombineSignal2, StaticSignalCombineMethods}
+import com.raquo.airstream.combine.generated.{CombinableSignal, CombineSignal2, SampleCombineSignal2, StaticSignalCombineMethods}
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
@@ -264,6 +264,10 @@ object Signal extends StaticSignalCombineMethods {
     signals: Seq[Signal[A]]
   ): Signal[Seq[A]] = {
     new CombineSignalN[A, Seq[A]](signals, identity)
+  }
+
+  implicit def toCombinableSignal[A](signal: Signal[A]): CombinableSignal[A] = {
+    new CombinableSignal(signal)
   }
 
   implicit def toTuple2Signal[A, B](signal: Signal[(A, B)]): Tuple2Signal[A, B] = {

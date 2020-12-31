@@ -2,7 +2,7 @@ package com.raquo.airstream.eventstream
 
 import app.tulz.tuplez.Composition
 import com.raquo.airstream.combine.CombineEventStreamN
-import com.raquo.airstream.combine.generated.{CombineEventStream2, SampleCombineEventStream2, StaticEventStreamCombineMethods}
+import com.raquo.airstream.combine.generated.{CombinableEventStream, CombineEventStream2, SampleCombineEventStream2, StaticEventStreamCombineMethods}
 import com.raquo.airstream.core.AirstreamError.ObserverError
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
 import com.raquo.airstream.custom.CustomSource._
@@ -310,6 +310,10 @@ object EventStream extends StaticEventStreamCombineMethods {
 
   def mergeSeq[A](streams: Seq[EventStream[A]]): EventStream[A] = {
     merge(streams: _*) // @TODO[Performance] Does _* introduce any overhead in Scala.js?
+  }
+
+  implicit def toCombineOpsStream[A](stream: EventStream[A]): CombinableEventStream[A] = {
+    new CombinableEventStream(stream)
   }
 
   implicit def toTuple2Stream[A, B](stream: EventStream[(A, B)]): Tuple2EventStream[A, B] = {
