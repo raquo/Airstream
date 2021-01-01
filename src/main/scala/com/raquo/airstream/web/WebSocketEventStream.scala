@@ -113,7 +113,7 @@ object WebSocketEventStream {
     def transmit(socket: dom.WebSocket, data: A): Unit
   }
 
-  /** Reads websocket [[dom.MessageEvent messages]] */
+  /** streams websocket messages */
   sealed abstract class reader[O](project: dom.MessageEvent => Try[O]) {
 
     /**
@@ -157,7 +157,7 @@ object WebSocketEventStream {
       new WebSocketEventStream(writer, project, url, socketObserver, socketOpenObserver)
   }
 
-  /** Extracts the data from a [[dom.MessageEvent message]] */
+  /** streams the data from a [[dom.MessageEvent message]] */
   sealed abstract class data[O] extends reader(e => Try(e.data.asInstanceOf[O]))
 
   final case class WebSocketClosed(event: dom.Event) extends WebSocketStreamException
@@ -188,16 +188,16 @@ object WebSocketEventStream {
       }
   }
 
-  /** Extracts [[js.typedarray.ArrayBuffer binary]] data from a [[dom.MessageEvent message]] */
+  /** streams [[js.typedarray.ArrayBuffer binary]] data */
   object binary extends data[js.typedarray.ArrayBuffer]
 
-  /** Extracts [[dom.Blob blob]] data from a [[dom.MessageEvent message]] */
+  /** streams [[dom.Blob blob]] data */
   object blob extends data[dom.Blob]
 
-  /** Returns [[dom.MessageEvent messages]] as is */
+  /** streams websocket [[dom.MessageEvent messages]] */
   object raw extends reader(Success(_))
 
-  /** Extracts [[String text]] data from a [[dom.MessageEvent message]] */
+  /** streams [[String text]] data */
   object text extends data[String]
 
 }
