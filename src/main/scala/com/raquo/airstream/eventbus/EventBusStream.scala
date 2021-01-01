@@ -3,17 +3,15 @@ package com.raquo.airstream.eventbus
 import com.raquo.airstream.core.Transaction
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.features.InternalNextErrorObserver
-
 import scala.scalajs.js
 
-class EventBusStream[A] private[eventbus] (writeBus: WriteBus[A]) extends EventStream[A] with InternalNextErrorObserver[A] {
+class EventBusStream[A] private[eventbus] () extends EventStream[A] with InternalNextErrorObserver[A] {
 
   private[eventbus] val sourceStreams: js.Array[EventStream[A]] = js.Array()
 
   /** Made more public to allow usage from WriteBus */
   override protected[eventbus] def isStarted: Boolean = super.isStarted
 
-  // @TODO document why. Basically event bus breaks the "static DAG" requirement for topo ranking
   override protected[airstream] val topoRank: Int = 1
 
   @inline private[eventbus] def addSource(sourceStream: EventStream[A]): Unit = {
@@ -69,9 +67,4 @@ class EventBusStream[A] private[eventbus] (writeBus: WriteBus[A]) extends EventS
     // dom.console.log("EventBusStream STOPPED!", this.toString)
     sourceStreams.foreach(sourceStream => Transaction.removeInternalObserver(sourceStream, observer = this))
   }
-}
-
-object EventBusStream {
-
-
 }

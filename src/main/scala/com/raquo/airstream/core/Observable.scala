@@ -1,12 +1,13 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.eventstream.EventStream
-import com.raquo.airstream.features.{FlattenStrategy, Splittable}
+import com.raquo.airstream.features.FlattenStrategy
 import com.raquo.airstream.features.FlattenStrategy.{SwitchSignalStrategy, SwitchStreamStrategy}
 import com.raquo.airstream.ownership.{Owner, Subscription}
 import com.raquo.airstream.signal.Signal
 import org.scalajs.dom
 
+import scala.annotation.unused
 import scala.scalajs.js
 import scala.util.Try
 
@@ -90,7 +91,7 @@ trait Observable[+A] {
   def debugLog(prefix: String = "event", when: A => Boolean = _ => true): Self[A] = {
     map(value => {
       if (when(value)) {
-        println(prefix + ": ", value.asInstanceOf[js.Any])
+        println(prefix + ": " + value.asInstanceOf[js.Any])
       }
       value
     })
@@ -150,7 +151,7 @@ trait Observable[+A] {
     subscription
   }
 
-  @inline protected def onAddedExternalObserver(observer: Observer[A]): Unit = ()
+  @inline protected def onAddedExternalObserver(@unused observer: Observer[A]): Unit = ()
 
   /** Child observable should call this method on its parents when it is started.
     * This observable calls [[onStart]] if this action has given it its first observer (internal or external).

@@ -3,7 +3,7 @@ package com.raquo.airstream.signal
 import com.raquo.airstream.AsyncUnitSpec
 import com.raquo.airstream.core.Observer
 import com.raquo.airstream.eventbus.EventBus
-import com.raquo.airstream.features.FlattenStrategy.{ConcurrentFutureStrategy, OverwriteFutureStrategy, SwitchFutureStrategy}
+import com.raquo.airstream.features.FlattenStrategy.SwitchFutureStrategy
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import org.scalatest.Assertion
 
@@ -16,7 +16,7 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
 
     it("initial unresolved future results in an async event") {
 
-      implicit val owner = new TestableOwner
+      implicit val owner: TestableOwner = new TestableOwner
 
       val effects = mutable.Buffer[Effect[Int]]()
 
@@ -63,7 +63,7 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
 
     it("initial future that is resolved at the same time as stream created and observer added result in an async event") {
 
-      implicit val owner = new TestableOwner
+      implicit val owner: TestableOwner = new TestableOwner
 
       val effects = mutable.Buffer[Effect[Int]]()
 
@@ -109,7 +109,7 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
 
     it("initial already-resolved future results in an async event if resolved async-before stream creation") {
 
-      implicit val owner = new TestableOwner
+      implicit val owner: TestableOwner = new TestableOwner
 
       val effects = mutable.Buffer[Effect[Int]]()
 

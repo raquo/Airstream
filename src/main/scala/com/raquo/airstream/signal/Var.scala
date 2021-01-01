@@ -24,6 +24,11 @@ class Var[A] private(private[this] var currentValue: Try[A]) {
     new Transaction(setCurrentValue(nextTry, _))
   }
 
+  /** Write values into a Var of Option[V] without manually wrapping in Some() */
+  def someWriter[V](implicit evidence: Option[V] <:< A): Observer[V] = {
+    writer.contramapSome
+  }
+
   /** An observer much like writer, but can compose input events with the current value of the var, for example:
     *
     * val v = Var(List(1, 2, 3))

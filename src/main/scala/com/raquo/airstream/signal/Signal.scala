@@ -1,6 +1,8 @@
 package com.raquo.airstream.signal
 
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
+import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
+import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.eventstream.{EventStream, MapEventStream}
 import com.raquo.airstream.features.CombineObservable
 import com.raquo.airstream.ownership.Owner
@@ -198,7 +200,7 @@ trait Signal[+A] extends Observable[A] {
       // We want to report unhandled errors on such signals if they have no observers (including internal observers)
       // because if we don't, the error will not be reported anywhere, and I think we would usually want it.
       if (isError && !errorReported) {
-        nextValue.fold(AirstreamError.sendUnhandledError, identity)
+        nextValue.fold(AirstreamError.sendUnhandledError, _ => ())
       }
     }
   }
@@ -206,12 +208,33 @@ trait Signal[+A] extends Observable[A] {
 
 object Signal {
 
+  def fromValue[A](value: A): Val[A] = Val(value)
+
+  def fromTry[A](value: Try[A]): Val[A] = Val.fromTry(value)
+
   @inline def fromFuture[A](future: Future[A]): Signal[Option[A]] = {
     new FutureSignal(future)
   }
 
   @inline def fromJsPromise[A](promise: js.Promise[A]): Signal[Option[A]] = {
     new FutureSignal(promise.toFuture)
+  }
+
+  /** Easy helper for custom signals. See [[CustomSignalSource]] for docs.
+    *
+    * @param stop MUST NOT THROW!
+    */
+  def fromCustomSource[A](
+    initial: => A,
+    start: (SetCurrentValue[A], GetCurrentValue[A], GetStartIndex, GetIsStarted) => Unit,
+    stop: StartIndex => Unit
+  ): Signal[A] = {
+    CustomSignalSource[A](initial)( (setValue, getValue, getStartIndex, getIsStarted) => {
+      CustomSource.Config(
+        onStart = start(setValue, getValue, getStartIndex, getIsStarted),
+        onStop = stop(getStartIndex())
+      )
+    })
   }
 
   implicit def toTuple2Signal[A, B](signal: Signal[(A, B)]): Tuple2Signal[A, B] = {

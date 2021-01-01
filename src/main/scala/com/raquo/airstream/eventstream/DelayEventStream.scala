@@ -18,19 +18,21 @@ class DelayEventStream[A](
 
   override protected[airstream] def onNext(nextValue: A, transaction: Transaction): Unit = {
     var timerHandle: SetTimeoutHandle = null
-    timerHandle = js.timers.setTimeout(delayMillis) {
+    timerHandle = js.timers.setTimeout(delayMillis.toDouble) {
       //println(s"> init trx from DelayEventStream.onNext($nextValue)")
       timerHandles.splice(timerHandles.indexOf(timerHandle), deleteCount = 1) // Remove handle
       new Transaction(fireValue(nextValue, _))
+      ()
     }
     timerHandles.push(timerHandle)
   }
 
   override def onError(nextError: Throwable, transaction: Transaction): Unit = {
     var timerHandle: SetTimeoutHandle = null
-    timerHandle = js.timers.setTimeout(delayMillis) {
+    timerHandle = js.timers.setTimeout(delayMillis.toDouble) {
       timerHandles.splice(timerHandles.indexOf(timerHandle), deleteCount = 1) // Remove handle
       new Transaction(fireError(nextError, _))
+      ()
     }
     timerHandles.push(timerHandle)
   }

@@ -11,7 +11,7 @@ class SwitchSignalSpec extends UnitSpec {
 
   it("mirrors last emitted signal, but only if subscribed") {
 
-    implicit val owner = new TestableOwner
+    implicit val owner: TestableOwner = new TestableOwner
 
     val calculations = mutable.Buffer[Calculation[Int]]()
     val effects = mutable.Buffer[Effect[Int]]()

@@ -49,6 +49,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [EventStream.fromSeq](#eventstreamfromseq)
     * [EventStream.periodic](#eventstreamperiodic)
     * [EventStream.empty](#eventstreamempty)
+    * [EventStream.withCallback and withObserver](#eventstreamwithcallback-and-withobserver)
     * [EventBus](#eventbus)
     * [Var](#var)
     * [Val](#val)
@@ -439,6 +440,22 @@ The underlying `PeriodicEventStream` class offers more functionality, including 
 A stream that never emits any events.
 
 
+#### `EventStream.withCallback` and `withObserver`
+
+`EventStream.withCallback[A]` Creates and returns a stream and an `A => Unit` callback that, when called, passes the input value to that stream. Of course, as streams are lazy, the stream will only emit if it has observers.
+
+```scala
+val (stream, callback) = EventStream.withCallback[Int]
+callback(1) // nothing happens because stream has no observers
+stream.foreach(println)
+callback(2) // `2` will be printed  
+```
+
+`EventStream.withJsCallback[A]` works similarly except it returns a js.Function for easier integration with Javascript libraries.
+
+`EventStream.withObserver[A]` works similarly but creates an observer, which among other conveniences passes the errors that it receives into the stream.
+
+
 #### EventBus
 
 `new EventBus[MyEvent]` is the general-purpose way to create a stream on which you can manually trigger events. The resulting EventBus exposes two properties:
@@ -579,89 +596,52 @@ AjaxEventStream
 
 Methods for POST, PUT, PATCH, and DELETE are also available.
 
-The request is made every time the stream is started. If the stream is stopped while the request is pending, the request will not be cancelled, but its result will be discarded.
+The request is made every time the stream is started. If the stream is stopped while the request is pending, the old request will not be cancelled, but its result will be discarded.
 
-The implementation follows that of `org.scalajs.dom.ext.ajax.apply`, but is adjusted slightly to be better behaved in Airstream.
+If the request times out, is aborted, returns an HTTP status code that isn't 2xx or 304, or fails in any other way, the stream will emit an `AjaxStreamError`.
+
+If you want a stream that never fails, a stream that emits an event regardless of all those errors, call `.completeEvents` on your ajax stream.
+
+You can listen for `progress` or `readyStateChange` events by passing in the corresponding observers to `AjaxEventStream.get` et al, for example:
+
+```scala
+val (progressObserver, $progress) = EventStream.withObserver[(dom.XMLHttpRequest, dom.ProgressEvent)]
+
+val $request = AjaxEventStream.get(
+  url = "/api/kittens",
+  progressObserver = progressObserver
+)
+
+val $bytesLoaded = $progress.map2((xhr, ev) => ev.loaded)
+```
+
+In a similar manner, you can pass a `requestObserver` that will be called with the newly created `dom.XMLHttpRequest` just before the request is sent. This way you can save the pending request into a Var and e.g. `abort()` it if needed.
+
+Warning: dom.XmlHttpRequest is an ugly, imperative JS construct. We set event callbacks for onload, onerror, onabort, ontimeout, and if requested, also for onprogress and onreadystatechange. Make sure you don't override Airstream's listeners, or this stream will not work properly.
+
 
 
 
 ### Websockets
 
-Airstream supports unidirectional and bidirectional websockets.
+Airstream has no official websockets integration yet.
 
-#### Absolute URL is required
-```scala
-import com.raquo.airstream.web.websocketUrl
+For several users' implementations, search Laminar gitter room, and the issues in this repo.
 
-val url: String = websocketUrl("relative/url")
-```
 
-#### Unidirectional websocket stream
-```scala
-import com.raquo.airstream.eventstream.EventStream
-import com.raquo.airstream.web.WebSocketEventStream
-import org.scalajs.dom
-
-import scala.scalajs.js
-
-// raw websocket messages
-val raw: EventStream[dom.MessageEvent] = WebSocketEventStream.raw("absolute/url")
-
-// or use one of the extractors to access just the data
-val binary: EventStream[js.typedarray.ArrayBuffer] = WebSocketEventStream.binary("absolute/url")
-val blob: EventStream[dom.Blob] = WebSocketEventStream.blob("absolute/url")
-val text: EventStream[String] = WebSocketEventStream.text("absolute/url")
-```
-
-#### Bidirectional websocket stream
-Usage:
-```scala
-import com.raquo.airstream.eventstream.EventStream
-import com.raquo.airstream.web.WebSocketEventStream
-import org.scalajs.dom
-
-import scala.scalajs.js
-
-// messages to be transmitted
-val out: EventStream[String] = ???
-
-// raw websocket messages
-val raw: EventStream[dom.MessageEvent] = WebSocketEventStream.raw("absolute/url", out)
-
-// or use one of the extractors to access just the data
-val binary: EventStream[js.typedarray.ArrayBuffer] = WebSocketEventStream.binary("absolute/url", out)
-val blob: EventStream[dom.Blob] = WebSocketEventStream.blob("absolute/url", out)
-val text: EventStream[String] = WebSocketEventStream.text("absolute/url", out)
-```
-
-#### Supported types
-The following types are supported for transmission/reception:
- - `js.typedarray.ArrayBuffer`
- - `dom.raw.Blob`
- - `String`
-
-#### Errors
- - `WebSocketClosed`: connection termination error
- - `WebSocketError`: transmission error (due to a terminated connection)
-
-#### Stream lifecycle
- - A new websocket connection is established on start.
- - Outgoing messages, if any, are sent on this connection.
-   - Transmission failures, due to connection termination, are propagated as errors.
- - Connection termination, not initiated by this stream, is propagated as an error.
- - Incoming messages are propagated as events.
- - The connection is closed on stop.
 
 ### DOM Events
 
-`DomEventStream` previously available in Laminar now lives in Airstream.
-
 ```scala
 val element: dom.Element = ???
-DomEventStream(element, "click") // EventStream[dom.MouseEvent]
+DomEventStream[dom.MouseEvent](element, "click") // EventStream[dom.MouseEvent]
 ``` 
 
-This stream, when started, registers a `click` event listener on `element`, and emits all events the listener receives until it is stopped, at which point the listener is removed.
+This stream, when started, registers a `click` event listener on `element`, and emits all events the listener receives until the stream is stopped, at which point the listener is removed.
+
+Airstream does not know the names & types of DOM events, so you need to manually specify both. You can get those manually from MDN or programmatically from event props such as `onClick` available in Laminar. 
+
+`DomEventStream` works not just on elements but on any `dom.raw.EventTarget`. However, make sure to check browser compatibility for fancy EventTarget-s such as XMLHttpRequest.
 
 
 
@@ -1239,7 +1219,7 @@ stream.recoverToTry.collect { case Failure(err) => err } // EventStream[Throwabl
 ## Limitations
 
 * Airstream only runs on Scala.js because its primary intended use case is unidirectional dataflow architecture on the frontend. I have no plans to make it run on the JVM. It would require too much of my time and too much compromise, complicating the API to support a completely different environment and use cases. 
-* Airstream has no concept of observables "completing". Personally I don't think this is a limitation, but I can see it being viewed as such. See [Issue #23](https://github.com/raquo/Airstream/issues/23).
+* Airstream has no concept of observables "completing". Personally I don't think this is much of a limitation, but I can see it being viewed as such. See [Issue #23](https://github.com/raquo/Airstream/issues/23).
 
 
 ## My Related Projects

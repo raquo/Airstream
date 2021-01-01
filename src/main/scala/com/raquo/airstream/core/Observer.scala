@@ -2,9 +2,12 @@ package com.raquo.airstream.core
 
 import com.raquo.airstream.core.AirstreamError.{ObserverError, ObserverErrorHandlingError}
 
+import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
 trait Observer[-A] {
+
+  lazy val toJsFn1: js.Function1[A, Unit] = onNext
 
   /** Note: must not throw! */
   def onNext(nextValue: A): Unit
@@ -31,6 +34,11 @@ trait Observer[-A] {
     )
   }
 
+  /** Available only on Observers of Option, this is a shortcut for contramap[B](Some(_)) */
+  def contramapSome[V](implicit evidence: Option[V] <:< A): Observer[V] = {
+    contramap[V](value => evidence(Some(value)))
+  }
+
   /** Like `contramap` but with `collect` semantics: not calling the original observer when `pf` is not defined */
   def contracollect[B](pf: PartialFunction[B, A]): Observer[B] = {
     Observer.withRecover(
@@ -52,7 +60,6 @@ trait Observer[-A] {
 }
 
 object Observer {
-
 
   /** An observer that does nothing. Use it to ensure that an Observable is started
     *
@@ -126,7 +133,7 @@ object Observer {
           if (onTryParam.isDefinedAt(nextValue)) {
             onTryParam(nextValue)
           } else {
-            nextValue.fold(err => AirstreamError.sendUnhandledError(err), identity)
+            nextValue.fold(err => AirstreamError.sendUnhandledError(err), _ => ())
           }
         } catch {
           case err: Throwable =>
