@@ -243,6 +243,14 @@ object Signal extends StaticSignalCombineMethods {
     })
   }
 
+  def sequence[A](
+    signals: Seq[Signal[A]]
+  ): Signal[Seq[A]] = {
+    new CombineSignalN[A, Seq[A]](signals, identity)
+  }
+
+  @inline def combineSeq[A](signals: Seq[Signal[A]]): Signal[Seq[A]] = sequence(signals)
+
   def combine[T1, T2](
     signal1: Signal[T1],
     signal2: Signal[T2]
@@ -258,12 +266,6 @@ object Signal extends StaticSignalCombineMethods {
     combinator: (T1, T2) => Out
   ): Signal[Out] = {
     new CombineSignal2(signal1, signal2, combinator)
-  }
-
-  def combineSeq[A](
-    signals: Seq[Signal[A]]
-  ): Signal[Seq[A]] = {
-    new CombineSignalN[A, Seq[A]](signals, identity)
   }
 
   implicit def toCombinableSignal[A](signal: Signal[A]): CombinableSignal[A] = {

@@ -282,6 +282,12 @@ object EventStream extends StaticEventStreamCombineMethods {
     )
   }
 
+  def sequence[A](streams: Seq[EventStream[A]]): EventStream[Seq[A]] = {
+    new CombineEventStreamN[A, Seq[A]](streams, identity)
+  }
+
+  @inline def combineSeq[A](streams: Seq[EventStream[A]]): EventStream[Seq[A]] = sequence(streams)
+
   def combine[T1, T2](
     stream1: EventStream[T1],
     stream2: EventStream[T2]
@@ -298,17 +304,11 @@ object EventStream extends StaticEventStreamCombineMethods {
     new CombineEventStream2(stream1, stream2, combinator)
   }
 
-  def combineSeq[A](
-    streams: Seq[EventStream[A]]
-  ): EventStream[Seq[A]] = {
-    new CombineEventStreamN[A, Seq[A]](streams, identity)
-  }
-
   def merge[A](streams: EventStream[A]*): EventStream[A] = {
     new MergeEventStream[A](streams)
   }
 
-  def mergeSeq[A](streams: Seq[EventStream[A]]): EventStream[A] = {
+  @inline def mergeSeq[A](streams: Seq[EventStream[A]]): EventStream[A] = {
     merge(streams: _*) // @TODO[Performance] Does _* introduce any overhead in Scala.js?
   }
 
