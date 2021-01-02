@@ -5,6 +5,36 @@ import com.raquo.airstream.signal.Signal
 
 class CombinableSignal[A](val signal: Signal[A]) extends AnyVal {
 
+  def combine[T1](
+    s1: Signal[T1]
+  )(implicit composition: Composition[A, (T1)]): Signal[composition.Composed] = {
+    combineWith(s1)((a, v1) => composition.compose(a, (v1)))
+  }
+
+  /** @param combinator Must not throw! */
+  def combineWith[T1, Out](
+    s1: Signal[T1]
+  )(
+    combinator: (A, T1) => Out
+  ): Signal[Out] = {
+    new CombineSignal2(signal, s1, combinator)
+  }
+
+  def withCurrentValueOf[T1](
+    s1: Signal[T1]
+  )(implicit composition: Composition[A, (T1)]): Signal[composition.Composed] = {
+    val combinator = (a: A, v1: T1) => composition.compose(a, (v1))
+    new SampleCombineSignal2(signal, s1, combinator)
+  }
+
+  def sample[T1](
+    s1: Signal[T1]
+  ): Signal[(T1)] = {
+    new SampleCombineSignal2[A, T1, (T1)](signal, s1, (_, v1) => (v1))
+  }
+
+  // --
+
   def combine[T1, T2](
     s1: Signal[T1], s2: Signal[T2]
   )(implicit composition: Composition[A, (T1, T2)]): Signal[composition.Composed] = {

@@ -54,20 +54,20 @@ Compile / sourceGenerators += Def.task {
     ).run,
     GenerateCombinableEventStream(
       (Compile / sourceDirectory).value,
-      from = generateExtraTupleCombinatorsFrom,
+      from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
     GenerateCombinableSignal(
       (Compile / sourceDirectory).value,
-      from = generateExtraTupleCombinatorsFrom,
+      from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
-    GenerateStaticEventStreamCombineMethods(
+    GenerateStaticEventStreamCombineOps(
       (Compile / sourceDirectory).value,
       from = generateExtraTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
-    GenerateStaticSignalCombineMethods(
+    GenerateStaticSignalCombineOps(
       (Compile / sourceDirectory).value,
       from = generateExtraTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo

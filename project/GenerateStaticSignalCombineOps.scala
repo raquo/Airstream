@@ -2,38 +2,38 @@ import sbt._
 
 import java.io.File
 
-case class GenerateStaticEventStreamCombineMethods(
+case class GenerateStaticSignalCombineOps(
   sourceDir: File,
   from: Int,
   to: Int
 ) extends SourceGenerator(
-  sourceDir / "scala" / "com" / "raquo" / "airstream" / "combine" / "generated" / s"StaticEventStreamCombineMethods.scala"
+  sourceDir / "scala" / "com" / "raquo" / "airstream" / "combine" / "generated" / s"StaticSignalCombineOps.scala"
 ) {
 
   override def apply(): Unit = {
     line("package com.raquo.airstream.combine.generated")
     line()
-    line("import com.raquo.airstream.eventstream.EventStream")
+    line("import com.raquo.airstream.signal.Signal")
     line()
-    enter(s"private[airstream] trait StaticEventStreamCombineMethods {")
+    enter(s"private[airstream] trait StaticSignalCombineOps {")
     line()
     for (n <- from to to) {
       enter(s"def combine[${tupleType(n)}](")
-      line((1 to n).map(i => s"s${i}: EventStream[T${i}]").mkString(", "))
+      line((1 to n).map(i => s"s${i}: Signal[T${i}]").mkString(", "))
       leave()
-      enter(s"): EventStream[(${tupleType(n)})] = {")
+      enter(s"): Signal[(${tupleType(n)})] = {")
       line(s"combineWith(${tupleType(n, "s")})(Tuple${n}.apply[${tupleType(n)}])")
       leave("}")
       line()
       line("/** @param combinator Must not throw! */")
       enter(s"def combineWith[${tupleType(n)}, Out](")
-      line((1 to n).map(i => s"s${i}: EventStream[T${i}]").mkString(", "))
+      line((1 to n).map(i => s"s${i}: Signal[T${i}]").mkString(", "))
       leave()
       enter(")(")
       line(s"combinator: (${tupleType(n)}) => Out")
       leave()
-      enter(s"): EventStream[Out] = {")
-      line(s"new CombineEventStream${n}(${tupleType(n, "s")}, combinator)")
+      enter(s"): Signal[Out] = {")
+      line(s"new CombineSignal${n}(${tupleType(n, "s")}, combinator)")
       leave("}")
       line()
       line("// --")

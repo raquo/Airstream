@@ -1,8 +1,7 @@
 package com.raquo.airstream.eventstream
 
-import app.tulz.tuplez.Composition
 import com.raquo.airstream.combine.CombineEventStreamN
-import com.raquo.airstream.combine.generated.{CombinableEventStream, CombineEventStream2, SampleCombineEventStream2, StaticEventStreamCombineMethods}
+import com.raquo.airstream.combine.generated.{CombinableEventStream, CombineEventStream2, StaticEventStreamCombineOps}
 import com.raquo.airstream.core.AirstreamError.ObserverError
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
 import com.raquo.airstream.custom.CustomSource._
@@ -94,35 +93,6 @@ trait EventStream[+A] extends Observable[A] {
     operator(this)
   }
 
-  def combine[B](otherEventStream: EventStream[B])(implicit composition: Composition[A, B]): EventStream[composition.Composed] = {
-    combineWith(otherEventStream)(composition.compose)
-  }
-
-  /** @param combinator Must not throw! */
-  def combineWith[B, C](otherEventStream: EventStream[B])(combinator: (A, B) => C): EventStream[C] = {
-    new CombineEventStream2[A, B, C](
-      parent1 = this,
-      parent2 = otherEventStream,
-      combinator = combinator
-    )
-  }
-
-  def withCurrentValueOf[B](signal: Signal[B])(implicit composition: Composition[A, B]): EventStream[composition.Composed] = {
-    new SampleCombineEventStream2[A, B, composition.Composed](
-      samplingStream = this,
-      sampledSignal1 = signal,
-      combinator = composition.compose
-    )
-  }
-
-  def sample[B](signal: Signal[B]): EventStream[B] = {
-    new SampleCombineEventStream2[A, B, B](
-      samplingStream = this,
-      sampledSignal1 = signal,
-      combinator = (_, sampledValue) => sampledValue
-    )
-  }
-
   /** See docs for [[MapEventStream]]
     *
     * @param pf Note: guarded against exceptions
@@ -179,7 +149,7 @@ trait EventStream[+A] extends Observable[A] {
   }
 }
 
-object EventStream extends StaticEventStreamCombineMethods {
+object EventStream extends StaticEventStreamCombineOps {
 
   /** Event stream that never emits anything */
   val empty: EventStream[Nothing] = {
@@ -288,6 +258,7 @@ object EventStream extends StaticEventStreamCombineMethods {
 
   @inline def combineSeq[A](streams: Seq[EventStream[A]]): EventStream[Seq[A]] = sequence(streams)
 
+  // Note: methods to combine up to 10 streams are available in parent trait StaticEventStreamCombineOps
   def combine[T1, T2](
     stream1: EventStream[T1],
     stream2: EventStream[T2]
@@ -295,6 +266,8 @@ object EventStream extends StaticEventStreamCombineMethods {
     combineWith(stream1, stream2)(Tuple2.apply[T1, T2])
   }
 
+  // Note: methods to combineWith up to 10 signals are available in parent trait StaticSignalCombineOps
+  /** @param combinator Must not throw! */
   def combineWith[T1, T2, Out](
     stream1: EventStream[T1],
     stream2: EventStream[T2]
@@ -312,12 +285,8 @@ object EventStream extends StaticEventStreamCombineMethods {
     merge(streams: _*) // @TODO[Performance] Does _* introduce any overhead in Scala.js?
   }
 
-  implicit def toCombineOpsStream[A](stream: EventStream[A]): CombinableEventStream[A] = {
+  implicit def toCombinableStream[A](stream: EventStream[A]): CombinableEventStream[A] = {
     new CombinableEventStream(stream)
-  }
-
-  implicit def toTuple2Stream[A, B](stream: EventStream[(A, B)]): Tuple2EventStream[A, B] = {
-    new Tuple2EventStream(stream)
   }
 
   implicit def toSplittableStream[M[_], Input](stream: EventStream[M[Input]]): SplittableEventStream[M, Input] = {
@@ -326,5 +295,9 @@ object EventStream extends StaticEventStreamCombineMethods {
 
   implicit def toSplittableOneStream[A](stream: EventStream[A]): SplittableOneEventStream[A] = {
     new SplittableOneEventStream(stream)
+  }
+
+  implicit def toTuple2Stream[A, B](stream: EventStream[(A, B)]): Tuple2EventStream[A, B] = {
+    new Tuple2EventStream(stream)
   }
 }

@@ -1,8 +1,7 @@
 package com.raquo.airstream.signal
 
-import app.tulz.tuplez.Composition
 import com.raquo.airstream.combine.CombineSignalN
-import com.raquo.airstream.combine.generated.{CombinableSignal, CombineSignal2, SampleCombineSignal2, StaticSignalCombineMethods}
+import com.raquo.airstream.combine.generated.{CombinableSignal, CombineSignal2, StaticSignalCombineOps}
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
@@ -53,34 +52,6 @@ trait Signal[+A] extends Observable[A] {
     initialOperator: Try[A] => Try[B]
   ): Signal[B] = {
     changesOperator(changes).toSignalWithTry(initialOperator(tryNow()))
-  }
-
-  def combineWith[B, C](otherSignal: Signal[B])(combinator: (A, B) => C): Signal[C] = {
-    new CombineSignal2[A, B, C](
-      parent1 = this,
-      parent2 = otherSignal,
-      combinator = combinator
-    )
-  }
-
-  def combine[B](otherSignal: Signal[B])(implicit composition: Composition[A, B]): Signal[composition.Composed] = {
-    combineWith(otherSignal)(composition.compose)
-  }
-
-  def withCurrentValueOf[B](signal: Signal[B]): Signal[(A, B)] = {
-    new SampleCombineSignal2[A, B, (A, B)](
-      samplingSignal = this,
-      sampledSignal1 = signal,
-      combinator = Tuple2.apply[A, B]
-    )
-  }
-
-  def sample[B](signal: Signal[B]): Signal[B] = {
-    new SampleCombineSignal2[A, B, B](
-      samplingSignal = this,
-      sampledSignal1 = signal,
-      combinator = (_, sampledValue) => sampledValue
-    )
   }
 
   def changes: EventStream[A] = new MapEventStream[A, A](parent = this, project = identity, recover = None)
@@ -212,7 +183,7 @@ trait Signal[+A] extends Observable[A] {
   }
 }
 
-object Signal extends StaticSignalCombineMethods {
+object Signal extends StaticSignalCombineOps {
 
   def fromValue[A](value: A): Val[A] = Val(value)
 
@@ -251,6 +222,7 @@ object Signal extends StaticSignalCombineMethods {
 
   @inline def combineSeq[A](signals: Seq[Signal[A]]): Signal[Seq[A]] = sequence(signals)
 
+  // Note: methods to combine up to 10 signals are available in parent trait StaticSignalCombineOps
   def combine[T1, T2](
     signal1: Signal[T1],
     signal2: Signal[T2]
@@ -258,6 +230,7 @@ object Signal extends StaticSignalCombineMethods {
     combineWith(signal1, signal2)(Tuple2.apply[T1, T2])
   }
 
+  // Note: methods to combineWith up to 10 signals are available in parent trait StaticSignalCombineOps
   /** @param combinator Must not throw! */
   def combineWith[T1, T2, Out](
     signal1: Signal[T1],
@@ -268,19 +241,21 @@ object Signal extends StaticSignalCombineMethods {
     new CombineSignal2(signal1, signal2, combinator)
   }
 
+  /** Provides methods: combine, combineWith, withCurrentValueOf, sample */
   implicit def toCombinableSignal[A](signal: Signal[A]): CombinableSignal[A] = {
     new CombinableSignal(signal)
   }
 
-  implicit def toTuple2Signal[A, B](signal: Signal[(A, B)]): Tuple2Signal[A, B] = {
-    new Tuple2Signal(signal)
-  }
-
+  /** Provides methods: combine, combineWith, withCurrentValueOf, sample */
   implicit def toSplittableSignal[M[_], Input](signal: Signal[M[Input]]): SplittableSignal[M, Input] = {
     new SplittableSignal(signal)
   }
 
   implicit def toSplittableOneSignal[A](signal: Signal[A]): SplittableOneSignal[A] = {
     new SplittableOneSignal[A](signal)
+  }
+
+  implicit def toTuple2Signal[A, B](signal: Signal[(A, B)]): Tuple2Signal[A, B] = {
+    new Tuple2Signal(signal)
   }
 }
