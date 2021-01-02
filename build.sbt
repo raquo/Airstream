@@ -52,6 +52,16 @@ Compile / sourceGenerators += Def.task {
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
+    GenerateTupleEventStreams(
+      (Compile / sourceDirectory).value,
+      from = generateTupleCombinatorsFrom,
+      to = generateTupleCombinatorsTo
+    ).run,
+    GenerateTupleSignals(
+      (Compile / sourceDirectory).value,
+      from = generateTupleCombinatorsFrom,
+      to = generateTupleCombinatorsTo
+    ).run,
     GenerateCombinableEventStream(
       (Compile / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,

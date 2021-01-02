@@ -1,7 +1,9 @@
 package com.raquo.airstream.eventstream
 
+import com.raquo.airstream.basic.{FilterEventStream, MapEventStream}
+import com.raquo.airstream.basic.generated._
 import com.raquo.airstream.combine.CombineEventStreamN
-import com.raquo.airstream.combine.generated.{CombinableEventStream, CombineEventStream2, StaticEventStreamCombineOps}
+import com.raquo.airstream.combine.generated._
 import com.raquo.airstream.core.AirstreamError.ObserverError
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
 import com.raquo.airstream.custom.CustomSource._
@@ -258,7 +260,9 @@ object EventStream extends StaticEventStreamCombineOps {
 
   @inline def combineSeq[A](streams: Seq[EventStream[A]]): EventStream[Seq[A]] = sequence(streams)
 
-  // Note: methods to combine up to 10 streams are available in parent trait StaticEventStreamCombineOps
+  // Note: methods to combine up to 10 streams are available:
+  // a) in parent trait StaticEventStreamCombineOps, and
+  // b) on instances of EventStream implicitly (see toCombinableStream below)
   def combine[T1, T2](
     stream1: EventStream[T1],
     stream2: EventStream[T2]
@@ -266,7 +270,9 @@ object EventStream extends StaticEventStreamCombineOps {
     combineWith(stream1, stream2)(Tuple2.apply[T1, T2])
   }
 
-  // Note: methods to combineWith up to 10 signals are available in parent trait StaticSignalCombineOps
+  // Note: methods to combineWith up to 10 signals are available:
+  // a) in parent trait StaticEventStreamCombineOps, and
+  // b) on instances of EventStream implicitly (see toCombinableStream below)
   /** @param combinator Must not throw! */
   def combineWith[T1, T2, Out](
     stream1: EventStream[T1],
@@ -285,19 +291,32 @@ object EventStream extends StaticEventStreamCombineOps {
     merge(streams: _*) // @TODO[Performance] Does _* introduce any overhead in Scala.js?
   }
 
-  implicit def toCombinableStream[A](stream: EventStream[A]): CombinableEventStream[A] = {
-    new CombinableEventStream(stream)
-  }
+  /** Provides methods on EventStream: combine, combineWith, withCurrentValueOf, sample */
+  implicit def toCombinableStream[A](stream: EventStream[A]): CombinableEventStream[A] = new CombinableEventStream(stream)
 
-  implicit def toSplittableStream[M[_], Input](stream: EventStream[M[Input]]): SplittableEventStream[M, Input] = {
-    new SplittableEventStream(stream)
-  }
+  /** Provides methods on EventStream: split, splitOneIntoSignals */
+  implicit def toSplittableStream[M[_], Input](stream: EventStream[M[Input]]): SplittableEventStream[M, Input] = new SplittableEventStream(stream)
 
-  implicit def toSplittableOneStream[A](stream: EventStream[A]): SplittableOneEventStream[A] = {
-    new SplittableOneEventStream(stream)
-  }
+  /** Provides methods on EventStream: splitOne, splitOneIntoSignals */
+  implicit def toSplittableOneStream[A](stream: EventStream[A]): SplittableOneEventStream[A] = new SplittableOneEventStream(stream)
 
-  implicit def toTuple2Stream[A, B](stream: EventStream[(A, B)]): Tuple2EventStream[A, B] = {
-    new Tuple2EventStream(stream)
-  }
+  // toTupleStreamN conversions provide mapN and filterN methods on Signals of tuples
+
+  implicit def toTupleStream2[T1, T2](stream: EventStream[(T1, T2)]): TupleEventStream2[T1, T2] = new TupleEventStream2(stream)
+
+  implicit def toTupleStream3[T1, T2, T3](stream: EventStream[(T1, T2, T3)]): TupleEventStream3[T1, T2, T3] = new TupleEventStream3(stream)
+
+  implicit def toTupleStream4[T1, T2, T3, T4](stream: EventStream[(T1, T2, T3, T4)]): TupleEventStream4[T1, T2, T3, T4] = new TupleEventStream4(stream)
+
+  implicit def toTupleStream5[T1, T2, T3, T4, T5](stream: EventStream[(T1, T2, T3, T4, T5)]): TupleEventStream5[T1, T2, T3, T4, T5] = new TupleEventStream5(stream)
+
+  implicit def toTupleStream6[T1, T2, T3, T4, T5, T6](stream: EventStream[(T1, T2, T3, T4, T5, T6)]): TupleEventStream6[T1, T2, T3, T4, T5, T6] = new TupleEventStream6(stream)
+
+  implicit def toTupleStream7[T1, T2, T3, T4, T5, T6, T7](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7)]): TupleEventStream7[T1, T2, T3, T4, T5, T6, T7] = new TupleEventStream7(stream)
+
+  implicit def toTupleStream8[T1, T2, T3, T4, T5, T6, T7, T8](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8)]): TupleEventStream8[T1, T2, T3, T4, T5, T6, T7, T8] = new TupleEventStream8(stream)
+
+  implicit def toTupleStream9[T1, T2, T3, T4, T5, T6, T7, T8, T9](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]): TupleEventStream9[T1, T2, T3, T4, T5, T6, T7, T8, T9] = new TupleEventStream9(stream)
+
+  implicit def toTupleStream10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]): TupleEventStream10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10] = new TupleEventStream10(stream)
 }

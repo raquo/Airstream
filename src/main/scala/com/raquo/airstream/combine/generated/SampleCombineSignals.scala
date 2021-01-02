@@ -3,6 +3,8 @@ package com.raquo.airstream.combine.generated
 import com.raquo.airstream.combine.SampleCombineSignalN
 import com.raquo.airstream.signal.Signal
 
+// These are implementations of SampleCombineSignalN used for Signal's `withCurrentValueOf` and `sample` methods
+
 /** @param combinator Must not throw! */
 class SampleCombineSignal2[T0, T1, Out](
   samplingSignal: Signal[T0],

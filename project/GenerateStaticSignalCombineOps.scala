@@ -15,6 +15,9 @@ case class GenerateStaticSignalCombineOps(
     line()
     line("import com.raquo.airstream.signal.Signal")
     line()
+    line("// These combine and combineWith methods are available on the Signal companion object")
+    line("// For instance methods of the same name, see CombinableSignal.scala")
+    line()
     enter(s"private[airstream] trait StaticSignalCombineOps {")
     line()
     for (n <- from to to) {

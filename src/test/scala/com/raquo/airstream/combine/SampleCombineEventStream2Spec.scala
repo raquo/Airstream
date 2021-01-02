@@ -25,7 +25,7 @@ class SampleCombineEventStream2Spec extends UnitSpec {
     val combinedStream = bus1.events
       .map(Calculation.log("stream", calculations))
       .withCurrentValueOf(sampledSignal)
-      .map2(_ + _)
+      .mapN(_ + _)
       .map(Calculation.log("combined", calculations))
 
     val signalObserver = Observer[Int](effects += Effect("signal", _))

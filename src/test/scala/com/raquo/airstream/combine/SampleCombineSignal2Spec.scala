@@ -25,7 +25,7 @@ class SampleCombineSignal2Spec extends UnitSpec {
     val combinedSignal = samplingVar.signal
       .map(Calculation.log("sampling", calculations))
       .withCurrentValueOf(sampledSignal)
-      .map2(_ + _)
+      .mapN(_ + _)
       .map(Calculation.log("combined", calculations))
 
     val sampledObserver = Observer[Int](effects += Effect("sampled", _))

@@ -17,6 +17,8 @@ case class GenerateSampleCombineEventStreams(
     line("import com.raquo.airstream.eventstream.EventStream")
     line("import com.raquo.airstream.signal.Signal")
     line()
+    line("// These are implementations of SampleCombineEventStreamN used for EventStream's `withCurrentValueOf` and `sample` methods")
+    line()
     for (n <- from to to) {
       line("/** @param combinator Must not throw! */")
       enter(s"class SampleCombineEventStream${n}[T0, ${tupleType(n - 1)}, Out](")

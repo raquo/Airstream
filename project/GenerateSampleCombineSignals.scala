@@ -16,6 +16,8 @@ case class GenerateSampleCombineSignals(
     line("import com.raquo.airstream.combine.SampleCombineSignalN")
     line("import com.raquo.airstream.signal.Signal")
     line()
+    line("// These are implementations of SampleCombineSignalN used for Signal's `withCurrentValueOf` and `sample` methods")
+    line()
     for (n <- from to to) {
       line("/** @param combinator Must not throw! */")
       enter(s"class SampleCombineSignal${n}[T0, ${tupleType(n - 1)}, Out](")

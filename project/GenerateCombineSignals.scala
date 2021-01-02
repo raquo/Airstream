@@ -16,6 +16,8 @@ case class GenerateCombineSignals(
     line("import com.raquo.airstream.combine.CombineSignalN")
     line("import com.raquo.airstream.signal.Signal")
     line()
+    line("// These are implementations of CombineSignalN used for Signal's `combine` and `combineWith` methods")
+    line()
     for (n <- from to to) {
       line("/** @param combinator Must not throw! */")
       enter(s"class CombineSignal${n}[${tupleType(n)}, Out](")

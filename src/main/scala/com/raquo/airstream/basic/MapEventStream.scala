@@ -1,7 +1,8 @@
-package com.raquo.airstream.eventstream
+package com.raquo.airstream.basic
 
-import com.raquo.airstream.core.{Observable, Transaction}
 import com.raquo.airstream.core.AirstreamError.ErrorHandlingError
+import com.raquo.airstream.core.{Observable, Transaction}
+import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.features.{InternalNextErrorObserver, SingleParentObservable}
 
 import scala.util.Try

@@ -1,11 +1,13 @@
 package com.raquo.airstream.signal
 
+import com.raquo.airstream.basic.generated._
+import com.raquo.airstream.basic.{MapEventStream, MapSignal}
 import com.raquo.airstream.combine.CombineSignalN
 import com.raquo.airstream.combine.generated.{CombinableSignal, CombineSignal2, StaticSignalCombineOps}
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
-import com.raquo.airstream.eventstream.{EventStream, MapEventStream}
+import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.ownership.Owner
 
 import scala.concurrent.Future
@@ -222,7 +224,9 @@ object Signal extends StaticSignalCombineOps {
 
   @inline def combineSeq[A](signals: Seq[Signal[A]]): Signal[Seq[A]] = sequence(signals)
 
-  // Note: methods to combine up to 10 signals are available in parent trait StaticSignalCombineOps
+  // Note: methods to combine up to 10 signals are available:
+  // a) in parent trait StaticSignalCombineOps, and
+  // b) on instances of Signal implicitly (see toCombinableSignal below)
   def combine[T1, T2](
     signal1: Signal[T1],
     signal2: Signal[T2]
@@ -230,7 +234,9 @@ object Signal extends StaticSignalCombineOps {
     combineWith(signal1, signal2)(Tuple2.apply[T1, T2])
   }
 
-  // Note: methods to combineWith up to 10 signals are available in parent trait StaticSignalCombineOps
+  // Note: methods to combineWith up to 10 signals are available:
+  // a) in parent trait StaticSignalCombineOps, and
+  // b) on instances of Signal implicitly (see toCombinableSignal below)
   /** @param combinator Must not throw! */
   def combineWith[T1, T2, Out](
     signal1: Signal[T1],
@@ -241,21 +247,32 @@ object Signal extends StaticSignalCombineOps {
     new CombineSignal2(signal1, signal2, combinator)
   }
 
-  /** Provides methods: combine, combineWith, withCurrentValueOf, sample */
-  implicit def toCombinableSignal[A](signal: Signal[A]): CombinableSignal[A] = {
-    new CombinableSignal(signal)
-  }
+  /** Provides methods on Signal: combine, combineWith, withCurrentValueOf, sample */
+  implicit def toCombinableSignal[A](signal: Signal[A]): CombinableSignal[A] = new CombinableSignal(signal)
 
-  /** Provides methods: combine, combineWith, withCurrentValueOf, sample */
-  implicit def toSplittableSignal[M[_], Input](signal: Signal[M[Input]]): SplittableSignal[M, Input] = {
-    new SplittableSignal(signal)
-  }
+  /** Provides methods on Signal: split, splitIntoSignals */
+  implicit def toSplittableSignal[M[_], Input](signal: Signal[M[Input]]): SplittableSignal[M, Input] = new SplittableSignal(signal)
 
-  implicit def toSplittableOneSignal[A](signal: Signal[A]): SplittableOneSignal[A] = {
-    new SplittableOneSignal[A](signal)
-  }
+  /** Provides methods on Signal: splitOne, splitOneIntoSignals */
+  implicit def toSplittableOneSignal[A](signal: Signal[A]): SplittableOneSignal[A] = new SplittableOneSignal[A](signal)
 
-  implicit def toTuple2Signal[A, B](signal: Signal[(A, B)]): Tuple2Signal[A, B] = {
-    new Tuple2Signal(signal)
-  }
+  // toTupleSignalN conversions provide mapN method on Signals of tuples
+
+  implicit def toTupleSignal2[T1, T2](stream: Signal[(T1, T2)]): TupleSignal2[T1, T2] = new TupleSignal2(stream)
+
+  implicit def toTupleSignal3[T1, T2, T3](stream: Signal[(T1, T2, T3)]): TupleSignal3[T1, T2, T3] = new TupleSignal3(stream)
+
+  implicit def toTupleSignal4[T1, T2, T3, T4](stream: Signal[(T1, T2, T3, T4)]): TupleSignal4[T1, T2, T3, T4] = new TupleSignal4(stream)
+
+  implicit def toTupleSignal5[T1, T2, T3, T4, T5](stream: Signal[(T1, T2, T3, T4, T5)]): TupleSignal5[T1, T2, T3, T4, T5] = new TupleSignal5(stream)
+
+  implicit def toTupleSignal6[T1, T2, T3, T4, T5, T6](stream: Signal[(T1, T2, T3, T4, T5, T6)]): TupleSignal6[T1, T2, T3, T4, T5, T6] = new TupleSignal6(stream)
+
+  implicit def toTupleSignal7[T1, T2, T3, T4, T5, T6, T7](stream: Signal[(T1, T2, T3, T4, T5, T6, T7)]): TupleSignal7[T1, T2, T3, T4, T5, T6, T7] = new TupleSignal7(stream)
+
+  implicit def toTupleSignal8[T1, T2, T3, T4, T5, T6, T7, T8](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8)]): TupleSignal8[T1, T2, T3, T4, T5, T6, T7, T8] = new TupleSignal8(stream)
+
+  implicit def toTupleSignal9[T1, T2, T3, T4, T5, T6, T7, T8, T9](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]): TupleSignal9[T1, T2, T3, T4, T5, T6, T7, T8, T9] = new TupleSignal9(stream)
+
+  implicit def toTupleSignal10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]): TupleSignal10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10] = new TupleSignal10(stream)
 }

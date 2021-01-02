@@ -6,7 +6,7 @@ import com.raquo.airstream.eventstream.EventStream
 
 class SyntaxSpec extends UnitSpec {
 
-  it("CombinableEventStream") {
+  it("CombinableEventStream & TupleEventStream") {
 
     val bus = new EventBus[Int]
     val bus1 = new EventBus[Int]
@@ -25,13 +25,13 @@ class SyntaxSpec extends UnitSpec {
       val _: EventStream[Foo] = tuple4stream
     }
 
-    //locally {
-    //  val tuple4stream = bus.events.withCurrentValueOf(
-    //    bus1.events.startWith(0),
-    //    bus2.events.startWith(false),
-    //    bus3.events.startWith("")
-    //  ).map4(Foo)
-    //  val _: EventStream[(Int, Int, Boolean, String)] = tuple4stream
-    //}
+    locally {
+      val fooStream = bus.events.withCurrentValueOf(
+        bus1.events.startWith(0),
+        bus2.events.startWith(false),
+        bus3.events.startWith("")
+      ).mapN(Foo)
+      val _: EventStream[Foo] = fooStream
+    }
   }
 }

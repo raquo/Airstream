@@ -4,6 +4,8 @@ import com.raquo.airstream.combine.SampleCombineEventStreamN
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.signal.Signal
 
+// These are implementations of SampleCombineEventStreamN used for EventStream's `withCurrentValueOf` and `sample` methods
+
 /** @param combinator Must not throw! */
 class SampleCombineEventStream2[T0, T1, Out](
   samplingStream: EventStream[T0],

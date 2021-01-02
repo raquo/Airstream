@@ -15,6 +15,9 @@ case class GenerateStaticEventStreamCombineOps(
     line()
     line("import com.raquo.airstream.eventstream.EventStream")
     line()
+    line("// These combine and combineWith methods are available on the EventStream companion object")
+    line("// For instance methods of the same name, see CombinableEventStream.scala")
+    line()
     enter(s"private[airstream] trait StaticEventStreamCombineOps {")
     line()
     for (n <- from to to) {

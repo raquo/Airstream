@@ -2,6 +2,9 @@ package com.raquo.airstream.combine.generated
 
 import com.raquo.airstream.eventstream.EventStream
 
+// These combine and combineWith methods are available on the EventStream companion object
+// For instance methods of the same name, see CombinableEventStream.scala
+
 private[airstream] trait StaticEventStreamCombineOps {
 
   def combine[T1, T2, T3](

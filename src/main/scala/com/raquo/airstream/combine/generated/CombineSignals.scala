@@ -3,6 +3,8 @@ package com.raquo.airstream.combine.generated
 import com.raquo.airstream.combine.CombineSignalN
 import com.raquo.airstream.signal.Signal
 
+// These are implementations of CombineSignalN used for Signal's `combine` and `combineWith` methods
+
 /** @param combinator Must not throw! */
 class CombineSignal2[T1, T2, Out](
   parent1: Signal[T1],

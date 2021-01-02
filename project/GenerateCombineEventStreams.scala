@@ -16,6 +16,8 @@ case class GenerateCombineEventStreams(
     line("import com.raquo.airstream.combine.CombineEventStreamN")
     line("import com.raquo.airstream.eventstream.EventStream")
     line()
+    line("// These are implementations of CombineEventStreamN used for EventStream's `combine` and `combineWith` methods")
+    line()
     for (n <- from to to) {
       line("/** @param combinator Must not throw! */")
       enter(s"class CombineEventStream${n}[${tupleType(n)}, Out](")

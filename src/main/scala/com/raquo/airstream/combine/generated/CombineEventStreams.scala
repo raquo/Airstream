@@ -3,6 +3,8 @@ package com.raquo.airstream.combine.generated
 import com.raquo.airstream.combine.CombineEventStreamN
 import com.raquo.airstream.eventstream.EventStream
 
+// These are implementations of CombineEventStreamN used for EventStream's `combine` and `combineWith` methods
+
 /** @param combinator Must not throw! */
 class CombineEventStream2[T1, T2, Out](
   parent1: EventStream[T1],
