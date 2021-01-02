@@ -126,21 +126,4 @@ private[airstream] trait StaticSignalCombineOps {
 
   // --
 
-  def combine[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
-    s1: Signal[T1], s2: Signal[T2], s3: Signal[T3], s4: Signal[T4], s5: Signal[T5], s6: Signal[T6], s7: Signal[T7], s8: Signal[T8], s9: Signal[T9], s10: Signal[T10]
-  ): Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)] = {
-    combineWith(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)(Tuple10.apply[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10])
-  }
-
-  /** @param combinator Must not throw! */
-  def combineWith[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, Out](
-    s1: Signal[T1], s2: Signal[T2], s3: Signal[T3], s4: Signal[T4], s5: Signal[T5], s6: Signal[T6], s7: Signal[T7], s8: Signal[T8], s9: Signal[T9], s10: Signal[T10]
-  )(
-    combinator: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) => Out
-  ): Signal[Out] = {
-    new CombineSignal10(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, combinator)
-  }
-
-  // --
-
 }

@@ -248,34 +248,4 @@ class CombinableSignal[A](val signal: Signal[A]) extends AnyVal {
 
   // --
 
-  def combine[T1, T2, T3, T4, T5, T6, T7, T8, T9](
-    s1: Signal[T1], s2: Signal[T2], s3: Signal[T3], s4: Signal[T4], s5: Signal[T5], s6: Signal[T6], s7: Signal[T7], s8: Signal[T8], s9: Signal[T9]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9)]): Signal[c.Composed] = {
-    combineWith(s1, s2, s3, s4, s5, s6, s7, s8, s9)((a, v1, v2, v3, v4, v5, v6, v7, v8, v9) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8, v9)))
-  }
-
-  /** @param combinator Must not throw! */
-  def combineWith[T1, T2, T3, T4, T5, T6, T7, T8, T9, Out](
-    s1: Signal[T1], s2: Signal[T2], s3: Signal[T3], s4: Signal[T4], s5: Signal[T5], s6: Signal[T6], s7: Signal[T7], s8: Signal[T8], s9: Signal[T9]
-  )(
-    combinator: (A, T1, T2, T3, T4, T5, T6, T7, T8, T9) => Out
-  ): Signal[Out] = {
-    new CombineSignal10(signal, s1, s2, s3, s4, s5, s6, s7, s8, s9, combinator)
-  }
-
-  def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9](
-    s1: Signal[T1], s2: Signal[T2], s3: Signal[T3], s4: Signal[T4], s5: Signal[T5], s6: Signal[T6], s7: Signal[T7], s8: Signal[T8], s9: Signal[T9]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9)]): Signal[c.Composed] = {
-    val combinator = (a: A, v1: T1, v2: T2, v3: T3, v4: T4, v5: T5, v6: T6, v7: T7, v8: T8, v9: T9) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8, v9))
-    new SampleCombineSignal10(signal, s1, s2, s3, s4, s5, s6, s7, s8, s9, combinator)
-  }
-
-  def sample[T1, T2, T3, T4, T5, T6, T7, T8, T9](
-    s1: Signal[T1], s2: Signal[T2], s3: Signal[T3], s4: Signal[T4], s5: Signal[T5], s6: Signal[T6], s7: Signal[T7], s8: Signal[T8], s9: Signal[T9]
-  ): Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9)] = {
-    new SampleCombineSignal10[A, T1, T2, T3, T4, T5, T6, T7, T8, T9, (T1, T2, T3, T4, T5, T6, T7, T8, T9)](signal, s1, s2, s3, s4, s5, s6, s7, s8, s9, (_, v1, v2, v3, v4, v5, v6, v7, v8, v9) => (v1, v2, v3, v4, v5, v6, v7, v8, v9))
-  }
-
-  // --
-
 }

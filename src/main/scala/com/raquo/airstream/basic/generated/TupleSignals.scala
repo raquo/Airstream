@@ -109,16 +109,3 @@ class TupleSignal9[T1, T2, T3, T4, T5, T6, T7, T8, T9](val signal: Signal[(T1, T
 
 // --
 
-class TupleSignal10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]) extends AnyVal {
-
-  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) => Out): Signal[Out] = {
-    new MapSignal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10), Out](
-      parent = signal,
-      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10),
-      recover = None
-    )
-  }
-}
-
-// --
-

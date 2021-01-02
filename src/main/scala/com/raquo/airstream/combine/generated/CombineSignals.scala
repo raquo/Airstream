@@ -165,33 +165,4 @@ class CombineSignal9[T1, T2, T3, T4, T5, T6, T7, T8, T9, Out](
   )
 )
 
-/** @param combinator Must not throw! */
-class CombineSignal10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, Out](
-  parent1: Signal[T1],
-  parent2: Signal[T2],
-  parent3: Signal[T3],
-  parent4: Signal[T4],
-  parent5: Signal[T5],
-  parent6: Signal[T6],
-  parent7: Signal[T7],
-  parent8: Signal[T8],
-  parent9: Signal[T9],
-  parent10: Signal[T10],
-  combinator: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) => Out
-) extends CombineSignalN[Any, Out](
-  parents = parent1 :: parent2 :: parent3 :: parent4 :: parent5 :: parent6 :: parent7 :: parent8 :: parent9 :: parent10 :: Nil,
-  combinator = seq => combinator(
-    seq(0).asInstanceOf[T1],
-    seq(1).asInstanceOf[T2],
-    seq(2).asInstanceOf[T3],
-    seq(3).asInstanceOf[T4],
-    seq(4).asInstanceOf[T5],
-    seq(5).asInstanceOf[T6],
-    seq(6).asInstanceOf[T7],
-    seq(7).asInstanceOf[T8],
-    seq(8).asInstanceOf[T9],
-    seq(9).asInstanceOf[T10],
-  )
-)
-
 

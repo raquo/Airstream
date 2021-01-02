@@ -28,7 +28,7 @@ scalacOptions in (Compile, doc) ++= Seq(
 
 val generateTupleCombinatorsFrom = 2
 val generateExtraTupleCombinatorsFrom = 3
-val generateTupleCombinatorsTo = 10
+val generateTupleCombinatorsTo = 9
 
 Compile / sourceGenerators += Def.task {
   Seq.concat(

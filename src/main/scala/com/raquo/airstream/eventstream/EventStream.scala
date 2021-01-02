@@ -317,6 +317,4 @@ object EventStream extends StaticEventStreamCombineOps {
   implicit def toTupleStream8[T1, T2, T3, T4, T5, T6, T7, T8](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8)]): TupleEventStream8[T1, T2, T3, T4, T5, T6, T7, T8] = new TupleEventStream8(stream)
 
   implicit def toTupleStream9[T1, T2, T3, T4, T5, T6, T7, T8, T9](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]): TupleEventStream9[T1, T2, T3, T4, T5, T6, T7, T8, T9] = new TupleEventStream9(stream)
-
-  implicit def toTupleStream10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]): TupleEventStream10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10] = new TupleEventStream10(stream)
 }

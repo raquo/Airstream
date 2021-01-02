@@ -126,21 +126,4 @@ private[airstream] trait StaticEventStreamCombineOps {
 
   // --
 
-  def combine[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
-    s1: EventStream[T1], s2: EventStream[T2], s3: EventStream[T3], s4: EventStream[T4], s5: EventStream[T5], s6: EventStream[T6], s7: EventStream[T7], s8: EventStream[T8], s9: EventStream[T9], s10: EventStream[T10]
-  ): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)] = {
-    combineWith(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)(Tuple10.apply[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10])
-  }
-
-  /** @param combinator Must not throw! */
-  def combineWith[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, Out](
-    s1: EventStream[T1], s2: EventStream[T2], s3: EventStream[T3], s4: EventStream[T4], s5: EventStream[T5], s6: EventStream[T6], s7: EventStream[T7], s8: EventStream[T8], s9: EventStream[T9], s10: EventStream[T10]
-  )(
-    combinator: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) => Out
-  ): EventStream[Out] = {
-    new CombineEventStream10(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, combinator)
-  }
-
-  // --
-
 }

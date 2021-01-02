@@ -273,6 +273,4 @@ object Signal extends StaticSignalCombineOps {
   implicit def toTupleSignal8[T1, T2, T3, T4, T5, T6, T7, T8](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8)]): TupleSignal8[T1, T2, T3, T4, T5, T6, T7, T8] = new TupleSignal8(stream)
 
   implicit def toTupleSignal9[T1, T2, T3, T4, T5, T6, T7, T8, T9](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]): TupleSignal9[T1, T2, T3, T4, T5, T6, T7, T8, T9] = new TupleSignal9(stream)
-
-  implicit def toTupleSignal10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]): TupleSignal10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10] = new TupleSignal10(stream)
 }

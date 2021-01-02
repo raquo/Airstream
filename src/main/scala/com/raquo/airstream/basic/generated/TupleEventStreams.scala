@@ -165,23 +165,3 @@ class TupleEventStream9[T1, T2, T3, T4, T5, T6, T7, T8, T9](val stream: EventStr
 
 // --
 
-class TupleEventStream10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]) extends AnyVal {
-
-  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) => Out): EventStream[Out] = {
-    new MapEventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10), Out](
-      parent = stream,
-      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10),
-      recover = None
-    )
-  }
-
-  def filterN(passes: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)] = {
-    new FilterEventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)](
-      parent = stream,
-      passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10)
-    )
-  }
-}
-
-// --
-
