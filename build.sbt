@@ -4,7 +4,7 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 libraryDependencies ++= Seq(
   "org.scala-js" %%% "scalajs-dom" % "1.1.0",
-  "app.tulz" %%% "tuplez-full-light" % "0.3.0",
+  "app.tulz" %%% "tuplez-full-light" % "0.3.1",
   "org.scalatest" %%% "scalatest" % "3.2.0" % Test
 )
 
@@ -99,14 +99,6 @@ Test / sourceGenerators += Def.task {
     ).run
   )
 }.taskValue
-
-mappings in (Compile, packageSrc) ++= {
-  val base  = (sourceManaged in Compile).value
-  val files = (managedSources in Compile).value
-  files.map { f =>
-    (f, f.relativeTo(base / "scala").get.getPath)
-  }
-}
 
 version in installJsdom := "16.4.0"
 
