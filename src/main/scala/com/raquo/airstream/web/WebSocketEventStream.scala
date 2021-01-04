@@ -27,6 +27,7 @@ import scala.util.{Success, Try}
   * @param parent             stream of outgoing messages
   * @param project            mapping for incoming messages
   * @param url                absolute URL of websocket endpoint
+  * @param protocol           name of the (optional) sub-protocol the server selected
   * @param socketObserver     called when a websocket connection is created
   * @param socketOpenObserver called when a websocket connection is open
   */
@@ -34,6 +35,7 @@ class WebSocketEventStream[I, O] private(
   override val parent: EventStream[I],
   project: dom.MessageEvent => Try[O],
   url: String,
+  protocol: String,
   socketObserver: Observer[dom.WebSocket],
   socketOpenObserver: Observer[dom.WebSocket]
 )(implicit D: Driver[I]) extends EventStream[O] with SingleParentObservable[I, O] with InternalNextErrorObserver[I] {
@@ -53,7 +55,7 @@ class WebSocketEventStream[I, O] private(
 
   override protected[this] def onStart(): Unit = {
 
-    val socket = new dom.WebSocket(url)
+    val socket = new dom.WebSocket(url, protocol)
 
     // update local reference
     jsSocket = socket
@@ -122,19 +124,21 @@ object WebSocketEventStream {
       * @param url absolute URL of websocket endpoint
       */
     final def apply(url: String): EventStream[O] =
-      apply(url, Observer.empty, Observer.empty)
+      apply(url, "", Observer.empty, Observer.empty)
 
     /**
       * Returns a stream that emits messages of type `O` from a [[dom.WebSocket websocket]] connection.
       *
       * @param url                absolute URL of websocket endpoint
+      * @param protocol           name of the (optional) sub-protocol the server selected
       * @param socketObserver     called when a websocket connection is created
       * @param socketOpenObserver called when a websocket connection is open
       */
     final def apply(url: String,
-                socketObserver: Observer[dom.WebSocket],
-                socketOpenObserver: Observer[dom.WebSocket]): EventStream[O] =
-      apply[Void](url, EventStream.empty, socketObserver, socketOpenObserver)
+                    protocol: String,
+                    socketObserver: Observer[dom.WebSocket],
+                    socketOpenObserver: Observer[dom.WebSocket]): EventStream[O] =
+      apply[Void](url, EventStream.empty, protocol, socketObserver, socketOpenObserver)
 
     /**
       * Returns a stream that emits messages of type `O` from a [[dom.WebSocket websocket]] connection.
@@ -146,15 +150,17 @@ object WebSocketEventStream {
       *
       * @param url                absolute URL of websocket endpoint
       * @param writer             stream of outgoing messages
+      * @param protocol           name of the (optional) sub-protocol the server selected
       * @param socketObserver     called when a websocket connection is created
       * @param socketOpenObserver called when a websocket connection is open
       */
     final def apply[I: Driver](
       url: String,
       writer: EventStream[I],
+      protocol: String = "",
       socketObserver: Observer[dom.WebSocket] = Observer.empty,
       socketOpenObserver: Observer[dom.WebSocket] = Observer.empty): EventStream[O] =
-      new WebSocketEventStream(writer, project, url, socketObserver, socketOpenObserver)
+      new WebSocketEventStream(writer, project, url, protocol, socketObserver, socketOpenObserver)
   }
 
   /** streams the data from a [[dom.MessageEvent message]] */
