@@ -18,10 +18,10 @@ object Fetch {
     body: js.UndefOr[dom.Blob | dom.crypto.BufferSource | dom.FormData | String] = js.undefined,
   ): FetchEventStreamBuilder =
     new FetchEventStreamBuilder(
-      url = url,
-      method = method,
-      headers = headers,
-      body = body
+      _url = url,
+      _method = method,
+      _headers = headers,
+      _body = body
     )
 
   @inline def get(
@@ -114,168 +114,168 @@ object Fetch {
 
 
 class FetchEventStreamBuilder(
-  private var url: String,
-  private var method: HttpMethod,
-  private var headers: js.UndefOr[Map[String, String]] = js.undefined,
-  private var body: js.UndefOr[dom.Blob | dom.crypto.BufferSource | dom.FormData | String] = js.undefined,
-  private var referrer: js.UndefOr[String] = js.undefined,
-  private var referrerPolicy: js.UndefOr[ReferrerPolicy] = js.undefined,
-  private var mode: js.UndefOr[RequestMode] = js.undefined,
-  private var credentials: js.UndefOr[RequestCredentials] = js.undefined,
-  private var cache: js.UndefOr[RequestCache] = js.undefined,
-  private var redirect: js.UndefOr[RequestRedirect] = js.undefined,
-  private var integrity: js.UndefOr[String] = js.undefined,
-  private var keepalive: js.UndefOr[Boolean] = js.undefined,
-  private var timeout: js.UndefOr[FiniteDuration] = js.undefined
+  private var _url: String,
+  private var _method: HttpMethod,
+  private var _headers: js.UndefOr[Map[String, String]] = js.undefined,
+  private var _body: js.UndefOr[dom.Blob | dom.crypto.BufferSource | dom.FormData | String] = js.undefined,
+  private var _referrer: js.UndefOr[String] = js.undefined,
+  private var _referrerPolicy: js.UndefOr[ReferrerPolicy] = js.undefined,
+  private var _mode: js.UndefOr[RequestMode] = js.undefined,
+  private var _credentials: js.UndefOr[RequestCredentials] = js.undefined,
+  private var _cache: js.UndefOr[RequestCache] = js.undefined,
+  private var _redirect: js.UndefOr[RequestRedirect] = js.undefined,
+  private var _integrity: js.UndefOr[String] = js.undefined,
+  private var _keepalive: js.UndefOr[Boolean] = js.undefined,
+  private var _timeout: js.UndefOr[FiniteDuration] = js.undefined
 ) {
 
   def raw: FetchEventStream[Response] =
     new FetchEventStream(
-      url = url,
-      method = method,
-      headers = headers,
-      body = body,
-      referrer = referrer,
-      referrerPolicy = referrerPolicy,
-      mode = mode,
-      credentials = credentials,
-      cache = cache,
-      redirect = redirect,
-      integrity = integrity,
-      keepalive = keepalive,
-      timeout = timeout,
+      url = _url,
+      method = _method,
+      headers = _headers,
+      body = _body,
+      referrer = _referrer,
+      referrerPolicy = _referrerPolicy,
+      mode = _mode,
+      credentials = _credentials,
+      cache = _cache,
+      redirect = _redirect,
+      integrity = _integrity,
+      keepalive = _keepalive,
+      timeout = _timeout,
       extract = response => Promise.resolve[Response](response)
     )
 
   def readableStream: FetchEventStream[ReadableStream[Uint8Array]] =
     new FetchEventStream(
-      url = url,
-      method = method,
-      headers = headers,
-      body = body,
-      referrer = referrer,
-      referrerPolicy = referrerPolicy,
-      mode = mode,
-      credentials = credentials,
-      cache = cache,
-      redirect = redirect,
-      integrity = integrity,
-      keepalive = keepalive,
-      timeout = timeout,
+      url = _url,
+      method = _method,
+      headers = _headers,
+      body = _body,
+      referrer = _referrer,
+      referrerPolicy = _referrerPolicy,
+      mode = _mode,
+      credentials = _credentials,
+      cache = _cache,
+      redirect = _redirect,
+      integrity = _integrity,
+      keepalive = _keepalive,
+      timeout = _timeout,
       extract = response => Promise.resolve[ReadableStream[Uint8Array]](response.body)
     )
 
   def text: FetchEventStream[String] =
     new FetchEventStream(
-      url = url,
-      method = method,
-      headers = headers,
-      body = body,
-      referrer = referrer,
-      referrerPolicy = referrerPolicy,
-      mode = mode,
-      credentials = credentials,
-      cache = cache,
-      redirect = redirect,
-      integrity = integrity,
-      keepalive = keepalive,
-      timeout = timeout,
+      url = _url,
+      method = _method,
+      headers = _headers,
+      body = _body,
+      referrer = _referrer,
+      referrerPolicy = _referrerPolicy,
+      mode = _mode,
+      credentials = _credentials,
+      cache = _cache,
+      redirect = _redirect,
+      integrity = _integrity,
+      keepalive = _keepalive,
+      timeout = _timeout,
       extract = _.text()
     )
 
   def json: FetchEventStream[js.Any] =
     new FetchEventStream(
-      url = url,
-      method = method,
-      headers = headers,
-      body = body,
-      referrer = referrer,
-      referrerPolicy = referrerPolicy,
-      mode = mode,
-      credentials = credentials,
-      cache = cache,
-      redirect = redirect,
-      integrity = integrity,
-      keepalive = keepalive,
-      timeout = timeout,
+      url = _url,
+      method = _method,
+      headers = _headers,
+      body = _body,
+      referrer = _referrer,
+      referrerPolicy = _referrerPolicy,
+      mode = _mode,
+      credentials = _credentials,
+      cache = _cache,
+      redirect = _redirect,
+      integrity = _integrity,
+      keepalive = _keepalive,
+      timeout = _timeout,
       extract = _.json()
     )
 
   def blob: FetchEventStream[Blob] =
     new FetchEventStream(
-      url = url,
-      method = method,
-      headers = headers,
-      body = body,
-      referrer = referrer,
-      referrerPolicy = referrerPolicy,
-      mode = mode,
-      credentials = credentials,
-      cache = cache,
-      redirect = redirect,
-      integrity = integrity,
-      keepalive = keepalive,
-      timeout = timeout,
+      url = _url,
+      method = _method,
+      headers = _headers,
+      body = _body,
+      referrer = _referrer,
+      referrerPolicy = _referrerPolicy,
+      mode = _mode,
+      credentials = _credentials,
+      cache = _cache,
+      redirect = _redirect,
+      integrity = _integrity,
+      keepalive = _keepalive,
+      timeout = _timeout,
       extract = _.blob()
     )
 
   def arrayBuffer: FetchEventStream[ArrayBuffer] =
     new FetchEventStream(
-      url = url,
-      method = method,
-      headers = headers,
-      body = body,
-      referrer = referrer,
-      referrerPolicy = referrerPolicy,
-      mode = mode,
-      credentials = credentials,
-      cache = cache,
-      redirect = redirect,
-      integrity = integrity,
-      keepalive = keepalive,
-      timeout = timeout,
+      url = _url,
+      method = _method,
+      headers = _headers,
+      body = _body,
+      referrer = _referrer,
+      referrerPolicy = _referrerPolicy,
+      mode = _mode,
+      credentials = _credentials,
+      cache = _cache,
+      redirect = _redirect,
+      integrity = _integrity,
+      keepalive = _keepalive,
+      timeout = _timeout,
       extract = _.arrayBuffer()
     )
 
   def body(
     body: js.UndefOr[dom.Blob | dom.crypto.BufferSource | dom.FormData | String]
   ): FetchEventStreamBuilder = {
-    this.body = body
+    this._body = body
     this
   }
 
   def referrer(
     referrer: js.UndefOr[String]
   ): FetchEventStreamBuilder = {
-    this.referrer = referrer
+    this._referrer = referrer
     this
   }
 
   def referrerPolicy(
     referrerPolicy: js.UndefOr[ReferrerPolicy]
   ): FetchEventStreamBuilder = {
-    this.referrerPolicy = referrerPolicy
+    this._referrerPolicy = referrerPolicy
     this
   }
 
   def mode(
     mode: js.UndefOr[RequestMode]
   ): FetchEventStreamBuilder = {
-    this.mode = mode
+    this._mode = mode
     this
   }
 
   def credentials(
     credentials: js.UndefOr[RequestCredentials]
   ): FetchEventStreamBuilder = {
-    this.credentials = credentials
+    this._credentials = credentials
     this
   }
 
   def cache(
     cache: js.UndefOr[RequestCache]
   ): FetchEventStreamBuilder = {
-    this.cache = cache
+    this._cache = cache
     this
   }
 
@@ -283,7 +283,7 @@ class FetchEventStreamBuilder(
   def redirect(
     redirect: js.UndefOr[RequestRedirect]
   ): FetchEventStreamBuilder = {
-    this.redirect = redirect
+    this._redirect = redirect
     this
   }
 
@@ -291,7 +291,7 @@ class FetchEventStreamBuilder(
   def integrity(
     integrity: js.UndefOr[String]
   ): FetchEventStreamBuilder = {
-    this.integrity = integrity
+    this._integrity = integrity
     this
   }
 
@@ -299,7 +299,7 @@ class FetchEventStreamBuilder(
   def keepalive(
     keepalive: js.UndefOr[Boolean]
   ): FetchEventStreamBuilder = {
-    this.keepalive = keepalive
+    this._keepalive = keepalive
     this
   }
 
@@ -307,7 +307,7 @@ class FetchEventStreamBuilder(
   def timeout(
     timeout: js.UndefOr[FiniteDuration]
   ): FetchEventStreamBuilder = {
-    this.timeout = timeout
+    this._timeout = timeout
     this
   }
 
@@ -326,19 +326,19 @@ class FetchEventStreamBuilder(
    keepalive: js.UndefOr[Boolean] = js.undefined,
    timeout: js.UndefOr[FiniteDuration] = js.undefined
   ): FetchEventStreamBuilder = {
-    this.url = url
-    this.method = method
-    this.headers = headers
-    this.body = body
-    this.referrer = referrer
-    this.referrerPolicy = referrerPolicy
-    this.mode = mode
-    this.credentials = credentials
-    this.cache = cache
-    this.redirect = redirect
-    this.integrity = integrity
-    this.keepalive = keepalive
-    this.timeout = timeout
+    this._url = url
+    this._method = method
+    this._headers = headers
+    this._body = body
+    this._referrer = referrer
+    this._referrerPolicy = referrerPolicy
+    this._mode = mode
+    this._credentials = credentials
+    this._cache = cache
+    this._redirect = redirect
+    this._integrity = integrity
+    this._keepalive = keepalive
+    this._timeout = timeout
     this
   }
 
