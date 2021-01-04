@@ -1,8 +1,9 @@
 package com.raquo.airstream.web
 
 import org.scalajs.dom
-import org.scalajs.dom.experimental.{ HttpMethod, ReadableStream, ReferrerPolicy, RequestCache, RequestCredentials, RequestMode, RequestRedirect, Response }
-import org.scalajs.dom.Blob
+import org.scalajs.dom.experimental.{
+  HttpMethod, ReadableStream, ReferrerPolicy, RequestCache, RequestCredentials, RequestMode, RequestRedirect, Response
+}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js
@@ -129,7 +130,9 @@ class FetchEventStreamBuilder(
   private var _timeout: js.UndefOr[FiniteDuration] = js.undefined
 ) {
 
-  def raw: FetchEventStream[Response] =
+  def build[A](
+    extract: Response => Promise[A]
+  ): FetchEventStream[A] =
     new FetchEventStream(
       url = _url,
       method = _method,
@@ -144,98 +147,20 @@ class FetchEventStreamBuilder(
       integrity = _integrity,
       keepalive = _keepalive,
       timeout = _timeout,
-      extract = response => Promise.resolve[Response](response)
+      extract = extract
     )
 
-  def readableStream: FetchEventStream[ReadableStream[Uint8Array]] =
-    new FetchEventStream(
-      url = _url,
-      method = _method,
-      headers = _headers,
-      body = _body,
-      referrer = _referrer,
-      referrerPolicy = _referrerPolicy,
-      mode = _mode,
-      credentials = _credentials,
-      cache = _cache,
-      redirect = _redirect,
-      integrity = _integrity,
-      keepalive = _keepalive,
-      timeout = _timeout,
-      extract = response => Promise.resolve[ReadableStream[Uint8Array]](response.body)
-    )
+  @inline def raw: FetchEventStream[Response] = build(response => Promise.resolve[Response](response))
 
-  def text: FetchEventStream[String] =
-    new FetchEventStream(
-      url = _url,
-      method = _method,
-      headers = _headers,
-      body = _body,
-      referrer = _referrer,
-      referrerPolicy = _referrerPolicy,
-      mode = _mode,
-      credentials = _credentials,
-      cache = _cache,
-      redirect = _redirect,
-      integrity = _integrity,
-      keepalive = _keepalive,
-      timeout = _timeout,
-      extract = _.text()
-    )
+  @inline def readableStream: FetchEventStream[ReadableStream[Uint8Array]] = build(response => Promise.resolve[ReadableStream[Uint8Array]](response.body))
 
-  def json: FetchEventStream[js.Any] =
-    new FetchEventStream(
-      url = _url,
-      method = _method,
-      headers = _headers,
-      body = _body,
-      referrer = _referrer,
-      referrerPolicy = _referrerPolicy,
-      mode = _mode,
-      credentials = _credentials,
-      cache = _cache,
-      redirect = _redirect,
-      integrity = _integrity,
-      keepalive = _keepalive,
-      timeout = _timeout,
-      extract = _.json()
-    )
+  @inline def text: FetchEventStream[String] = build(_.text())
 
-  def blob: FetchEventStream[Blob] =
-    new FetchEventStream(
-      url = _url,
-      method = _method,
-      headers = _headers,
-      body = _body,
-      referrer = _referrer,
-      referrerPolicy = _referrerPolicy,
-      mode = _mode,
-      credentials = _credentials,
-      cache = _cache,
-      redirect = _redirect,
-      integrity = _integrity,
-      keepalive = _keepalive,
-      timeout = _timeout,
-      extract = _.blob()
-    )
+  @inline def json: FetchEventStream[js.Any] = build(_.json())
 
-  def arrayBuffer: FetchEventStream[ArrayBuffer] =
-    new FetchEventStream(
-      url = _url,
-      method = _method,
-      headers = _headers,
-      body = _body,
-      referrer = _referrer,
-      referrerPolicy = _referrerPolicy,
-      mode = _mode,
-      credentials = _credentials,
-      cache = _cache,
-      redirect = _redirect,
-      integrity = _integrity,
-      keepalive = _keepalive,
-      timeout = _timeout,
-      extract = _.arrayBuffer()
-    )
+  @inline def blob: FetchEventStream[dom.Blob] = build(_.blob())
+
+  @inline def arrayBuffer: FetchEventStream[ArrayBuffer] = build(_.arrayBuffer())
 
   def body(
     body: js.UndefOr[dom.Blob | dom.crypto.BufferSource | dom.FormData | String]

@@ -5,7 +5,10 @@ import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.web.FetchEventStream.{ FetchError, FetchResponse, FetchTimeout }
 import org.scalajs.dom
 import org.scalajs.dom.experimental.Fetch.fetch
-import org.scalajs.dom.experimental.{ AbortController, ByteString, Headers, HttpMethod, ReferrerPolicy, RequestCache, RequestCredentials, RequestInit, RequestMode, RequestRedirect, Response, ResponseType }
+import org.scalajs.dom.experimental.{
+  AbortController, ByteString, Headers, HttpMethod, ReferrerPolicy, RequestCache,
+  RequestCredentials, RequestInit, RequestMode, RequestRedirect, Response, ResponseType
+}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js
@@ -17,24 +20,23 @@ import scala.concurrent.Future
 class FetchEventStream[A](
   url: String,
   method: HttpMethod,
-  headers: js.UndefOr[Map[String, String]] = js.undefined,
-  body: js.UndefOr[dom.Blob | dom.crypto.BufferSource | dom.FormData | String] = js.undefined,
-  referrer: js.UndefOr[String] = js.undefined,
-  referrerPolicy: js.UndefOr[ReferrerPolicy] = js.undefined,
-  mode: js.UndefOr[RequestMode] = js.undefined,
-  credentials: js.UndefOr[RequestCredentials] = js.undefined,
-  cache: js.UndefOr[RequestCache] = js.undefined,
-  redirect: js.UndefOr[RequestRedirect] = js.undefined,
-  integrity: js.UndefOr[String] = js.undefined,
-  keepalive: js.UndefOr[Boolean] = js.undefined,
-  timeout: js.UndefOr[FiniteDuration] = js.undefined,
+  headers: js.UndefOr[Map[String, String]],
+  body: js.UndefOr[dom.Blob | dom.crypto.BufferSource | dom.FormData | String],
+  referrer: js.UndefOr[String],
+  referrerPolicy: js.UndefOr[ReferrerPolicy],
+  mode: js.UndefOr[RequestMode],
+  credentials: js.UndefOr[RequestCredentials],
+  cache: js.UndefOr[RequestCache],
+  redirect: js.UndefOr[RequestRedirect],
+  integrity: js.UndefOr[String],
+  keepalive: js.UndefOr[Boolean],
+  timeout: js.UndefOr[FiniteDuration],
   extract: Response => Promise[A]
 ) extends EventStream[FetchResponse[A]] {
 
   protected[airstream] val topoRank: Int = 1
 
   private val abortController = new AbortController()
-  private val abortSignal = abortController.signal
   private var timeoutHandle: js.UndefOr[SetTimeoutHandle] = js.undefined
 
   override protected[this] def onStart(): Unit = {
@@ -49,28 +51,25 @@ class FetchEventStream[A](
 
     response.onComplete { result =>
       result.fold[Unit](
-        error => {
-          timeoutHandle.foreach(clearTimeout)
-          new Transaction(fireError(FetchError(error), _))
-        },
+        handleError,
         response => {
           timeoutHandle.foreach(clearTimeout)
+          timeoutHandle = js.undefined
           extract(response).toFuture.onComplete { extracted =>
             extracted.fold[Unit](
-              error => {
-                timeoutHandle.foreach(clearTimeout)
-                new Transaction(fireError(FetchError(error), _))
-              },
+              handleError,
               extracted => {
-                new Transaction(fireValue( FetchResponse[A](
-                  ok = response.ok,
-                  status = response.status,
-                  statusText = response.statusText,
-                  headers = response.headers,
-                  `type` = response.`type`,
-                  data = extracted,
-                  url = response.url,
-                ), _))
+                new Transaction(fireValue(
+                  FetchResponse[A](
+                    ok = response.ok,
+                    status = response.status,
+                    statusText = response.statusText,
+                    headers = response.headers,
+                    `type` = response.`type`,
+                    data = extracted,
+                    url = response.url
+                  ), _
+                ))
               }
             )
           }
@@ -81,6 +80,12 @@ class FetchEventStream[A](
 
   override protected[this] def onStop(): Unit = {
     abortController.abort()
+  }
+
+  private def handleError(error: Throwable): Unit = {
+    timeoutHandle.foreach(clearTimeout)
+    timeoutHandle = js.undefined
+    new Transaction(fireError(FetchError(error), _))
   }
 
   private def sendRequest(): Future[Response] = {
@@ -102,7 +107,7 @@ class FetchEventStream[A](
     init.redirect = redirect
     init.integrity = integrity
     init.keepalive = keepalive
-    init.signal = abortSignal
+    init.signal = abortController.signal
     fetch(url, init).toFuture
   }
 
@@ -112,14 +117,14 @@ object FetchEventStream {
 
   /**
     *
-    * @param data
+    * @param data Contains the extracted response data (string, json, blob, etc)
     * @param `type` Contains the type of the response.
     * @param url Contains the URL of the response.
     * @param ok Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
     * @param status Contains the status code of the response (e.g., 200 for a success).
     * @param statusText Contains the status message corresponding to the status code (e.g., OK for 200).
     * @param headers Contains the Headers object associated with the response.
-    * @tparam A
+    * @tparam A type of the extracted data (String, js.Any for json, dom.Blob, etc)
     */
   final case class FetchResponse[A](
     ok: Boolean,
