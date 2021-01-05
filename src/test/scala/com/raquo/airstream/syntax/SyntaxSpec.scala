@@ -3,7 +3,6 @@ package com.raquo.airstream.syntax
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.eventstream.EventStream
-import com.raquo.airstream.signal.Signal
 
 import scala.concurrent.Future
 
@@ -20,12 +19,12 @@ class SyntaxSpec extends UnitSpec {
 
     locally {
       val tuple4stream = bus.events.combine(bus1.events, bus2.events, bus3.events)
-      val _: EventStream[(Int, Int, Boolean, String)] = tuple4stream
+      tuple4stream: EventStream[(Int, Int, Boolean, String)]
     }
 
     locally {
       val tuple4stream = bus.events.combineWith(bus1.events, bus2.events, bus3.events)(Foo)
-      val _: EventStream[Foo] = tuple4stream
+      tuple4stream: EventStream[Foo]
     }
 
     locally {
@@ -34,7 +33,7 @@ class SyntaxSpec extends UnitSpec {
         bus2.events.startWith(false),
         bus3.events.startWith("")
       ).mapN(Foo)
-      val _: EventStream[Foo] = fooStream
+      fooStream: EventStream[Foo]
     }
   }
 
@@ -49,12 +48,12 @@ class SyntaxSpec extends UnitSpec {
 
     locally {
       val combinedStream = EventStream.combine(bus1.events, bus2.events)
-      val _: EventStream[(Int, Boolean)] = combinedStream
+      combinedStream: EventStream[(Int, Boolean)]
     }
 
     locally {
       val combinedStream = EventStream.combineWith(bus.events, bus1.events, bus2.events, bus3.events)(Foo)
-      val _: EventStream[Foo] = combinedStream
+      combinedStream: EventStream[Foo]
     }
   }
 
@@ -64,12 +63,12 @@ class SyntaxSpec extends UnitSpec {
 
     locally {
       val flatStream = bus.events.flatMap(a => Future.successful(a))
-      val _: EventStream[Int] = flatStream
+      flatStream: EventStream[Int]
     }
 
     locally {
       val flatSignal = bus.events.startWith(0).flatMap(a => Future.successful(a))
-      val _: Signal[Int] = flatSignal
+      flatSignal: EventStream[Int]
     }
   }
 }
