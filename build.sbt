@@ -15,11 +15,19 @@ val filterScalacOptions = { options: Seq[String] =>
   ))
 }
 
+val filterTestScalacOptions = { options: Seq[String] =>
+  options.filterNot { o =>
+    o.startsWith("-Ywarn-unused") || o.startsWith("-Wunused")
+  }
+}
+
 scalaVersion := "2.13.4"
 
 crossScalaVersions := Seq("2.12.12", "2.13.4")
 
 scalacOptions ~= filterScalacOptions
+
+scalacOptions in Test ~= filterTestScalacOptions
 
 // @TODO[Build] Why does this need " in (Compile, doc)" while other options don't?
 scalacOptions in (Compile, doc) ++= Seq(
