@@ -612,7 +612,7 @@ val $request = AjaxEventStream.get(
   progressObserver = progressObserver
 )
 
-val $bytesLoaded = $progress.map2((xhr, ev) => ev.loaded)
+val $bytesLoaded = $progress.mapN((xhr, ev) => ev.loaded)
 ```
 
 In a similar manner, you can pass a `requestObserver` that will be called with the newly created `dom.XMLHttpRequest` just before the request is sent. This way you can save the pending request into a Var and e.g. `abort()` it if needed.

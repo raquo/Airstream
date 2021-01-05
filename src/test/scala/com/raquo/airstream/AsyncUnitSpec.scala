@@ -6,7 +6,7 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.scalajs.js
 import scala.util.Try
 
-class AsyncUnitSpec extends AsyncFunSpec with Matchers {
+abstract class AsyncUnitSpec extends AsyncFunSpec with Matchers {
 
   implicit override def executionContext: ExecutionContext = scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 

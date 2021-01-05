@@ -1,13 +1,17 @@
 package com.raquo.airstream.eventstream
 
+import com.raquo.airstream.basic.{FilterEventStream, MapEventStream}
+import com.raquo.airstream.basic.generated._
+import com.raquo.airstream.combine.CombineEventStreamN
+import com.raquo.airstream.combine.generated._
 import com.raquo.airstream.core.AirstreamError.ObserverError
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.eventbus.EventBus
-import com.raquo.airstream.features.CombineObservable
 import com.raquo.airstream.signal.{FoldLeftSignal, Signal, SignalFromEventStream}
 
+import scala.annotation.unused
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
@@ -90,30 +94,6 @@ trait EventStream[+A] extends Observable[A] {
 
   def compose[B](operator: EventStream[A] => EventStream[B]): EventStream[B] = {
     operator(this)
-  }
-
-  def combineWith[AA >: A, B](otherEventStream: EventStream[B]): EventStream[(AA, B)] = {
-    new CombineEventStream2[AA, B, (AA, B)](
-      parent1 = this,
-      parent2 = otherEventStream,
-      combinator = CombineObservable.guardedCombinator((_, _))
-    )
-  }
-
-  def withCurrentValueOf[B](signal: Signal[B]): EventStream[(A, B)] = {
-    new SampleCombineEventStream2[A, B, (A, B)](
-      samplingStream = this,
-      sampledSignal = signal,
-      combinator = CombineObservable.guardedCombinator((_, _))
-    )
-  }
-
-  def sample[B](signal: Signal[B]): EventStream[B] = {
-    new SampleCombineEventStream2[A, B, B](
-      samplingStream = this,
-      sampledSignal = signal,
-      combinator = CombineObservable.guardedCombinator((_, sampledValue) => sampledValue)
-    )
   }
 
   /** See docs for [[MapEventStream]]
@@ -217,7 +197,7 @@ object EventStream {
     new FutureEventStream[A](future, emitFutureIfCompleted)
   }
 
-  @inline def fromJsPromise[A](promise: js.Promise[A]): EventStream[A] = {
+  def fromJsPromise[A](promise: js.Promise[A]): EventStream[A] = {
     fromFuture(promise.toFuture)
   }
 
@@ -275,26 +255,47 @@ object EventStream {
     )
   }
 
-  @inline def combine[A, B](
-    stream1: EventStream[A],
-    stream2: EventStream[B]
-  ): EventStream[(A, B)] = {
-    stream1.combineWith(stream2)
+  def sequence[A](streams: Seq[EventStream[A]]): EventStream[Seq[A]] = {
+    new CombineEventStreamN[A, Seq[A]](streams, identity)
   }
+
+  @inline def combineSeq[A](streams: Seq[EventStream[A]]): EventStream[Seq[A]] = sequence(streams)
 
   def merge[A](streams: EventStream[A]*): EventStream[A] = {
     new MergeEventStream[A](streams)
   }
 
-  implicit def toTuple2Stream[A, B](stream: EventStream[(A, B)]): Tuple2EventStream[A, B] = {
-    new Tuple2EventStream(stream)
+  @inline def mergeSeq[A](streams: Seq[EventStream[A]]): EventStream[A] = {
+    merge(streams: _*) // @TODO[Performance] Does _* introduce any overhead in Scala.js?
   }
 
-  implicit def toSplittableStream[M[_], Input](stream: EventStream[M[Input]]): SplittableEventStream[M, Input] = {
-    new SplittableEventStream(stream)
-  }
+  /** Provides methods on EventStream companion object: combine, combineWith */
+  implicit def toEventStreamCompanionCombineSyntax(@unused s: EventStream.type): StaticEventStreamCombineOps.type = StaticEventStreamCombineOps
 
-  implicit def toSplittableOneStream[A](stream: EventStream[A]): SplittableOneEventStream[A] = {
-    new SplittableOneEventStream(stream)
-  }
+  /** Provides methods on EventStream: combine, combineWith, withCurrentValueOf, sample */
+  implicit def toCombinableStream[A](stream: EventStream[A]): CombinableEventStream[A] = new CombinableEventStream(stream)
+
+  /** Provides methods on EventStream: split, splitOneIntoSignals */
+  implicit def toSplittableStream[M[_], Input](stream: EventStream[M[Input]]): SplittableEventStream[M, Input] = new SplittableEventStream(stream)
+
+  /** Provides methods on EventStream: splitOne, splitOneIntoSignals */
+  implicit def toSplittableOneStream[A](stream: EventStream[A]): SplittableOneEventStream[A] = new SplittableOneEventStream(stream)
+
+  // toTupleStreamN conversions provide mapN and filterN methods on Signals of tuples
+
+  implicit def toTupleStream2[T1, T2](stream: EventStream[(T1, T2)]): TupleEventStream2[T1, T2] = new TupleEventStream2(stream)
+
+  implicit def toTupleStream3[T1, T2, T3](stream: EventStream[(T1, T2, T3)]): TupleEventStream3[T1, T2, T3] = new TupleEventStream3(stream)
+
+  implicit def toTupleStream4[T1, T2, T3, T4](stream: EventStream[(T1, T2, T3, T4)]): TupleEventStream4[T1, T2, T3, T4] = new TupleEventStream4(stream)
+
+  implicit def toTupleStream5[T1, T2, T3, T4, T5](stream: EventStream[(T1, T2, T3, T4, T5)]): TupleEventStream5[T1, T2, T3, T4, T5] = new TupleEventStream5(stream)
+
+  implicit def toTupleStream6[T1, T2, T3, T4, T5, T6](stream: EventStream[(T1, T2, T3, T4, T5, T6)]): TupleEventStream6[T1, T2, T3, T4, T5, T6] = new TupleEventStream6(stream)
+
+  implicit def toTupleStream7[T1, T2, T3, T4, T5, T6, T7](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7)]): TupleEventStream7[T1, T2, T3, T4, T5, T6, T7] = new TupleEventStream7(stream)
+
+  implicit def toTupleStream8[T1, T2, T3, T4, T5, T6, T7, T8](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8)]): TupleEventStream8[T1, T2, T3, T4, T5, T6, T7, T8] = new TupleEventStream8(stream)
+
+  implicit def toTupleStream9[T1, T2, T3, T4, T5, T6, T7, T8, T9](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]): TupleEventStream9[T1, T2, T3, T4, T5, T6, T7, T8, T9] = new TupleEventStream9(stream)
 }

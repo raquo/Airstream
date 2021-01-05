@@ -1,5 +1,7 @@
 package com.raquo.airstream.eventstream
 
+import com.raquo.airstream.basic.FilterEventStream
+
 import scala.scalajs.js
 
 // @TODO[Test] Verify throttling
