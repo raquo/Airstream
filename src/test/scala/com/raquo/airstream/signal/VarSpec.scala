@@ -666,7 +666,6 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     val v = Var(List(1))
 
     val adder = v.tryUpdater[Int] { (acc, newItem) =>
-      println(acc)
       acc
         .map(_ :+ newItem)
         .recover { case `resetErr` => List(0) }

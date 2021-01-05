@@ -124,6 +124,12 @@ trait Observable[+A] {
     })
   }
 
+  /** Print when the observable has just started or stopped */
+  def debugLogLifecycle(prefix: String): Self[A]
+
+  /** Run callbacks when the observable has just started or stopped */
+  def debugSpyLifecycle(start: () => Unit = () => (), stop: () => Unit = () => ()): Self[A]
+
   // @TODO[API] I don't like the Option[O] output type here very much. We should consider a sentinel error object instead (need to check performance). Or maybe add a recoverOrSkip method or something?
   /** @param pf Note: guarded against exceptions */
   def recover[B >: A](pf: PartialFunction[Throwable, Option[B]]): Self[B]

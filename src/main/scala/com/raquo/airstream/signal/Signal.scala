@@ -7,6 +7,7 @@ import com.raquo.airstream.combine.generated.{CombinableSignal, StaticSignalComb
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
+import com.raquo.airstream.debug.DebugLifecycleSignal
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.ownership.Owner
 
@@ -95,6 +96,32 @@ trait Signal[+A] extends Observable[A] {
   }
 
   override def recoverToTry: Signal[Try[A]] = map(Try(_)).recover[Try[A]] { case err => Some(Failure(err)) }
+
+  /** Print when the signal has just started or stopped */
+  override def debugLogLifecycle(prefix: String = "signal"): Signal[A] = {
+    debugSpyLifecycle(
+      () => println(s"$prefix started"),
+      () => println(s"$prefix stopped"),
+      initial => println(s"$prefix initial value: $initial"),
+    )
+  }
+
+  /** Run callbacks when the signal has just started or stopped */
+  override def debugSpyLifecycle(
+    start: () => Unit = () => (),
+    stop: () => Unit = () => ()
+  ): Signal[A] = {
+    new DebugLifecycleSignal[A](this, start, stop, _ => ())
+  }
+
+  /** Run callbacks when the signal has just started or stopped or evaluated its initial value */
+  def debugSpyLifecycle(
+    start: () => Unit,
+    stop: () => Unit,
+    initial: Try[A] => Unit
+  ): Signal[A] = {
+    new DebugLifecycleSignal[A](this, start, stop, initial)
+  }
 
   /** Add a noop observer to this signal to ensure that it's started.
     * This lets you access .now and .tryNow on the resulting StrictSignal.
