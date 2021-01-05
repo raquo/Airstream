@@ -165,7 +165,7 @@ object EventStream {
 
   /** @param emitOnce if true, the event will be emitted at most one time.
     *                 If false, the event will be emitted every time the stream is started. */
-  def fromSeq[A](events: Seq[A], emitOnce: Boolean): EventStream[A] = {
+  def fromSeq[A](events: Seq[A], emitOnce: Boolean = false): EventStream[A] = {
     fromCustomSource[A](
       shouldStart = startIndex => if (emitOnce) startIndex == 1 else true,
       start = (fireEvent, _, _, _) => events.foreach(fireEvent),
@@ -175,7 +175,7 @@ object EventStream {
 
   /** @param emitOnce if true, the event will be emitted at most one time.
     *                 If false, the event will be emitted every time the stream is started. */
-  def fromValue[A](event: A, emitOnce: Boolean): EventStream[A] = {
+  def fromValue[A](event: A, emitOnce: Boolean = false): EventStream[A] = {
     fromCustomSource[A](
       shouldStart = startIndex => if (emitOnce) startIndex == 1 else true,
       start = (fireEvent, _, _, _) => fireEvent(event),
@@ -185,7 +185,7 @@ object EventStream {
 
   /** @param emitOnce if true, the event will be emitted at most one time.
     *                 If false, the event will be emitted every time the stream is started. */
-  def fromTry[A](value: Try[A], emitOnce: Boolean): EventStream[A] = {
+  def fromTry[A](value: Try[A], emitOnce: Boolean = false): EventStream[A] = {
     fromCustomSource[A](
       shouldStart = startIndex => if (emitOnce) startIndex == 1 else true,
       start = (fireEvent, fireError, _, _) => value.fold(fireError, fireEvent),
