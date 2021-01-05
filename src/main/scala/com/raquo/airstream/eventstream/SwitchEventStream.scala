@@ -53,11 +53,16 @@ class SwitchEventStream[I, O](
   )
 
   override protected[airstream] def onNext(nextValue: I, transaction: Transaction): Unit = {
-    removeInternalObserverFromCurrentEventStream()
     val nextStream = makeStream(nextValue)
-    maybeCurrentEventStream = Success(nextStream)
-    // If we're receiving events, this stream is started, so no need to check for that
-    nextStream.addInternalObserver(internalEventObserver)
+    val isSameStream = maybeCurrentEventStream.exists { currentStream =>
+      currentStream.isSuccess && (currentStream.get eq nextStream)
+    }
+    if (!isSameStream) {
+      removeInternalObserverFromCurrentEventStream()
+      maybeCurrentEventStream = Success(nextStream)
+      // If we're receiving events, this stream is started, so no need to check for that
+      nextStream.addInternalObserver(internalEventObserver)
+    }
   }
 
   override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
