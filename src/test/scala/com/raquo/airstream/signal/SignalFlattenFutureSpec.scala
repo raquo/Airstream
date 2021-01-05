@@ -3,7 +3,6 @@ package com.raquo.airstream.signal
 import com.raquo.airstream.AsyncUnitSpec
 import com.raquo.airstream.core.Observer
 import com.raquo.airstream.eventbus.EventBus
-import com.raquo.airstream.features.FlattenStrategy.SwitchFutureStrategy
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import org.scalatest.Assertion
 
@@ -12,7 +11,9 @@ import scala.concurrent.{Future, Promise}
 
 class SignalFlattenFutureSpec extends AsyncUnitSpec {
 
-  describe("Signal.flatten(SwitchFutureStrategy)") {
+  // Note: default strategy is SwitchFutureStrategy
+
+  describe("Signal.flatten") {
 
     it("initial unresolved future results in an async event") {
 
@@ -35,7 +36,7 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
       val promise2 = makePromise()
 
       val futureBus = new EventBus[Future[Int]]()
-      val stream = futureBus.events.toSignal(promise0.future).flatten(SwitchFutureStrategy)
+      val stream = futureBus.events.toSignal(promise0.future).flatten
 
       stream.addObserver(obs)
 
@@ -82,7 +83,7 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
 
       val futureBus = new EventBus[Future[Int]]()
 
-      val stream = futureBus.events.toSignal(promise0.future).flatten(SwitchFutureStrategy)
+      val stream = futureBus.events.toSignal(promise0.future).flatten
       promise0.success(-100)
 
       stream.addObserver(obs)
@@ -131,7 +132,7 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
       promise0.success(-100)
 
       delay {
-        val stream = futureBus.events.toSignal(promise0.future).flatten(SwitchFutureStrategy)
+        val stream = futureBus.events.toSignal(promise0.future).flatten
         stream.addObserver(obs)
 
       }.flatMap { _ =>

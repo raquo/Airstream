@@ -1,8 +1,11 @@
-package com.raquo.airstream.core
+package com.raquo.airstream.syntax
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.eventstream.EventStream
+import com.raquo.airstream.signal.Signal
+
+import scala.concurrent.Future
 
 class SyntaxSpec extends UnitSpec {
 
@@ -52,6 +55,21 @@ class SyntaxSpec extends UnitSpec {
     locally {
       val combinedStream = EventStream.combineWith(bus.events, bus1.events, bus2.events, bus3.events)(Foo)
       val _: EventStream[Foo] = combinedStream
+    }
+  }
+
+  it("SwitchFutureStrategy") {
+
+    val bus = new EventBus[Int]
+
+    locally {
+      val flatStream = bus.events.flatMap(a => Future.successful(a))
+      val _: EventStream[Int] = flatStream
+    }
+
+    locally {
+      val flatSignal = bus.events.startWith(0).flatMap(a => Future.successful(a))
+      val _: Signal[Int] = flatSignal
     }
   }
 }

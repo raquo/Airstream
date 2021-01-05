@@ -2,12 +2,13 @@ package com.raquo.airstream.core
 
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.features.FlattenStrategy
-import com.raquo.airstream.features.FlattenStrategy.{SwitchSignalStrategy, SwitchStreamStrategy}
+import com.raquo.airstream.features.FlattenStrategy.{SwitchFutureStrategy, SwitchSignalStrategy, SwitchStreamStrategy}
 import com.raquo.airstream.ownership.{Owner, Subscription}
 import com.raquo.airstream.signal.Signal
 import org.scalajs.dom
 
 import scala.annotation.unused
+import scala.concurrent.Future
 import scala.scalajs.js
 import scala.util.Try
 
@@ -254,6 +255,8 @@ object Observable {
   implicit val switchStreamStrategy: FlattenStrategy[Observable, EventStream, EventStream] = SwitchStreamStrategy
 
   implicit val switchSignalStrategy: FlattenStrategy[Signal, Signal, Signal] = SwitchSignalStrategy
+
+  implicit val switchFutureStrategy: FlattenStrategy[Observable, Future, EventStream] = SwitchFutureStrategy
 
   // @TODO[Elegance] Maybe use implicit evidence on a method instead?
   implicit class MetaObservable[A, Outer[+_] <: Observable[_], Inner[_]](
