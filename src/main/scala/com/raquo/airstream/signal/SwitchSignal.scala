@@ -32,16 +32,19 @@ class SwitchSignal[A](
   )
 
   override protected[airstream] def onTry(nextSignalTry: Try[Signal[A]], transaction: Transaction): Unit = {
-    removeInternalObserverFromCurrentSignal()
-    currentSignalTry = nextSignalTry
+    val isSameSignal = nextSignalTry.isSuccess && nextSignalTry == currentSignalTry
+    if (!isSameSignal) {
+      removeInternalObserverFromCurrentSignal()
+      currentSignalTry = nextSignalTry
 
-    // If we're receiving events, this signal is started, so no need to check for that
-    nextSignalTry.foreach { nextSignal =>
-      nextSignal.addInternalObserver(internalEventObserver)
+      // If we're receiving events, this signal is started, so no need to check for that
+      nextSignalTry.foreach { nextSignal =>
+        nextSignal.addInternalObserver(internalEventObserver)
+      }
+      //println(s"> init trx from SwitchSignal.onTry")
+      // Update this signal's value with nextSignal's current value (or an error if we don't have nextSignal)
+      new Transaction(fireTry(nextSignalTry.flatMap(_.tryNow()), _))
     }
-    //println(s"> init trx from SwitchSignal.onTry")
-    // Update this signal's value with nextSignal's current value (or an error if we don't have nextSignal)
-    new Transaction(fireTry(nextSignalTry.flatMap(_.tryNow()), _))
   }
 
   override protected[this] def onStart(): Unit = {
