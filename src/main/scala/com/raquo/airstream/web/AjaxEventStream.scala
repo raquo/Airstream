@@ -2,7 +2,7 @@ package com.raquo.airstream.web
 
 import com.raquo.airstream.core.{Observer, Transaction}
 import com.raquo.airstream.eventstream.EventStream
-import com.raquo.airstream.web.AjaxEventStream.{AjaxAbort, AjaxError, AjaxStreamException, AjaxTimeout}
+import com.raquo.airstream.web.AjaxEventStream._
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -11,9 +11,9 @@ import scala.scalajs.js
 
 /**
   * [[AjaxEventStream]] performs an HTTP request and emits an [[dom.XMLHttpRequest]] on success,
-  * or an [[AjaxStreamException]] error (AjaxError | AjaxTimeout | AjaxAbort) on failure.
+  * or an [[AjaxStreamError]] error (AjaxStatusError | AjaxNetworkError | AjaxTimeout | AjaxAbort) on failure.
   *
-  * Acceptable HTTP response status codes are 2xx and 304, others result in AjaxError.
+  * Acceptable HTTP response status codes are 2xx and 304, others result in AjaxStatusError.
   *
   * The network request is only performed when the stream is started.
   *
@@ -38,6 +38,7 @@ class AjaxEventStream(
   headers: Map[String, String],
   withCredentials: Boolean,
   responseType: String,
+  isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
   requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
   progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
   readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
@@ -63,10 +64,10 @@ class AjaxEventStream(
       if (pendingRequest.contains(request)) {
         pendingRequest = None
         val status = request.status
-        if ((status >= 200 && status < 300) || status == 304)
+        if (isStatusCodeSuccess(status))
           new Transaction(fireValue(request, _))
         else
-          new Transaction(fireError(AjaxError(request, s"Ajax request failed: $status ${request.statusText}"), _))
+          new Transaction(fireError(AjaxStatusError(request, status, s"Ajax request failed: $status ${request.statusText}"), _))
       }
     }
 
@@ -78,7 +79,7 @@ class AjaxEventStream(
         //  - `ev` is not actually a dom.ErrorEvent, but a useless dom.ProgressEvent
         //  - Reasons could be network, DNS, CORS, etc.
 
-        new Transaction(fireError(AjaxError(request, s"Ajax request failed: unknown reason."), _))
+        new Transaction(fireError(AjaxNetworkError(request, s"Ajax request failed: unknown network reason."), _))
       }
     }
 
@@ -129,7 +130,7 @@ class AjaxEventStream(
     */
   lazy val completeEvents: EventStream[dom.XMLHttpRequest] = {
     this.recover {
-      case err: AjaxStreamException => Some(err.xhr)
+      case err: AjaxStreamError => Some(err.xhr)
     }
   }
 
@@ -141,13 +142,15 @@ class AjaxEventStream(
 object AjaxEventStream {
 
   /** A more detailed version of [[dom.ext.AjaxException]] (no relation) */
-  sealed abstract class AjaxStreamException(val xhr: dom.XMLHttpRequest, message: String) extends Exception(message)
+  sealed abstract class AjaxStreamError(val xhr: dom.XMLHttpRequest, message: String) extends Exception(message)
 
-  final case class AjaxError(override val xhr: dom.XMLHttpRequest, message: String) extends AjaxStreamException(xhr, message)
+  final case class AjaxStatusError(override val xhr: dom.XMLHttpRequest, val status: Int, message: String) extends AjaxStreamError(xhr, message)
 
-  final case class AjaxTimeout(override val xhr: dom.XMLHttpRequest) extends AjaxStreamException(xhr, "Ajax request timed out.")
+  final case class AjaxNetworkError(override val xhr: dom.XMLHttpRequest, message: String) extends AjaxStreamError(xhr, message)
 
-  final case class AjaxAbort(override val xhr: dom.XMLHttpRequest) extends AjaxStreamException(xhr, "Ajax request was aborted.")
+  final case class AjaxTimeout(override val xhr: dom.XMLHttpRequest) extends AjaxStreamError(xhr, "Ajax request timed out.")
+
+  final case class AjaxAbort(override val xhr: dom.XMLHttpRequest) extends AjaxStreamError(xhr, "Ajax request was aborted.")
 
   // @TODO[API] I'm not sure that creating an Ajax request should result in a stream of responses.
   //  - Another alternative is that it should result in an object that exposes several streams, e.g. responseStream,
@@ -168,6 +171,7 @@ object AjaxEventStream {
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = "",
+    isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
     requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
     progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
     readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
@@ -180,6 +184,7 @@ object AjaxEventStream {
       headers,
       withCredentials,
       responseType,
+      isStatusCodeSuccess,
       requestObserver,
       progressObserver,
       readyStateChangeObserver
@@ -198,6 +203,7 @@ object AjaxEventStream {
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = "",
+    isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
     requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
     progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
     readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
@@ -210,6 +216,7 @@ object AjaxEventStream {
       headers,
       withCredentials,
       responseType,
+      isStatusCodeSuccess,
       requestObserver,
       progressObserver,
       readyStateChangeObserver
@@ -228,6 +235,7 @@ object AjaxEventStream {
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = "",
+    isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
     requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
     progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
     readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
@@ -240,6 +248,7 @@ object AjaxEventStream {
       headers,
       withCredentials,
       responseType,
+      isStatusCodeSuccess,
       requestObserver,
       progressObserver,
       readyStateChangeObserver
@@ -258,6 +267,7 @@ object AjaxEventStream {
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = "",
+    isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
     requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
     progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
     readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
@@ -270,6 +280,7 @@ object AjaxEventStream {
       headers,
       withCredentials,
       responseType,
+      isStatusCodeSuccess,
       requestObserver,
       progressObserver,
       readyStateChangeObserver
@@ -288,6 +299,7 @@ object AjaxEventStream {
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = "",
+    isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
     requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
     progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
     readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
@@ -300,6 +312,7 @@ object AjaxEventStream {
       headers,
       withCredentials,
       responseType,
+      isStatusCodeSuccess,
       requestObserver,
       progressObserver,
       readyStateChangeObserver
@@ -338,5 +351,9 @@ object AjaxEventStream {
   ): Unit = {
     request.open(method, url)
     if (data == null) request.send() else request.send(data)
+  }
+
+  def defaultIsStatusCodeSuccess(status: Int): Boolean = {
+    (status >= 200 && status < 300) || status == 304
   }
 }
