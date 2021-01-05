@@ -18,7 +18,7 @@ case class GenerateStaticSignalCombineOps(
     line("// These combine and combineWith methods are available on the Signal companion object")
     line("// For instance methods of the same name, see CombinableSignal.scala")
     line()
-    enter(s"private[airstream] trait StaticSignalCombineOps {")
+    enter(s"object StaticSignalCombineOps {")
     line()
     for (n <- from to to) {
       enter(s"def combine[${tupleType(n)}](")

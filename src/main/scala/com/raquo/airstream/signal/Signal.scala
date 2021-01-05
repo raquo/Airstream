@@ -3,13 +3,14 @@ package com.raquo.airstream.signal
 import com.raquo.airstream.basic.generated._
 import com.raquo.airstream.basic.{MapEventStream, MapSignal}
 import com.raquo.airstream.combine.CombineSignalN
-import com.raquo.airstream.combine.generated.{CombinableSignal, CombineSignal2, StaticSignalCombineOps}
+import com.raquo.airstream.combine.generated.{CombinableSignal, StaticSignalCombineOps}
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.ownership.Owner
 
+import scala.annotation.unused
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
@@ -185,7 +186,7 @@ trait Signal[+A] extends Observable[A] {
   }
 }
 
-object Signal extends StaticSignalCombineOps {
+object Signal {
 
   def fromValue[A](value: A): Val[A] = Val(value)
 
@@ -224,28 +225,8 @@ object Signal extends StaticSignalCombineOps {
 
   @inline def combineSeq[A](signals: Seq[Signal[A]]): Signal[Seq[A]] = sequence(signals)
 
-  // Note: methods to combine up to 10 signals are available:
-  // a) in parent trait StaticSignalCombineOps, and
-  // b) on instances of Signal implicitly (see toCombinableSignal below)
-  def combine[T1, T2](
-    signal1: Signal[T1],
-    signal2: Signal[T2]
-  ): Signal[(T1, T2)] = {
-    combineWith(signal1, signal2)(Tuple2.apply[T1, T2])
-  }
-
-  // Note: methods to combineWith up to 10 signals are available:
-  // a) in parent trait StaticSignalCombineOps, and
-  // b) on instances of Signal implicitly (see toCombinableSignal below)
-  /** @param combinator Must not throw! */
-  def combineWith[T1, T2, Out](
-    signal1: Signal[T1],
-    signal2: Signal[T2]
-  )(
-    combinator: (T1, T2) => Out
-  ): Signal[Out] = {
-    new CombineSignal2(signal1, signal2, combinator)
-  }
+  /** Provides methods on Signal companion object: combine, combineWith */
+  implicit def toSignalCompanionCombineSyntax(@unused s: Signal.type): StaticSignalCombineOps.type = StaticSignalCombineOps
 
   /** Provides methods on Signal: combine, combineWith, withCurrentValueOf, sample */
   implicit def toCombinableSignal[A](signal: Signal[A]): CombinableSignal[A] = new CombinableSignal(signal)

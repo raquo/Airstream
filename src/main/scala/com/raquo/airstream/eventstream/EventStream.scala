@@ -11,6 +11,7 @@ import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.signal.{FoldLeftSignal, Signal, SignalFromEventStream}
 
+import scala.annotation.unused
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
@@ -151,7 +152,7 @@ trait EventStream[+A] extends Observable[A] {
   }
 }
 
-object EventStream extends StaticEventStreamCombineOps {
+object EventStream {
 
   /** Event stream that never emits anything */
   val empty: EventStream[Nothing] = {
@@ -260,29 +261,6 @@ object EventStream extends StaticEventStreamCombineOps {
 
   @inline def combineSeq[A](streams: Seq[EventStream[A]]): EventStream[Seq[A]] = sequence(streams)
 
-  // Note: methods to combine up to 10 streams are available:
-  // a) in parent trait StaticEventStreamCombineOps, and
-  // b) on instances of EventStream implicitly (see toCombinableStream below)
-  def combine[T1, T2](
-    stream1: EventStream[T1],
-    stream2: EventStream[T2]
-  ): EventStream[(T1, T2)] = {
-    combineWith(stream1, stream2)(Tuple2.apply[T1, T2])
-  }
-
-  // Note: methods to combineWith up to 10 signals are available:
-  // a) in parent trait StaticEventStreamCombineOps, and
-  // b) on instances of EventStream implicitly (see toCombinableStream below)
-  /** @param combinator Must not throw! */
-  def combineWith[T1, T2, Out](
-    stream1: EventStream[T1],
-    stream2: EventStream[T2]
-  )(
-    combinator: (T1, T2) => Out
-  ): EventStream[Out] = {
-    new CombineEventStream2(stream1, stream2, combinator)
-  }
-
   def merge[A](streams: EventStream[A]*): EventStream[A] = {
     new MergeEventStream[A](streams)
   }
@@ -290,6 +268,9 @@ object EventStream extends StaticEventStreamCombineOps {
   @inline def mergeSeq[A](streams: Seq[EventStream[A]]): EventStream[A] = {
     merge(streams: _*) // @TODO[Performance] Does _* introduce any overhead in Scala.js?
   }
+
+  /** Provides methods on EventStream companion object: combine, combineWith */
+  implicit def toEventStreamCompanionCombineSyntax(@unused s: EventStream.type): StaticEventStreamCombineOps.type = StaticEventStreamCombineOps
 
   /** Provides methods on EventStream: combine, combineWith, withCurrentValueOf, sample */
   implicit def toCombinableStream[A](stream: EventStream[A]): CombinableEventStream[A] = new CombinableEventStream(stream)

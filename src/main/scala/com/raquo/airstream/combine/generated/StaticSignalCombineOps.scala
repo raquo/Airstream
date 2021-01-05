@@ -5,7 +5,24 @@ import com.raquo.airstream.signal.Signal
 // These combine and combineWith methods are available on the Signal companion object
 // For instance methods of the same name, see CombinableSignal.scala
 
-private[airstream] trait StaticSignalCombineOps {
+object StaticSignalCombineOps {
+
+  def combine[T1, T2](
+    s1: Signal[T1], s2: Signal[T2]
+  ): Signal[(T1, T2)] = {
+    combineWith(s1, s2)(Tuple2.apply[T1, T2])
+  }
+
+  /** @param combinator Must not throw! */
+  def combineWith[T1, T2, Out](
+    s1: Signal[T1], s2: Signal[T2]
+  )(
+    combinator: (T1, T2) => Out
+  ): Signal[Out] = {
+    new CombineSignal2(s1, s2, combinator)
+  }
+
+  // --
 
   def combine[T1, T2, T3](
     s1: Signal[T1], s2: Signal[T2], s3: Signal[T3]
