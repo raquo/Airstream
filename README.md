@@ -975,6 +975,7 @@ Aside from the `def flatMap[...](implicit strategy: FlattenStrategy[...])` metho
 * The flattened signal follows standard signal expectations – it's lazy. If you stop observing it, its current value might get stale even if the signal that it's tracking has other observers.
 
 **`SwitchFutureStrategy`** flattens an `Observable[Future[A]]` into an `EventStream[A]`. We first create an event stream from each emitted future, then flatten the result using `SwitchStreamStrategy`. So this ends up behaving very similarly, producing a stream that emits the value from the last future emitted by the parent observable, discarding the values of all previously emitted futures.
+* As of Airstream v0.12.0, this strategy is the default for flattening Observable[Future[A]]. Previously there was no default for such observables so you had to manually specify a strategy.
 
 To summarize, the above strategies result in an observable that imitates the latest stream / signal / future emitted by the parent observable. So as soon as the parent observable emits a new future / signal / stream, it stops listening for values produced by previously emitted futures / signals / streams.
 
