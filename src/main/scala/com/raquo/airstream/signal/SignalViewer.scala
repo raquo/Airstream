@@ -1,5 +1,6 @@
 package com.raquo.airstream.signal
 
+import com.raquo.airstream.basic.MapSignal
 import com.raquo.airstream.core.Observer
 import com.raquo.airstream.ownership.{Owner, Subscription}
 

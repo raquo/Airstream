@@ -1,33 +1,34 @@
-package com.raquo.airstream.signal
+package com.raquo.airstream.combine
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Observer
+import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 
 import scala.collection.mutable
 
 /** See also – diamond test case for this in GlitchSpec */
-class SampleCombineSignal2Spec extends UnitSpec {
+class SampleCombineEventStream2Spec extends UnitSpec {
 
   it("gets current value of Signal") {
 
     implicit val testOwner: TestableOwner = new TestableOwner
 
-    val samplingVar = Var(100)
-    val sampledVar = Var(10)
+    val bus1 = new EventBus[Int]
+    val bus2 = new EventBus[Int]
 
     val calculations = mutable.Buffer[Calculation[Int]]()
     val effects = mutable.Buffer[Effect[Int]]()
 
-    val sampledSignal = sampledVar.signal.map(Calculation.log("sampled", calculations))
+    val sampledSignal = bus2.events.toSignal(0).map(Calculation.log("signal", calculations))
 
-    val combinedSignal = samplingVar.signal
-      .map(Calculation.log("sampling", calculations))
+    val combinedStream = bus1.events
+      .map(Calculation.log("stream", calculations))
       .withCurrentValueOf(sampledSignal)
-      .map2(_ + _)
+      .mapN(_ + _)
       .map(Calculation.log("combined", calculations))
 
-    val sampledObserver = Observer[Int](effects += Effect("sampled", _))
+    val signalObserver = Observer[Int](effects += Effect("signal", _))
     val combinedObserver = Observer[Int](effects += Effect("combined", _))
 
     // --
@@ -37,41 +38,10 @@ class SampleCombineSignal2Spec extends UnitSpec {
 
     // --
 
-    val subCombined = combinedSignal.addObserver(combinedObserver)
+    val subCombined = combinedStream.addObserver(combinedObserver)
 
     calculations shouldEqual mutable.Buffer(
-      Calculation("sampling", 100),
-      Calculation("sampled", 10),
-      Calculation("combined", 110),
-    )
-    effects shouldEqual mutable.Buffer(
-      Effect("combined", 110),
-    )
-
-    calculations.clear()
-    effects.clear()
-
-    // --
-
-    samplingVar.writer.onNext(200)
-
-    calculations shouldEqual mutable.Buffer(
-      Calculation("sampling", 200),
-      Calculation("combined", 210)
-    )
-    effects shouldEqual mutable.Buffer(
-      Effect("combined", 210)
-    )
-
-    calculations.clear()
-    effects.clear()
-
-    // --
-
-    sampledVar.writer.onNext(20)
-
-    calculations shouldEqual mutable.Buffer(
-      Calculation("sampled", 20)
+      Calculation("signal", 0)
     )
     effects shouldEqual mutable.Buffer()
 
@@ -79,14 +49,40 @@ class SampleCombineSignal2Spec extends UnitSpec {
 
     // --
 
-    samplingVar.writer.onNext(300)
+    bus1.writer.onNext(1)
 
     calculations shouldEqual mutable.Buffer(
-      Calculation("sampling", 300),
-      Calculation("combined", 320)
+      Calculation("stream", 1),
+      Calculation("combined", 1)
     )
     effects shouldEqual mutable.Buffer(
-      Effect("combined", 320)
+      Effect("combined", 1)
+    )
+
+    calculations.clear()
+    effects.clear()
+
+    // --
+
+    bus2.writer.onNext(100)
+
+    calculations shouldEqual mutable.Buffer(
+      Calculation("signal", 100)
+    )
+    effects shouldEqual mutable.Buffer()
+
+    calculations.clear()
+
+    // --
+
+    bus1.writer.onNext(2)
+
+    calculations shouldEqual mutable.Buffer(
+      Calculation("stream", 2),
+      Calculation("combined", 102)
+    )
+    effects shouldEqual mutable.Buffer(
+      Effect("combined", 102)
     )
 
     calculations.clear()
@@ -95,24 +91,24 @@ class SampleCombineSignal2Spec extends UnitSpec {
     // --
 
     subCombined.kill()
-    sampledSignal.addObserver(sampledObserver)
+    sampledSignal.addObserver(signalObserver)
 
     calculations shouldEqual mutable.Buffer()
     effects shouldEqual mutable.Buffer(
-      Effect("sampled", 20)
+      Effect("signal", 100)
     )
 
     effects.clear()
 
     // --
 
-    sampledVar.writer.onNext(30)
+    bus2.writer.onNext(200)
 
     calculations shouldEqual mutable.Buffer(
-      Calculation("sampled", 30)
+      Calculation("signal", 200)
     )
     effects shouldEqual mutable.Buffer(
-      Effect("sampled", 30)
+      Effect("signal", 200)
     )
 
     calculations.clear()
@@ -120,25 +116,21 @@ class SampleCombineSignal2Spec extends UnitSpec {
 
     // --
 
-    combinedSignal.addObserver(combinedObserver)
+    combinedStream.addObserver(combinedObserver)
 
     calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer(
-      Effect("combined", 320) // @TODO[API] This could be 330 if we implement https://github.com/raquo/Airstream/issues/43
-    )
-
-    effects.clear()
+    effects shouldEqual mutable.Buffer()
 
     // --
 
-    samplingVar.writer.onNext(400)
+    bus1.writer.onNext(3)
 
     calculations shouldEqual mutable.Buffer(
-      Calculation("sampling", 400),
-      Calculation("combined", 430)
+      Calculation("stream", 3),
+      Calculation("combined", 203)
     )
     effects shouldEqual mutable.Buffer(
-      Effect("combined", 430)
+      Effect("combined", 203)
     )
 
     calculations.clear()
