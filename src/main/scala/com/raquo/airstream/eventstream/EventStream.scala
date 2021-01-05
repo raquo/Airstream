@@ -8,6 +8,7 @@ import com.raquo.airstream.core.AirstreamError.ObserverError
 import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
+import com.raquo.airstream.debug.DebugLifecycleEventStream
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.signal.{FoldLeftSignal, Signal, SignalFromEventStream}
 
@@ -109,6 +110,16 @@ trait EventStream[+A] extends Observable[A] {
   }
 
   override def recoverToTry: EventStream[Try[A]] = map(Try(_)).recover[Try[A]] { case err => Some(Failure(err)) }
+
+  /** Print when the stream has just started or stopped */
+  override def debugLogLifecycle(prefix: String = "stream"): EventStream[A] = {
+    debugSpyLifecycle(() => println(s"$prefix started"), () => println(s"$prefix stopped"))
+  }
+
+  /** Run callbacks when the stream has just started or stopped */
+  override def debugSpyLifecycle(start: () => Unit = () => (), stop: () => Unit = () => ()): EventStream[A] = {
+    new DebugLifecycleEventStream[A](this, start, stop)
+  }
 
   override protected[this] def fireValue(nextValue: A, transaction: Transaction): Unit = {
     // Note: Removal of observers is always done at the end of a transaction, so the iteration here is safe

@@ -12,7 +12,6 @@ class CustomStreamSource[A] private (
 ) extends EventStream[A] with CustomSource[A] {
 
   override protected[this] val config: Config = makeConfig(_fireValue, _fireError, getStartIndex, getIsStarted)
-
 }
 
 object CustomStreamSource {

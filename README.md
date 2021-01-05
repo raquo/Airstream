@@ -990,7 +990,7 @@ All built-in strategies result in observables that emit each event in a new tran
 
 #### Debugging Operators
 
-Observable trait includes a few operators for debugging:
+Observable trait includes a few operators for debugging events:
 * `debugLog` (log events)
 * `debugBreak` (invoke a JS debugger on every event)
 * `debugSpy` (call a function on every event)
@@ -1002,6 +1002,10 @@ val myIntStream: EventStream[Int] = ???
 val debuggedStream: EventStream[Int] = myIntStream.debugBreak(_ % 2 == 0) // break on even numbers only
 ``` 
 
+You can also debug observables lifecycle, i.e. starting, stopping, and Signals evaluating their initial value, using the following operators:
+* `debugLogLifecycle` (log when observable starts & stops)
+* `debugSpyLifecycle` (call a function when observable starts, stops, or signal evaluates its current value)
+  * Note: any errors thrown in these callbacks will be considered unhandled, without affecting the observable graph.
 
 
 ### Error Handling
