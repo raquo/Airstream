@@ -57,11 +57,7 @@ class WebSocketEventStream[I, O] private (
   }
 
   def send(out: O): Unit =
-  // https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/send
-  // The WebSocket.send() method enqueues the specified data to be transmitted to the server over the WebSocket
-  // connection, increasing the value of bufferedAmount by the number of bytes needed to contain the data. If the
-  // data can't be sent (for example, because it needs to be buffered but the buffer is full), the socket is closed
-  // automatically.
+    // https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/send
     websocket.fold(unsentObserver.onNext(out))(W.write(_, out))
 
   override protected[this] def onStart(): Unit = {
@@ -75,7 +71,7 @@ class WebSocketEventStream[I, O] private (
   }
 
   private def bind(socket: dom.WebSocket): Unit =
-  // bind message listener
+    // bind message listener
     socket.onmessage = (e: dom.MessageEvent) => {
       val _ = project(e).fold(e => new Transaction(fireError(e, _)), o => new Transaction(fireValue(o, _)))
     }
