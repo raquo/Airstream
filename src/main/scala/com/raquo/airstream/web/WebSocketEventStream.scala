@@ -2,208 +2,261 @@ package com.raquo.airstream.web
 
 import com.raquo.airstream.core.{Observer, Transaction}
 import com.raquo.airstream.eventstream.EventStream
-import com.raquo.airstream.features.{InternalNextErrorObserver, SingleParentObservable}
-import com.raquo.airstream.web.WebSocketEventStream.{Driver, WebSocketClosed, WebSocketError}
 import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.util.{Success, Try}
 
 /**
-  * An event source that emits messages from a [[dom.WebSocket]] connection.
-  *
-  * Stream lifecycle:
-  *  - A new websocket connection is established on start.
-  *  - Outgoing messages, if any, are sent on this connection.
-  *    - Transmission failures, due to connection termination, are propagated as errors.
-  *  - Connection termination, not initiated by this stream, is propagated as an error.
-  *  - Incoming messages are propagated as events.
-  *  - The connection is closed on stop.
+  * An event source that emits/transmits messages from/on a [[dom.WebSocket]] connection.
   *
   * '''Warning''': [[dom.WebSocket]] is an ugly, imperative JS construct. We set event callbacks for
-  * `onclose`, `onmessage`, and if requested, also for `onopen`.
+  * `onclose`, `onmessage`, and if requested, also for `onerror`, `onopen`.
   * Make sure you don't override Airstream's listeners, or this stream will not work properly.
   *
-  * @param parent             stream of outgoing messages
-  * @param project            mapping for incoming messages
-  * @param url                absolute URL of websocket endpoint
-  * @param protocol           name of the (optional) sub-protocol the server selected
-  * @param socketObserver     called when a websocket connection is created
-  * @param socketOpenObserver called when a websocket connection is open
+  * @param url            absolute URL of websocket endpoint
+  * @param protocol       name of the sub-protocol the server selected
+  * @param closeObserver  called when a websocket connection is closed
+  * @param errorObserver  called when a websocket connection error occurs
+  * @param openObserver   called when a websocket connection is open
+  * @param startObserver  called when a websocket connection is started
+  * @param unsentObserver called when a message cannot be sent
+  *
+  * @see [[https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API MDN]]
   */
-class WebSocketEventStream[I, O] private(
-  override val parent: EventStream[I],
-  project: dom.MessageEvent => Try[O],
+class WebSocketEventStream[I, O] private (
   url: String,
-  protocol: String,
-  socketObserver: Observer[dom.WebSocket],
-  socketOpenObserver: Observer[dom.WebSocket]
-)(implicit D: Driver[I]) extends EventStream[O] with SingleParentObservable[I, O] with InternalNextErrorObserver[I] {
+  project: dom.MessageEvent => Try[I],
+  closeObserver: Observer[dom.CloseEvent],
+  errorObserver: Observer[dom.Event],
+  openObserver: Observer[dom.Event],
+  startObserver: Observer[dom.WebSocket],
+  unsentObserver: Observer[O],
+  protocol: String
+)(implicit W: WebSocketEventStream.Writer[O])
+  extends EventStream[I] {
 
   protected[airstream] val topoRank: Int = 1
 
-  private var jsSocket: js.UndefOr[dom.WebSocket] = js.undefined
+  private var websocket: js.UndefOr[dom.WebSocket] = js.undefined
 
-  protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
-    // noop
+  def close(): Unit =
+  // https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close
+    websocket.foreach { socket =>
+      socket.onclose = null
+      socket.onerror = null
+      socket.onmessage = null
+      socket.onopen = null
+      socket.close()
+      websocket = js.undefined
+    }
+
+  def open(): Unit = {
+    close()
+    connect()
   }
 
-  protected[airstream] def onNext(nextValue: I, transaction: Transaction): Unit = {
-    // transmit upstream message, no guard required since driver is trusted
-    jsSocket.fold(fireError(WebSocketError(nextValue), transaction))(D.transmit(_, nextValue))
-  }
+  def send(out: O): Unit =
+  // https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/send
+  // The WebSocket.send() method enqueues the specified data to be transmitted to the server over the WebSocket
+  // connection, increasing the value of bufferedAmount by the number of bytes needed to contain the data. If the
+  // data can't be sent (for example, because it needs to be buffered but the buffer is full), the socket is closed
+  // automatically.
+    websocket.fold(unsentObserver.onNext(out))(W.write(_, out))
 
   override protected[this] def onStart(): Unit = {
-
-    val socket = new dom.WebSocket(url, protocol)
-
-    // update local reference
-    jsSocket = socket
-
-    // initialize new socket
-    D.initialize(socket)
-
-    // https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_client_applications#Creating_a_WebSocket_object
-    // "onclose" is called right after "onerror", so register callback for "onclose" only
-    // propagate connection close event as error
-    socket.onclose =
-      (e: dom.CloseEvent) => if (jsSocket.contains(socket)) {
-        jsSocket = js.undefined
-        new Transaction(fireError(WebSocketClosed(e), _))
-      }
-
-    // propagate message received
-    socket.onmessage =
-      (e: dom.MessageEvent) => if (jsSocket.contains(socket)) {
-        project(e).fold(e => new Transaction(fireError(e, _)), o => new Transaction(fireValue(o, _)))
-      }
-
-    // call/register optional observers
-
-    if (socketOpenObserver ne Observer.empty) {
-      socket.onopen =
-        (_: dom.Event) => if (jsSocket.contains(socket)) {
-          socketOpenObserver.onNext(socket)
-        }
-    }
-
-    if (socketObserver ne Observer.empty) {
-      socketObserver.onNext(socket)
-    }
-
+    websocket.fold(connect())(bind)
     super.onStart()
   }
 
   override protected[this] def onStop(): Unit = {
-    // Is "close" async?
-    // just to be safe, reset local reference before closing to prevent error propagation in "onclose" callback
-    val socket = jsSocket
-    jsSocket = js.undefined
-    socket.foreach(_.close())
+    close()
     super.onStop()
+  }
+
+  private def bind(socket: dom.WebSocket): Unit =
+  // bind message listener
+    socket.onmessage = (e: dom.MessageEvent) => {
+      val _ = project(e).fold(e => new Transaction(fireError(e, _)), o => new Transaction(fireValue(o, _)))
+    }
+
+  private def connect(): Unit = {
+    val socket = new dom.WebSocket(url, protocol)
+
+    // update local reference
+    websocket = socket
+
+    // initialize new socket
+    W.initialize(socket)
+
+    // bind message listener
+    if (isStarted) bind(socket)
+
+    // register required listeners
+    socket.onclose = (e: dom.CloseEvent) => {
+      websocket = js.undefined
+      if (closeObserver ne Observer.empty) closeObserver.onNext(e)
+    }
+
+    // register optional listeners
+    if (errorObserver ne Observer.empty) socket.onerror = errorObserver.onNext
+    if (openObserver ne Observer.empty) socket.onopen = openObserver.onNext
+
+    // call optional observer
+    if (startObserver ne Observer.empty) startObserver.onNext(socket)
   }
 }
 
 object WebSocketEventStream {
 
-  sealed abstract class WebSocketStreamException extends Exception
+  /**
+    * A unidirectional (server to client) websocket connection defined as 2 values,
+    *  1. controller: observer that controls when a connection is opened/closed
+    *  1. receiver: stream of incoming messages of type `I`
+    */
+  type Simplex[+I] = (Observer[Boolean], EventStream[I])
 
-  sealed abstract class Driver[A] {
+  /**
+    * A bidirectional websocket connection defined as 3 values,
+    *  1. controller: observer that controls when a connection is opened/closed
+    *  1. receiver: stream of incoming messages of type `I`
+    *  1. transmitter: observer that transmits outgoing messages of type `O`
+    */
+  type Duplex[+I, -O] = (Observer[Boolean], EventStream[I], Observer[O])
 
-    def initialize(socket: dom.WebSocket): Unit
-
-    def transmit(socket: dom.WebSocket, data: A): Unit
-  }
-
-  /** streams websocket messages */
-  sealed abstract class reader[O](project: dom.MessageEvent => Try[O]) {
+  sealed abstract class Reader[I](project: dom.MessageEvent => Try[I]) {
 
     /**
-      * Returns a stream that emits messages of type `O` from a [[dom.WebSocket websocket]] connection.
+      * Returns a websocket [[Duplex connection]] as 3 values,
+      *  1. `controller`: observer that controls when a connection is opened/closed
+      *  1. `receiver`: stream of incoming messages of type `I`
+      *  1. `transmitter`: observer that transmits outgoing messages of type `O`
+      *
+      * Connection lifecycle:
+      *  - A new websocket connection is established when either
+      *    - the `receiver` is started.
+      *    - the `controller` is called with a value of true.
+      *  - A connection is closed when either
+      *    - the `receiver` is stopped.
+      *    - the `controller` is called with a value of false.
+      *  - The `closeObserver` is called when the connection is terminated abruptly.
+      *    - This can be used in conjunction with the `controller` to implement a retry policy.
+      *
+      * Transmission:
+      *  - The `transmitter` sends outgoing messages on the underlying websocket connection, if any.
+      *    - If no connection exists, the message is passed on to the `unsentObserver`.
+      *    - Note that a connection is automatically closed when
+      *    [[https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/send data can't be sent]].
       *
       * @param url absolute URL of websocket endpoint
+      * @param closeObserver called when a websocket connection is closed
+      * @param errorObserver called when a websocket connection error occurs
+      * @param openObserver called when a websocket connection is opened
+      * @param startObserver called when a websocket connection is started
+      * @param unsentObserver called when transmission is attempted on a non existing connection
+      * @param protocol websocket server sub-protocol
       */
-    final def apply(url: String): EventStream[O] =
-      apply(url, "", Observer.empty, Observer.empty)
-
-    /**
-      * Returns a stream that emits messages of type `O` from a [[dom.WebSocket websocket]] connection.
-      *
-      * @param url                absolute URL of websocket endpoint
-      * @param protocol           name of the (optional) sub-protocol the server selected
-      * @param socketObserver     called when a websocket connection is created
-      * @param socketOpenObserver called when a websocket connection is open
-      */
-    final def apply(url: String,
-                    protocol: String,
-                    socketObserver: Observer[dom.WebSocket],
-                    socketOpenObserver: Observer[dom.WebSocket]): EventStream[O] =
-      apply[Void](url, EventStream.empty, protocol, socketObserver, socketOpenObserver)
-
-    /**
-      * Returns a stream that emits messages of type `O` from a [[dom.WebSocket websocket]] connection.
-      *
-      * Transmission is supported for the following types:
-      *  - [[js.typedarray.ArrayBuffer]]
-      *  - [[dom.raw.Blob]]
-      *  - [[String]]
-      *
-      * @param url                absolute URL of websocket endpoint
-      * @param writer             stream of outgoing messages
-      * @param protocol           name of the (optional) sub-protocol the server selected
-      * @param socketObserver     called when a websocket connection is created
-      * @param socketOpenObserver called when a websocket connection is open
-      */
-    final def apply[I: Driver](
+    final def apply[O: Writer](
       url: String,
-      writer: EventStream[I],
-      protocol: String = "",
-      socketObserver: Observer[dom.WebSocket] = Observer.empty,
-      socketOpenObserver: Observer[dom.WebSocket] = Observer.empty): EventStream[O] =
-      new WebSocketEventStream(writer, project, url, protocol, socketObserver, socketOpenObserver)
+      closeObserver: Observer[dom.CloseEvent] = Observer.empty,
+      errorObserver: Observer[dom.Event] = Observer.empty,
+      openObserver: Observer[dom.Event] = Observer.empty,
+      startObserver: Observer[dom.WebSocket] = Observer.empty,
+      unsentObserver: Observer[O] = Observer.empty,
+      protocol: String = ""
+    ): Duplex[I, O] = {
+      val ws = new WebSocketEventStream(
+        url,
+        project,
+        closeObserver,
+        errorObserver,
+        openObserver,
+        startObserver,
+        unsentObserver,
+        protocol
+      )
+      (Observer(if (_) ws.open() else ws.close()), ws, Observer(ws.send))
+    }
+
+    /**
+      * Returns a websocket [[Simplex connection]] as 2 values,
+      *  1. `controller`: observer that controls when a connection is opened/closed
+      *  1. `receiver`: stream of incoming messages of type `I`
+      *
+      * Connection lifecycle:
+      *  - A new websocket connection is established when either
+      *    - the `receiver` is started.
+      *    - the `controller` is called with a value of true.
+      *  - A connection is closed when either
+      *    - the `receiver` is stopped.
+      *    - the `controller` is called with a value of false.
+      *  - The `closeObserver` is called when the connection is terminated abruptly.
+      *    - This can be used in conjunction with the `controller` to implement a retry policy.
+      *
+      * @param url absolute URL of websocket endpoint
+      * @param closeObserver called when a websocket connection is closed
+      * @param errorObserver called when a websocket connection error occurs
+      * @param openObserver called when a websocket connection is opened
+      * @param startObserver called when a websocket connection is started
+      * @param protocol websocket server sub-protocol
+      * @return
+      */
+    final def read(
+      url: String,
+      closeObserver: Observer[dom.CloseEvent] = Observer.empty,
+      errorObserver: Observer[dom.Event] = Observer.empty,
+      openObserver: Observer[dom.Event] = Observer.empty,
+      startObserver: Observer[dom.WebSocket] = Observer.empty,
+      protocol: String = ""
+    ): Simplex[I] = {
+      val (control, receiver, _) =
+        apply[Void](url, closeObserver, errorObserver, openObserver, startObserver, Observer.empty, protocol)
+      (control, receiver)
+    }
   }
 
-  /** streams the data from a [[dom.MessageEvent message]] */
-  sealed abstract class data[O] extends reader(e => Try(e.data.asInstanceOf[O]))
+  sealed abstract class Driver[A: Writer] extends Reader(e => Try(e.data.asInstanceOf[A])) {
 
-  final case class WebSocketClosed(event: dom.Event) extends WebSocketStreamException
+    /** @see [[apply]] */
+    final def open(
+      url: String,
+      closeObserver: Observer[dom.CloseEvent] = Observer.empty,
+      errorObserver: Observer[dom.Event] = Observer.empty,
+      openObserver: Observer[dom.Event] = Observer.empty,
+      startObserver: Observer[dom.WebSocket] = Observer.empty,
+      unsentObserver: Observer[A] = Observer.empty,
+      protocol: String = ""
+    ): Duplex[A, A] =
+      apply(url, closeObserver, errorObserver, openObserver, startObserver, unsentObserver, protocol)
+  }
 
-  final case class WebSocketError[I](input: I) extends WebSocketStreamException
+  sealed abstract class Writer[O] {
+    def initialize(socket: dom.WebSocket): Unit
+    def write(socket: dom.WebSocket, data: O): Unit
+  }
 
-  object Driver {
+  object Writer {
 
-    implicit val blobDriver: Driver[dom.Blob] = binary(_ send _, "blob")
-    implicit val binaryDriver: Driver[js.typedarray.ArrayBuffer] = binary(_ send _, "arraybuffer")
-    implicit val stringDriver: Driver[String] = simple(_ send _)
-    implicit val voidDriver: Driver[Void] = simple((_, _) => ())
+    implicit val arraybuffer: Writer[js.typedarray.ArrayBuffer] = binary(_ send _, "arraybuffer")
+    implicit val blob: Writer[dom.Blob]                         = binary(_ send _, "blob")
+    implicit val string: Writer[String]                         = simple(_ send _)
+    implicit val noop: Writer[Void]                             = simple((_, _) => ())
 
-    private def binary[A](send: (dom.WebSocket, A) => Unit, binaryType: String): Driver[A] =
-      new Driver[A] {
-
-        final def initialize(socket: dom.WebSocket): Unit = socket.binaryType = binaryType
-
-        final def transmit(socket: dom.WebSocket, data: A): Unit = send(socket, data)
+    private def binary[A](f: (dom.WebSocket, A) => Unit, binaryType: String): Writer[A] =
+      new Writer[A] {
+        final def initialize(socket: dom.WebSocket): Unit     = socket.binaryType = binaryType
+        final def write(socket: dom.WebSocket, data: A): Unit = f(socket, data)
       }
 
-    private def simple[A](send: (dom.WebSocket, A) => Unit): Driver[A] =
-      new Driver[A] {
-
-        final def initialize(socket: dom.WebSocket): Unit = ()
-
-        final def transmit(socket: dom.WebSocket, data: A): Unit = send(socket, data)
+    private def simple[A](f: (dom.WebSocket, A) => Unit): Writer[A] =
+      new Writer[A] {
+        final def initialize(socket: dom.WebSocket): Unit     = ()
+        final def write(socket: dom.WebSocket, data: A): Unit = f(socket, data)
       }
   }
 
-  /** streams [[js.typedarray.ArrayBuffer binary]] data */
-  object binary extends data[js.typedarray.ArrayBuffer]
-
-  /** streams [[dom.Blob blob]] data */
-  object blob extends data[dom.Blob]
-
-  /** streams websocket [[dom.MessageEvent messages]] */
-  object raw extends reader(Success(_))
-
-  /** streams [[String text]] data */
-  object text extends data[String]
-
+  object arraybuffer extends Driver[js.typedarray.ArrayBuffer]
+  object blob        extends Driver[dom.Blob]
+  object raw         extends Reader(Success(_))
+  object text        extends Driver[String]
 }

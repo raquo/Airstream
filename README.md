@@ -622,48 +622,7 @@ Warning: dom.XmlHttpRequest is an ugly, imperative JS construct. We set event ca
 
 ### Websockets
 
-Airstream has support for streaming messages from websockets.
-
-Usage:
-```scala
-import com.raquo.airstream.web.websocketUrl
-import com.raquo.airstream.eventstream.EventStream
-import com.raquo.airstream.web.WebSocketEventStream
-import org.scalajs.dom
-
-import scala.scalajs.js
-
-// absolute URL is required
-val url: String = websocketUrl("relative/url")
-
-// messages to be transmitted (bidirectional usecase)
-// supported types: js.typedarray.ArrayBuffer, dom.Blob, String
-val writer: EventStream[String] = ???
-
-// for unidirectional usecase, skip the "writer" parameter
-
-// raw websocket messages
-val raw: EventStream[dom.MessageEvent] = WebSocketEventStream.raw(url, writer)
-
-// or use one of the data extractors
-val binary: EventStream[js.typedarray.ArrayBuffer] = WebSocketEventStream.binary(url, writer)
-val blob: EventStream[dom.Blob] = WebSocketEventStream.blob(url, writer)
-val text: EventStream[String] = WebSocketEventStream.text(url, writer)
-```
-
-All constructors accept optional observers:
- - `socketObserver`: notified when a websocket is created
- - `socketOpenObserver`: notified when a websocket is open
-
-Stream lifecycle:
- - A new websocket connection is established on start.
- - Outgoing messages, if any, are sent on this connection.
-   - Transmission failures, due to connection termination, are propagated as errors.
- - Connection termination, not initiated by this stream, is propagated as an error.
- - Incoming messages are propagated as events.
- - The connection is closed on stop.
-
-Warning: `dom.WebSocket` is an ugly, imperative JS construct. We set event callbacks for `onclose`, `onmessage`, and if requested, also for `onopen`. Make sure you don't override Airstream's listeners, or this stream will not work properly.
+TODO.
 
 ### DOM Events
 
