@@ -80,31 +80,32 @@ class WebSocketEventStream[I, O] private (
       val _ = project(e).fold(e => new Transaction(fireError(e, _)), o => new Transaction(fireValue(o, _)))
     }
 
-  private def connect(): Unit = {
-    val socket = new dom.WebSocket(url, protocol)
+  private def connect(): Unit =
+    if (isStarted) {
+      val socket = new dom.WebSocket(url, protocol)
 
-    // update local reference
-    websocket = socket
+      // update local reference
+      websocket = socket
 
-    // initialize new socket
-    W.initialize(socket)
+      // initialize new socket
+      W.initialize(socket)
 
-    // bind message listener
-    if (isStarted) bind(socket)
+      // bind message listener
+      if (isStarted) bind(socket)
 
-    // register required listeners
-    socket.onclose = (e: dom.CloseEvent) => {
-      websocket = js.undefined
-      if (closeObserver ne Observer.empty) closeObserver.onNext(e)
+      // register required listeners
+      socket.onclose = (e: dom.CloseEvent) => {
+        websocket = js.undefined
+        if (closeObserver ne Observer.empty) closeObserver.onNext(e)
+      }
+
+      // register optional listeners
+      if (errorObserver ne Observer.empty) socket.onerror = errorObserver.onNext
+      if (openObserver ne Observer.empty) socket.onopen = openObserver.onNext
+
+      // call optional observer
+      if (startObserver ne Observer.empty) startObserver.onNext(socket)
     }
-
-    // register optional listeners
-    if (errorObserver ne Observer.empty) socket.onerror = errorObserver.onNext
-    if (openObserver ne Observer.empty) socket.onopen = openObserver.onNext
-
-    // call optional observer
-    if (startObserver ne Observer.empty) startObserver.onNext(socket)
-  }
 }
 
 object WebSocketEventStream {
@@ -135,7 +136,7 @@ object WebSocketEventStream {
       * Connection lifecycle:
       *  - A new websocket connection is established when either
       *    - the `receiver` is started.
-      *    - the `controller` is called with a value of true.
+      *    - the `controller` is called with a value of true (and the receiver is subscribed to).
       *  - A connection is closed when either
       *    - the `receiver` is stopped.
       *    - the `controller` is called with a value of false.
@@ -186,7 +187,7 @@ object WebSocketEventStream {
       * Connection lifecycle:
       *  - A new websocket connection is established when either
       *    - the `receiver` is started.
-      *    - the `controller` is called with a value of true.
+      *    - the `controller` is called with a value of true (and the receiver is subscribed to).
       *  - A connection is closed when either
       *    - the `receiver` is stopped.
       *    - the `controller` is called with a value of false.
