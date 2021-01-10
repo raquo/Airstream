@@ -1,23 +1,30 @@
-package com.raquo.airstream.signal
+package com.raquo.airstream.vars
 
+import com.raquo.airstream.core.AirstreamError.VarError
 import com.raquo.airstream.core.{Observer, Transaction}
-import com.raquo.airstream.signal.Var.VarSignal
+import com.raquo.airstream.ownership.Owner
+import com.raquo.airstream.signal.StrictSignal
 import com.raquo.airstream.util.hasDuplicateTupleKeys
 
 import scala.util.{Failure, Success, Try}
 
-/** Var is a container for a Writeable Signal – sort of like EventBus, but for Signals.
+/** Var is essentially a Signal that you can write to, so it's a source of state like EventBus is a source of events.
   *
-  * Note that while this Var and its signal itself are strict – that is, their currentValue will update regardless
-  * of whether the Var's `signal` has any observers, this new value will not propagate anywhere if the signal has
-  * no observers, obviously.
+  * There are two kinds of Vars: SourceVar and DerivedVar. The latter you can obtain by calling zoom(a => b, b => a) on
+  * a Var, however, unlike SourceVar, DerivedVar requires an Owner in order to run.
   */
-class Var[A] private(private[this] var currentValue: Try[A]) {
+trait Var[A] {
 
-  /** VarSignal is a private type, do not expose it */
-  private[this] val _varSignal = new VarSignal[A](initialValue = currentValue)
+  /** Used to make sure we don't update the same var twice in the same transaction */
+  private[vars] def underlyingVar: SourceVar[_]
 
-  val signal: StrictSignal[A] = _varSignal
+  private[vars] def getCurrentValue: Try[A]
+
+  private[vars] def setCurrentValue(value: Try[A], transaction: Transaction): Unit
+
+  val signal: StrictSignal[A]
+
+  // --
 
   val writer: Observer[A] = Observer.fromTry { case nextTry => // Note: `case` syntax needed for Scala 2.12
     //println(s"> init trx from Var.writer(${nextTry})")
@@ -44,7 +51,7 @@ class Var[A] private(private[this] var currentValue: Try[A]) {
           now()
         } catch {
           case err: Throwable =>
-            throw new Exception("Unable to update a failed Var. Consider Var#tryUpdater instead.", err)
+            throw VarError("Unable to update a failed Var. Consider Var#tryUpdater instead.", cause = Some(err))
         }
         val nextValue = Try(mod(unsafeValue, nextInput)) // this does catch exceptions in mod
         setCurrentValue(nextValue, trx)
@@ -61,28 +68,31 @@ class Var[A] private(private[this] var currentValue: Try[A]) {
   def tryUpdater[B](mod: (Try[A], B) => Try[A]): Observer[B] = Observer.fromTry { case nextInputTry =>
     new Transaction(trx => nextInputTry match {
       case Success(nextInput) =>
-        val nextValue = mod(currentValue, nextInput)
+        val nextValue = mod(getCurrentValue, nextInput)
         setCurrentValue(nextValue, trx)
       case Failure(err) =>
         setCurrentValue(Failure[A](err), trx)
     })
   }
 
-  @inline def set(value: A): Unit = writer.onNext(value)
+  def zoom[B](in: A => B)(out: B => A)(implicit owner: Owner): Var[B] = {
+    new DerivedVar[A, B](this, in, out, owner)
+  }
 
-  @inline def setTry(tryValue: Try[A]): Unit = writer.onTry(tryValue)
+  def setTry(tryValue: Try[A]): Unit = writer.onTry(tryValue)
 
-  @inline def setError(error: Throwable): Unit = writer.onError(error)
+  final def set(value: A): Unit = setTry(Success(value))
+
+  final def setError(error: Throwable): Unit = setTry(Failure(error))
 
   /** @param mod Note: guarded against exceptions
     * @throws Exception if currentValue is a Failure */
   def update(mod: A => A): Unit = {
-    //println(s"> init trx from Var.update")
     new Transaction(trx => {
       val unsafeValue = try {
         now()
       } catch { case err: Throwable =>
-        throw new Exception("Unable to update a failed Var. Consider Var#tryUpdate instead.", err)
+        throw VarError("Unable to update a failed Var. Consider Var#tryUpdate instead.", cause = Some(err))
       }
       val nextValue = Try(mod(unsafeValue)) // this does catch exceptions in mod(unsafeValue)
       setCurrentValue(nextValue, trx)
@@ -95,7 +105,7 @@ class Var[A] private(private[this] var currentValue: Try[A]) {
   def tryUpdate(mod: Try[A] => Try[A]): Unit = {
     //println(s"> init trx from Var.tryUpdate")
     new Transaction(trx => {
-      val nextValue = mod(currentValue)
+      val nextValue = mod(getCurrentValue)
       setCurrentValue(nextValue, trx)
     })
   }
@@ -104,18 +114,13 @@ class Var[A] private(private[this] var currentValue: Try[A]) {
 
   /** @throws Exception if currentValue is a Failure */
   @inline def now(): A = signal.now()
-
-  private[Var] def setCurrentValue(value: Try[A], transaction: Transaction): Unit = {
-    currentValue = value
-    _varSignal.onTry(value, transaction)
-  }
 }
 
 object Var {
 
   def apply[A](initial: A): Var[A] = fromTry(Success(initial))
 
-  @inline def fromTry[A](initial: Try[A]): Var[A] = new Var(initial)
+  @inline def fromTry[A](initial: Try[A]): Var[A] = new SourceVar[A](initial)
 
 
   type VarTuple[A] = (Var[A], A)
@@ -143,8 +148,8 @@ object Var {
     */
   def setTry(values: VarTryTuple[_]*): Unit = {
     //println(s"> init trx from Var.set/setTry")
-    if (hasDuplicateTupleKeys(values)) {
-      throw new Exception("Unable to Var.{set,setTry}: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.")
+    if (hasDuplicateVars(values)) {
+      throw VarError("Unable to Var.{set,setTry}: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None)
     }
     new Transaction(trx => values.foreach(setTryValue(_, trx)))
   }
@@ -162,8 +167,8 @@ object Var {
     *                   2) if input contains duplicate vars. Airstream allows a maximum of one event per observable per transaction.
     */
   def update(mods: VarModTuple[_]*): Unit = {
-    if (hasDuplicateTupleKeys(mods)) {
-      throw new Exception("Unable to Var.update: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.")
+    if (hasDuplicateVars(mods)) {
+      throw VarError("Unable to Var.update: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None)
     }
     val tryMods: Seq[VarTryModTuple[_]] = mods.map(modToTryModTuple(_))
     //println(s"> init trx from Var.update")
@@ -172,7 +177,7 @@ object Var {
       try {
         vars.foreach(_.now())
       } catch { case err: Throwable =>
-        throw new Exception("Unable to Var.update a failed Var. Consider Var.tryUpdate instead.", err)
+        throw VarError("Unable to Var.update a failed Var. Consider Var.tryUpdate instead.", cause = Some(err))
       }
       val tryValues: Seq[VarTryTuple[_]] = tryMods.map(tryModToTryTuple(_))
       tryValues.foreach(setTryValue(_, trx))
@@ -187,8 +192,8 @@ object Var {
     */
   def tryUpdate(mods: VarTryModTuple[_]*): Unit = {
     //println(s"> init trx from Var.tryUpdate")
-    if (hasDuplicateTupleKeys(mods)) {
-      throw new Exception("Unable to Var.tryUpdate: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.")
+    if (hasDuplicateVars(mods)) {
+      throw VarError("Unable to Var.tryUpdate: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None)
     }
     new Transaction(trx => {
       val tryValues: Seq[VarTryTuple[_]] = mods.map(tryModToTryTuple(_))
@@ -206,27 +211,8 @@ object Var {
     tuple._1.setCurrentValue(tuple._2, transaction)
   }
 
-
-  /** Unlike other signals, this signal's current value is always up to date
-    * because a subscription is not needed to maintain it.
-    *
-    * Consequently, we expose its current value with now() / tryNow() methods
-    * (see StrictSignal).
-    */
-  class VarSignal[A] private[Var](
-    override protected[this] val initialValue: Try[A]
-  ) extends StrictSignal[A] {
-
-    /** Var does not directly depend on other streams, so it breaks the graph. */
-    override protected[airstream] val topoRank: Int = 1
-
-    /** Note: we do not check if isStarted() here, this is how we ensure that this
-      * signal's current value stays up to date. If this signal is stopped, this
-      * value will not be propagated anywhere further though.
-      */
-    private[Var] def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
-      fireTry(nextValue, transaction)
-    }
+  private def hasDuplicateVars(tuples: Seq[(Var[_], _)]): Boolean = {
+    hasDuplicateTupleKeys(tuples.map(t => t.copy(_1 = t._1.underlyingVar)))
   }
 
 }

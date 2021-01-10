@@ -56,7 +56,7 @@ class SignalViewerSpec extends UnitSpec {
 
     // --
 
-    signalViewer.kill()
+    signalViewer.killOriginalSubscription()
     bus.writer.onNext(3)
 
     signalViewer.now() shouldEqual 20

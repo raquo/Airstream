@@ -227,6 +227,11 @@ object Transaction { // extends GlobalCounter {
       transaction.code(transaction) // @TODO[API] Shouldn't we guard against exceptions in `code` here? It can be provided by the user.
       transaction.resolvePendingObservables()
     } finally {
+      // @TODO[API,Integrity]
+      //  This block is executed regardless of whether an exception is thrown in `code` or not,
+      //  but it doesn't actually catch the exception, so `new Transaction(code)` actually throws
+      //  iff `code` throws AND the transaction was created while no other transaction is running
+      //  This is not very predictable, so we should fix it.
       isSafeToRemoveObserver = true
       //println(s"--end trx ${transaction.id}")
       pendingTransactions.done(transaction)

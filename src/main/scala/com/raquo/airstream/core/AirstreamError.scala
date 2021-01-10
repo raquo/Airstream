@@ -10,22 +10,31 @@ sealed abstract class AirstreamError(message: String) extends Throwable(message)
 // @TODO[Naming]
 object AirstreamError {
 
-  // @TODO[API] What kind of information do we want to capture to make recovery easier?
+  case class VarError(message: String, cause: Option[Throwable])
+    extends AirstreamError(message) {
 
-  // @TODO[API] Should this be its own error? If so, should now() also throw a special error?
-//  case class VarUpdateError(cause: Throwable)
-//    extends AirstreamError("VarUpdateError: unable to update errored Var; cause: " + cause.getMessage)
+    cause.foreach(initCause)
+  }
 
   case class ErrorHandlingError(error: Throwable, cause: Throwable)
-    extends AirstreamError("ErrorHandlingError: " + error.getMessage + "; cause: " + cause.getMessage)
+    extends AirstreamError("ErrorHandlingError: " + error.getMessage + "; cause: " + cause.getMessage) {
 
-  // @TODO[API] Should we maybe get a special case for Combine2, like CombinedError2(Try[A], Try[B])? This would make it easier to recover from such errors
+    initCause(cause)
+  }
+
   case class CombinedError(causes: Seq[Option[Throwable]])
-    extends AirstreamError("CombinedError: " + causes.flatten.map(_.getMessage).mkString("; "))
+    extends AirstreamError("CombinedError: " + causes.flatten.map(_.getMessage).mkString("; ")) {
+
+    causes.flatten.headOption.foreach(initCause) // Just get the first cause – better than nothing I guess?
+  }
 
   case class ObserverError(error: Throwable) extends AirstreamError("ObserverError: " + error.getMessage)
 
-  case class ObserverErrorHandlingError(error: Throwable, cause: Throwable) extends AirstreamError("ObserverErrorHandlingError: " + error.getMessage + "; cause: " + cause.getMessage)
+  case class ObserverErrorHandlingError(error: Throwable, cause: Throwable)
+    extends AirstreamError("ObserverErrorHandlingError: " + error.getMessage + "; cause: " + cause.getMessage) {
+
+    initCause(cause)
+  }
 
   // --
 

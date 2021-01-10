@@ -213,7 +213,7 @@ If you don't need lastStreamEvent, use `stream.sample(signal).map(signalCurrentV
 
 `withCurrentValueOf` and `sample` operators are also available on signals, not just streams.
 
-If you want to get a Signal's current value without the complications of sampling, or even if you just want to make sure that a Signal is started, just call `observe` on it. That will add a noop observer to the signal, and return a `SignalViewer` instance which being a `StrictSignal`, does expose `now()` and `tryNow()` methods that safely provide you with its current value.
+If you want to get a Signal's current value without the complications of sampling, or even if you just want to make sure that a Signal is started, just call `observe` on it. That will add a noop observer to the signal, and return an `OwnedViewer` instance which being a `StrictSignal`, does expose `now()` and `tryNow()` methods that safely provide you with its current value.
 
 
 ### Relationship between EventStream and Signal
@@ -543,9 +543,33 @@ inputStream --> adder // Laminar syntax
 
 You can get the Var's current value using `now()` and `tryNow()`. Similar to `update`, `now` throws if the current value is an error. Var also exposes a `signal` of its values.
 
-Var follows **strict** (not lazy) execution – it will update its current value as instructed even if its signal has no observers. Unlike most other signals, the Var's signal is also strict – its current value matches the Var's current value at all times regardless of whether it has observers. Of course, any downstream observables that depend on the Var's signal are still lazy as usual.
+SourceVar, i.e. any Var that you create with `Var(...)`, follows **strict** (not lazy) execution – it will update its current value as instructed even if its signal has no observers. Unlike most other signals, the Var's signal is also strict – its current value matches the Var's current value at all times regardless of whether it has observers. Of course, any downstream observables that depend on the Var's signal are still lazy as usual.
 
 Being a `StrictSignal`, the signal also exposes `now` and `tryNow` methods, so if you need to provide your code with read-only access to a Var, sharing only its signal is the way to go. 
+
+##### Derived Vars
+
+If you have a `Var[A]`, you can get zoomed / derived `Var[B]` by providing `A => B`, `B => A`, and an owner. The result is a `DerivedVar`, essentially a combination of `var.signal.map` and `writer.contramap` packaged in a Var, and so to simulate the strictness of Var, creating DerivedVar requires an owner.
+
+When you have a derived var, updates to it are propagated to the source var and vice versa, as long as derived var's signal has listeners. Don't try to set/update a derived Var's value when it has no listeners. The value will not be updated, and Airstream will emit an unhandled error.
+
+```scala
+val owner: Owner = ???
+val source = Var(1)
+val derived = source.zoom(_ + 100)(_ - 100)(owner)
+
+source.set(2) // source.now() == 2, derived.now() == 102
+
+derived.set(103) // source.now() == 3, derived.now() == 103
+
+owner.killSubscriptions()
+
+source.set(3) // derived var did not update: derived.now() == 102
+
+derived.set(104) // neither var updated: source.now() == 3, derived.now() == 103
+```
+
+Note: DerivedVar starts out with a subscription owned by `owner`, that counts as a listener of course. However, just like `OwnedSignal` in general, if it obtains any other listeners, it will continue running even if the original owner kills its subscription.
 
 ##### Batch Updates
 
@@ -570,9 +594,11 @@ Batch updates are also atomic in the following ways:
 
 Also, since an Airstream observable can't emit more than once per transaction, the inputs to batch Var methods must have no duplicate vars. For example, you can't do this: `Var.set(var1 -> 1, var1 -> 2, var2 -> 3)`. Airstream will detect that you're attempting to put two events into `var1` in the same transaction, and will throw. Use two separate calls if you want to send two updates into the same Var.  
 
+Keep in mind that derived vars count as the underlying source vars for duplicate detection purposes, so you can't update vars `var1` and `var1.zoom(fa)(fb)` in the same transaction.
+
 Those are the only ways in which setting / updating a Var can throw an error. If any of those happen when batch-updating Var values, Airstream will throw an error, and all of the involved Vars will fail to update, keeping their current value.
 
-Remember that this atomicity guarantee only applies to failures which would have caused an individual `update` / `tryUpdate` call to throw. For example, if the `mod` function provided to `update` throws, `update` will not throw, it will instead successfully set that Var `Failure(err)`. 
+Remember that this atomicity guarantee only applies to failures which would have caused an individual `update` / `tryUpdate` call to throw. For example, if the `mod` function provided to `update` throws, `update` will not throw, it will instead successfully set that Var `Failure(err)`.
 
 
 

@@ -1,4 +1,4 @@
-package com.raquo.airstream.signal
+package com.raquo.airstream.vars
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.{AirstreamError, Observer}
@@ -25,6 +25,7 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
   after {
     AirstreamError.registerUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
     AirstreamError.unregisterUnhandledErrorCallback(errorCallback)
+    assert(errorEffects.isEmpty) // #Note this fails the test rather inelegantly
     errorEffects.clear()
   }
 
@@ -226,6 +227,12 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     assert(x.tryNow() == Failure(err1))
     assert(y.now() == 300)
 
+    assert(errorEffects.toList == List(
+      Effect("unhandled", err1)
+    ))
+
+    errorEffects.clear()
+
     // --
 
     // @TODO[API] Figure out if there is an elegant solution that would allow for type inference here
@@ -263,6 +270,12 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
 
     assert(x.now() == 5)
     assert(y.tryNow() == Failure(err2))
+
+    assert(errorEffects.toList == List(
+      Effect("unhandled", err2)
+    ))
+
+    errorEffects.clear()
   }
 
   it("batch updates are glitch-free") {
@@ -304,18 +317,25 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
   }
 
   it("disallow duplicate vars in Var.set and such") {
+
+    val owner = new TestableOwner
+
     // If we allowed this, you would be able to send two events into the same Var
     // in the same transaction, which breaks Airstream contract.
     val var1 = Var(0)
     val var2 = Var(0)
     val var3 = Var(0)
+    val zoomedVar1 = var1.zoom(identity)(identity)(owner)
+    val zoomedVar2 = var2.zoom(identity)(identity)(owner)
+
+    val err3 = new Exception("Var 3 is broken")
 
     // -- should not fail
 
     Var.setTry(
       var1 -> Success(1),
       var2 -> Success(1),
-      var3 -> Failure(new Exception("Var 3 is broken"))
+      var3 -> Failure(err3)
     )
 
     Var.set(
@@ -323,6 +343,12 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
       var2 -> 1,
       var3 -> 1
     )
+
+    assert(errorEffects.toList == List(
+      Effect("unhandled", err3)
+    ))
+
+    errorEffects.clear()
 
     // --
 
@@ -334,9 +360,23 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
 
     // --
 
+    Try(Var.set(
+      var1 -> 2,
+      var2 -> 2,
+      zoomedVar1 -> 2
+    )).isFailure shouldBe true
+
+    // --
+
     Try(Var.setTry(
       var1 -> Success(3),
       var2 -> Success(4),
+      var2 -> Success(5)
+    )).isFailure shouldBe true
+
+    Try(Var.setTry(
+      var1 -> Success(3),
+      zoomedVar2 -> Success(4),
       var2 -> Success(5)
     )).isFailure shouldBe true
 
@@ -348,6 +388,12 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
       var2 -> ((_: Int) + 3)
     )).isFailure shouldBe true
 
+    Try(Var.update(
+      var1 -> ((_: Int) + 1),
+      var2 -> ((_: Int) + 2),
+      zoomedVar2 -> ((_: Int) + 3)
+    )).isFailure shouldBe true
+
     // --
 
     Try(Var.tryUpdate(
@@ -356,23 +402,44 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
       var2 -> ((_: Try[Int]).map(_ + 3))
     )).isFailure shouldBe true
 
+    Try(Var.tryUpdate(
+      var1 -> ((_: Try[Int]).map(_ + 1)),
+      var2 -> ((_: Try[Int]).map(_ + 2)),
+      zoomedVar2 -> ((_: Try[Int]).map(_ + 3))
+    )).isFailure shouldBe true
+
     // --
 
     var1.now() shouldBe 1
     var2.now() shouldBe 1
     var3.now() shouldBe 1
+
+    zoomedVar1.now() shouldBe 1
+    zoomedVar2.now() shouldBe 1
   }
 
   it("updating Var which is in a failed state") {
-    val err = new Exception("Known Var error")
+    val err = new Exception("Known Var error 1")
     val v = Var(1)
     val v2 = Var(2)
 
     def reset(): Unit = {
+      val isSameError = v.tryNow() == Failure(err)
+
       v.setTry(Failure(err))
       v2.set(2)
       v.tryNow() shouldBe Failure(err)
       v2.tryNow() shouldBe Success(2)
+
+      if (isSameError) {
+        assert(errorEffects.isEmpty)
+      } else {
+        assert(errorEffects.toList == List(
+          Effect("unhandled", err)
+        ))
+      }
+
+      errorEffects.clear()
     }
 
     // --
@@ -466,15 +533,27 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
   }
 
   it("updating Var with a failed value") {
-    val err = new Exception("Known Var error")
+    val err = new Exception("Known Var error 2")
     val v = Var(1)
     val v2 = Var(2)
 
     def reset(): Unit = {
-      v.set(1)
+      val isSameError = v.tryNow() == Failure(err)
+
+      v.setTry(Failure(err))
       v2.set(2)
-      v.tryNow() shouldBe Success(1)
+      v.tryNow() shouldBe Failure(err)
       v2.tryNow() shouldBe Success(2)
+
+      if (isSameError) {
+        assert(errorEffects.isEmpty)
+      } else {
+        assert(errorEffects.toList == List(
+          Effect("unhandled", err)
+        ))
+      }
+
+      errorEffects.clear()
     }
 
     // --
@@ -526,7 +605,7 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
   }
 
   it("throwing in Var update mods") {
-    val err = new Exception("Known Var error")
+    val err = new Exception("Known Var error 3")
     val v = Var(1)
     val v2 = Var(2)
 
@@ -545,6 +624,13 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
 
     v.update(_ => throw err)
     v.tryNow() shouldBe Failure(err)
+
+    assert(errorEffects.toList == List(
+      Effect("unhandled", err)
+    ))
+
+    errorEffects.clear()
+
     reset()
 
     // --
@@ -552,6 +638,8 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     Try(v.tryUpdate(_ => throw err)).isFailure shouldBe true
     v.tryNow() shouldBe Success(1)
     reset()
+
+    assert(errorEffects.isEmpty)
 
     // --
 
@@ -561,6 +649,13 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     )
     v.tryNow() shouldBe Failure(err)
     v2.tryNow() shouldBe Success(20)
+
+    assert(errorEffects.toList == List(
+      Effect("unhandled", err)
+    ))
+
+    errorEffects.clear()
+
     reset()
 
     // -- diff order
@@ -571,6 +666,13 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     )
     v.tryNow() shouldBe Failure(err)
     v2.tryNow() shouldBe Success(20)
+
+    assert(errorEffects.toList == List(
+      Effect("unhandled", err)
+    ))
+
+    errorEffects.clear()
+
     reset()
 
     // --
@@ -581,6 +683,9 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     )).isFailure shouldBe true
     v.tryNow() shouldBe Success(1)
     v2.tryNow() shouldBe Success(2)
+
+    assert(errorEffects.isEmpty)
+
     reset()
 
     // -- diff order
@@ -591,6 +696,9 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     )).isFailure shouldBe true
     v.tryNow() shouldBe Success(1)
     v2.tryNow() shouldBe Success(2)
+
+    assert(errorEffects.isEmpty)
+
     reset()
 
   }
@@ -655,6 +763,9 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     doubler.onNext(())
 
     v.now() shouldBe List(1, 2, 1, 2)
+
+    // @TODO[Test] Don't ignore, assert these properly
+    errorEffects.clear()
   }
 
   it("tryUpdater") {
@@ -725,5 +836,8 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     adder.onNext(3)
 
     v.now() shouldBe List(1, 2, 3)
+
+    // @TODO[Test] Don't ignore, assert these properly
+    errorEffects.clear()
   }
 }
