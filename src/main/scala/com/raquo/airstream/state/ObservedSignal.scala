@@ -1,8 +1,9 @@
-package com.raquo.airstream.signal
+package com.raquo.airstream.state
 
 import com.raquo.airstream.basic.MapSignal
 import com.raquo.airstream.core.Observer
 import com.raquo.airstream.ownership.{Owner, Subscription}
+import com.raquo.airstream.signal.Signal
 
 /** This class adds a noop observer to `signal`, ensuring that its current value is computed.
   * It then lets you query `signal`'s current value with `now` and `tryNow` methods (see StrictSignal),

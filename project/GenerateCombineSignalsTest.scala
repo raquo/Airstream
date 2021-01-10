@@ -17,7 +17,7 @@ case class GenerateCombineSignalsTest(
     line("import com.raquo.airstream.core.Observer")
     line("import com.raquo.airstream.fixtures.TestableOwner")
     line("import com.raquo.airstream.signal.Signal")
-    line("import com.raquo.airstream.vars.Var")
+    line("import com.raquo.airstream.state.Var")
     line()
     line("import scala.collection.mutable")
     line()

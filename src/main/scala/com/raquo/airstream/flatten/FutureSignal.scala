@@ -1,7 +1,7 @@
 package com.raquo.airstream.flatten
 
 import com.raquo.airstream.core.Transaction
-import com.raquo.airstream.signal.StrictSignal
+import com.raquo.airstream.state.StrictSignal
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

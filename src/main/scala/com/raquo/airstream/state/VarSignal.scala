@@ -1,7 +1,6 @@
-package com.raquo.airstream.vars
+package com.raquo.airstream.state
 
 import com.raquo.airstream.core.Transaction
-import com.raquo.airstream.signal.StrictSignal
 
 import scala.util.Try
 
@@ -12,7 +11,7 @@ import scala.util.Try
   * Consequently, we expose its current value with now() / tryNow() methods
   * (see StrictSignal).
   */
-private[vars] class VarSignal[A] private[vars](
+private[state] class VarSignal[A] private[state](
   override protected[this] val initialValue: Try[A]
 ) extends StrictSignal[A] {
 
@@ -23,7 +22,7 @@ private[vars] class VarSignal[A] private[vars](
     * signal's current value stays up to date. If this signal is stopped, this
     * value will not be propagated anywhere further though.
     */
-  private[vars] def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
+  private[state] def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
     fireTry(nextValue, transaction)
   }
 }

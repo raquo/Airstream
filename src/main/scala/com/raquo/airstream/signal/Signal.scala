@@ -12,6 +12,7 @@ import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.flatten.FutureSignal
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.split.{SplittableOneSignal, SplittableSignal}
+import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
 
 import scala.annotation.unused
 import scala.concurrent.Future
