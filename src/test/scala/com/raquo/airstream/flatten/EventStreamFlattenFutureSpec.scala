@@ -1,9 +1,8 @@
 package com.raquo.airstream.flatten
 
 import com.raquo.airstream.AsyncUnitSpec
-import com.raquo.airstream.core.Observer
+import com.raquo.airstream.core.{EventStream, Observer}
 import com.raquo.airstream.eventbus.EventBus
-import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.flatten.FlattenStrategy._
 import org.scalatest.Assertion

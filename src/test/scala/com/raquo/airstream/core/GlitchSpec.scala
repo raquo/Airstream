@@ -2,7 +2,6 @@ package com.raquo.airstream.core
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
-import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import com.raquo.airstream.state.Var
 

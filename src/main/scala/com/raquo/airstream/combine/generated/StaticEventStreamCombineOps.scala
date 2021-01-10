@@ -1,6 +1,6 @@
 package com.raquo.airstream.combine.generated
 
-import com.raquo.airstream.eventstream.EventStream
+import com.raquo.airstream.core.EventStream
 
 // These combine and combineWith methods are available on the EventStream companion object
 // For instance methods of the same name, see CombinableEventStream.scala

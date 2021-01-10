@@ -13,7 +13,7 @@ case class GenerateStaticEventStreamCombineOps(
   override def apply(): Unit = {
     line("package com.raquo.airstream.combine.generated")
     line()
-    line("import com.raquo.airstream.eventstream.EventStream")
+    line("import com.raquo.airstream.core.EventStream")
     line()
     line("// These combine and combineWith methods are available on the EventStream companion object")
     line("// For instance methods of the same name, see CombinableEventStream.scala")

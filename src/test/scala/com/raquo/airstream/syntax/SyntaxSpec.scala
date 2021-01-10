@@ -1,8 +1,8 @@
 package com.raquo.airstream.syntax
 
 import com.raquo.airstream.UnitSpec
+import com.raquo.airstream.core.EventStream
 import com.raquo.airstream.eventbus.EventBus
-import com.raquo.airstream.eventstream.EventStream
 
 import scala.concurrent.Future
 

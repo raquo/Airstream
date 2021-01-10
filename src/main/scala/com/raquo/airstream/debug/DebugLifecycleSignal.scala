@@ -1,8 +1,7 @@
 package com.raquo.airstream.debug
 
-import com.raquo.airstream.core.{AirstreamError, Transaction}
+import com.raquo.airstream.core.{AirstreamError, Signal, Transaction}
 import com.raquo.airstream.features.{InternalTryObserver, SingleParentObservable}
-import com.raquo.airstream.signal.Signal
 
 import scala.util.Try
 

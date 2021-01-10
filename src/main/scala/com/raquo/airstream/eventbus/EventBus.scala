@@ -1,7 +1,7 @@
 package com.raquo.airstream.eventbus
 
+import com.raquo.airstream.core.EventStream
 import com.raquo.airstream.eventbus.WriteBus.{BusTryTuple, BusTuple}
-import com.raquo.airstream.eventstream.EventStream
 
 import scala.util.Try
 

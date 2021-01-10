@@ -1,6 +1,6 @@
 package com.raquo.airstream.eventstream
 
-import com.raquo.airstream.core.{Observable, Observation, SyncObservable, Transaction}
+import com.raquo.airstream.core.{EventStream, Observable, Observation, SyncObservable, Transaction}
 import com.raquo.airstream.features.InternalParentObserver
 import com.raquo.airstream.util.JsPriorityQueue
 

@@ -1,7 +1,6 @@
 package com.raquo.airstream.web
 
-import com.raquo.airstream.core.{Observer, Transaction}
-import com.raquo.airstream.eventstream.EventStream
+import com.raquo.airstream.core.{EventStream, Observer, Transaction}
 import com.raquo.airstream.web.AjaxEventStream._
 import org.scalajs.dom
 

@@ -1,8 +1,6 @@
 package com.raquo.airstream.flatten
 
-import com.raquo.airstream.core.Observable
-import com.raquo.airstream.eventstream.EventStream
-import com.raquo.airstream.signal.Signal
+import com.raquo.airstream.core.{EventStream, Observable, Signal}
 
 import scala.concurrent.Future
 

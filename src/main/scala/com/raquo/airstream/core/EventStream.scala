@@ -1,16 +1,16 @@
-package com.raquo.airstream.eventstream
+package com.raquo.airstream.core
 
-import com.raquo.airstream.basic.{FilterEventStream, MapEventStream}
 import com.raquo.airstream.basic.generated._
+import com.raquo.airstream.basic.{FilterEventStream, MapEventStream}
 import com.raquo.airstream.combine.CombineEventStreamN
 import com.raquo.airstream.combine.generated._
 import com.raquo.airstream.core.AirstreamError.ObserverError
-import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.debug.DebugLifecycleEventStream
 import com.raquo.airstream.eventbus.EventBus
-import com.raquo.airstream.signal.{FoldLeftSignal, Signal}
+import com.raquo.airstream.eventstream.MergeEventStream
+import com.raquo.airstream.signal.FoldLeftSignal
 import com.raquo.airstream.split._
 import com.raquo.airstream.timing.{FutureEventStream, _}
 

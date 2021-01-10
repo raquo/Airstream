@@ -1,15 +1,14 @@
-package com.raquo.airstream.signal
+package com.raquo.airstream.core
 
 import com.raquo.airstream.basic.generated._
 import com.raquo.airstream.basic.{MapEventStream, MapSignal}
 import com.raquo.airstream.combine.CombineSignalN
 import com.raquo.airstream.combine.generated.{CombinableSignal, StaticSignalCombineOps}
-import com.raquo.airstream.core.{AirstreamError, Observable, Observer, Transaction}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.debug.DebugLifecycleSignal
-import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.ownership.Owner
+import com.raquo.airstream.signal.FoldLeftSignal
 import com.raquo.airstream.split.{SplittableOneSignal, SplittableSignal}
 import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
 import com.raquo.airstream.timing.FutureSignal

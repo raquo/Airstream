@@ -1,9 +1,8 @@
 package com.raquo.airstream.combine
 
 import com.raquo.airstream.UnitSpec
-import com.raquo.airstream.core.Observer
+import com.raquo.airstream.core.{Observer, Signal}
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
-import com.raquo.airstream.signal.Signal
 import com.raquo.airstream.state.Var
 
 import scala.collection.mutable

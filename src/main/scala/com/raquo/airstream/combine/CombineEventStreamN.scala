@@ -1,6 +1,6 @@
 package com.raquo.airstream.combine
 
-import com.raquo.airstream.eventstream.EventStream
+import com.raquo.airstream.core.EventStream
 import com.raquo.airstream.features.InternalParentObserver
 
 import scala.util.Try

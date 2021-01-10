@@ -1,7 +1,7 @@
 package com.raquo.airstream.combine.generated
 
 import app.tulz.tuplez.Composition
-import com.raquo.airstream.signal.Signal
+import com.raquo.airstream.core.Signal
 
 // These combine / combineWith / withCurrentValueOf / sample methods are implicitly available on all signals
 // For combine / combineWith methods on the Signal companion object, see StaticSignalCombineOps.scala

@@ -1,7 +1,6 @@
 package com.raquo.airstream.flatten
 
-import com.raquo.airstream.core.{Observable, Transaction}
-import com.raquo.airstream.eventstream.EventStream
+import com.raquo.airstream.core.{EventStream, Observable, Transaction}
 import com.raquo.airstream.features.{InternalNextErrorObserver, SingleParentObservable}
 
 import scala.concurrent.ExecutionContext.Implicits.global

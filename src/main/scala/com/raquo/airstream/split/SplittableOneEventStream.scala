@@ -1,7 +1,6 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.eventstream.EventStream
-import com.raquo.airstream.signal.Signal
+import com.raquo.airstream.core.{EventStream, Signal}
 import com.raquo.airstream.split.Splittable.IdSplittable
 import com.raquo.airstream.util.Id
 

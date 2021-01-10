@@ -1,8 +1,7 @@
 package com.raquo.airstream.combine.generated
 
 import com.raquo.airstream.combine.SampleCombineEventStreamN
-import com.raquo.airstream.eventstream.EventStream
-import com.raquo.airstream.signal.Signal
+import com.raquo.airstream.core.{EventStream, Signal}
 
 // These are implementations of SampleCombineEventStreamN used for EventStream's `withCurrentValueOf` and `sample` methods
 

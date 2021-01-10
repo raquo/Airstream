@@ -14,7 +14,7 @@ case class GenerateCombineEventStreams(
     line("package com.raquo.airstream.combine.generated")
     line()
     line("import com.raquo.airstream.combine.CombineEventStreamN")
-    line("import com.raquo.airstream.eventstream.EventStream")
+    line("import com.raquo.airstream.core.EventStream")
     line()
     line("// These are implementations of CombineEventStreamN used for EventStream's `combine` and `combineWith` methods")
     line()

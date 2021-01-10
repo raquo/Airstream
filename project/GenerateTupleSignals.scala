@@ -14,7 +14,7 @@ case class GenerateTupleSignals(
     line("package com.raquo.airstream.basic.generated")
     line()
     line("import com.raquo.airstream.basic.MapSignal")
-    line("import com.raquo.airstream.signal.Signal")
+    line("import com.raquo.airstream.core.Signal")
     line()
     line("// These mapN helpers are implicitly available on signals of tuples")
     line()
