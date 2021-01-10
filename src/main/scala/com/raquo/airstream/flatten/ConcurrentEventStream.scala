@@ -1,7 +1,7 @@
 package com.raquo.airstream.flatten
 
+import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentObservable}
 import com.raquo.airstream.core.{EventStream, InternalObserver, Observable, Signal, Transaction}
-import com.raquo.airstream.features.{InternalNextErrorObserver, SingleParentObservable}
 
 import scala.scalajs.js
 import scala.util.{Failure, Success}

@@ -1,7 +1,7 @@
 package com.raquo.airstream.timing
 
+import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentObservable}
 import com.raquo.airstream.core.{EventStream, Transaction}
-import com.raquo.airstream.features.{InternalNextErrorObserver, SingleParentObservable}
 
 import scala.scalajs.js
 import scala.scalajs.js.timers.SetTimeoutHandle

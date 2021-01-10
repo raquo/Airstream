@@ -1,7 +1,7 @@
 package com.raquo.airstream.split
 
+import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
 import com.raquo.airstream.core.{EventStream, Signal, Transaction}
-import com.raquo.airstream.features.{InternalTryObserver, SingleParentObservable}
 
 import scala.util.Try
 

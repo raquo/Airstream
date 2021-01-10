@@ -1,7 +1,7 @@
 package com.raquo.airstream.combine
 
+import com.raquo.airstream.common.InternalParentObserver
 import com.raquo.airstream.core.{EventStream, Signal, Transaction}
-import com.raquo.airstream.features.InternalParentObserver
 
 import scala.util.Try
 

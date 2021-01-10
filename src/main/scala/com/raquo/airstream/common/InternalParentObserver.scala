@@ -1,4 +1,4 @@
-package com.raquo.airstream.features
+package com.raquo.airstream.common
 
 import com.raquo.airstream.core.{InternalObserver, Observable, Transaction}
 

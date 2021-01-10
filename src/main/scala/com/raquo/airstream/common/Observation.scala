@@ -1,4 +1,6 @@
-package com.raquo.airstream.core
+package com.raquo.airstream.common
+
+import com.raquo.airstream.core.Observable
 
 import scala.util.Try
 
