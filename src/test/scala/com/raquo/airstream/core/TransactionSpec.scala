@@ -3,7 +3,7 @@ package com.raquo.airstream.core
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
-import com.raquo.airstream.signal.Var
+import com.raquo.airstream.vars.Var
 
 import scala.collection.mutable
 import scala.util.Try

@@ -1,0 +1,50 @@
+package com.raquo.airstream.vars
+
+import com.raquo.airstream.core.AirstreamError.VarError
+import com.raquo.airstream.core.{AirstreamError, Transaction}
+import com.raquo.airstream.ownership.Owner
+import com.raquo.airstream.signal.StrictSignal
+
+import scala.util.Try
+
+/** DerivedVar has the same Var contract as SourceVar, but instead of maintaining its own state
+  * it is essentially a lens on the underlying SourceVar.
+  *
+  * This Var is active for as long as its signal has listeners.
+  * Being a StrictSignal, it already starts out with a subscription owned by `owner`,
+  * but even if owner kills its subscriptions, this Var's signal might have other listeners.
+  */
+class DerivedVar[A, B](
+  parent: Var[A],
+  zoomIn: A => B,
+  zoomOut: B => A,
+  owner: Owner
+) extends Var[B] {
+
+  override private[vars] def underlyingVar: SourceVar[_] = parent.underlyingVar
+
+  private[this] val _varSignal = new DerivedVarSignal(parent, zoomIn, owner)
+
+  // #Note this getCurrentValue implementation is different from SourceVar
+  //  - SourceVar's getCurrentValue looks at an internal currentValue variable
+  //  - That currentValue gets updated immediately before the signal (in an already existing transaction)
+  //  - I hope this doesn't introduce weird transaction related timing glitches
+  //  - But even if it does, I think keeping derived var's current value consistent with its signal value
+  //    is more important, otherwise it would be madness if the derived var was accessed after its owner
+  //    was killed
+  override private[vars] def getCurrentValue: Try[B] = signal.tryNow()
+
+  override private[vars] def setCurrentValue(value: Try[B], transaction: Transaction): Unit = {
+    if (_varSignal.isStarted) {
+      parent.setCurrentValue(value.map(zoomOut), transaction)
+    } else {
+      // #Note We can't just throw here
+      //  - The outcome of that would be unpredictable, see comment in Transaction.run
+      //  - We also can't put an error into this Var's signal, because no one is listening to it
+      //  - The only other thing we could do is send the error into the parent Var, but I'm not sure if that's the right thing to do
+      AirstreamError.sendUnhandledError(VarError(s"Unable to set current value ${value} on inactive derived var", cause = None))
+    }
+  }
+
+  override val signal: StrictSignal[B] = _varSignal
+}

@@ -126,10 +126,10 @@ trait Signal[+A] extends Observable[A] {
   /** Add a noop observer to this signal to ensure that it's started.
     * This lets you access .now and .tryNow on the resulting StrictSignal.
     *
-    * You can use `myStream.toWeakSignal.observe` to read the last emitted
+    * You can use `myStream.toWeakSignal.observe.tryNow()` to read the last emitted
     * value from event streams just as well.
     */
-  def observe(implicit owner: Owner): SignalViewer[A] = new SignalViewer(this, owner)
+  def observe(implicit owner: Owner): OwnedSignal[A] = new ObservedSignal(this, Observer.empty, owner)
 
   /** Initial value is only evaluated if/when needed (when there are observers) */
   protected[airstream] def tryNow(): Try[A] = {

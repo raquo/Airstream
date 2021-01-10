@@ -3,7 +3,7 @@ package com.raquo.airstream.combine
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Observer
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
-import com.raquo.airstream.signal.Var
+import com.raquo.airstream.vars.Var
 
 import scala.collection.mutable
 

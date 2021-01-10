@@ -31,7 +31,8 @@ class MapSignal[I, +O](
     nextParentValue.fold(
       nextError => recover.fold(
         // if no `recover` specified, fire original error
-        fireError(nextError, transaction))(
+        fireError(nextError, transaction)
+      )(
         pf => Try(pf.applyOrElse(nextError, (_: Throwable) => null)).fold(
           tryError => {
             // if recover throws error, fire wrapped error

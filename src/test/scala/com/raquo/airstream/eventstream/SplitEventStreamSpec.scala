@@ -3,8 +3,8 @@ package com.raquo.airstream.eventstream
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
-import com.raquo.airstream.signal.Var
 import com.raquo.airstream.util.Id
+import com.raquo.airstream.vars.Var
 
 import scala.collection.mutable
 

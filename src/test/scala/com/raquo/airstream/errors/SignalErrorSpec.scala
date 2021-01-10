@@ -5,7 +5,8 @@ import com.raquo.airstream.core.{AirstreamError, Observer}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
-import com.raquo.airstream.signal.{Val, Var}
+import com.raquo.airstream.signal.Val
+import com.raquo.airstream.vars.Var
 import org.scalatest.BeforeAndAfter
 
 import scala.collection.mutable

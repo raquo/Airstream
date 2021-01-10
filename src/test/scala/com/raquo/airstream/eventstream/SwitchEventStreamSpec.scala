@@ -6,7 +6,7 @@ import com.raquo.airstream.core.Observer
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.features.FlattenStrategy.SwitchStreamStrategy
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
-import com.raquo.airstream.signal.Var
+import com.raquo.airstream.vars.Var
 
 import scala.collection.mutable
 
