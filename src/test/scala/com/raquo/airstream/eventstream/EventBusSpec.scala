@@ -30,8 +30,8 @@ class EventBusSpec extends UnitSpec {
     effects shouldEqual mutable.Buffer(Effect("obs0", 2))
     effects.clear()
 
-    bus.writer.onNext(3)
-    bus.writer.onNext(4)
+    bus.emit(3)
+    bus.emit(4)
 
     effects shouldEqual mutable.Buffer(Effect("obs0", 3), Effect("obs0", 4))
     effects.clear()
