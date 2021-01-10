@@ -8,7 +8,7 @@ import scala.scalajs.js.timers.SetTimeoutHandle
 
 class DelayEventStream[A](
   override protected val parent: EventStream[A],
-  delayMillis: Int
+  delayMs: Int
 ) extends EventStream[A] with SingleParentObservable[A, A] with InternalNextErrorObserver[A] {
 
   /** Async stream, so reset rank */
@@ -18,7 +18,7 @@ class DelayEventStream[A](
 
   override protected[airstream] def onNext(nextValue: A, transaction: Transaction): Unit = {
     var timerHandle: SetTimeoutHandle = null
-    timerHandle = js.timers.setTimeout(delayMillis.toDouble) {
+    timerHandle = js.timers.setTimeout(delayMs.toDouble) {
       //println(s"> init trx from DelayEventStream.onNext($nextValue)")
       timerHandles.splice(timerHandles.indexOf(timerHandle), deleteCount = 1) // Remove handle
       new Transaction(fireValue(nextValue, _))
@@ -29,7 +29,7 @@ class DelayEventStream[A](
 
   override def onError(nextError: Throwable, transaction: Transaction): Unit = {
     var timerHandle: SetTimeoutHandle = null
-    timerHandle = js.timers.setTimeout(delayMillis.toDouble) {
+    timerHandle = js.timers.setTimeout(delayMs.toDouble) {
       timerHandles.splice(timerHandles.indexOf(timerHandle), deleteCount = 1) // Remove handle
       new Transaction(fireError(nextError, _))
       ()

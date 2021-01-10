@@ -18,7 +18,7 @@ import scala.util.Try
   */
 class DebounceEventStream[A](
   override protected[this] val parent: EventStream[A],
-  delayFromLastEventMillis: Int
+  delayFromLastEventMs: Int
 ) extends EventStream[A] with SingleParentObservable[A, A] with InternalTryObserver[A] {
 
   private[this] var maybeLastTimeoutHandle: js.UndefOr[SetTimeoutHandle] = js.undefined
@@ -27,12 +27,12 @@ class DebounceEventStream[A](
   override protected[airstream] val topoRank: Int = 1
 
   /** Every time [[parent]] emits an event, we clear the previous timer and set a new one.
-    * This stream only emits when the parent has stopped emitting for [[delayFromLastEventMillis]] ms.
+    * This stream only emits when the parent has stopped emitting for [[delayFromLastEventMs]] ms.
     */
   override protected[airstream] def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
     maybeLastTimeoutHandle.foreach(js.timers.clearTimeout)
     maybeLastTimeoutHandle = js.defined(
-      js.timers.setTimeout(delayFromLastEventMillis.toDouble) {
+      js.timers.setTimeout(delayFromLastEventMs.toDouble) {
         //println(s"> init trx from DebounceEventStream.onTry($nextValue)")
         new Transaction(fireTry(nextValue, _))
       }

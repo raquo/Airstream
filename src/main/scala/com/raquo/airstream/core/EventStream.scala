@@ -51,13 +51,13 @@ trait EventStream[+A] extends Observable[A] {
   }
 
   /** See docs for [[ThrottleEventStream]] */
-  def throttle(intervalMillis: Int): EventStream[A] = {
-    ThrottleEventStream(parent = this, intervalMillis)
+  def throttle(ms: Int): EventStream[A] = {
+    ThrottleEventStream(parent = this, ms)
   }
 
   /** See docs for [[DebounceEventStream]] */
-  def debounce(delayFromLastEventMillis: Int): EventStream[A] = {
-    new DebounceEventStream(parent = this, delayFromLastEventMillis)
+  def debounce(ms: Int): EventStream[A] = {
+    new DebounceEventStream(parent = this, ms)
   }
 
   // @TODO[API] Should we introduce some kind of FoldError() wrapper?

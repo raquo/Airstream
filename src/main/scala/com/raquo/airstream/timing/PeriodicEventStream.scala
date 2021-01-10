@@ -5,7 +5,7 @@ import com.raquo.airstream.core.{EventStream, Transaction}
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
-/** @param next (currentState => (nextState, nextInterval)
+/** @param next (currentState => (nextState, nextIntervalMs)
   *             Note: guarded against exceptions.
   *             If `next` throws, stream will emit that error
   */
