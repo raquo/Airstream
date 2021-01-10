@@ -91,8 +91,8 @@ object CustomSource {
 
   object Config {
 
-    def apply(onStart: => Unit, onStop: => Unit): Config = {
-      new Config(() => onStart, () => onStop)
+    def apply(onStart: () => Unit, onStop: () => Unit): Config = {
+      new Config(onStart, onStop)
     }
   }
 

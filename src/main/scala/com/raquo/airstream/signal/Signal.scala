@@ -238,8 +238,8 @@ object Signal {
   ): Signal[A] = {
     CustomSignalSource[A](initial)( (setValue, getValue, getStartIndex, getIsStarted) => {
       CustomSource.Config(
-        onStart = start(setValue, getValue, getStartIndex, getIsStarted),
-        onStop = stop(getStartIndex())
+        onStart = () => start(setValue, getValue, getStartIndex, getIsStarted),
+        onStop = () => stop(getStartIndex())
       )
     })
   }

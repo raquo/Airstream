@@ -223,12 +223,8 @@ object EventStream {
   ): EventStream[A] = {
     CustomStreamSource[A] { (fireValue, fireError, getStartIndex, getIsStarted) =>
       CustomSource.Config(
-        onStart = {
-          start(fireValue, fireError, getStartIndex, getIsStarted)
-        },
-        onStop = {
-          stop(getStartIndex())
-        }
+        onStart = () => start(fireValue, fireError, getStartIndex, getIsStarted),
+        onStop = () => stop(getStartIndex())
       ).when {
         () => shouldStart(getStartIndex())
       }

@@ -32,8 +32,8 @@ object DomEventStream {
       val eventHandler: js.Function1[Ev, Unit] = fireValue
 
       CustomSource.Config(
-        onStart = eventTarget.addEventListener(eventKey, eventHandler, useCapture),
-        onStop = eventTarget.removeEventListener(eventKey, eventHandler, useCapture)
+        onStart = () => eventTarget.addEventListener(eventKey, eventHandler, useCapture),
+        onStop = () => eventTarget.removeEventListener(eventKey, eventHandler, useCapture)
       )
     })
   }
