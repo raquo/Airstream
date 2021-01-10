@@ -10,9 +10,9 @@ import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.debug.DebugLifecycleEventStream
 import com.raquo.airstream.eventbus.EventBus
-import com.raquo.airstream.flatten.FutureEventStream
 import com.raquo.airstream.signal.{FoldLeftSignal, Signal}
-import com.raquo.airstream.split.{SignalFromEventStream, SplittableEventStream, SplittableOneEventStream}
+import com.raquo.airstream.split._
+import com.raquo.airstream.timing.{FutureEventStream, _}
 
 import scala.annotation.unused
 import scala.concurrent.Future

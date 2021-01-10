@@ -1,6 +1,7 @@
-package com.raquo.airstream.eventstream
+package com.raquo.airstream.timing
 
 import com.raquo.airstream.core.Transaction
+import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.features.{InternalNextErrorObserver, SingleParentObservable}
 
 import scala.scalajs.js
