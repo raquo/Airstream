@@ -33,7 +33,7 @@ class AjaxEventStream(
   method: String,
   url: String,
   data: dom.ext.Ajax.InputData,
-  timeout: Int,
+  timeoutMs: Int,
   headers: Map[String, String],
   withCredentials: Boolean,
   responseType: String,
@@ -48,7 +48,7 @@ class AjaxEventStream(
   private var pendingRequest: Option[dom.XMLHttpRequest] = None
 
   override protected[this] def onStart(): Unit = {
-    val request = AjaxEventStream.initRequest(timeout, headers, withCredentials, responseType)
+    val request = AjaxEventStream.initRequest(timeoutMs, headers, withCredentials, responseType)
 
     pendingRequest = Some(request)
 
@@ -166,7 +166,7 @@ object AjaxEventStream {
   def get(
     url: String,
     data: dom.ext.Ajax.InputData = null,
-    timeout: Int = 0,
+    timeoutMs: Int = 0,
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = "",
@@ -179,7 +179,7 @@ object AjaxEventStream {
       "GET",
       url,
       data,
-      timeout,
+      timeoutMs,
       headers,
       withCredentials,
       responseType,
@@ -198,7 +198,7 @@ object AjaxEventStream {
   def post(
     url: String,
     data: dom.ext.Ajax.InputData = null,
-    timeout: Int = 0,
+    timeoutMs: Int = 0,
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = "",
@@ -211,7 +211,7 @@ object AjaxEventStream {
       "POST",
       url,
       data,
-      timeout,
+      timeoutMs,
       headers,
       withCredentials,
       responseType,
@@ -230,7 +230,7 @@ object AjaxEventStream {
   def put(
     url: String,
     data: dom.ext.Ajax.InputData = null,
-    timeout: Int = 0,
+    timeoutMs: Int = 0,
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = "",
@@ -243,7 +243,7 @@ object AjaxEventStream {
       "PUT",
       url,
       data,
-      timeout,
+      timeoutMs,
       headers,
       withCredentials,
       responseType,
@@ -262,7 +262,7 @@ object AjaxEventStream {
   def patch(
     url: String,
     data: dom.ext.Ajax.InputData = null,
-    timeout: Int = 0,
+    timeoutMs: Int = 0,
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = "",
@@ -275,7 +275,7 @@ object AjaxEventStream {
       "PATCH",
       url,
       data,
-      timeout,
+      timeoutMs,
       headers,
       withCredentials,
       responseType,
@@ -294,7 +294,7 @@ object AjaxEventStream {
   def delete(
     url: String,
     data: dom.ext.Ajax.InputData = null,
-    timeout: Int = 0,
+    timeoutMs: Int = 0,
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = "",
@@ -307,7 +307,7 @@ object AjaxEventStream {
       "DELETE",
       url,
       data,
-      timeout,
+      timeoutMs,
       headers,
       withCredentials,
       responseType,
@@ -325,14 +325,14 @@ object AjaxEventStream {
     * AjaxEventStream already does this internally. This is provided as a building block for custom logic.
     */
   def initRequest(
-    timeout: Int = 0,
+    timeoutMs: Int = 0,
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = ""
   ): dom.XMLHttpRequest = {
     val request = new dom.XMLHttpRequest
     request.responseType = responseType
-    request.timeout = timeout.toDouble
+    request.timeout = timeoutMs.toDouble
     request.withCredentials = withCredentials
     headers.foreach(Function.tupled(request.setRequestHeader))
     request

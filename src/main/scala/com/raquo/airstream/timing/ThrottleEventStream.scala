@@ -17,14 +17,14 @@ import scala.scalajs.js
   */
 object ThrottleEventStream {
 
-  def apply[A](parent: EventStream[A], intervalMillis: Int): EventStream[A] = {
+  def apply[A](parent: EventStream[A], intervalMs: Int): EventStream[A] = {
     var lastEventTimeMillis: Double = 0
 
     new FilterEventStream[A](parent, passes = _ => {
       val currentTimeMillis = js.Date.now()
       val timeSinceLastEventMillis = currentTimeMillis - lastEventTimeMillis
 
-      val shouldEmit = timeSinceLastEventMillis >= intervalMillis
+      val shouldEmit = timeSinceLastEventMillis >= intervalMs
 
       if (shouldEmit) {
         lastEventTimeMillis = currentTimeMillis
