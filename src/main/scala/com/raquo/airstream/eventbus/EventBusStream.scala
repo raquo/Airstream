@@ -1,7 +1,7 @@
 package com.raquo.airstream.eventbus
 
+import com.raquo.airstream.common.InternalNextErrorObserver
 import com.raquo.airstream.core.{EventStream, Transaction}
-import com.raquo.airstream.features.InternalNextErrorObserver
 
 import scala.scalajs.js
 

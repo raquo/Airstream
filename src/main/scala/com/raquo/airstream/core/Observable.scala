@@ -1,7 +1,7 @@
 package com.raquo.airstream.core
 
-import com.raquo.airstream.flatten.FlattenStrategy.{SwitchFutureStrategy, SwitchSignalStrategy, SwitchStreamStrategy}
 import com.raquo.airstream.flatten.FlattenStrategy
+import com.raquo.airstream.flatten.FlattenStrategy.{SwitchFutureStrategy, SwitchSignalStrategy, SwitchStreamStrategy}
 import com.raquo.airstream.ownership.{Owner, Subscription}
 import org.scalajs.dom
 

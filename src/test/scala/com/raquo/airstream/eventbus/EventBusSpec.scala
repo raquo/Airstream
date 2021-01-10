@@ -1,8 +1,7 @@
-package com.raquo.airstream.eventstream
+package com.raquo.airstream.eventbus
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Observer
-import com.raquo.airstream.eventbus.{EventBus, WriteBus}
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.ownership.Owner
 

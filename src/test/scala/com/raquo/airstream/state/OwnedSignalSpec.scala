@@ -1,4 +1,4 @@
-package com.raquo.airstream.observers
+package com.raquo.airstream.state
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
@@ -7,9 +7,9 @@ import com.raquo.airstream.fixtures.{Calculation, TestableOwner}
 import scala.collection.mutable
 import scala.util.Success
 
-class SignalViewerSpec extends UnitSpec {
+class OwnedSignalSpec extends UnitSpec {
 
-  it("SignalViewer") {
+  it("OwnedSignal") {
 
     implicit val testOwner: TestableOwner = new TestableOwner
 

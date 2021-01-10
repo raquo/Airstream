@@ -1,7 +1,7 @@
-package com.raquo.airstream.basic.generated
+package com.raquo.airstream.misc.generated
 
-import com.raquo.airstream.basic.MapSignal
 import com.raquo.airstream.core.Signal
+import com.raquo.airstream.misc.MapSignal
 
 // These mapN helpers are implicitly available on signals of tuples
 

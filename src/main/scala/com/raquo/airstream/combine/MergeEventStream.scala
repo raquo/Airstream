@@ -1,7 +1,7 @@
-package com.raquo.airstream.eventstream
+package com.raquo.airstream.combine
 
-import com.raquo.airstream.core.{EventStream, Observable, Observation, SyncObservable, Transaction}
-import com.raquo.airstream.features.InternalParentObserver
+import com.raquo.airstream.common.{InternalParentObserver, Observation}
+import com.raquo.airstream.core.{EventStream, Observable, SyncObservable, Transaction}
 import com.raquo.airstream.util.JsPriorityQueue
 
 import scala.scalajs.js

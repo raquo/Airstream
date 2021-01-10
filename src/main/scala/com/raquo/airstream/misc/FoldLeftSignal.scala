@@ -1,7 +1,7 @@
-package com.raquo.airstream.signal
+package com.raquo.airstream.misc
 
+import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
 import com.raquo.airstream.core.{Observable, Signal, Transaction}
-import com.raquo.airstream.features.{InternalTryObserver, SingleParentObservable}
 
 import scala.util.Try
 

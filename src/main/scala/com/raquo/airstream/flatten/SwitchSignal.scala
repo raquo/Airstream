@@ -1,7 +1,7 @@
 package com.raquo.airstream.flatten
 
+import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
 import com.raquo.airstream.core.{InternalObserver, Signal, Transaction}
-import com.raquo.airstream.features.{InternalTryObserver, SingleParentObservable}
 
 import scala.util.Try
 

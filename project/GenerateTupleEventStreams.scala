@@ -7,14 +7,14 @@ case class GenerateTupleEventStreams(
   from: Int,
   to: Int
 ) extends SourceGenerator(
-  sourceDir / "scala" / "com" / "raquo" / "airstream" / "basic" / "generated" / s"TupleEventStreams.scala"
+  sourceDir / "scala" / "com" / "raquo" / "airstream" / "misc" / "generated" / s"TupleEventStreams.scala"
 ) {
 
   override def apply(): Unit = {
-    line("package com.raquo.airstream.basic.generated")
+    line("package com.raquo.airstream.misc.generated")
     line()
-    line("import com.raquo.airstream.basic.{FilterEventStream, MapEventStream}")
     line("import com.raquo.airstream.core.EventStream")
+    line("import com.raquo.airstream.misc.{FilterEventStream, MapEventStream}")
     line()
     line("// These mapN and filterN helpers are implicitly available on streams of tuples")
     line()
