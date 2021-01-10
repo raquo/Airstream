@@ -16,6 +16,10 @@ class EventBus[A] {
   val writer: WriteBus[A] = new WriteBus[A]
 
   val events: EventStream[A] = writer.stream
+
+  def emit(event: A): Unit = writer.onNext(event)
+
+  def emitTry(event: Try[A]): Unit = writer.onTry(event)
 }
 
 object EventBus {
