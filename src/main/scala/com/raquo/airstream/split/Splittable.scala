@@ -1,4 +1,4 @@
-package com.raquo.airstream.features
+package com.raquo.airstream.split
 
 import com.raquo.airstream.util.Id
 

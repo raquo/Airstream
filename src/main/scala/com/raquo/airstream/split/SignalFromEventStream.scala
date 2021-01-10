@@ -1,8 +1,9 @@
-package com.raquo.airstream.signal
+package com.raquo.airstream.split
 
 import com.raquo.airstream.core.Transaction
 import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.features.{InternalTryObserver, SingleParentObservable}
+import com.raquo.airstream.signal.Signal
 
 import scala.util.Try
 
