@@ -9,6 +9,7 @@ import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.debug.DebugLifecycleSignal
 import com.raquo.airstream.eventstream.EventStream
+import com.raquo.airstream.flatten.FutureSignal
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.split.{SplittableOneSignal, SplittableSignal}
 

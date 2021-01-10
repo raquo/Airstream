@@ -1,4 +1,4 @@
-package com.raquo.airstream.signal
+package com.raquo.airstream.flatten
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Observable.MetaObservable
