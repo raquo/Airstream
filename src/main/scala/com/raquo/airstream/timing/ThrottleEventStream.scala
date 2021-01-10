@@ -1,6 +1,7 @@
-package com.raquo.airstream.eventstream
+package com.raquo.airstream.timing
 
 import com.raquo.airstream.basic.FilterEventStream
+import com.raquo.airstream.eventstream.EventStream
 
 import scala.scalajs.js
 

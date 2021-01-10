@@ -1,4 +1,4 @@
-package com.raquo.airstream.flatten
+package com.raquo.airstream.timing
 
 import com.raquo.airstream.AsyncUnitSpec
 import com.raquo.airstream.core.Observer

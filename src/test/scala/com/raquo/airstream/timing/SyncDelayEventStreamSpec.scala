@@ -1,4 +1,4 @@
-package com.raquo.airstream.eventstream
+package com.raquo.airstream.timing
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Observer
