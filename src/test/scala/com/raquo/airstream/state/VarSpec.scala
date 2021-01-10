@@ -1,4 +1,4 @@
-package com.raquo.airstream.vars
+package com.raquo.airstream.state
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.{AirstreamError, Observer}

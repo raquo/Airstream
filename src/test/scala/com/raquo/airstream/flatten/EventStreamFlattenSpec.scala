@@ -7,7 +7,7 @@ import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import com.raquo.airstream.flatten.FlattenStrategy.ConcurrentStreamStrategy
 import com.raquo.airstream.ownership.Owner
-import com.raquo.airstream.vars.Var
+import com.raquo.airstream.state.Var
 
 import scala.collection.mutable
 

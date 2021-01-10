@@ -1,9 +1,8 @@
-package com.raquo.airstream.vars
+package com.raquo.airstream.state
 
 import com.raquo.airstream.core.AirstreamError.VarError
 import com.raquo.airstream.core.{AirstreamError, Transaction}
 import com.raquo.airstream.ownership.Owner
-import com.raquo.airstream.signal.StrictSignal
 
 import scala.util.Try
 
@@ -21,7 +20,7 @@ class DerivedVar[A, B](
   owner: Owner
 ) extends Var[B] {
 
-  override private[vars] def underlyingVar: SourceVar[_] = parent.underlyingVar
+  override private[state] def underlyingVar: SourceVar[_] = parent.underlyingVar
 
   private[this] val _varSignal = new DerivedVarSignal(parent, zoomIn, owner)
 
@@ -32,9 +31,9 @@ class DerivedVar[A, B](
   //  - But even if it does, I think keeping derived var's current value consistent with its signal value
   //    is more important, otherwise it would be madness if the derived var was accessed after its owner
   //    was killed
-  override private[vars] def getCurrentValue: Try[B] = signal.tryNow()
+  override private[state] def getCurrentValue: Try[B] = signal.tryNow()
 
-  override private[vars] def setCurrentValue(value: Try[B], transaction: Transaction): Unit = {
+  override private[state] def setCurrentValue(value: Try[B], transaction: Transaction): Unit = {
     if (_varSignal.isStarted) {
       parent.setCurrentValue(value.map(zoomOut), transaction)
     } else {

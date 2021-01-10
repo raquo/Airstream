@@ -1,9 +1,8 @@
-package com.raquo.airstream.vars
+package com.raquo.airstream.state
 
 import com.raquo.airstream.core.AirstreamError.VarError
 import com.raquo.airstream.core.{Observer, Transaction}
 import com.raquo.airstream.ownership.Owner
-import com.raquo.airstream.signal.StrictSignal
 import com.raquo.airstream.util.hasDuplicateTupleKeys
 
 import scala.util.{Failure, Success, Try}
@@ -16,11 +15,11 @@ import scala.util.{Failure, Success, Try}
 trait Var[A] {
 
   /** Used to make sure we don't update the same var twice in the same transaction */
-  private[vars] def underlyingVar: SourceVar[_]
+  private[state] def underlyingVar: SourceVar[_]
 
-  private[vars] def getCurrentValue: Try[A]
+  private[state] def getCurrentValue: Try[A]
 
-  private[vars] def setCurrentValue(value: Try[A], transaction: Transaction): Unit
+  private[state] def setCurrentValue(value: Try[A], transaction: Transaction): Unit
 
   val signal: StrictSignal[A]
 
