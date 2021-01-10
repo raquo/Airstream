@@ -1,6 +1,7 @@
-package com.raquo.airstream.eventstream
+package com.raquo.airstream.flatten
 
 import com.raquo.airstream.core.Transaction
+import com.raquo.airstream.eventstream.EventStream
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -13,7 +14,7 @@ import scala.concurrent.Future
   * @param future Note: guarded against failures
   * @param emitIfFutureCompleted If false, this stream will emit an event when it's initialized with
   *                              an already completed future. Generally you should avoid this and use
-  *                              [[com.raquo.airstream.signal.FutureSignal]] instead.
+  *                              [[FutureSignal]] instead.
   */
 class FutureEventStream[A](future: Future[A], emitIfFutureCompleted: Boolean) extends EventStream[A] {
 

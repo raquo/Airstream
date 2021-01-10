@@ -1,10 +1,11 @@
-package com.raquo.airstream.eventstream
+package com.raquo.airstream.flatten
 
 import com.raquo.airstream.AsyncUnitSpec
 import com.raquo.airstream.core.Observer
 import com.raquo.airstream.eventbus.EventBus
-import com.raquo.airstream.features.FlattenStrategy.{ConcurrentFutureStrategy, OverwriteFutureStrategy, SwitchFutureStrategy}
+import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
+import com.raquo.airstream.flatten.FlattenStrategy._
 import org.scalatest.Assertion
 
 import scala.collection.mutable
