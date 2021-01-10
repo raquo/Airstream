@@ -1,7 +1,6 @@
-package com.raquo.airstream.signal
+package com.raquo.airstream.core
 
 import com.raquo.airstream.UnitSpec
-import com.raquo.airstream.core.Observer
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 

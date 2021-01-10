@@ -1,7 +1,7 @@
 package com.raquo.airstream.basic.generated
 
 import com.raquo.airstream.basic.{FilterEventStream, MapEventStream}
-import com.raquo.airstream.eventstream.EventStream
+import com.raquo.airstream.core.EventStream
 
 // These mapN and filterN helpers are implicitly available on streams of tuples
 

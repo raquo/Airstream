@@ -1,8 +1,8 @@
 package com.raquo.airstream.eventbus
 
-import com.raquo.airstream.core.Transaction
-import com.raquo.airstream.eventstream.EventStream
+import com.raquo.airstream.core.{EventStream, Transaction}
 import com.raquo.airstream.features.InternalNextErrorObserver
+
 import scala.scalajs.js
 
 class EventBusStream[A] private[eventbus] () extends EventStream[A] with InternalNextErrorObserver[A] {

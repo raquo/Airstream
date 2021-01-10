@@ -1,7 +1,6 @@
 package com.raquo.airstream.timing
 
-import com.raquo.airstream.core.Transaction
-import com.raquo.airstream.eventstream.EventStream
+import com.raquo.airstream.core.{EventStream, Transaction}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

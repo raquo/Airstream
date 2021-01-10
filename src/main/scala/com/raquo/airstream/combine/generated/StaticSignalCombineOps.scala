@@ -1,6 +1,6 @@
 package com.raquo.airstream.combine.generated
 
-import com.raquo.airstream.signal.Signal
+import com.raquo.airstream.core.Signal
 
 // These combine and combineWith methods are available on the Signal companion object
 // For instance methods of the same name, see CombinableSignal.scala

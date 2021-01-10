@@ -14,7 +14,7 @@ case class GenerateCombineSignals(
     line("package com.raquo.airstream.combine.generated")
     line()
     line("import com.raquo.airstream.combine.CombineSignalN")
-    line("import com.raquo.airstream.signal.Signal")
+    line("import com.raquo.airstream.core.Signal")
     line()
     line("// These are implementations of CombineSignalN used for Signal's `combine` and `combineWith` methods")
     line()

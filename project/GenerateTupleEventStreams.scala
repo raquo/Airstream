@@ -14,7 +14,7 @@ case class GenerateTupleEventStreams(
     line("package com.raquo.airstream.basic.generated")
     line()
     line("import com.raquo.airstream.basic.{FilterEventStream, MapEventStream}")
-    line("import com.raquo.airstream.eventstream.EventStream")
+    line("import com.raquo.airstream.core.EventStream")
     line()
     line("// These mapN and filterN helpers are implicitly available on streams of tuples")
     line()

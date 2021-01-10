@@ -14,7 +14,7 @@ case class GenerateCombinableSignal(
     line("package com.raquo.airstream.combine.generated")
     line()
     line("import app.tulz.tuplez.Composition")
-    line("import com.raquo.airstream.signal.Signal")
+    line("import com.raquo.airstream.core.Signal")
     line()
     line("// These combine / combineWith / withCurrentValueOf / sample methods are implicitly available on all signals")
     line("// For combine / combineWith methods on the Signal companion object, see StaticSignalCombineOps.scala")

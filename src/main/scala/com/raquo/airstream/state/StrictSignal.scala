@@ -1,6 +1,6 @@
 package com.raquo.airstream.state
 
-import com.raquo.airstream.signal.Signal
+import com.raquo.airstream.core.Signal
 
 import scala.util.Try
 

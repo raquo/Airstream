@@ -1,8 +1,7 @@
 package com.raquo.airstream.combine.generated
 
 import app.tulz.tuplez.Composition
-import com.raquo.airstream.eventstream.EventStream
-import com.raquo.airstream.signal.Signal
+import com.raquo.airstream.core.{EventStream, Signal}
 
 // These combine / combineWith / withCurrentValueOf / sample methods are implicitly available on all streams
 // For combine / combineWith methods on the EventStream companion object, see StaticEventStreamCombineOps.scala

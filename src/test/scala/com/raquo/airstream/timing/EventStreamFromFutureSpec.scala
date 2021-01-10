@@ -1,8 +1,7 @@
 package com.raquo.airstream.timing
 
 import com.raquo.airstream.AsyncUnitSpec
-import com.raquo.airstream.core.Observer
-import com.raquo.airstream.eventstream.EventStream
+import com.raquo.airstream.core.{EventStream, Observer}
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import org.scalatest.{Assertion, BeforeAndAfter}
 

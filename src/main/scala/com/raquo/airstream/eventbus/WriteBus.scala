@@ -1,7 +1,6 @@
 package com.raquo.airstream.eventbus
 
-import com.raquo.airstream.core.{Observer, Transaction}
-import com.raquo.airstream.eventstream.EventStream
+import com.raquo.airstream.core.{EventStream, Observer, Transaction}
 import com.raquo.airstream.ownership.{Owner, Subscription}
 import com.raquo.airstream.util.hasDuplicateTupleKeys
 

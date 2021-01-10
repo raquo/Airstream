@@ -1,6 +1,6 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.signal.Signal
+import com.raquo.airstream.core.Signal
 
 class SplittableSignal[M[_], Input](val signal: Signal[M[Input]]) extends AnyVal {
 

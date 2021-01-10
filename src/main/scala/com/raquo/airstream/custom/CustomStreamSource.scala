@@ -1,7 +1,7 @@
 package com.raquo.airstream.custom
 
+import com.raquo.airstream.core.EventStream
 import com.raquo.airstream.custom.CustomSource._
-import com.raquo.airstream.eventstream.EventStream
 
 /** Use this to easily create a custom signal from an external source
   *

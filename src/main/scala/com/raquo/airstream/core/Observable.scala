@@ -1,10 +1,8 @@
 package com.raquo.airstream.core
 
-import com.raquo.airstream.eventstream.EventStream
 import com.raquo.airstream.flatten.FlattenStrategy.{SwitchFutureStrategy, SwitchSignalStrategy, SwitchStreamStrategy}
 import com.raquo.airstream.flatten.FlattenStrategy
 import com.raquo.airstream.ownership.{Owner, Subscription}
-import com.raquo.airstream.signal.Signal
 import org.scalajs.dom
 
 import scala.annotation.unused

@@ -13,7 +13,7 @@ case class GenerateStaticSignalCombineOps(
   override def apply(): Unit = {
     line("package com.raquo.airstream.combine.generated")
     line()
-    line("import com.raquo.airstream.signal.Signal")
+    line("import com.raquo.airstream.core.Signal")
     line()
     line("// These combine and combineWith methods are available on the Signal companion object")
     line("// For instance methods of the same name, see CombinableSignal.scala")

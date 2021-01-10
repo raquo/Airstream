@@ -1,8 +1,7 @@
 package com.raquo.airstream.ownership
 
-import com.raquo.airstream.core.{Observable, Observer}
+import com.raquo.airstream.core.{EventStream, Observable, Observer}
 import com.raquo.airstream.eventbus.WriteBus
-import com.raquo.airstream.eventstream.EventStream
 
 // @TODO[API] I could make the constructor public but it's less confusing if you use the companion object methods
 

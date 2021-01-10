@@ -1,7 +1,7 @@
 package com.raquo.airstream.custom
 
+import com.raquo.airstream.core.Signal
 import com.raquo.airstream.custom.CustomSource._
-import com.raquo.airstream.signal.Signal
 
 import scala.util.{Success, Try}
 

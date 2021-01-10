@@ -1,7 +1,7 @@
 package com.raquo.airstream.combine.generated
 
 import com.raquo.airstream.combine.CombineSignalN
-import com.raquo.airstream.signal.Signal
+import com.raquo.airstream.core.Signal
 
 // These are implementations of CombineSignalN used for Signal's `combine` and `combineWith` methods
 

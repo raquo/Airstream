@@ -1,7 +1,7 @@
 package com.raquo.airstream.combine.generated
 
 import com.raquo.airstream.combine.CombineEventStreamN
-import com.raquo.airstream.eventstream.EventStream
+import com.raquo.airstream.core.EventStream
 
 // These are implementations of CombineEventStreamN used for EventStream's `combine` and `combineWith` methods
 

@@ -1,7 +1,7 @@
 package com.raquo.airstream.combine.generated
 
 import com.raquo.airstream.combine.SampleCombineSignalN
-import com.raquo.airstream.signal.Signal
+import com.raquo.airstream.core.Signal
 
 // These are implementations of SampleCombineSignalN used for Signal's `withCurrentValueOf` and `sample` methods
 

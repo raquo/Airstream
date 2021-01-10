@@ -1,7 +1,7 @@
 package com.raquo.airstream.web
 
+import com.raquo.airstream.core.EventStream
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
-import com.raquo.airstream.eventstream.EventStream
 import org.scalajs.dom
 
 import scala.scalajs.js
