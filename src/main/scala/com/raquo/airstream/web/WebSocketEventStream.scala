@@ -11,7 +11,7 @@ import scala.util.{Success, Try}
   * An event source that emits/transmits messages from/on a [[dom.WebSocket]] connection.
   *
   * '''Warning''': [[dom.WebSocket]] is an ugly, imperative JS construct. We set event callbacks for
-  * `onclose`, `onmessage`, and if requested, also for `onerror`, `onopen`.
+  * `onclose`, `onmessage`, `onopen`, and if requested, also for `onerror`.
   * Make sure you don't override Airstream's listeners, or this stream will not work properly.
   *
   * @param url            absolute URL of websocket endpoint
@@ -41,15 +41,8 @@ class WebSocketEventStream[I, O] private (
   private var websocket: js.UndefOr[dom.WebSocket] = js.undefined
 
   def close(): Unit =
-  // https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close
-    websocket.foreach { socket =>
-      socket.onclose = null
-      socket.onerror = null
-      socket.onmessage = null
-      socket.onopen = null
-      socket.close()
-      websocket = js.undefined
-    }
+    // https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close
+    websocket.foreach(_.close())
 
   def open(): Unit = {
     close()
@@ -80,24 +73,26 @@ class WebSocketEventStream[I, O] private (
     if (isStarted) {
       val socket = protocol.fold(new dom.WebSocket(url))(new dom.WebSocket(url, _))
 
-      // update local reference
-      websocket = socket
-
       // initialize new socket
       W.initialize(socket)
 
       // bind message listener
       if (isStarted) bind(socket)
 
-      // register required listeners
+      // register listeners
       socket.onclose = (e: dom.CloseEvent) => {
+        // reset local reference
         websocket = js.undefined
         if (closeObserver ne Observer.empty) closeObserver.onNext(e)
+      }
+      socket.onopen = (e: dom.Event) => {
+        // update local reference
+        websocket = socket
+        if (openObserver ne Observer.empty) openObserver.onNext(e)
       }
 
       // register optional listeners
       if (errorObserver ne Observer.empty) socket.onerror = errorObserver.onNext
-      if (openObserver ne Observer.empty) socket.onopen = openObserver.onNext
 
       // call optional observer
       if (startObserver ne Observer.empty) startObserver.onNext(socket)
