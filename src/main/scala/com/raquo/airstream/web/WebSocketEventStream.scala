@@ -32,7 +32,7 @@ class WebSocketEventStream[I, O] private (
   openObserver: Observer[dom.Event],
   startObserver: Observer[dom.WebSocket],
   unsentObserver: Observer[O],
-  protocol: String
+  protocol: js.UndefOr[String]
 )(implicit W: WebSocketEventStream.Writer[O])
   extends EventStream[I] {
 
@@ -78,7 +78,7 @@ class WebSocketEventStream[I, O] private (
 
   private def connect(): Unit =
     if (isStarted) {
-      val socket = new dom.WebSocket(url, protocol)
+      val socket = protocol.fold(new dom.WebSocket(url))(new dom.WebSocket(url, _))
 
       // update local reference
       websocket = socket
@@ -160,7 +160,7 @@ object WebSocketEventStream {
       openObserver: Observer[dom.Event] = Observer.empty,
       startObserver: Observer[dom.WebSocket] = Observer.empty,
       unsentObserver: Observer[O] = Observer.empty,
-      protocol: String = ""
+      protocol: js.UndefOr[String] = js.undefined
     ): Duplex[I, O] = {
       val ws = new WebSocketEventStream(
         url,
@@ -204,7 +204,7 @@ object WebSocketEventStream {
       errorObserver: Observer[dom.Event] = Observer.empty,
       openObserver: Observer[dom.Event] = Observer.empty,
       startObserver: Observer[dom.WebSocket] = Observer.empty,
-      protocol: String = ""
+      protocol: js.UndefOr[String] = js.undefined
     ): Simplex[I] = {
       val (control, receiver, _) =
         apply[Void](url, closeObserver, errorObserver, openObserver, startObserver, Observer.empty, protocol)
@@ -222,7 +222,7 @@ object WebSocketEventStream {
       openObserver: Observer[dom.Event] = Observer.empty,
       startObserver: Observer[dom.WebSocket] = Observer.empty,
       unsentObserver: Observer[A] = Observer.empty,
-      protocol: String = ""
+      protocol: js.UndefOr[String] = js.undefined
     ): Duplex[A, A] =
       apply(url, closeObserver, errorObserver, openObserver, startObserver, unsentObserver, protocol)
   }
