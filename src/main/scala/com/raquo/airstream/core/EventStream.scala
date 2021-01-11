@@ -51,8 +51,8 @@ trait EventStream[+A] extends Observable[A] {
   }
 
   /** See docs for [[ThrottleEventStream]] */
-  def throttle(ms: Int): EventStream[A] = {
-    ThrottleEventStream(parent = this, ms)
+  def throttle(ms: Int, leading: Boolean = true): EventStream[A] = {
+    new ThrottleEventStream(parent = this, intervalMs = ms, leading = leading)
   }
 
   /** See docs for [[DebounceEventStream]] */
