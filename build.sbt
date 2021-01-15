@@ -4,7 +4,7 @@ enablePlugins(ScalaJSPlugin)
 
 libraryDependencies ++= Seq(
   "org.scala-js" %%% "scalajs-dom" % "1.2.0-SNAPSHOT",
-  "app.tulz" %%% "tuplez-full-light" % "0.3.2-SNAPSHOT",
+  "app.tulz" %%% "tuplez-full-light" % "0.3.2",
 //  "org.scalatest" %%% "scalatest" % "3.2.0" % Test
 )
 
