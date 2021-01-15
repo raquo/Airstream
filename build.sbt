@@ -3,7 +3,7 @@ enablePlugins(ScalaJSPlugin)
 //enablePlugins(ScalaJSBundlerPlugin)
 
 libraryDependencies ++= Seq(
-  "app.tulz" %%% "tuplez-full-light" % "0.3.3-SNAPSHOT"
+  "app.tulz" %%% "tuplez-full-light" % "0.3.3"
 )
 
 libraryDependencies ++=
