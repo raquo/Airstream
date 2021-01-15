@@ -1,6 +1,6 @@
 package com.raquo.airstream.web
 
-import com.raquo.airstream.core.{EventStream, Observer, Transaction}
+import com.raquo.airstream.core.{ EventStream, Observer, Transaction, WritableEventStream }
 import com.raquo.airstream.web.AjaxEventStream._
 import org.scalajs.dom
 
@@ -41,13 +41,13 @@ class AjaxEventStream(
   requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
   progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
   readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
-) extends EventStream[dom.XMLHttpRequest] {
+) extends EventStream[dom.XMLHttpRequest] with WritableEventStream[dom.XMLHttpRequest] {
 
   protected[airstream] val topoRank: Int = 1
 
   private var pendingRequest: Option[dom.XMLHttpRequest] = None
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     val request = AjaxEventStream.initRequest(timeoutMs, headers, withCredentials, responseType)
 
     pendingRequest = Some(request)
@@ -135,7 +135,7 @@ class AjaxEventStream(
     }
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     pendingRequest = None
     super.onStop()
   }

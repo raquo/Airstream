@@ -1,9 +1,9 @@
 package com.raquo.airstream.custom
 
-import com.raquo.airstream.core.Signal
+import com.raquo.airstream.core.{ Signal, WritableSignal }
 import com.raquo.airstream.custom.CustomSource._
 
-import scala.util.{Success, Try}
+import scala.util.{ Success, Try }
 
 // @TODO[Test] needs testing
 
@@ -14,11 +14,11 @@ import scala.util.{Success, Try}
 class CustomSignalSource[A] (
   getInitialValue: => Try[A],
   makeConfig: (SetCurrentValue[A], GetCurrentValue[A], GetStartIndex, GetIsStarted) => CustomSource.Config,
-) extends Signal[A] with CustomSource[A] {
+) extends Signal[A] with WritableSignal[A] with CustomSource[A] {
 
-  override protected[this] def initialValue: Try[A] = getInitialValue
+  override protected def initialValue: Try[A] = getInitialValue
 
-  override protected[this] val config: Config = makeConfig(_fireTry, tryNow, getStartIndex, getIsStarted)
+  override protected val config: Config = makeConfig(_fireTry, tryNow _, getStartIndex, getIsStarted)
 }
 
 object CustomSignalSource {

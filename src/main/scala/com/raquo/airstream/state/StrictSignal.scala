@@ -2,8 +2,6 @@ package com.raquo.airstream.state
 
 import com.raquo.airstream.core.Signal
 
-import scala.util.Try
-
 /** A Signal that lets you directly query its current value.
   *
   * This means that its current value is kept up to date regardless of observers.
@@ -11,7 +9,8 @@ import scala.util.Try
   */
 trait StrictSignal[+A] extends Signal[A] {
 
-  override def now(): A = super.now()
+//  abstract override def now(): A = super.now()
 
-  override def tryNow(): Try[A] = super.tryNow()
+//  override def tryNow(): Try[A] = super.tryNow()
+
 }

@@ -6,7 +6,7 @@ import scala.util.Try
 
 trait InternalParentObserver[A] extends InternalObserver[A] {
 
-  protected[this] val parent: Observable[A]
+  protected val parent: Observable[A]
 
   def addToParent(): Unit = {
     parent.addInternalObserver(this)
@@ -29,7 +29,7 @@ object InternalParentObserver {
     val onErrorParam = onError
     new InternalParentObserver[A] with InternalNextErrorObserver[A] {
 
-      override protected[this] val parent: Observable[A] = parentParam
+      override protected val parent: Observable[A] = parentParam
 
       override protected[airstream] final def onNext(nextValue: A, transaction: Transaction): Unit = {
         onNextParam(nextValue, transaction)
@@ -49,7 +49,7 @@ object InternalParentObserver {
     val onTryParam = onTry
     new InternalParentObserver[A] with InternalTryObserver[A] {
 
-      override protected[this] val parent: Observable[A] = parentParam
+      override protected val parent: Observable[A] = parentParam
 
       override protected[airstream] final def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
         onTryParam(nextValue, transaction)

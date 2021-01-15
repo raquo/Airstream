@@ -1,9 +1,9 @@
 package com.raquo.airstream.timing
 
-import com.raquo.airstream.core.{EventStream, Transaction}
+import com.raquo.airstream.core.{ EventStream, Transaction, WritableEventStream }
 
 import scala.scalajs.js
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 /** @param next (currentState => (nextState, nextIntervalMs)
   *             Note: guarded against exceptions.
@@ -14,7 +14,7 @@ class PeriodicEventStream[A](
   next: A => Option[(A, Int)],
   emitInitial: Boolean, // @TODO[API] replace with drop(1)
   resetOnStop: Boolean
-) extends EventStream[A] {
+) extends EventStream[A] with WritableEventStream[A] {
 
   override protected[airstream] val topoRank: Int = 1
 
@@ -64,12 +64,12 @@ class PeriodicEventStream[A](
     }
   }
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     super.onStart()
     tick(isStarting = true)
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     super.onStop()
     clearTimeout()
     if (resetOnStop) {

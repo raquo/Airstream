@@ -1,6 +1,6 @@
 package com.raquo.airstream.state
 
-import com.raquo.airstream.core.Transaction
+import com.raquo.airstream.core.{ Transaction, WritableSignal }
 
 import scala.util.Try
 
@@ -12,8 +12,8 @@ import scala.util.Try
   * (see StrictSignal).
   */
 private[state] class VarSignal[A] private[state](
-  override protected[this] val initialValue: Try[A]
-) extends StrictSignal[A] {
+  override protected val initialValue: Try[A]
+) extends StrictSignal[A] with WritableSignal[A] {
 
   /** SourceVar does not directly depend on other observables, so it breaks the graph. */
   override protected[airstream] val topoRank: Int = 1

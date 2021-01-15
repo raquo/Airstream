@@ -1,7 +1,7 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentObservable}
-import com.raquo.airstream.core.{EventStream, Signal, Transaction}
+import com.raquo.airstream.common.{ InternalNextErrorObserver, SingleParentObservable }
+import com.raquo.airstream.core.{ EventStream, Signal, Transaction, WritableEventStream }
 
 import scala.collection.mutable
 import scala.util.Try
@@ -18,11 +18,11 @@ import scala.util.Try
   *                  - After parent stops containing an Input for this Key, we forget we ever called project for this key
   */
 class SplitEventStream[M[_], Input, Output, Key](
-  override protected[this] val parent: EventStream[M[Input]],
+  override protected val parent: EventStream[M[Input]],
   key: Input => Key,
   project: (Key, Input, EventStream[Input]) => Output,
   splittable: Splittable[M]
-) extends EventStream[M[Output]] with SingleParentObservable[M[Input], M[Output]] with InternalNextErrorObserver[M[Input]] {
+) extends EventStream[M[Output]] with WritableEventStream[M[Output]] with SingleParentObservable[M[Input], M[Output]] with InternalNextErrorObserver[M[Input]] {
 
   override protected[airstream] val topoRank: Int = parent.topoRank + 1
 
@@ -48,7 +48,7 @@ class SplitEventStream[M[_], Input, Output, Key](
   private[this] def memoizedProject(nextInputs: M[Input]): M[Output] = {
     val nextKeysDict = mutable.HashSet.empty[Key] // HashSet has desirable performance tradeoffs
 
-    val nextOutputs = splittable.map(nextInputs, { nextInput: Input =>
+    val nextOutputs = splittable.map(nextInputs, { (nextInput: Input) =>
       val memoizedKey = key(nextInput)
       nextKeysDict += memoizedKey
 

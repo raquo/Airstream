@@ -18,5 +18,5 @@ class ObservedSignal[A](
   recover = None
 ) with OwnedSignal[A] {
 
-  override protected[this] val subscription: Subscription = addObserver(observer)(owner)
+  override protected val subscription: Subscription = addObserver(observer)(owner)
 }

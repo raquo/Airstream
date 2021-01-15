@@ -7,7 +7,7 @@ import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.debug.{DebuggableSignal, Debugger, DebuggerSignal}
 import com.raquo.airstream.misc.generated._
-import com.raquo.airstream.misc.{FoldLeftSignal, MapEventStream, MapSignal}
+import com.raquo.airstream.misc.{MapEventStream, MapSignal}
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.split.{SplittableOneSignal, SplittableSignal}
 import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
@@ -16,20 +16,10 @@ import com.raquo.airstream.timing.FutureSignal
 import scala.annotation.unused
 import scala.concurrent.Future
 import scala.scalajs.js
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Try}
 
 /** Signal is an Observable with a current value. */
-trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with SignalSource[A] {
-
-  /** Evaluate initial value of this [[Signal]].
-    * This method must only be called once, when this value is first needed.
-    * You should override this method as `def` (no `val` or lazy val) to avoid
-    * holding a reference to the initial value beyond the duration of its relevance.
-    */
-  // @TODO[Integrity] ^^^ Does this memory management advice even hold water?
-  protected[this] def initialValue: Try[A]
-
-  protected[this] var maybeLastSeenCurrentValue: js.UndefOr[Try[A]] = js.undefined
+trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with SignalSource[A] with SignalOps[A] {
 
   /** @param project Note: guarded against exceptions */
   override def map[B](project: A => B): Signal[B] = {
@@ -48,16 +38,6 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
     composeAll(operator, initialOperator = identity)
   }
 
-  /** @param changesOperator Note: Must not throw!
-    * @param initialOperator Note: Must not throw!
-    */
-  def composeAll[B](
-    changesOperator: EventStream[A] => EventStream[B],
-    initialOperator: Try[A] => Try[B]
-  ): Signal[B] = {
-    changesOperator(changes).toSignalWithTry(initialOperator(tryNow()))
-  }
-
   def changes: EventStream[A] = new MapEventStream[A, A](parent = this, project = identity, recover = None)
 
   /**
@@ -69,20 +49,6 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
       parentInitial => parentInitial.map(makeInitial)
     )(
       (currentValue, nextParentValue) => Try(fn(currentValue.get, nextParentValue.get))
-    )
-  }
-
-  // @TODO[Naming]
-  /**
-    * @param makeInitial currentParentValue => initialValue   Note: must not throw
-    * @param fn (currentValue, nextParentValue) => nextValue
-    * @return
-    */
-  def foldLeftRecover[B](makeInitial: Try[A] => Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
-    new FoldLeftSignal(
-      parent = this,
-      makeInitialValue = () => makeInitial(tryNow()),
-      fn
     )
   }
 
@@ -149,49 +115,6 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
     observer.onTry(tryNow()) // send current value immediately
   }
 
-  override protected[this] final def fireValue(nextValue: A, transaction: Transaction): Unit = {
-    fireTry(Success(nextValue), transaction)
-  }
-
-  override protected[this] final def fireError(nextError: Throwable, transaction: Transaction): Unit = {
-    fireTry(Failure(nextError), transaction)
-  }
-
-  /** Signal propagates only if its value has changed */
-  override protected[this] def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
-    // @TODO[API] It is rather curious/unintuitive that firing external observers first seems to make more sense. Think about it some more.
-    // @TODO[Performance] This might be suboptimal for some data structures (e.g. big maps). Document this along with workarounds.
-    // Note: This comparison is using the Scala `equals` method. Typically `equals` calls `eq` first,
-    // to check for reference equality, then proceeds to check for structural equality if needed.
-    if (tryNow() != nextValue) {
-      setCurrentValue(nextValue)
-
-      // === CAUTION ===
-      // The following logic must match EventStream's fireValue / fireError! It is separated here for performance.
-
-      val isError = nextValue.isFailure
-      var errorReported = false
-
-      externalObservers.foreach { observer =>
-        observer.onTry(nextValue)
-        if (isError && !errorReported) errorReported = true
-      }
-
-      internalObservers.foreach { observer =>
-        observer.onTry(nextValue, transaction)
-        if (isError && !errorReported) errorReported = true
-      }
-
-      // This will only ever happen for special Signals that maintain their current value even without observers.
-      // Currently we only have one kind of such signal: StrictSignal.
-      //
-      // We want to report unhandled errors on such signals if they have no observers (including internal observers)
-      // because if we don't, the error will not be reported anywhere, and I think we would usually want it.
-      if (isError && !errorReported) {
-        nextValue.fold(AirstreamError.sendUnhandledError, _ => ())
-      }
-    }
-  }
 }
 
 object Signal {

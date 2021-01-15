@@ -1,7 +1,7 @@
 package com.raquo.airstream.flatten
 
-import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
-import com.raquo.airstream.core.{InternalObserver, Signal, Transaction}
+import com.raquo.airstream.common.{ InternalTryObserver, SingleParentObservable }
+import com.raquo.airstream.core.{ InternalObserver, Signal, Transaction, WritableSignal }
 
 import scala.util.Try
 
@@ -15,8 +15,8 @@ import scala.util.Try
   * - So if you want a consistent value out of this signal, keep it observed.
   */
 class SwitchSignal[A](
-  override protected[this] val parent: Signal[Signal[A]]
-) extends Signal[A] with SingleParentObservable[Signal[A], A] with InternalTryObserver[Signal[A]] {
+  override protected val parent: Signal[Signal[A]]
+) extends Signal[A] with WritableSignal[A] with SingleParentObservable[Signal[A], A] with InternalTryObserver[Signal[A]] {
 
   override protected[airstream] val topoRank: Int = 1
 
@@ -47,12 +47,12 @@ class SwitchSignal[A](
     }
   }
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     currentSignalTry.foreach(_.addInternalObserver(internalEventObserver))
     super.onStart()
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     removeInternalObserverFromCurrentSignal()
     super.onStop()
   }

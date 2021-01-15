@@ -1,6 +1,6 @@
 package com.raquo.airstream.timing
 
-import com.raquo.airstream.core.{EventStream, Transaction}
+import com.raquo.airstream.core.{ EventStream, Transaction, WritableEventStream }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -15,7 +15,7 @@ import scala.concurrent.Future
   *                              an already completed future. Generally you should avoid this and use
   *                              [[FutureSignal]] instead.
   */
-class FutureEventStream[A](future: Future[A], emitIfFutureCompleted: Boolean) extends EventStream[A] {
+class FutureEventStream[A](future: Future[A], emitIfFutureCompleted: Boolean) extends EventStream[A] with WritableEventStream[A] {
 
   override protected[airstream] val topoRank: Int = 1
 
