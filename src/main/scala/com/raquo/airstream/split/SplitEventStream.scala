@@ -48,7 +48,7 @@ class SplitEventStream[M[_], Input, Output, Key](
   private[this] def memoizedProject(nextInputs: M[Input]): M[Output] = {
     val nextKeysDict = mutable.HashSet.empty[Key] // HashSet has desirable performance tradeoffs
 
-    val nextOutputs = splittable.map(nextInputs, { nextInput: Input =>
+    val nextOutputs = splittable.map(nextInputs, { (nextInput: Input) =>
       val memoizedKey = key(nextInput)
       nextKeysDict += memoizedKey
 

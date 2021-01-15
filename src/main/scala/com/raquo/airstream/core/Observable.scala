@@ -1,11 +1,12 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.flatten.FlattenStrategy
-import com.raquo.airstream.flatten.FlattenStrategy.{SwitchFutureStrategy, SwitchSignalStrategy, SwitchStreamStrategy}
-import com.raquo.airstream.ownership.{Owner, Subscription}
+import com.raquo.airstream.flatten.FlattenStrategy.{ SwitchFutureStrategy, SwitchSignalStrategy, SwitchStreamStrategy }
+import com.raquo.airstream.ownership.{ Owner, Subscription }
 import org.scalajs.dom
 
 import scala.annotation.unused
+import scala.collection.mutable
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.util.Try
@@ -34,10 +35,16 @@ trait Observable[+A] {
   /** Note: Observer can be added more than once to an Observable.
     * If so, it will observe each event as many times as it was added.
     */
-  protected[this] val externalObservers: ObserverList[Observer[A]] = new ObserverList(js.Array())
+  private[this] val _externalObservers: ObserverList[Observer[A]] = new ObserverList(js.Array())
 
   /** Note: This is enforced to be a Set outside of the type system #performance */
-  protected[this] val internalObservers: ObserverList[InternalObserver[A]] = new ObserverList(js.Array())
+  private[this] val _internalObservers: ObserverList[InternalObserver[A]] = new ObserverList(js.Array())
+
+  protected def externalObservers[B]: ObserverList[Observer[B]] =
+    _externalObservers.asInstanceOf[ObserverList[Observer[B]]]
+
+  protected def internalObservers[B]: ObserverList[InternalObserver[B]] =
+    _internalObservers.asInstanceOf[ObserverList[InternalObserver[B]]]
 
   /** @param project Note: guarded against exceptions */
   def map[B](project: A => B): Self[B]
@@ -84,43 +91,7 @@ trait Observable[+A] {
     }
   }
 
-  // @TODO[API] print with dom.console.log automatically only if a JS value detected? Not sure if possible to do well.
 
-  /** print events using println - use for Scala values */
-  def debugLog(prefix: String = "event", when: A => Boolean = _ => true): Self[A] = {
-    map(value => {
-      if (when(value)) {
-        println(prefix + ": " + value.asInstanceOf[js.Any])
-      }
-      value
-    })
-  }
-
-  /** print events using dom.console.log - use for JS values */
-  def debugLogJs(prefix: String = "event", when: A => Boolean = _ => true): Self[A] = {
-    map(value => {
-      if (when(value)) {
-        dom.console.log(prefix + ": ", value.asInstanceOf[js.Any])
-      }
-      value
-    })
-  }
-
-  def debugBreak(when: A => Boolean = _ => true): Self[A] = {
-    map(value => {
-      if (when(value)) {
-        js.special.debugger()
-      }
-      value
-    })
-  }
-
-  def debugSpy(fn: A => Unit): Self[A] = {
-    map(value => {
-      fn(value)
-      value
-    })
-  }
 
   /** Print when the observable has just started or stopped */
   def debugLogLifecycle(prefix: String): Self[A]
@@ -149,7 +120,7 @@ trait Observable[+A] {
   /** Subscribe an external observer to this observable */
   def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription = {
     val subscription = new Subscription(owner, () => Transaction.removeExternalObserver(this, observer))
-    externalObservers.push(observer)
+    _externalObservers.push(observer)
     onAddedExternalObserver(observer)
     maybeStart()
     //dom.console.log(s"Adding subscription: $subscription")
@@ -163,7 +134,7 @@ trait Observable[+A] {
     */
   protected[airstream] def addInternalObserver(observer: InternalObserver[A]): Unit = {
     // @TODO Why does simple "protected" not work? Specialization?
-    internalObservers.push(observer)
+//    internalObservers.push(observer)
     maybeStart()
   }
 
@@ -171,7 +142,7 @@ trait Observable[+A] {
     * This observable calls [[onStop]] if this action has removed its last observer (internal or external).
     */
   protected[airstream] def removeInternalObserverNow(observer: InternalObserver[A]): Unit = {
-    val removed = internalObservers.removeObserverNow(observer)
+    val removed = _internalObservers.removeObserverNow(observer)
     if (removed) {
       maybeStop()
     }
@@ -179,13 +150,13 @@ trait Observable[+A] {
 
 
   protected[airstream] def removeExternalObserverNow(observer: Observer[A]): Unit = {
-    val removed = externalObservers.removeObserverNow(observer)
+    val removed = _externalObservers.removeObserverNow(observer)
     if (removed) {
       maybeStop()
     }
   }
 
-  private[this] def numAllObservers: Int = externalObservers.length + internalObservers.length
+  private[this] def numAllObservers: Int = _externalObservers.length + _internalObservers.length
 
   protected[this] def isStarted: Boolean = numAllObservers > 0
 
@@ -247,11 +218,11 @@ trait Observable[+A] {
   // don't know which one of them will be called, but they need to be
   // implemented to produce similar results
 
-  protected[this] def fireValue(nextValue: A, transaction: Transaction): Unit
+  protected[this] def fireValue(nextValue: Any, transaction: Transaction): Unit
 
   protected[this] def fireError(nextError: Throwable, transaction: Transaction): Unit
 
-  protected[this] def fireTry(nextValue: Try[A], transaction: Transaction): Unit
+  protected[this] def fireTry(nextValue: Try[Any], transaction: Transaction): Unit
 }
 
 object Observable {
@@ -273,4 +244,78 @@ object Observable {
       strategy.flatten(parent)
     }
   }
+
+  implicit class ObservableWithDebugs[A](val o: Observable[A]) {
+
+    // @TODO[API] print with dom.console.log automatically only if a JS value detected? Not sure if possible to do well.
+
+    /** print events using println - use for Scala values */
+    def debugLog(prefix: String = "event", when: A => Boolean = _ => true): o.Self[A] = {
+      o.map(value => {
+        if (when(value)) {
+          println(prefix + ": " + value.asInstanceOf[js.Any])
+        }
+        value
+      })
+    }
+
+    /** print events using dom.console.log - use for JS values */
+    def debugLogJs(prefix: String = "event", when: A => Boolean = _ => true): o.Self[A] = {
+      o.map(value => {
+        if (when(value)) {
+          dom.console.log(prefix + ": ", value.asInstanceOf[js.Any])
+        }
+        value
+      })
+    }
+
+    def debugBreak(when: A => Boolean = _ => true): o.Self[A] = {
+      o.map(value => {
+        if (when(value)) {
+          js.special.debugger()
+        }
+        value
+      })
+    }
+
+    def debugSpy(fn: A => Unit): o.Self[A] = {
+      o.map(value => {
+        fn(value)
+        value
+      })
+    }
+
+  }
+
+
+
+//  private[airstream] def addExternalObserver(o: Observable[_], observer: Observer[_]): Unit = {
+//    val list = externalObservers.getOrElse(o, new ObserverList(js.Array()))
+//    externalObservers.update(o, list)
+//    list.push(observer)
+//  }
+//
+//  private[airstream] def addInternalObserver(o: Observable[_], observer: InternalObserver[_]): Unit = {
+//    val list = internalObservers.getOrElse(o, new ObserverList(js.Array()))
+//    internalObservers.update(o, list)
+//    list.push(observer)
+//  }
+//
+//  private[airstream] def removeInternalObserverNow(o: Observable[_], observer: InternalObserver[_]): Boolean = {
+//    val list = internalObservers.getOrElse(o, new ObserverList(js.Array()))
+//    list.removeObserverNow(observer)
+//  }
+//
+//  private[airstream] def removeExternalObserverNow(o: Observable[_], observer: Observer[_]): Boolean = {
+//    val list = externalObservers.getOrElse(o, new ObserverList(js.Array()))
+//    list.removeObserverNow(observer)
+//  }
+//
+//  private[airstream] def numAllObservers(o: Observable[_]): Int = {
+//    externalObservers.get(o).fold(0)(_.length) + internalObservers.get(o).fold(0)(_.length)
+//  }
+
+
+
+
 }

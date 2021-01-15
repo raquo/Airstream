@@ -1,11 +1,11 @@
 enablePlugins(ScalaJSPlugin)
 
-enablePlugins(ScalaJSBundlerPlugin)
+//enablePlugins(ScalaJSBundlerPlugin)
 
 libraryDependencies ++= Seq(
-  "org.scala-js" %%% "scalajs-dom" % "1.1.0",
-  "app.tulz" %%% "tuplez-full-light" % "0.3.1",
-  "org.scalatest" %%% "scalatest" % "3.2.0" % Test
+  "org.scala-js" %%% "scalajs-dom" % "1.2.0-SNAPSHOT",
+  "app.tulz" %%% "tuplez-full-light" % "0.3.2-SNAPSHOT",
+//  "org.scalatest" %%% "scalatest" % "3.2.0" % Test
 )
 
 val filterScalacOptions = { options: Seq[String] =>
@@ -21,9 +21,13 @@ val filterTestScalacOptions = { options: Seq[String] =>
   }
 }
 
-scalaVersion := "2.13.4"
+val scala213Version = "2.13.4"
+val scala212Version = "2.12.12"
+val scala3Version = "3.0.0-M3"
 
-crossScalaVersions := Seq("2.12.12", "2.13.4")
+scalaVersion := scala3Version
+
+crossScalaVersions := Seq(scala3Version, scala212Version, scala213Version)
 
 scalacOptions ~= filterScalacOptions
 
@@ -115,6 +119,6 @@ requireJsDomEnv in Test := true
 
 parallelExecution in Test := false
 
-scalaJSUseMainModuleInitializer := true
+//scalaJSUseMainModuleInitializer := true
 
-scalaJSLinkerConfig in (Compile, fastOptJS) ~= { _.withSourceMap(false) }
+//scalaJSLinkerConfig in (Compile, fastOptJS) ~= { _.withSourceMap(false) }

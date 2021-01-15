@@ -7,7 +7,7 @@ import scala.util.{Failure, Success, Try}
 
 trait Observer[-A] {
 
-  lazy val toJsFn1: js.Function1[A, Unit] = onNext
+  lazy val toJsFn1: js.Function1[A, Unit] = onNext _
 
   /** Note: must not throw! */
   def onNext(nextValue: A): Unit

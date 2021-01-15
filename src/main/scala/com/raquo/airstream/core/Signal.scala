@@ -30,7 +30,7 @@ trait Signal[+A] extends Observable[A] {
   // @TODO[Integrity] ^^^ Does this memory management advice even hold water?
   protected[this] def initialValue: Try[A]
 
-  protected[this] var maybeLastSeenCurrentValue: js.UndefOr[Try[A]] = js.undefined
+  protected[this] var maybeLastSeenCurrentValue: js.UndefOr[Try[Any]] = js.undefined
 
   /** @param project Note: guarded against exceptions */
   override def map[B](project: A => B): Signal[B] = {
@@ -138,7 +138,7 @@ trait Signal[+A] extends Observable[A] {
       val currentValue = initialValue
       setCurrentValue(currentValue)
       currentValue
-    }
+    }.asInstanceOf[Try[A]]
   }
 
   /** See comment for [[tryNow]] right above
@@ -147,7 +147,7 @@ trait Signal[+A] extends Observable[A] {
     */
   protected[airstream] def now(): A = tryNow().get
 
-  protected[this] def setCurrentValue(newValue: Try[A]): Unit = {
+  protected[this] def setCurrentValue(newValue: Try[Any]): Unit = {
     maybeLastSeenCurrentValue = js.defined(newValue)
   }
 
@@ -169,7 +169,7 @@ trait Signal[+A] extends Observable[A] {
     observer.onTry(tryNow()) // send current value immediately
   }
 
-  override protected[this] final def fireValue(nextValue: A, transaction: Transaction): Unit = {
+  override protected[this] final def fireValue(nextValue: Any, transaction: Transaction): Unit = {
     fireTry(Success(nextValue), transaction)
   }
 
@@ -178,13 +178,13 @@ trait Signal[+A] extends Observable[A] {
   }
 
   /** Signal propagates only if its value has changed */
-  override protected[this] def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
+  override protected[this] def fireTry(nextValue: Try[Any], transaction: Transaction): Unit = {
     // @TODO[API] It is rather curious/unintuitive that firing external observers first seems to make more sense. Think about it some more.
     // @TODO[Performance] This might be suboptimal for some data structures (e.g. big maps). Document this along with workarounds.
     // Note: This comparison is using the Scala `equals` method. Typically `equals` calls `eq` first,
     // to check for reference equality, then proceeds to check for structural equality if needed.
     if (tryNow() != nextValue) {
-      setCurrentValue(nextValue)
+      setCurrentValue(nextValue.asInstanceOf[Try[A]])
 
       // === CAUTION ===
       // The following logic must match EventStream's fireValue / fireError! It is separated here for performance.
@@ -192,13 +192,13 @@ trait Signal[+A] extends Observable[A] {
       val isError = nextValue.isFailure
       var errorReported = false
 
-      externalObservers.foreach { observer =>
-        observer.onTry(nextValue)
+      externalObservers[A].foreach { observer =>
+        observer.onTry(nextValue.asInstanceOf[Try[A]])
         if (isError && !errorReported) errorReported = true
       }
 
-      internalObservers.foreach { observer =>
-        observer.onTry(nextValue, transaction)
+      internalObservers[A].foreach { observer =>
+        observer.onTry(nextValue.asInstanceOf[Try[A]], transaction)
         if (isError && !errorReported) errorReported = true
       }
 
