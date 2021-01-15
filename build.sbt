@@ -3,7 +3,7 @@ enablePlugins(ScalaJSPlugin)
 //enablePlugins(ScalaJSBundlerPlugin)
 
 libraryDependencies ++= Seq(
-  "app.tulz" %%% "tuplez-full-light" % "0.3.2"
+  "app.tulz" %%% "tuplez-full-light" % "0.3.3-SNAPSHOT"
 )
 
 libraryDependencies ++=
@@ -13,7 +13,7 @@ libraryDependencies ++=
       "org.scalatest" %%% "scalatest" % "3.2.0" % Test
     )
     case Some((3, _)) => Seq(
-      "org.scala-js" %%% "scalajs-dom" % "1.2.0-SNAPSHOT"
+      "org.scala-js" %%% "scalajs-dom" % "1.2.0.3M3-SNAPSHOT"
     )
     case _            => Seq()
   })
@@ -33,9 +33,9 @@ val filterTestScalacOptions = { options: Seq[String] =>
 
 val scala213Version = "2.13.4"
 val scala212Version = "2.12.12"
-val scala3Version = "3.0.0-M3"
+val scala3Version = "3.0.0-RC1-bin-20210113-8345078-NIGHTLY"
 
-scalaVersion := scala213Version
+scalaVersion := scala3Version
 
 crossScalaVersions := Seq(scala3Version, scala212Version, scala213Version)
 
