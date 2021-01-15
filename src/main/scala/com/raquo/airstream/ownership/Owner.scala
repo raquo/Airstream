@@ -19,9 +19,9 @@ import scala.scalajs.js
 trait Owner {
 
   /** Note: This is enforced to be a sorted set outside the type system. #performance */
-  protected[this] val subscriptions: js.Array[Subscription] = js.Array()
+  protected val subscriptions: js.Array[Subscription] = js.Array()
 
-  protected[this] def killSubscriptions(): Unit = {
+  protected def killSubscriptions(): Unit = {
     subscriptions.foreach(_.onKilledByOwner())
     subscriptions.clear()
   }
@@ -33,7 +33,7 @@ trait Owner {
     * You can override it to add custom behaviour.
     * Note: You can rely on this base method being empty.
     */
-  protected[this] def onOwned(@unused subscription: Subscription): Unit = ()
+  protected def onOwned(@unused subscription: Subscription): Unit = ()
 
   private[ownership] def onKilledExternally(subscription: Subscription): Unit = {
     val index = subscriptions.indexOf(subscription)

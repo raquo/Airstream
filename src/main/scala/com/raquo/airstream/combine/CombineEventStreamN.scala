@@ -1,7 +1,7 @@
 package com.raquo.airstream.combine
 
 import com.raquo.airstream.common.InternalParentObserver
-import com.raquo.airstream.core.EventStream
+import com.raquo.airstream.core.{ EventStream, WritableEventStream }
 
 import scala.util.Try
 
@@ -9,7 +9,7 @@ import scala.util.Try
 class CombineEventStreamN[A, Out](
   parents: Seq[EventStream[A]],
   combinator: Seq[A] => Out
-) extends EventStream[Out] with CombineObservable[Out] {
+) extends EventStream[Out] with WritableEventStream[Out] with CombineObservable[Out] {
 
   // @TODO[API] Maybe this should throw if parents.isEmpty
 
@@ -17,11 +17,11 @@ class CombineEventStreamN[A, Out](
 
   private[this] val maybeLastParentValues: Array[Option[Try[A]]] = Array.fill(parents.size)(None)
 
-  override protected[this] def inputsReady: Boolean = {
+  override protected def inputsReady: Boolean = {
     maybeLastParentValues.forall(_.nonEmpty)
   }
 
-  override protected[this] def combinedValue: Try[Out] = {
+  override protected def combinedValue: Try[Out] = {
     // @TODO[Scala3] When we don't need Scala 2.12, use ArraySeq.unsafeWrapArray(maybeLastParentValues) for perf?
     CombineObservable.seqCombinator(maybeLastParentValues.toIndexedSeq.map(_.get), combinator)
   }
@@ -40,7 +40,7 @@ class CombineEventStreamN[A, Out](
     }: _*
   )
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     maybeLastParentValues.indices.foreach(maybeLastParentValues.update(_, None))
     super.onStop()
   }

@@ -1,8 +1,10 @@
 package com.raquo.airstream.state
 
-import scala.util.{Success, Try}
+import com.raquo.airstream.core.WritableSignal
 
-class Val[A](override protected[this] val initialValue: Try[A]) extends StrictSignal[A] {
+import scala.util.{ Success, Try }
+
+class Val[A](override protected val initialValue: Try[A]) extends StrictSignal[A] with WritableSignal[A] {
 
   override protected[airstream] val topoRank: Int = 1
 

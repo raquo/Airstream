@@ -1,7 +1,7 @@
 package com.raquo.airstream.debug
 
-import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
-import com.raquo.airstream.core.{AirstreamError, Signal, Transaction}
+import com.raquo.airstream.common.{ InternalTryObserver, SingleParentObservable }
+import com.raquo.airstream.core.{ AirstreamError, Signal, Transaction, WritableSignal }
 
 import scala.util.Try
 
@@ -16,11 +16,11 @@ class DebugLifecycleSignal[A](
   start: () => Unit,
   stop: () => Unit,
   initial: Try[A] => Unit
-) extends Signal[A] with SingleParentObservable[A, A] with InternalTryObserver[A] {
+) extends Signal[A] with WritableSignal[A] with SingleParentObservable[A, A] with InternalTryObserver[A] {
 
   override protected[airstream] val topoRank: Int = parent.topoRank + 1
 
-  override protected[this] def initialValue: Try[A] = {
+  override protected def initialValue: Try[A] = {
     val initValue = parent.tryNow()
     Try(initial(initValue)).recover { case err => AirstreamError.sendUnhandledError(err) }
     initValue
@@ -30,12 +30,12 @@ class DebugLifecycleSignal[A](
     fireTry(nextValue, transaction)
   }
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     super.onStart()
     Try(start()).recover { case err => AirstreamError.sendUnhandledError(err) }
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     super.onStop()
     Try(stop()).recover { case err => AirstreamError.sendUnhandledError(err) }
   }

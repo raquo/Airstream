@@ -1,7 +1,7 @@
 package com.raquo.airstream.debug
 
-import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentObservable}
-import com.raquo.airstream.core.{AirstreamError, EventStream, Transaction}
+import com.raquo.airstream.common.{ InternalNextErrorObserver, SingleParentObservable }
+import com.raquo.airstream.core.{ AirstreamError, EventStream, Transaction, WritableEventStream }
 
 import scala.util.Try
 
@@ -15,7 +15,7 @@ class DebugLifecycleEventStream[A](
   override protected val parent: EventStream[A],
   start: () => Unit,
   stop: () => Unit
-) extends EventStream[A] with SingleParentObservable[A, A] with InternalNextErrorObserver[A] {
+) extends EventStream[A] with WritableEventStream[A] with SingleParentObservable[A, A] with InternalNextErrorObserver[A] {
 
   override protected[airstream] val topoRank: Int = parent.topoRank + 1
 
@@ -27,12 +27,12 @@ class DebugLifecycleEventStream[A](
     fireError(nextError, transaction)
   }
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     super.onStart()
     Try(start()).recover { case err => AirstreamError.sendUnhandledError(err) }
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     super.onStop()
     Try(stop()).recover { case err => AirstreamError.sendUnhandledError(err) }
   }

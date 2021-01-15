@@ -1,6 +1,6 @@
 package com.raquo.airstream.custom
 
-import com.raquo.airstream.core.{Observable, Transaction}
+import com.raquo.airstream.core.{ Transaction, WritableObservable }
 import com.raquo.airstream.custom.CustomSource._
 
 import scala.util.Try
@@ -13,45 +13,45 @@ import scala.util.Try
   * - [[com.raquo.airstream.custom.CustomStreamSource]]
   * - [[com.raquo.airstream.custom.CustomSignalSource]]
   */
-trait CustomSource[A] extends Observable[A] {
+trait CustomSource[A] extends WritableObservable[A] {
 
-  protected[this] val config: Config
+  protected val config: Config
 
   // --
 
   /** CustomSource is intended for observables that don't synchronously depend on other observables. */
   override protected[airstream] val topoRank: Int = 1
 
-  protected[this] var startIndex: StartIndex = 0
+  protected var startIndex: StartIndex = 0
 
 
-  protected[this] val _fireValue: FireValue[A] = { value =>
+  protected val _fireValue: FireValue[A] = { value =>
     //println(s"> init trx from CustomSource(${value})")
     new Transaction(fireValue(value, _))
   }
 
-  protected[this] val _fireError: FireError = { error =>
+  protected val _fireError: FireError = { error =>
     //println(s"> init error trx from CustomSource(${error})")
     new Transaction(fireError(error, _))
   }
 
-  protected[this] val _fireTry: SetCurrentValue[A] = { value =>
+  protected val _fireTry: SetCurrentValue[A] = { value =>
     //println(s"> init try trx from CustomSource(${value})")
     new Transaction(fireTry(value, _))
   }
 
-  protected[this] val getStartIndex: GetStartIndex = () => startIndex
+  protected val getStartIndex: GetStartIndex = () => startIndex
 
-  protected[this] val getIsStarted: GetIsStarted = () => isStarted
+  protected val getIsStarted: GetIsStarted = () => isStarted
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     startIndex += 1
     Try(config.onStart()).recover {
       case err: Throwable => _fireError(err)
     }
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     config.onStop()
   }
 }

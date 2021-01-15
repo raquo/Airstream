@@ -1,7 +1,6 @@
 package com.raquo.airstream.eventbus
 
 import com.raquo.airstream.core.EventStream
-import com.raquo.airstream.eventbus.WriteBus.{BusTryTuple, BusTuple}
 
 import scala.util.Try
 
@@ -33,10 +32,10 @@ object EventBus {
   /** Emit events into several EventBus-es at once (in the same transaction)
     * Example usage: emitTry(eventBus1 -> value1, eventBus2 -> value2)
     */
-  def emit(
-    values: EventBusTuple[_]*
+  def emit[A](
+    values: EventBusTuple[A]*
   ): Unit = {
-    WriteBus.emit(values.map(value => (value._1.writer, value._2).asInstanceOf[BusTuple[_]]): _*)
+    WriteBus.emit(values.map(value => (value._1.writer, value._2)): _*)
   }
 
   /** Emit events into several WriteBus-es at once (in the same transaction)
@@ -45,6 +44,6 @@ object EventBus {
   def emitTry[A](
     values: EventBusTryTuple[A]*
   ): Unit = {
-    WriteBus.emitTry(values.map(value => (value._1.writer, value._2).asInstanceOf[BusTryTuple[_]]): _*)
+    WriteBus.emitTry(values.map(value => (value._1.writer, value._2)): _*)
   }
 }

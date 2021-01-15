@@ -2,31 +2,31 @@ package com.raquo.airstream.combine
 
 import com.raquo.airstream.common.InternalParentObserver
 import com.raquo.airstream.core.AirstreamError.CombinedError
-import com.raquo.airstream.core.{SyncObservable, Transaction}
+import com.raquo.airstream.core.{ SyncObservable, Transaction, WritableObservable }
 import org.scalajs.dom
 
 import scala.scalajs.js
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
-trait CombineObservable[A] extends SyncObservable[A] { self =>
+trait CombineObservable[A] extends WritableObservable[A] with SyncObservable[A] { self =>
 
   /** This should only be called when all inputs are ready.
     * It will throw if the required parent values are missing.
     */
-  protected[this] def combinedValue: Try[A]
+  protected def combinedValue: Try[A]
 
   /** Parent observers are not immediately active. onStart/onStop regulates that. */
-  protected[this] val parentObservers: js.Array[InternalParentObserver[_]] = js.Array()
+  protected val parentObservers: js.Array[InternalParentObserver[_]] = js.Array()
 
   // @TODO[Elegance] Not a fan of how inputsReady couples this to its subclasses
   /** Check whether inputs (parent observables' values) are all available to be combined. */
-  protected[this] def inputsReady: Boolean
+  protected def inputsReady: Boolean
 
   /** Implementations should call this instead of .fireValue() / .fireTry()
     * Transaction will call `syncFire` when it's time, and that in turn will
     * evaluate maybeCombinedValue and call .fireTry()
     */
-  protected[this] def onInputsReady(transaction: Transaction): Unit = {
+  protected def onInputsReady(transaction: Transaction): Unit = {
     if (!transaction.pendingObservables.contains(self)) {
       // println(s"Marking CombineObs($id) as pending in TRX(${transaction.id})")
       transaction.pendingObservables.enqueue(self)
@@ -44,12 +44,12 @@ trait CombineObservable[A] extends SyncObservable[A] { self =>
     }
   }
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     parentObservers.foreach(_.addToParent())
     super.onStart()
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     parentObservers.foreach(_.removeFromParent())
     super.onStop()
   }

@@ -1,10 +1,10 @@
 package com.raquo.airstream.flatten
 
-import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentObservable}
-import com.raquo.airstream.core.{EventStream, InternalObserver, Observable, Signal, Transaction}
+import com.raquo.airstream.common.{ InternalNextErrorObserver, SingleParentObservable }
+import com.raquo.airstream.core.{ EventStream, InternalObserver, Observable, Signal, Transaction, WritableEventStream }
 
 import scala.scalajs.js
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 /** `parent` observable emits values that we convert into streams using `makeStream`.
   *
@@ -29,9 +29,9 @@ import scala.util.{Failure, Success, Try}
   * @param makeStream Note: Must not throw
   */
 class SwitchEventStream[I, O](
-  override protected[this] val parent: Observable[I],
+  override protected val parent: Observable[I],
   makeStream: I => EventStream[O]
-) extends EventStream[O] with SingleParentObservable[I, O] with InternalNextErrorObserver[I] {
+) extends EventStream[O] with WritableEventStream[O] with SingleParentObservable[I, O] with InternalNextErrorObserver[I] {
 
   override protected[airstream] val topoRank: Int = 1
 
@@ -70,7 +70,7 @@ class SwitchEventStream[I, O](
     fireError(nextError, transaction)
   }
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     maybeCurrentEventStream.foreach { streamTry =>
       val initialStream = streamTry.fold(err => EventStream.fromTry(Failure(err), emitOnce = true), identity)
       initialStream.addInternalObserver(internalEventObserver)
@@ -78,7 +78,7 @@ class SwitchEventStream[I, O](
     super.onStart()
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     removeInternalObserverFromCurrentEventStream()
     maybeCurrentEventStream = js.undefined
     super.onStop()

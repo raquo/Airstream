@@ -1,11 +1,11 @@
 package com.raquo.airstream.eventbus
 
 import com.raquo.airstream.common.InternalNextErrorObserver
-import com.raquo.airstream.core.{EventStream, Transaction}
+import com.raquo.airstream.core.{ EventStream, Transaction, WritableEventStream }
 
 import scala.scalajs.js
 
-class EventBusStream[A] private[eventbus] () extends EventStream[A] with InternalNextErrorObserver[A] {
+class EventBusStream[A] private[eventbus] () extends EventStream[A] with WritableEventStream[A] with InternalNextErrorObserver[A] {
 
   private[eventbus] val sourceStreams: js.Array[EventStream[A]] = js.Array()
 
@@ -59,11 +59,11 @@ class EventBusStream[A] private[eventbus] () extends EventStream[A] with Interna
     new Transaction(fireError(nextError, _))
   }
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     sourceStreams.foreach(_.addInternalObserver(this))
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     // dom.console.log("EventBusStream STOPPED!", this.toString)
     sourceStreams.foreach(sourceStream => Transaction.removeInternalObserver(sourceStream, observer = this))
   }

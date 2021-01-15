@@ -91,7 +91,7 @@ object WriteBus {
   /** Emit events into several WriteBus-es at once (in the same transaction)
     * Example usage: emitTry(writeBus1 -> value1, writeBus2 -> value2)
     */
-  def emit(values: BusTuple[_]*): Unit = {
+  def emit[A](values: BusTuple[A]*): Unit = {
     //println(s"> init trx from WriteBus.emit($values)")
     if (hasDuplicateTupleKeys(values)) {
       throw new Exception("Unable to {EventBus,WriteBus}.emit: the provided list of event buses has duplicates. You can't make an observable emit more than one event per transaction.")
@@ -102,7 +102,7 @@ object WriteBus {
   /** Emit events into several WriteBus-es at once (in the same transaction)
     * Example usage: emitTry(writeBus1 -> Success(value1), writeBus2 -> Failure(error2))
     */
-  def emitTry(values: BusTryTuple[_]*): Unit = {
+  def emitTry[A](values: BusTryTuple[A]*): Unit = {
     //println(s"> init trx from WriteBus.emitTry($values)")
     if (hasDuplicateTupleKeys(values)) {
       throw new Exception("Unable to {EventBus,WriteBus}.emitTry: the provided list of event buses has duplicates. You can't make an observable emit more than one event per transaction.")

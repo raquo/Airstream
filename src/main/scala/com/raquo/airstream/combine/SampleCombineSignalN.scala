@@ -1,7 +1,7 @@
 package com.raquo.airstream.combine
 
 import com.raquo.airstream.common.InternalParentObserver
-import com.raquo.airstream.core.Signal
+import com.raquo.airstream.core.{ Signal, WritableSignal }
 
 import scala.util.Try
 
@@ -18,15 +18,15 @@ class SampleCombineSignalN[A, Out](
   samplingSignal: Signal[A],
   sampledSignals: Seq[Signal[A]],
   combinator: Seq[A] => Out
-) extends Signal[Out] with CombineObservable[Out] {
+) extends Signal[Out] with WritableSignal[Out] with CombineObservable[Out] {
 
   override protected[airstream] val topoRank: Int = (samplingSignal +: sampledSignals).foldLeft(0)(_ max _.topoRank) + 1
 
-  override protected[this] def initialValue: Try[Out] = combinedValue
+  override protected def initialValue: Try[Out] = combinedValue
 
-  override protected[this] def inputsReady: Boolean = true
+  override protected def inputsReady: Boolean = true
 
-  override protected[this] def combinedValue: Try[Out] = {
+  override protected def combinedValue: Try[Out] = {
     val values = (samplingSignal +: sampledSignals).map(_.tryNow())
     CombineObservable.seqCombinator(values, combinator)
   }
