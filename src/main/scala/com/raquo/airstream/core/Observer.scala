@@ -78,24 +78,36 @@ object Observer {
   }
 
   /**
-    * @param onNext Note: guarded against exceptions
-    * @param onError Note: guarded against exceptions
+    * @param onNext               Note: guarded against exceptions. See docs for details.
+    * @param onError              Note: guarded against exceptions. See docs for details.
+    * @param handleObserverErrors If true, we will call this observer's onError(ObserverError(err))
+    *                             if this observer throws while processing an incoming event,
+    *                             giving this observer one last chance to process its own error.
     */
-  def withRecover[A](onNext: A => Unit, onError: PartialFunction[Throwable, Unit]): Observer[A] = {
+  def withRecover[A](
+    onNext: A => Unit,
+    onError: PartialFunction[Throwable, Unit],
+    handleObserverErrors: Boolean = true
+  ): Observer[A] = {
     val onNextParam = onNext // It's beautiful on the outside
     val onErrorParam = onError
     new Observer[A] {
 
-      override final def onNext(nextValue: A): Unit = {
+      override def onNext(nextValue: A): Unit = {
         // dom.console.log(s"===== Observer(${hashCode()}).onNext", nextValue.asInstanceOf[js.Any])
         try {
           onNextParam(nextValue)
         } catch {
-          case err: Throwable => AirstreamError.sendUnhandledError(ObserverError(err))
+          case err: Throwable =>
+            if (handleObserverErrors) {
+              this.onError(ObserverError(err)) // this doesn't throw, see below
+            } else {
+              AirstreamError.sendUnhandledError(ObserverError(err))
+            }
         }
       }
 
-      override final def onError(error: Throwable): Unit = {
+      override def onError(error: Throwable): Unit = {
         try {
           if (onErrorParam.isDefinedAt(error)) {
             onErrorParam(error)
@@ -103,32 +115,40 @@ object Observer {
             AirstreamError.sendUnhandledError(error)
           }
         } catch {
-          case err: Throwable => AirstreamError.sendUnhandledError(ObserverErrorHandlingError(error = err, cause = error))
+          case err: Throwable =>
+            AirstreamError.sendUnhandledError(ObserverErrorHandlingError(error = err, cause = error))
         }
       }
 
-      override final def onTry(nextValue: Try[A]): Unit = {
+      override def onTry(nextValue: Try[A]): Unit = {
         nextValue.fold(onError, onNext)
       }
     }
   }
 
-  /** @param onTry Note: guarded against exceptions */
-  def fromTry[A](onTry: PartialFunction[Try[A], Unit]): Observer[A] = {
+  /** @param onTry                Note: guarded against exceptions. See docs for details.
+    * @param handleObserverErrors If true, we will call this observer's onError(ObserverError(err))
+    *                             if this observer throws while processing an incoming event,
+    *                             giving this observer one last chance to process its own error.
+    */
+  def fromTry[A](
+    onTry: PartialFunction[Try[A], Unit],
+    handleObserverErrors: Boolean = true
+  ): Observer[A] = {
     val onTryParam = onTry
 
     new Observer[A] {
 
-      override final def onNext(nextValue: A): Unit = {
+      override def onNext(nextValue: A): Unit = {
         // dom.console.log(s"===== Observer(${hashCode()}).onNext", nextValue.asInstanceOf[js.Any])
         onTry(Success(nextValue))
       }
 
-      override final def onError(error: Throwable): Unit = {
+      override def onError(error: Throwable): Unit = {
         onTry(Failure(error))
       }
 
-      override final def onTry(nextValue: Try[A]): Unit = {
+      override def onTry(nextValue: Try[A]): Unit = {
         try {
           if (onTryParam.isDefinedAt(nextValue)) {
             onTryParam(nextValue)
@@ -137,10 +157,14 @@ object Observer {
           }
         } catch {
           case err: Throwable =>
-            nextValue.fold(
-              originalError => AirstreamError.sendUnhandledError(ObserverErrorHandlingError(error = err, cause = originalError)),
-              _ => AirstreamError.sendUnhandledError(ObserverError(err))
-            )
+            if (handleObserverErrors && nextValue.isSuccess) {
+              this.onError(ObserverError(err)) // this calls onTry so it doesn't throw
+            } else {
+              nextValue.fold(
+                originalError => AirstreamError.sendUnhandledError(ObserverErrorHandlingError(error = err, cause = originalError)),
+                _ => AirstreamError.sendUnhandledError(ObserverError(err))
+              )
+            }
         }
       }
     }
@@ -158,7 +182,7 @@ object Observer {
         observers.foreach(_.onError(err))
       }
 
-      override final def onTry(nextValue: Try[A]): Unit = {
+      override def onTry(nextValue: Try[A]): Unit = {
         nextValue.fold(onError, onNext)
       }
     }

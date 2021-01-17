@@ -211,7 +211,7 @@ You can use `stream.withCurrentValueOf(signal).map((lastStreamEvent, signalCurre
 
 If you don't need lastStreamEvent, use `stream.sample(signal).map(signalCurrentValue => ???)` instead. Note: both of these output streams will emit only when `stream` emits, as documented in the code. If you want updates from signal to also trigger an event, look into the `combineWith` operator.
 
-`withCurrentValueOf` and `sample` operators are also available on signals, not just streams.
+Note: `withCurrentValueOf` and `sample` operators are also available on signals, not just streams.
 
 If you want to get a Signal's current value without the complications of sampling, or even if you just want to make sure that a Signal is started, just call `observe` on it. That will add a noop observer to the signal, and return an `OwnedViewer` instance which being a `StrictSignal`, does expose `now()` and `tryNow()` methods that safely provide you with its current value.
 
@@ -238,6 +238,8 @@ You usually create observers with `Observer.apply` or `myObservable.foreach`. Th
 Observers have a few convenience methods:
 
 `def contramap[B](project: B => A): Observer[B]` – This is useful for separation of concerns. For example your Ajax service might expose an `Observer[Request]`, but you don't want a simple `UserProfile` component to know about your Ajax implementation details (`Request`), so you can instead provide it with `requestObserver.contramap(makeUpdateRequest)` which is a `Observer[User]`.
+
+`def contramapSome` is just an easy way to get `Observer[A]` from `Observer[Option[A]]`
 
 `def filter(passes: A => Boolean): Observer[A]` – useful if you have an `Observable` that you need to observe while filtering out some events (there is no `Observable.filter` method, only `EventStream.filter`).
 
@@ -458,7 +460,7 @@ callback(2) // `2` will be printed
 
 #### EventBus
 
-`new EventBus[MyEvent]` is the general-purpose way to create a stream on which you can manually trigger events. The resulting EventBus exposes two properties:
+`new EventBus[MyEvent]` is a more powerful way to create a stream on which you can manually trigger events. The resulting EventBus exposes two properties:
 
 **`events`** is the stream of events emitted by the EventBus.
 
@@ -466,7 +468,9 @@ callback(2) // `2` will be printed
 
 WriteBus extends Observer, so you can call `onNext(newEventValue)` on it, or pass it as an observer to another stream's `addObserver` method. This will cause the event bus to emit `newEventValue` in a new transaction.
 
-You can also call `addSource(otherStream)(owner)` on it, and the event bus will re-emit every event emitted by that stream. This is somewhat similar to adding `writer` as an observer to `otherStream`, except this will not cause `otherStream` to be started unless/until the EventBus's own stream is started (see [Laziness](#laziness)).
+Or you can just call `eventBus.emit(newEvent)` for the same effect.
+
+What sets EventBus apart from e.g. `EventStream.withObserver` is that you can also call `eventBus.addSource(otherStream)(owner)`, and the event bus will re-emit every event emitted by that stream. This is somewhat similar to adding `writer` as an observer to `otherStream`, except this will not cause `otherStream` to be started unless/until the EventBus's own stream is started (see [Laziness](#laziness)).
 
 You've probably noticed that `addSource` takes `owner` as an implicit param – this is for memory management purposes. You would typically pass a WriteBus to a child component if you want the child to send any events to the parent. Thus, we want `addSource` to be automatically undone when said child is discarded (see [Ownership](#ownership)), even if `writer.stream` is still being observed.
 
@@ -516,7 +520,7 @@ Creating a Var is straightforward: `Var(initialValue)`, `Var.fromTry(tryValue)`.
 
 ##### Simple Updates
 
-You can update a Var using one of its methods: `set(value)`, `setTry(Try(value))`, `update(currentValue => nextValue)`, `tryUpdate(currentValueTry => Try(nextValue))`. Note that `update` will throw if the Var's current value is an error (thus `tryUpdate`).
+You can update a Var using one of its methods: `set(value)`, `setTry(Try(value))`, `update(currentValue => nextValue)`, `tryUpdate(currentValueTry => Try(nextValue))`. Note that `update` will throw (inside a transaction) if the Var's current value is an error (thus `tryUpdate`).
 
 ##### Observers Feeding into Var
 
@@ -537,7 +541,9 @@ inputStream.foreach(adder)
 inputStream --> adder // Laminar syntax
 ``` 
 
-`updater` will fail to update if the Var is in a failed state, for those cases we have `tryUpdater`.
+`updater` will write a VarError into the Var if you ask it to update a Var that is in a failed state. In such cases, use `tryUpdater`.
+
+Vars of Options, i.e. `Var[Option[A]]`, also offer `someWriter: Observer[A]` for convenience.
 
 ##### Reading Values from a Var
 
@@ -643,7 +649,7 @@ val $bytesLoaded = $progress.mapN((xhr, ev) => ev.loaded)
 
 In a similar manner, you can pass a `requestObserver` that will be called with the newly created `dom.XMLHttpRequest` just before the request is sent. This way you can save the pending request into a Var and e.g. `abort()` it if needed.
 
-Warning: dom.XmlHttpRequest is an ugly, imperative JS construct. We set event callbacks for onload, onerror, onabort, ontimeout, and if requested, also for onprogress and onreadystatechange. Make sure you don't override Airstream's listeners, or this stream will not work properly.
+Warning: dom.XmlHttpRequest is an ugly, imperative JS construct. We set event callbacks for `onload`, `onerror`, `onabort`, `ontimeout`, and if requested, also for `onprogress` and `onreadystatechange`. Make sure you don't override Airstream's listeners in your own code, or this stream will not work properly.
 
 
 
@@ -1160,9 +1166,25 @@ If a `Signal[A]` observable runs into an error that it doesn't handle itself, th
 
 ##### Errors Can Become Wrapped 
 
-Errors originating in an external Observer's onNext and onTry methods are wrapped in `ObserverError` and `ObserverErrorHandlingError` respectively before they are shipped off as unhandled errors.
+Errors originating in observables error handling code (e.g. the `pf` in `stream.recover(pf)`) are wrapped in `ErrorHandlingError`.
 
-Errors originating in observables error handling code (`stream.recover(pf)`) are wrapped in `ErrorHandlingError`.
+In Observers created using Airstream-provided constructors:
+
+* If the user-provided observer callback (e.g. the `handleError` in `Observer.withRecover[Int](cb, handleError)`) throws while processing an incoming error, the error is wrapped into `ObserverErrorHandlingError` and sent off as unhandled error.
+
+* If `handleObserverErrors` constructor param is `true` (that's the default), and the user-provided observer callback throws while processing an incoming event (as opposed to an incoming error), the error is wrapped in `ObserverError` and sent to this same observer's onError method. So, such an observer has a chance to process its own failure. The usefulness of that lies mostly in being able to automatically pass this error up the chain of observers.
+  
+  For example:
+
+  ```scala
+  val sourceObs = Observer.fromTry[Int](println)
+  val derivedObs = sourceObs.contramap[Int] { value =>
+    if (value >= 0) 1 else throw new Exception("negative!")
+  }
+  derivedObs.onNext(1) // prints "Success(1)"
+  derivedObs.onNext(-1) // prints "Failure(ObserverError: java.lang.Exception: negative!)"
+  // no errors are sent into unhandled because `println` is a total function, it handles them all.
+  ```
 
 You can always access the original errors on wrapped errors, and it will always provide you with a stack trace that includes the line where your code failed. Make sure to configure error reporting as well as Scala.js source maps to make use of this in fullOpt / production.
 
@@ -1226,9 +1248,13 @@ stream.recoverToTry.collect { case Failure(err) => err } // EventStream[Throwabl
 
 #### Handling Errors Using Observers
 
-**`Observer.withRecover(onNext, onError: PartialFunction[Throwable, Unit])`** lets you handle some or all of the errors coming from upstream observables. Errors for which `onError` is not defined get reported as unhandled.
+**`Observer.fromTry(nextTry => ...)`** and **`Observer.withRecover(onNext, onError: PartialFunction[Throwable, Unit])`** let you handle all or some of the errors coming from upstream observables. Errors for which `onError` is not defined get reported as unhandled.
 
 **`Observer.ignoreErrors(onNext)`** is similar to `recoverIgnoreErrors` on observables – it simply silences any error it receives, so that it does not get reported as unhandled.
+
+Observers that are derived from other observers, e.g. `observer.contramap[Int](...)`, pass the error to the original observer, and so maintain the original observer's error handling behaviour.
+
+Airstream-provided Observer constructors that let you specify an error handling callback (e.g. `Observer.fromTry` and `Observer.withRecover`) also have a `handleObserverErrors` param. When this param is true (that's the default), if the observer's callback throws while processing an incoming event, the same observer's **error** callback (the onError method) gets called with the error wrapped in ObserverError. This lets you automatically propagate unexpected exceptions up the chain of observers instead of sending the error into unhandled right away. For more details, see [Errors Can Become Wrapped](#errors-can-become-wrapped) above.
 
 
 #### Other Error Handling Considerations
