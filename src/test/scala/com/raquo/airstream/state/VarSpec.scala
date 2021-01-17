@@ -1,6 +1,7 @@
 package com.raquo.airstream.state
 
 import com.raquo.airstream.UnitSpec
+import com.raquo.airstream.core.AirstreamError.VarError
 import com.raquo.airstream.core.{AirstreamError, Observer}
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import org.scalatest.BeforeAndAfter
@@ -737,7 +738,7 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
 
     adder.onNext(3)
 
-    v.tryNow() shouldBe Failure(err2)
+    v.tryNow() shouldBe Failure(VarError("Unable to update a failed Var. Consider Var#tryUpdater instead.", cause = Some(err2)))
 
     // --
 
@@ -755,7 +756,7 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
 
     failedUpdater.onNext(1)
 
-    v.tryNow() shouldBe Failure(err1)
+    v.tryNow() shouldBe Failure(VarError("Unable to update a failed Var. Consider Var#tryUpdater instead.", cause = Some(err1)))
 
     // --
 

@@ -46,13 +46,12 @@ trait Var[A] {
   def updater[B](mod: (A, B) => A): Observer[B] = Observer.fromTry { case nextInputTry =>
     new Transaction(trx => nextInputTry match {
       case Success(nextInput) =>
-        val unsafeValue = try {
-          now()
-        } catch {
-          case err: Throwable =>
-            throw VarError("Unable to update a failed Var. Consider Var#tryUpdater instead.", cause = Some(err))
+        val nextValue = tryNow() match {
+          case Success(currentValue) =>
+            Try(mod(currentValue, nextInput)) // this does catch exceptions in mod
+          case Failure(err) =>
+            Failure(VarError("Unable to update a failed Var. Consider Var#tryUpdater instead.", cause = Some(err)))
         }
-        val nextValue = Try(mod(unsafeValue, nextInput)) // this does catch exceptions in mod
         setCurrentValue(nextValue, trx)
       case Failure(err) =>
         setCurrentValue(Failure[A](err), trx)
