@@ -19,8 +19,22 @@ scalacOptions in Test ~= (_.filterNot { o =>
   o.startsWith("-Ywarn-unused") || o.startsWith("-Wunused")
 })
 
-// @TODO[Build] Why does this need " in (Compile, doc)" while other options don't?
-scalacOptions in (Compile, doc) ~= (_.filter(_.startsWith("-Xplugin")))
+scalacOptions in (Compile, doc) ~= (_.filterNot(
+  Set(
+    "-scalajs",
+    "-deprecation",
+    "-explain-types",
+    "-explain",
+    "-feature",
+    "-language:existentials,experimental.macros,higherKinds,implicitConversions",
+    "-unchecked",
+    "-Xfatal-warnings",
+    "-Ykind-projector",
+    "-from-tasty",
+    "-encoding",
+    "utf8",
+  )
+))
 
 scalacOptions in (Compile, doc) ++= Seq(
   "-no-link-warnings" // Suppress scaladoc "Could not find any member to link for" warnings
