@@ -520,7 +520,7 @@ Creating a Var is straightforward: `Var(initialValue)`, `Var.fromTry(tryValue)`.
 
 ##### Simple Updates
 
-You can update a Var using one of its methods: `set(value)`, `setTry(Try(value))`, `update(currentValue => nextValue)`, `tryUpdate(currentValueTry => Try(nextValue))`. Note that `update` will throw (inside a transaction) if the Var's current value is an error (thus `tryUpdate`).
+You can update a Var using one of its methods: `set(value)`, `setTry(Try(value))`, `update(currentValue => nextValue)`, `tryUpdate(currentValueTry => Try(nextValue))`. Note that `update` will send a VarError into unhandled if the Var's current value is an error. Use `set*` or `tryUpdate` methods to update failed Vars.
 
 ##### Observers Feeding into Var
 
@@ -541,13 +541,13 @@ inputStream.foreach(adder)
 inputStream --> adder // Laminar syntax
 ``` 
 
-`updater` will write a VarError into the Var if you ask it to update a Var that is in a failed state. In such cases, use `tryUpdater`.
+`updater` will send a VarError into unhandled if you ask it to update a Var that is in a failed state. In such cases, use `writer` or `tryUpdater` instead.
 
 Vars of Options, i.e. `Var[Option[A]]`, also offer `someWriter: Observer[A]` for convenience.
 
 ##### Reading Values from a Var
 
-You can get the Var's current value using `now()` and `tryNow()`. Similar to `update`, `now` throws if the current value is an error. Var also exposes a `signal` of its values.
+You can get the Var's current value using `now()` and `tryNow()`. `now` throws if the current value is an error. Var also exposes a `signal` of its values.
 
 SourceVar, i.e. any Var that you create with `Var(...)`, follows **strict** (not lazy) execution – it will update its current value as instructed even if its signal has no observers. Unlike most other signals, the Var's signal is also strict – its current value matches the Var's current value at all times regardless of whether it has observers. Of course, any downstream observables that depend on the Var's signal are still lazy as usual.
 
