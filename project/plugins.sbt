@@ -11,3 +11,5 @@ addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.5")
 addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.1.16")
 
 addSbtPlugin("ch.epfl.lamp" % "sbt-dotty" % "0.5.1")
+
+addSbtPlugin("com.codecommit" % "sbt-github-actions" % "0.10.0")
