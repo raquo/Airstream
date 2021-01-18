@@ -1,6 +1,7 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.core.AirstreamError.{ObserverError, ObserverErrorHandlingError}
+import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
@@ -55,6 +56,48 @@ trait Observer[-A] {
   def filter[B <: A](passes: B => Boolean): Observer[B] = {
     Observer.withRecover(nextValue => if (passes(nextValue)) onNext(nextValue), {
       case nextError => onError(nextError)
+    })
+  }
+
+  /** print events using println - use for Scala values */
+  def debugLog[AA <: A](
+    prefix: String = "event",
+    when: AA => Boolean = (_: AA) => true
+  ): Observer[AA] = {
+    contramap(value => {
+      if (when(value)) {
+        println(prefix + ": " + value.asInstanceOf[js.Any])
+      }
+      value
+    })
+  }
+
+  /** print events using dom.console.log - use for JS values */
+  def debugLogJs[AA <: A](
+    prefix: String = "event",
+    when: AA => Boolean = (_: AA) => true
+  ): Observer[AA] = {
+    contramap(value => {
+      if (when(value)) {
+        dom.console.log(prefix + ": ", value.asInstanceOf[js.Any])
+      }
+      value
+    })
+  }
+
+  def debugBreak[AA <: A](when: AA => Boolean = (_: AA) => true): Observer[AA] = {
+    contramap(value => {
+      if (when(value)) {
+        js.special.debugger()
+      }
+      value
+    })
+  }
+
+  def debugSpy[AA <: A](fn: AA => Unit): Observer[AA] = {
+    contramap(value => {
+      fn(value)
+      value
     })
   }
 }
