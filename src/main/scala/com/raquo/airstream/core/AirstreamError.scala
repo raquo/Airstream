@@ -14,26 +14,37 @@ object AirstreamError {
     extends AirstreamError(message) {
 
     cause.foreach(initCause)
+
+    override def toString: String = s"VarError: $message; cause: $cause"
   }
 
   case class ErrorHandlingError(error: Throwable, cause: Throwable)
-    extends AirstreamError("ErrorHandlingError: " + error.getMessage + "; cause: " + cause.getMessage) {
+    extends AirstreamError(s"ErrorHandlingError: ${error.getMessage}; cause: ${cause.getMessage}") {
 
     initCause(cause)
+
+    override def toString: String = s"ErrorHandlingError: $error; cause: $cause"
   }
 
   case class CombinedError(causes: Seq[Option[Throwable]])
-    extends AirstreamError("CombinedError: " + causes.flatten.map(_.getMessage).mkString("; ")) {
+    extends AirstreamError(s"CombinedError: ${causes.flatten.map(_.getMessage).mkString("; ")}") {
 
     causes.flatten.headOption.foreach(initCause) // Just get the first cause – better than nothing I guess?
+
+    override def toString: String = s"CombinedError: ${causes.flatten.toList.mkString("; ")}"
   }
 
-  case class ObserverError(error: Throwable) extends AirstreamError("ObserverError: " + error.getMessage)
+  case class ObserverError(error: Throwable) extends AirstreamError(s"ObserverError: ${error.getMessage}") {
+
+    override def toString: String = s"ObserverError: $error"
+  }
 
   case class ObserverErrorHandlingError(error: Throwable, cause: Throwable)
-    extends AirstreamError("ObserverErrorHandlingError: " + error.getMessage + "; cause: " + cause.getMessage) {
+    extends AirstreamError(s"ObserverErrorHandlingError: ${error.getMessage}; cause: ${cause.getMessage}") {
 
     initCause(cause)
+
+    override def toString: String = s"ObserverErrorHandlingError: $error, cause: $cause"
   }
 
   // --
