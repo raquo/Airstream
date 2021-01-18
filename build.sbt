@@ -20,6 +20,8 @@ scalacOptions in Test ~= (_.filterNot { o =>
 })
 
 // @TODO[Build] Why does this need " in (Compile, doc)" while other options don't?
+scalacOptions in (Compile, doc) ~= (_.filter(_.startsWith("-Xplugin")))
+
 scalacOptions in (Compile, doc) ++= Seq(
   "-no-link-warnings" // Suppress scaladoc "Could not find any member to link for" warnings
 )
