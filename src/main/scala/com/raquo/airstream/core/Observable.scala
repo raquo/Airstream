@@ -45,17 +45,17 @@ trait Observable[+A] {
   /** `value` is passed by name, so it will be evaluated whenever the Observable fires.
     * Use it to sample mutable values (e.g. myInput.ref.value in Laminar).
     *
-    * See also: [[mapToValue]]
+    * See also: [[mapToStrict]]
     *
     * @param value Note: guarded against exceptions
     */
   def mapTo[B](value: => B): Self[B] = map(_ => value)
 
-  /** `value` is evaluated only once, when this method is called.
+  /** `value` is evaluated strictly, only once, when this method is called.
     *
     * See also: [[mapTo]]
     */
-  def mapToValue[B](value: B): Self[B] = map(_ => value)
+  def mapToStrict[B](value: B): Self[B] = map(_ => value)
 
   // @TODO[API] Not sure if `distinct` `should accept A => Key or (A, A) => Boolean. We'll start with a more constrained version for now.
   // @TODO[API] Implement this. We should consider making a slide() operator to support this
