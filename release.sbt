@@ -1,42 +1,9 @@
-name := "Airstream"
-
-normalizedName := "airstream"
-
-organization := "com.raquo"
-
-homepage := Some(url("https://github.com/raquo/Airstream"))
-
-licenses += ("MIT", url("https://github.com/raquo/Airstream/blob/master/LICENSE.md"))
-
-scmInfo := Some(
-  ScmInfo(
-    url("https://github.com/raquo/Airstream"),
-    "scm:git@github.com/raquo/Airstream.git"
-  )
-)
-
-developers := List(
-  Developer(
-    id = "raquo",
-    name = "Nikita Gazarov",
-    email = "nikita@raquo.com",
-    url = url("http://raquo.com")
-  )
-)
-
-sonatypeProfileName := "com.raquo"
-
-publishMavenStyle := true
-
-publishArtifact in Test := false
-
-publishTo := sonatypePublishTo.value
-
-releaseCrossBuild := true
-
-pomIncludeRepository := { _ => false }
-
-//useGpg := true
-
-releasePublishArtifactsAction := PgpKeys.publishSigned.value
+ThisBuild / organization := "com.raquo"
+ThisBuild / homepage := Some(url("https://github.com/raquo/Airstream"))
+ThisBuild / licenses += "MIT" -> url("https://github.com/raquo/Airstream/blob/master/LICENSE.md")
+ThisBuild / scmInfo := Some(ScmInfo(url("https://github.com/raquo/Airstream"), "scm:git@github.com/raquo/Airstream.git"))
+ThisBuild / developers += Developer("raquo", "Nikita Gazarov", "nikita@raquo.com", url("http://raquo.com"))
+ThisBuild / sonatypeProfileName := "com.raquo"
+ThisBuild / publishArtifact in Test := false
+ThisBuild / publishTo := sonatypePublishToBundle.value
 

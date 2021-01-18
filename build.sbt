@@ -1,5 +1,7 @@
 enablePlugins(ScalaJSPlugin)
 
+name := "Airstream"
+
 libraryDependencies ++= Seq(
   ("org.scala-js" %%% "scalajs-dom" % "1.1.0").withDottyCompat(scalaVersion.value),
   "app.tulz" %%% "tuplez-full-light" % "0.3.3",
