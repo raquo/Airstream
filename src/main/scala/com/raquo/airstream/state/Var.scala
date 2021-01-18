@@ -1,7 +1,7 @@
 package com.raquo.airstream.state
 
 import com.raquo.airstream.core.AirstreamError.VarError
-import com.raquo.airstream.core.{Observer, Transaction}
+import com.raquo.airstream.core.{AirstreamError, Observer, Transaction}
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.util.hasDuplicateTupleKeys
 
@@ -41,18 +41,23 @@ trait Var[A] {
     * val appender = v.updater((acc, nextItem) => acc :+ nextItem)
     * appender.onNext(4) // v now contains List(1, 2, 3, 4)
     *
+    * Do not use on failed Vars. Use [[tryUpdater]] on those.
+    *
     * @param mod (currValue, nextInput) => nextValue
     */
   def updater[B](mod: (A, B) => A): Observer[B] = Observer.fromTry { case nextInputTry =>
     new Transaction(trx => nextInputTry match {
       case Success(nextInput) =>
-        val nextValue = tryNow() match {
+        tryNow() match {
           case Success(currentValue) =>
-            Try(mod(currentValue, nextInput)) // this does catch exceptions in mod
+            val nextValue = Try(mod(currentValue, nextInput)) // this does catch exceptions in mod
+            setCurrentValue(nextValue, trx)
           case Failure(err) =>
-            Failure(VarError("Unable to update a failed Var. Consider Var#tryUpdater instead.", cause = Some(err)))
+            AirstreamError.sendUnhandledError(
+              VarError("Unable to update a failed Var. Consider Var#tryUpdater instead.", cause = Some(err))
+            )
         }
-        setCurrentValue(nextValue, trx)
+
       case Failure(err) =>
         setCurrentValue(Failure[A](err), trx)
     })
@@ -83,17 +88,22 @@ trait Var[A] {
 
   final def setError(error: Throwable): Unit = setTry(Failure(error))
 
-  /** @param mod Note: guarded against exceptions
-    * @throws Exception if currentValue is a Failure */
+  /** Do not use on failed Vars. Use [[tryUpdate]] on those.
+    *
+    * @param mod Note: guarded against exceptions
+    */
   def update(mod: A => A): Unit = {
     new Transaction(trx => {
-      val unsafeValue = try {
-        now()
-      } catch { case err: Throwable =>
-        throw VarError("Unable to update a failed Var. Consider Var#tryUpdate instead.", cause = Some(err))
+      tryNow() match {
+        case Success(currentValue) =>
+          val nextValue = Try(mod(currentValue)) // this does catch exceptions in mod(currentValue)
+          setCurrentValue(nextValue, trx)
+        case Failure(err) =>
+          AirstreamError.sendUnhandledError(
+            VarError("Unable to update a failed Var. Consider Var#tryUpdate instead.", cause = Some(err))
+          )
       }
-      val nextValue = Try(mod(unsafeValue)) // this does catch exceptions in mod(unsafeValue)
-      setCurrentValue(nextValue, trx)
+
     })
   }
 

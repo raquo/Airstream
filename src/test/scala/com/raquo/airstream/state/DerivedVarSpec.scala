@@ -19,6 +19,7 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
   }
 
   before {
+    errorEffects.clear()
     AirstreamError.registerUnhandledErrorCallback(errorCallback)
     AirstreamError.unregisterUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
   }
@@ -27,7 +28,6 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
     AirstreamError.registerUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
     AirstreamError.unregisterUnhandledErrorCallback(errorCallback)
     assert(errorEffects.isEmpty) // #Note this fails the test rather inelegantly
-    errorEffects.clear()
   }
 
   it("error handling") {
@@ -74,12 +74,13 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     // --
 
-    // Similar to .now(), doing .update() on an errored Var throws
-    assert(Try(x.update(_ + 1)).isFailure)
+    x.update(_ + 1)
 
     // We are unable to update a value if the current value is an error
     assert(x.tryNow() == Failure(err2))
-    assert(errorEffects == mutable.Buffer())
+    assert(errorEffects == mutable.Buffer(
+      Effect("unhandled", VarError("Unable to update a failed Var. Consider Var#tryUpdate instead.", cause = Some(err2)))
+    ))
 
     errorEffects.clear()
 
@@ -216,7 +217,14 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     // -- Can't update a failed var
 
-    assert(Try(d.update(_ + 1)).isFailure)
+    d.update(_ + 1)
+
+    d.tryNow() shouldBe Failure(err1)
+    // Remember, a Var without a listener does emit its errors into "unhandled"
+    errorEffects shouldBe mutable.Buffer(
+      Effect("unhandled", VarError("Unable to update a failed Var. Consider Var#tryUpdate instead.", cause = Some(err1)))
+    )
+    errorEffects.clear()
 
     // -- Can't update the same underlying var twice
 

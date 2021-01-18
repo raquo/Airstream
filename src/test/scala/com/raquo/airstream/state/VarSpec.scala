@@ -19,6 +19,7 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
   }
 
   before {
+    errorEffects.clear()
     AirstreamError.registerUnhandledErrorCallback(errorCallback)
     AirstreamError.unregisterUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
   }
@@ -27,7 +28,6 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     AirstreamError.registerUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
     AirstreamError.unregisterUnhandledErrorCallback(errorCallback)
     assert(errorEffects.isEmpty) // #Note this fails the test rather inelegantly
-    errorEffects.clear()
   }
 
   it("strict updates") {
@@ -182,12 +182,13 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
 
     // --
 
-    // Similar to .now(), doing .update() on an errored Var throws
-    assert(Try(x.update(_ + 1)).isFailure)
+    x.update(_ + 1)
 
     // We are unable to update a value if the current value is an error
     assert(x.tryNow() == Failure(err2))
-    assert(errorEffects == mutable.Buffer())
+    assert(errorEffects == mutable.Buffer(
+      Effect("unhandled", VarError("Unable to update a failed Var. Consider Var#tryUpdate instead.", cause = Some(err2)))
+    ))
 
     errorEffects.clear()
 
@@ -481,8 +482,13 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
 
     // --
 
-    Try(v.update(_ * 10)).isFailure shouldBe true
+    v.update(_ * 10)
     v.tryNow() shouldBe Failure(err)
+    // Remember, a Var without a listener does emit its errors into "unhandled"
+    errorEffects shouldBe mutable.Buffer(
+      Effect("unhandled", VarError("Unable to update a failed Var. Consider Var#tryUpdate instead.", cause = Some(err)))
+    )
+    errorEffects.clear()
     reset()
 
     // --
@@ -738,7 +744,7 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
 
     adder.onNext(3)
 
-    v.tryNow() shouldBe Failure(VarError("Unable to update a failed Var. Consider Var#tryUpdater instead.", cause = Some(err2)))
+    v.tryNow() shouldBe Failure(err2)
 
     // --
 
@@ -756,7 +762,7 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
 
     failedUpdater.onNext(1)
 
-    v.tryNow() shouldBe Failure(VarError("Unable to update a failed Var. Consider Var#tryUpdater instead.", cause = Some(err1)))
+    v.tryNow() shouldBe Failure(err1)
 
     // --
 
