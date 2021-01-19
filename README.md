@@ -12,7 +12,7 @@ Airstream is a small state propagation and streaming library. Primary difference
 
 - **One integrated system for two core types of observables** – Event streams alone are not a good enough abstraction for anything other than events.
   - EventStream for events (lazy, no current value)
-  - Signal for state (lazy, has current value)
+  - Signal for state (lazy, has current value, only state-safe operators)
 
 - **Small size, simple implementation** – easy to understand, easy to create custom observables. Does not bloat your Scala.js bundle size.
 
@@ -56,6 +56,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Ajax](#ajax)
     * [Websockets](#websockets)
     * [DOM Events](#dom-events)
+    * [Custom Event Sources](#custom-event-sources)
     * [Custom Observables](#custom-observables)
   * [FRP Glitches](#frp-glitches)
     * [Other Libraries](#other-libraries)
@@ -539,7 +540,7 @@ val inputStream: EventStream[Int] = ???
 
 inputStream.foreach(adder)
 inputStream --> adder // Laminar syntax
-``` 
+```
 
 `updater` will send a VarError into unhandled if you ask it to update a Var that is in a failed state. In such cases, use `writer` or `tryUpdater` instead.
 
@@ -551,7 +552,59 @@ You can get the Var's current value using `now()` and `tryNow()`. `now` throws i
 
 SourceVar, i.e. any Var that you create with `Var(...)`, follows **strict** (not lazy) execution – it will update its current value as instructed even if its signal has no observers. Unlike most other signals, the Var's signal is also strict – its current value matches the Var's current value at all times regardless of whether it has observers. Of course, any downstream observables that depend on the Var's signal are still lazy as usual.
 
-Being a `StrictSignal`, the signal also exposes `now` and `tryNow` methods, so if you need to provide your code with read-only access to a Var, sharing only its signal is the way to go. 
+Being a `StrictSignal`, the signal also exposes `now` and `tryNow` methods, so if you need to provide your code with read-only access to a Var, sharing only its signal is the way to go.
+
+##### Var Transaction Delay
+
+Var emits every event in a new [transaction](#transactions). This has important ramifications when writing to and reading from a Var. Consider the following code:
+
+```scala
+val myVar = Var(0)
+
+println("Start")
+
+myVar.set(1)
+println(s"After set: ${myVar.now()}")
+
+myVar.update(_ + 1)
+println(s"After update: ${myVar.now()}")
+
+new Transaction { _ =>
+  println(s"After trx: ${myVar.now()}")
+}
+
+println("Done")
+```
+
+If you put this code in your app's `main` method or inside a `setTimeout` callback, it will print:
+
+```
+Start
+After set: 1
+After update: 2
+After trx: 2
+Done
+```
+
+But if you try to run this same code _while another transaction is being executed_, for example inside one of your observers, in response to an incoming stream event, this is what will be printed:
+
+```
+Start
+Done
+After set: 0
+After update: 0
+After trx: 2
+```
+
+Why the difference? Var's current value exposed by `now()` only updates when the Var emits the updated value, and as we now know, this always happens in a new transaction. But we ran our code inside an observer, that is, while another transaction was running. And the new transaction will only run after the current transaction has finished propagating, so the Var' current value will not update until then.
+
+This is why reading `myVar.now()` after calling `myVar.set(1)` gives you a stale value in this case. Var tries very hard to do the right thing though. While you can't expect to see the new value in `now()`, the `update` method does provide the updated value, `1`, as the input to its callback. This is because the update callback is also scheduled for a new transaction, and so it is executed after the transaction in which the Var's value was set to `1` has finished propagating.
+
+Finally, in both cases the code prints "After trx: 2". This is because that println is only executed in a new transaction. Similar to the update callback, this only gets run when the previously scheduled transactions have finished propagating, so it will always see the final Var value.
+
+So there you have it, you have two ways to read the Var's **new** current value: either call `now()` inside a new transaction, or use `update`. And of course you can also listen to the Var's signal.
+
+Keep in mind that transaction scheduling is fully synchronous, we do not introduce an asynchronous delay anywhere, we merely order the execution chunks to make the maximum amount of sense possible. Read more about transaction scheduling in the [Transactions](#transactions) section.
 
 ##### Derived Vars
 
@@ -607,13 +660,11 @@ Those are the only ways in which setting / updating a Var can throw an error. If
 Remember that this atomicity guarantee only applies to failures which would have caused an individual `update` / `tryUpdate` call to throw. For example, if the `mod` function provided to `update` throws, `update` will not throw, it will instead successfully set that Var `Failure(err)`.
 
 
-
 #### Val
 
 `Val(value)` / `Val.fromTry(tryValue)` is a Signal "constant" – a Signal that never changes its value. Unlike other Signals, its value is evaluated immediately upon creation, and is exposed in public `now()` and `tryNow()` methods.
 
 Val is useful when a component wants to accept either a Signal or a constant value as input. You can just wrap your constant in a Val, and make the component accept a `Signal` (or a `StrictSignal`) instead.
-
 
 
 #### Ajax
@@ -652,22 +703,19 @@ In a similar manner, you can pass a `requestObserver` that will be called with t
 Warning: dom.XmlHttpRequest is an ugly, imperative JS construct. We set event callbacks for `onload`, `onerror`, `onabort`, `ontimeout`, and if requested, also for `onprogress` and `onreadystatechange`. Make sure you don't override Airstream's listeners in your own code, or this stream will not work properly.
 
 
-
-
-### Websockets
+#### Websockets
 
 Airstream has no official websockets integration yet.
 
 For several users' implementations, search Laminar gitter room, and the issues in this repo.
 
 
-
-### DOM Events
+#### DOM Events
 
 ```scala
 val element: dom.Element = ???
 DomEventStream[dom.MouseEvent](element, "click") // EventStream[dom.MouseEvent]
-``` 
+```
 
 This stream, when started, registers a `click` event listener on `element`, and emits all events the listener receives until the stream is stopped, at which point the listener is removed.
 
@@ -677,15 +725,71 @@ Airstream does not know the names & types of DOM events, so you need to manually
 
 
 
+### Custom Event Sources
+
+If simpler event sources (see above) do not suit your needs, consider using `CustomSource`. This mechanism lets you create a custom stream or signal as long as it does not depend on other Airstream observables. So. it's good for integrating with third party sources of events.
+
+You can create custom event sources using `EventStream.fromCustomSource` and `Signal.fromCustomSource`, which are convenience wrappers over the underlying  `CustomEventSource` and `CustomSignalSource` classes. This section will explain how to use those underlying classes, and after that the understanding of `fromCustomSource` methods should come naturally.
+
+Airstream's `DomEventStream.apply` creates a stream of events by wrapping the DOM API into `CustomStreamSource`. Let's see how it works:
+
+```scala
+def apply[Ev <: dom.Event](
+  eventTarget: dom.EventTarget,
+  eventKey: String,
+  useCapture: Boolean = false
+): EventStream[Ev] = {
+
+  CustomStreamSource[Ev]( (fireValue, fireError, getStartIndex, getIsStarted) => {
+
+    val eventHandler: js.Function1[Ev, Unit] = fireValue
+
+    CustomSource.Config(
+      onStart = () => {
+        eventTarget.addEventListener(eventKey, eventHandler, useCapture)
+      },
+      onStop = () => {
+        eventTarget.removeEventListener(eventKey, eventHandler, useCapture)
+      }
+    )
+  })
+}
+```
+
+When we create a `CustomStreamSource`, we need to provide a callback that accepts some useful arguments and returns an instance of `CustomSource.Config`, which is essentially a bundle of two callbacks: `onStart` which fires when your stream is started, and `onStop` which fires when your stream is stopped (see [Laziness](#laziness)).
+
+Here we see that DomEventStream registers `fireValue` as an event listener on the DOM element when the stream starts, and unregisters that listener when the stream stops. This way the resulting stream will properly clean up its resources.
+
+Side note: `val eventHandler` is cached to avoid implicitly creating a new instance of `js.Function1`. We need to keep this exact reference to be able to unregister the listener. Just a bit of Scala-vs-js friction here.
+
+Let's look at the methods that `CustomStreamSource` makes available to us:
+
+* **fireValue** - call this with a value to make the custom stream emit that value in a new transaction
+* **fireError** - call this with a Throwable to make the custom stream emit an error (see [Error Handling](#error-handling))
+* **getStartIndex** – call this to check how many times the custom stream has been started. Airstream uses this for the `emitOnce` param in streams like `EventStream.fromSeq`.
+* **getIsStarted** – call this to check if the custom stream is currently started 
+
+`CustomSource.Config` instances have a `when(passes: () => Boolean)` method that returns a config that, when the predicate does not pass, will **not** call your `onStart` callback when the stream starts, and will not call your `onStop` callback when the stream is subsequently stopped (we assume that your `onStop` code cleans up after your `onStart` code). To clarify, the predicate is evaluated when the custom stream is about to start. And the stream **will* actually start – you can't break this part of Airstream contract – the predicate only controls whether your callbacks defined in the config will be run. You can see this predicate being useful to implement the `emitOnce` param in streams like `EventStream.fromSeq`.
+
+**CustomSignalSource** is the Signal version of CustomStreamSource, and works similarly, just with a slightly different set of params:
+
+```scala
+class CustomSignalSource[A] (
+  getInitialValue: => Try[A],
+  makeConfig: (SetCurrentValue[A], GetCurrentValue[A], GetStartIndex, GetIsStarted) => CustomSource.Config,
+)
+```
+
+`fireValue` and `fireError` are merged into one `setCurrentValue` callback that expects a `Try[A]`, and this being a Signal, we also provide a `getCurrentValue` param to check the custom signal's current value.
+
+Generally signals need to be started in order for their current value to update. Stopped signals generally don't update without listeners, unless they are a `StrictSignal` like `Var#signal`. `CustomSignalSource` is not a `StrictSignal` so there is no expectation for it to keep updating its value when it's stopped. Users should keep listening to signals that they care about.
+
+
 #### Custom Observables
 
-EventBus is a very generic solution that should suit most needs, even if perhaps not very elegantly sometimes.
+If you need a custom observable that depends on other Airstream observables, you can subclass EventStream or Signal. It can be intimidating at first, but actually it's pretty easy. Look at the various observables available in Airstream for inspiration, starting with `MapEventStream`.
 
-You can create your own observables that emit events in their own unique way by wrapping or extending EventBus (easier) or extending Observable (more work and knowledge required, but rewarded with better behavior)).
-
-If extending Observable, you will need to make the `topoRank` field public to be able to override it. See [#37](https://github.com/raquo/Airstream/issues/37).
-
-Unfortunately I don't have enough time to describe how to create custom observables in detail right now. You will need to read the rest of the documentation and the source code – you will see how other observables such as MapEventStream or FilterEventStream are implemented. Airstream's source code should be easy to comprehend. It is clean, small (a bit more than 1K LoC with all the operators), and does not use complicated implicits or hardcore functional stuff.
+Note: Observable's `topoRank` field is `protected[airstream]`, so you'll need to override it with a **public** val in your non-airstream subclass. See [#37](https://github.com/raquo/Airstream/issues/37).
 
 
 
@@ -1032,7 +1136,7 @@ You can actually invoke the debugger (or logger) on a subset of events, like so:
 ```scala
 val myIntStream: EventStream[Int] = ???
 val debuggedStream: EventStream[Int] = myIntStream.debugBreak(_ % 2 == 0) // break on even numbers only
-``` 
+```
 
 You can also debug observables lifecycle, i.e. starting, stopping, and Signals evaluating their initial value, using the following operators:
 * `debugLogLifecycle` (log when observable starts & stops)
