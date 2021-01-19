@@ -652,15 +652,9 @@ In a similar manner, you can pass a `requestObserver` that will be called with t
 Warning: dom.XmlHttpRequest is an ugly, imperative JS construct. We set event callbacks for `onload`, `onerror`, `onabort`, `ontimeout`, and if requested, also for `onprogress` and `onreadystatechange`. Make sure you don't override Airstream's listeners in your own code, or this stream will not work properly.
 
 
-
-
 ### Websockets
 
-Airstream has no official websockets integration yet.
-
-For several users' implementations, search Laminar gitter room, and the issues in this repo.
-
-
+TODO.
 
 ### DOM Events
 
