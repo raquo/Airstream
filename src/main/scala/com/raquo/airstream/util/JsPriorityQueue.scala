@@ -2,23 +2,22 @@ package com.raquo.airstream.util
 
 import scala.scalajs.js
 
-// @TODO[Test] add tests for this class
-
 class JsPriorityQueue[A](getRank: A => Int) {
 
   private[this] val queue: js.Array[A] = js.Array()
 
   def enqueue(item: A): Unit = {
+    val itemRank = getRank(item)
     var insertAtIndex = 0
     var foundHigherRank = false
     while (
-      insertAtIndex < queue.length &&
-        !foundHigherRank
+      insertAtIndex < queue.length && !foundHigherRank
     ) {
-      if (getRank(queue(insertAtIndex)) <= getRank(item)) {
+      if (getRank(queue(insertAtIndex)) > itemRank) {
         foundHigherRank = true
+      } else {
+        insertAtIndex += 1
       }
-      insertAtIndex += 1
     }
     queue.splice(index = insertAtIndex, deleteCount = 0, item) // insert at index
   }
@@ -40,4 +39,6 @@ class JsPriorityQueue[A](getRank: A => Int) {
   @inline def isEmpty: Boolean = size == 0
 
   @inline def nonEmpty: Boolean = !isEmpty
+
+  def debugQueue: List[A] = queue.toList
 }
