@@ -4,7 +4,7 @@ import com.raquo.airstream.combine.CombineSignalN
 import com.raquo.airstream.combine.generated.{CombinableSignal, StaticSignalCombineOps}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
-import com.raquo.airstream.debug.DebugLifecycleSignal
+import com.raquo.airstream.debug.{DebugSignal, DebugWriteSignal, ObservableDebugger}
 import com.raquo.airstream.misc.generated._
 import com.raquo.airstream.misc.{FoldLeftSignal, MapEventStream, MapSignal}
 import com.raquo.airstream.ownership.Owner
@@ -21,6 +21,8 @@ import scala.util.{Failure, Success, Try}
 trait Signal[+A] extends Observable[A] {
 
   override type Self[+T] = Signal[T]
+
+  override type DebugSelf[+T] = DebugSignal[T]
 
   /** Evaluate initial value of this [[Signal]].
     * This method must only be called once, when this value is first needed.
@@ -98,30 +100,9 @@ trait Signal[+A] extends Observable[A] {
 
   override def recoverToTry: Signal[Try[A]] = map(Try(_)).recover[Try[A]] { case err => Some(Failure(err)) }
 
-  /** Print when the signal has just started or stopped */
-  override def debugLogLifecycle(prefix: String = "signal"): Signal[A] = {
-    debugSpyLifecycle(
-      () => println(s"$prefix started"),
-      () => println(s"$prefix stopped"),
-      initial => println(s"$prefix initial value: $initial"),
-    )
-  }
-
-  /** Run callbacks when the signal has just started or stopped */
-  override def debugSpyLifecycle(
-    start: () => Unit = () => (),
-    stop: () => Unit = () => ()
-  ): Signal[A] = {
-    new DebugLifecycleSignal[A](this, start, stop, _ => ())
-  }
-
-  /** Run callbacks when the signal has just started or stopped or evaluated its initial value */
-  def debugSpyLifecycle(
-    start: () => Unit,
-    stop: () => Unit,
-    initial: Try[A] => Unit
-  ): Signal[A] = {
-    new DebugLifecycleSignal[A](this, start, stop, initial)
+  /** See also [[debug]] convenience method in [[Observable]] */
+  override def debugWith(debugger: ObservableDebugger[A]): DebugSignal[A] = {
+    new DebugWriteSignal[A](this, debugger)
   }
 
   /** Add a noop observer to this signal to ensure that it's started.

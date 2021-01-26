@@ -61,10 +61,12 @@ class EventBusStream[A] private[eventbus] () extends EventStream[A] with Interna
 
   override protected[this] def onStart(): Unit = {
     sourceStreams.foreach(_.addInternalObserver(this))
+    super.onStart()
   }
 
   override protected[this] def onStop(): Unit = {
     // dom.console.log("EventBusStream STOPPED!", this.toString)
     sourceStreams.foreach(sourceStream => Transaction.removeInternalObserver(sourceStream, observer = this))
+    super.onStop()
   }
 }

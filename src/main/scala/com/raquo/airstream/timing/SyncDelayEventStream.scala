@@ -17,7 +17,7 @@ class SyncDelayEventStream[A] (
 
   override protected[airstream] def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
     if (!transaction.pendingObservables.contains(this)) {
-      // println(s"Marking SyncDelayEventStream($id) as pending in TRX(${transaction.id})")
+       //println(s"Marking SyncDelayEventStream(${this.toString.substring(this.toString.indexOf('@'))}) as pending in TRX(${transaction.id})")
       transaction.pendingObservables.enqueue(this)
     }
     maybePendingValue = nextValue
