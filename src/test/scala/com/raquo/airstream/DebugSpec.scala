@@ -403,52 +403,52 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
     calculations.clear()
   }
 
-  it("observable debugName") {
+  it("observable displayName") {
 
     val bus = new EventBus[Int]
 
     // --
 
-    val events = bus.events.setDebugName("events")
+    val events = bus.events.setDisplayName("events")
 
     assert(events eq bus.events)
-    assert(events.debugName == "events")
+    assert(events.displayName == "events")
     assert(events.toString == "events")
 
     // --
 
-    events.setDebugName("bus.events")
+    events.setDisplayName("bus.events")
 
-    assert(events.debugName == "bus.events")
+    assert(events.displayName == "bus.events")
     assert(events.toString == "bus.events")
 
     // --
 
-    assert(events.map(identity).debugName != "bus.events")
+    assert(events.map(identity).displayName != "bus.events")
     assert(events.map(identity).toString != "bus.events")
 
     // --
 
-    assert(events.debugLog().debugName == "bus.events|Debug")
+    assert(events.debugLog().displayName == "bus.events|Debug")
     assert(events.debugLog().toString == "bus.events|Debug")
-    assert(events.debugSpyErrors(_ => ()).debugLog().debugName == "bus.events|Debug")
+    assert(events.debugSpyErrors(_ => ()).debugLog().displayName == "bus.events|Debug")
     assert(events.debugSpyErrors(_ => ()).debugLog().toString == "bus.events|Debug")
-    assert(events.debugSpyErrors(_ => ()).debugLog().debugLogStarts.debugName == "bus.events|Debug")
+    assert(events.debugSpyErrors(_ => ()).debugLog().debugLogStarts.displayName == "bus.events|Debug")
     assert(events.debugSpyErrors(_ => ()).debugLog().debugLogStarts.toString == "bus.events|Debug")
 
     // --
 
     assert(events.debugWithName("debugEvents") ne events)
-    assert(events.debugName == "bus.events") // unchanged
+    assert(events.displayName == "bus.events") // unchanged
 
-    assert(events.debugWithName("debugEvents").debugName == "debugEvents")
+    assert(events.debugWithName("debugEvents").displayName == "debugEvents")
     assert(events.debugWithName("debugEvents").toString == "debugEvents")
-    assert(events.debugWithName("debugEvents").debugLog().debugName == "debugEvents")
+    assert(events.debugWithName("debugEvents").debugLog().displayName == "debugEvents")
     assert(events.debugWithName("debugEvents").debugLog().toString == "debugEvents")
-    assert(events.debugWithName("debugEvents").debugSpy(_ => ()).debugLog().debugBreak().debugName == "debugEvents")
+    assert(events.debugWithName("debugEvents").debugSpy(_ => ()).debugLog().debugBreak().displayName == "debugEvents")
     assert(events.debugWithName("debugEvents").debugSpy(_ => ()).debugLog().debugBreak().toString == "debugEvents")
 
-    assert(events.debugWithName("debugEvents").debugLog().map(identity).debugName != "debugEvents")
+    assert(events.debugWithName("debugEvents").debugLog().map(identity).displayName != "debugEvents")
     assert(events.debugWithName("debugEvents").debugLog().map(identity).toString != "debugEvents")
 
     // --
@@ -456,14 +456,14 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
     assert(events
       .debugWithName("debugEvents")
       .debugLog()
-      .setDebugName("debugLog")
-      .debugName == "debugLog"
+      .setDisplayName("debugLog")
+      .displayName == "debugLog"
     )
 
     assert(events
       .debugWithName("debugEvents")
       .debugLog()
-      .setDebugName("debugLog")
+      .setDisplayName("debugLog")
       .toString == "debugLog"
     )
 
@@ -471,69 +471,69 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
       events
         .debugWithName("debugEvents")
         .debugLog()
-        .setDebugName("debugLog")
+        .setDisplayName("debugLog")
         .debugSpy(_ => ())
-        .setDebugName("debugSpy")
-        .debugName == "debugSpy"
+        .setDisplayName("debugSpy")
+        .displayName == "debugSpy"
     )
 
     assert(
       events
         .debugWithName("debugEvents")
         .debugLog()
-        .setDebugName("debugLog")
+        .setDisplayName("debugLog")
         .debugSpy(_ => ())
-        .setDebugName("debugSpy")
+        .setDisplayName("debugSpy")
         .toString == "debugSpy"
     )
   }
 
-  it("observer debugName") {
+  it("observer displayName") {
 
     val obs = Observer.empty[Int]
 
     // --
 
-    val obsWithNameSet = obs.setDebugName("obs-0")
+    val obsWithNameSet = obs.setDisplayName("obs-0")
 
     assert(obsWithNameSet eq obs)
-    assert(obs.debugName == "obs-0")
+    assert(obs.displayName == "obs-0")
     assert(obs.toString == "obs-0")
 
     // --
 
-    obs.setDebugName("obs")
+    obs.setDisplayName("obs")
 
-    assert(obs.debugName == "obs")
+    assert(obs.displayName == "obs")
     assert(obs.toString == "obs")
 
     // --
 
-    assert(obs.contramap[Int](identity).debugName != "obs")
+    assert(obs.contramap[Int](identity).displayName != "obs")
     assert(obs.contramap[Int](identity).toString != "obs")
 
     // --
 
-    assert(obs.debugLog().debugName == "obs|Debug")
+    assert(obs.debugLog().displayName == "obs|Debug")
     assert(obs.debugLog().toString == "obs|Debug")
-    assert(obs.debugSpyErrors(_ => ()).debugLog().debugName == "obs|Debug")
+    assert(obs.debugSpyErrors(_ => ()).debugLog().displayName == "obs|Debug")
     assert(obs.debugSpyErrors(_ => ()).debugLog().toString == "obs|Debug")
-    assert(obs.debugSpyErrors(_ => ()).debugLog().debugLogEvents().debugName == "obs|Debug")
+    assert(obs.debugSpyErrors(_ => ()).debugLog().debugLogEvents().displayName == "obs|Debug")
     assert(obs.debugSpyErrors(_ => ()).debugLog().debugLogEvents().toString == "obs|Debug")
 
     // --
 
     assert(obs.debugWithName("debugEvents") ne obs)
-    assert(obs.debugName == "obs") // unchanged
+    assert(obs.displayName == "obs") // unchanged
 
-    assert(obs.debugWithName("debugEvents").debugName == "debugEvents")
+    assert(obs.debugWithName("debugEvents").displayName == "debugEvents")
     assert(obs.debugWithName("debugEvents").toString == "debugEvents")
-    assert(obs.debugWithName("debugEvents").debugLog().debugName == "debugEvents")
+    assert(obs.debugWithName("debugEvents").debugLog().displayName == "debugEvents")
     assert(obs.debugWithName("debugEvents").debugLog().toString == "debugEvents")
-    assert(obs.debugWithName("debugEvents").debugSpy(_ => ()).debugLog().debugBreak().debugName == "debugEvents")
+    assert(obs.debugWithName("debugEvents").debugSpy(_ => ()).debugLog().debugBreak().displayName == "debugEvents")
     assert(obs.debugWithName("debugEvents").debugSpy(_ => ()).debugLog().debugBreak().toString == "debugEvents")
 
-    assert(obs.debugWithName("debugEvents").debugLog().contramap[Int](identity).debugName != "debugEvents")
+    assert(obs.debugWithName("debugEvents").debugLog().contramap[Int](identity).displayName != "debugEvents")
     assert(obs.debugWithName("debugEvents").debugLog().contramap[Int](identity).toString != "debugEvents")
 
     // --
@@ -541,14 +541,14 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
     assert(obs
       //.debugWithName("debugEvents")
       .debugLog()
-      .setDebugName("debugLog")
-      .debugName == "debugLog"
+      .setDisplayName("debugLog")
+      .displayName == "debugLog"
     )
 
     assert(obs
       //.debugWithName("debugEvents")
       .debugLog()
-      .setDebugName("debugLog")
+      .setDisplayName("debugLog")
       .toString == "debugLog"
     )
 
@@ -556,19 +556,19 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
       obs
         //.debugWithName("debugEvents")
         .debugLog()
-        .setDebugName("debugLog")
+        .setDisplayName("debugLog")
         .debugSpy(_ => ())
-        .setDebugName("debugSpy")
-        .debugName == "debugSpy"
+        .setDisplayName("debugSpy")
+        .displayName == "debugSpy"
     )
 
     assert(
       obs
         //.debugWithName("debugEvents")
         .debugLog()
-        .setDebugName("debugLog")
+        .setDisplayName("debugLog")
         .debugSpy(_ => ())
-        .setDebugName("debugSpy")
+        .setDisplayName("debugSpy")
         .toString == "debugSpy"
     )
   }

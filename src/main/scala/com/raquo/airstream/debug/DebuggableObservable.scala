@@ -28,18 +28,18 @@ class DebuggableObservable[+A](val observable: Observable[A]) {
   def debugTopoRank: Int = observable.topoRank
 
   /** Create a new observable that listens to the original, and
-    * set the debugName of the new observable.
-    * This is different from `setDebugName`.
+    * set the displayName of the new observable.
+    * This is different from `setDisplayName`.
     *
-    * If you say `stream.debugWithName("foo").debugLog()`, the debugName
+    * If you say `stream.debugWithName("foo").debugLog()`, the displayName
     * used by the logger will be "foo" verbatim, whereas if you say
-    * `stream.setDebugName("foo").debugLog()`, the logger's debugName
+    * `stream.setDisplayName("foo").debugLog()`, the logger's displayName
     * will be "foo|Debug" – with a suffix – to differentiate it from
-    * the "foo" debugName of `stream` itself.
+    * the "foo" displayName of `stream` itself.
     */
-  def debugWithName(debugName: String): Self[A] = {
+  def debugWithName(displayName: String): Self[A] = {
     val emptyDebugger = Debugger(observable.topoRank)
-    observable.debugWith(emptyDebugger).setDebugName(debugName)
+    observable.debugWith(emptyDebugger).setDisplayName(displayName)
   }
 
   // -- Callback spies --
@@ -168,7 +168,7 @@ class DebuggableObservable[+A](val observable: Observable[A]) {
     useJsLogger: Boolean
   ): Unit = {
     val maybeColon = if (value.isDefined) ":" else ""
-    val prefix = s"${observable.debugName} [$action]$maybeColon"
+    val prefix = s"${observable.displayName} [$action]$maybeColon"
     if (useJsLogger) {
       // This is useful if you're emitting native JS objects, they will be printed to the console nicer
       dom.console.log(prefix, value.asInstanceOf[js.Any])

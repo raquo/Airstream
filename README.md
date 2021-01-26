@@ -1168,21 +1168,21 @@ Also, your logs will be prefixed with `sourceName` which defaults to `stream.toS
 We try to minimize the impact of debugging on the execution of your observable graph. To that end, any errors you throw in the callbacks you provide to `debugSpy*` methods will be reported as unhandled (wrapped in `DebuggerError`), and will not affect the propagation of events.
 
 
-##### debugName
+##### displayName
 
-When debugging, it's very useful to name your observables. There are two ways to do this: `stream.setDebugName("MyStream")` patches `stream` in place to set its `debugName`. It returns the same `stream`, it does **not** create a new observable.
+When debugging, it's very useful to name your observables. There are two ways to do this: `stream.setDisplayName("MyStream")` patches `stream` in place to set its `displayName`. It returns the same `stream`, it does **not** create a new observable.
 
-This should be the preferred method for adding **permanent** debug names to important observables. For example, if you have a global `val AuthSignal: Signal[AuthContext]`, you might want to add `.setDebugName("AuthSignal")` to its definition.
+This should be the preferred method for adding **permanent** names to important observables. For example, if you have a global `val AuthSignal: Signal[AuthContext]`, you might want to add `.setDisplayName("AuthSignal")` to its definition.
 
-`debugName`, if explicitly set, is returned by the observable's `toString` method. If not explicitly set, it defaults to `defaultDebugName`, which in turn defaults to java.Object's default `type@hashcode` toString implementation. If subclassing Observable, you can't override its toString method directly, but you can override `defaultDebugName`.
+`displayName`, if explicitly set, is returned by the observable's `toString` method. If not explicitly set, it defaults to `defaultDisplayName`, which in turn defaults to java.Object's default `type@hashcode` toString implementation. If subclassing Observable, you can't override its toString method directly, but you can override `defaultDisplayName`.
 
-`debugName` is of course useful to give human-readable identifiers to observables – seeing `AuthSignal` when print-debugging is much more useful than `MapSignal@f161`.
+`displayName` is of course useful to give human-readable identifiers to observables – seeing `AuthSignal` when print-debugging is much more useful than `MapSignal@f161`.
 
-`debugName` is also prepended to logs produced by `debugLog*` methods. However, given `stream.setDebugName("MyStream")`, while the `debugName` of `stream` is "MyStream", the `debugName` of `stream.setDebugName("MyStream").debugLog()` is "MyStream|Debug", to differentiate it from `stream`.
+`displayName` is also prepended to logs produced by `debugLog*` methods. However, given `stream.setDisplayName("MyStream")`, while the `displayName` of `stream` is "MyStream", the `displayName` of `stream.setDisplayName("MyStream").debugLog()` is "MyStream|Debug", to differentiate it from `stream`.
 
-You can of course also `setDebugName` on the debugged stream directly: `stream.debugLog().setDebugName("MyDebuggedStream")`, but if you have a _chain_ of debug streams that you want to apply the same name to, you can use the `withDebugName` method: `stream.withDebugName("MyDebugName").debugLogEvents().debugSpyErrors().debugLogStarts()` – in this case all three debug* streams will have their `debugName` set to "MyDebugName", but `stream` will not. This is because unlike `setDebugName`, `withDebugName` does not patch the original observable, it creates a new debug observable and patches that instead. `withDebugName` works with debug chains because unlike regular observables, debug observables inherit their parent debug observable's `debugName` by default.
+You can of course also `setDisplayName` on the debugged stream directly: `stream.debugLog().setDisplayName("MyDebuggedStream")`, but if you have a _chain_ of debug streams that you want to apply the same name to, you can use the `withDisplayName` method: `stream.withDisplayName("MyDisplayName").debugLogEvents().debugSpyErrors().debugLogStarts()` – in this case all three debug* streams will have their `displayName` set to "MyDisplayName", but `stream` will not. This is because unlike `setDisplayName`, `withDisplayName` does not patch the original observable, it creates a new debug observable and patches that instead. `withDisplayName` works with debug chains because unlike regular observables, debug observables inherit their parent debug observable's `displayName` by default.
 
-Airstream does not require `debugName` to be unique, although if you want to keep your sanity, it should be descriptive enough to clearly tell you which instance it refers to.
+Airstream does not require `displayName` to be unique, although if you want to keep your sanity, it should be descriptive enough to clearly tell you which instance it refers to.
 
 
 ##### debugTopoRank
@@ -1216,7 +1216,7 @@ Just as in typical contramapping, the order of execution is reversed, so in the 
 
 Similarly to debugged observables, your debuggers throwing do not affect the execution of the observable graph, instead they result in an unhandled `DebuggerError` being reported.
 
-Just like observables, observers can be named using `setDebugName` and `debugWithName`, with similar semantics. Note that even though observers are executed in "reverse" order (contramap semantics), debugged observers inherit `debugName` from their parent, so the `debugName` of all debugged observers in `obs.debugWithName("MyObserver").debugLog().debugSpy(???)` is "MyObserver".
+Just like observables, observers can be named using `setDisplayName` and `debugWithName`, with similar semantics. Note that even though observers are executed in "reverse" order (contramap semantics), debugged observers inherit `displayName` from their parent, so the `displayName` of all debugged observers in `obs.debugWithName("MyObserver").debugLog().debugSpy(???)` is "MyObserver".
 
 
 

@@ -8,15 +8,15 @@ import scala.util.{Failure, Success, Try}
 /** See [[DebuggableObserver]] for user-facing debug methods */
 class DebuggerObserver[A](parent: Observer[A], debug: Try[A] => Unit) extends Observer[A] {
 
-  override def defaultDebugName: String = {
+  override def defaultDisplayName: String = {
     parent match {
       case _: DebuggerObserver[_] =>
-        // When chaining multiple debug observers, they will inherit the parent's debugName
-        parent.debugName
+        // When chaining multiple debug observers, they will inherit the parent's displayName
+        parent.displayName
       case _ =>
         // We need to indicate that this isn't the original observer, but a debugged one,
         // otherwise debugging could get really confusing
-        s"${parent.debugName}|Debug"
+        s"${parent.displayName}|Debug"
     }
   }
 
