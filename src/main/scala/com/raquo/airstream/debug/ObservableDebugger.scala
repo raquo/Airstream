@@ -6,7 +6,6 @@ import scala.util.Try
   * @param onInitialEval when initial value is evaluated. Only for signals.
   */
 case class ObservableDebugger[-A] (
-  sourceName: String,
   topoRank: Int,
   onStart: () => Unit = () => (),
   onStop: () => Unit = () => (),

@@ -44,20 +44,17 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
     // #Note: we write out `ev` excessively to make sure that type inference works
 
     val events = bus.events
-      .debug()
-      .spy(ev => Calculation.log("bus.events", calculations)(ev))
+      .debugSpy(ev => Calculation.log("bus.events", calculations)(ev))
 
     val events1 = events
-      .debug()
-        .spy(ev => Calculation.log("events-1", calculations)(ev))
-        .spyStarts(_ => Calculation.log("events-1-start", calculations)(Success(-1)))
-        .spyStops(() => Calculation.log("events-1-stop", calculations)(Success(-1)))
+      .debugSpy(ev => Calculation.log("events-1", calculations)(ev))
+      .debugSpyStarts(_ => Calculation.log("events-1-start", calculations)(Success(-1)))
+      .debugSpyStops(() => Calculation.log("events-1-stop", calculations)(Success(-1)))
 
     val events2 = events
-      .debug()
-      .spyEvents(ev => Calculation.log("events-2", calculations)(Success(ev)))
-      .spyErrors(err => Calculation.log("events-2", calculations)(Failure(err)))
-      .spyLifecycle(
+      .debugSpyEvents(ev => Calculation.log("events-2", calculations)(Success(ev)))
+      .debugSpyErrors(err => Calculation.log("events-2", calculations)(Failure(err)))
+      .debugSpyLifecycle(
         startFn = _ => Calculation.log("events-2-start", calculations)(Success(-1)),
         stopFn = () => Calculation.log("events-2-stop", calculations)(Success(-1))
       )
@@ -208,23 +205,20 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
     // #Note: we write out `ev` excessively to make sure that type inference works
 
     val signal = v.signal
-      .debug()
-      .spyInitialEval(ev => Calculation.log("var.signal-initial", calculations)(ev))
-      .spy(ev => Calculation.log("var.signal", calculations)(ev))
+      .debugSpyInitialEval(ev => Calculation.log("var.signal-initial", calculations)(ev))
+      .debugSpy(ev => Calculation.log("var.signal", calculations)(ev))
 
     val signal1 = signal
-      .debug()
-      .spyInitialEval(ev => Calculation.log("signal-1-initial", calculations)(ev))
-      .spy(ev => Calculation.log("signal-1", calculations)(ev))
-      .spyStarts(_ => Calculation.log("signal-1-start", calculations)(Success(-1)))
-      .spyStops(() => Calculation.log("signal-1-stop", calculations)(Success(-1)))
+      .debugSpyInitialEval(ev => Calculation.log("signal-1-initial", calculations)(ev))
+      .debugSpy(ev => Calculation.log("signal-1", calculations)(ev))
+      .debugSpyStarts(_ => Calculation.log("signal-1-start", calculations)(Success(-1)))
+      .debugSpyStops(() => Calculation.log("signal-1-stop", calculations)(Success(-1)))
 
     val signal2 = signal
-      .debug()
-      .spyInitialEval(ev => Calculation.log("signal-2-initial", calculations)(ev))
-      .spyEvents(ev => Calculation.log("signal-2", calculations)(Success(ev)))
-      .spyErrors(err => Calculation.log("signal-2", calculations)(Failure(err)))
-      .spyLifecycle(
+      .debugSpyInitialEval(ev => Calculation.log("signal-2-initial", calculations)(ev))
+      .debugSpyEvents(ev => Calculation.log("signal-2", calculations)(Success(ev)))
+      .debugSpyErrors(err => Calculation.log("signal-2", calculations)(Failure(err)))
+      .debugSpyLifecycle(
         startFn = _ => Calculation.log("signal-2-start", calculations)(Success(-1)),
         stopFn = () => Calculation.log("signal-2-stop", calculations)(Success(-1))
       )
@@ -355,6 +349,87 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
     calculations.clear()
   }
 
+  it("observable debugName") {
+
+    val bus = new EventBus[Int]
+
+    // --
+
+    bus.events.setDebugName("events")
+
+    assert(bus.events.debugName == "events")
+    assert(bus.events.toString == "events")
+
+    // --
+
+    bus.events.setDebugName("bus.events")
+
+    assert(bus.events.debugName == "bus.events")
+    assert(bus.events.toString == "bus.events")
+
+    // --
+
+    assert(bus.events.map(identity).debugName != "bus.events")
+    assert(bus.events.map(identity).toString != "bus.events")
+
+    // --
+
+    assert(bus.events.debugLog().debugName == "bus.events|Debug")
+    assert(bus.events.debugLog().toString == "bus.events|Debug")
+    assert(bus.events.debugSpyErrors(_ => ()).debugLog().debugName == "bus.events|Debug")
+    assert(bus.events.debugSpyErrors(_ => ()).debugLog().toString == "bus.events|Debug")
+    assert(bus.events.debugSpyErrors(_ => ()).debugLog().debugLogStarts.debugName == "bus.events|Debug")
+    assert(bus.events.debugSpyErrors(_ => ()).debugLog().debugLogStarts.toString == "bus.events|Debug")
+
+    // --
+
+    assert(bus.events.debugWithName("debugEvents").debugName == "debugEvents")
+    assert(bus.events.debugWithName("debugEvents").toString == "debugEvents")
+    assert(bus.events.debugWithName("debugEvents").debugLog().debugName == "debugEvents")
+    assert(bus.events.debugWithName("debugEvents").debugLog().toString == "debugEvents")
+    assert(bus.events.debugWithName("debugEvents").debugSpy(_ => ()).debugLog().debugBreak().debugName == "debugEvents")
+    assert(bus.events.debugWithName("debugEvents").debugSpy(_ => ()).debugLog().debugBreak().toString == "debugEvents")
+
+    assert(bus.events.debugWithName("debugEvents").debugLog().map(identity).debugName != "debugEvents")
+    assert(bus.events.debugWithName("debugEvents").debugLog().map(identity).toString != "debugEvents")
+
+    // --
+
+    assert(bus.events
+      .debugWithName("debugEvents")
+      .debugLog()
+      .setDebugName("debugLog")
+      .debugName == "debugLog"
+    )
+
+    assert(bus.events
+      .debugWithName("debugEvents")
+      .debugLog()
+      .setDebugName("debugLog")
+      .toString == "debugLog"
+    )
+
+    assert(
+      bus.events
+        .debugWithName("debugEvents")
+        .debugLog()
+        .setDebugName("debugLog")
+        .debugSpy(_ => ())
+        .setDebugName("debugSpy")
+        .debugName == "debugSpy"
+    )
+
+    assert(
+      bus.events
+        .debugWithName("debugEvents")
+        .debugLog()
+        .setDebugName("debugLog")
+        .debugSpy(_ => ())
+        .setDebugName("debugSpy")
+        .toString == "debugSpy"
+    )
+  }
+
   it("observer spy debuggers") {
 
     val err1 = new Exception("err1")
@@ -419,8 +494,7 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
     val err1 = new Exception("err1")
 
     val events = bus.events
-      .debug()
-      .spy {
+      .debugSpy {
         case Success(ev) if ev < 10 =>
           Calculation.log("bus.events", calculations)(Success(ev))
         case _ =>

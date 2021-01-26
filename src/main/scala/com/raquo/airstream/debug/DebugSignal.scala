@@ -1,43 +1,42 @@
 package com.raquo.airstream.debug
 
-import com.raquo.airstream.core.Signal
-import com.raquo.airstream.util.always
+import com.raquo.airstream.core.AirstreamError.DebugError
+import com.raquo.airstream.core.{AirstreamError, Signal, Transaction}
 
-import scala.scalajs.js
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
-abstract class DebugSignal[+A](debugger: ObservableDebugger[A]) extends Signal[A] with DebugObservable[A] {
+/** See [[DebuggableObservable]] and [[DebuggableSignal]] for user-facing debug methods */
+class DebugSignal[A](
+  override protected val parent: Signal[A],
+  override protected val debugger: ObservableDebugger[A]
+) extends Signal[A] with DebugObservable[A] {
 
-  override protected[this] def createDebugObservable(debugger: ObservableDebugger[A]): DebugSignal[A] = {
-    new DebugWriteSignal[A](this, debugger)
-  }
+  override protected[airstream] val topoRank: Int = parent.topoRank + 1
 
-  override protected[this] def sourceName: String = debugger.sourceName
-
-  /** Execute fn when signal is evaluating its initial value */
-  def spyInitialEval(fn: Try[A] => Unit): DebugSignal[A] = {
-    val debugger = ObservableDebugger(sourceName, topoRank, onInitialEval = fn)
-    createDebugObservable(debugger)
-  }
-
-  /** Log when signal is evaluating its initial value (if `when` passes at that time) */
-  def logInitialEval(when: Try[A] => Boolean = always, useJsLogger: Boolean = false): DebugSelf[A] = {
-    spyInitialEval { value =>
-      if (when(value)) {
-        value match {
-          case Success(ev) => _log("initial-eval[event]", ev, useJsLogger)
-          case Failure(err) => _log("initial-eval[error]", err, useJsLogger)
-        }
-      }
+  override protected[this] def initialValue: Try[A] = {
+    val initial = parent.tryNow()
+    try {
+      debugger.onInitialEval(initial)
+    } catch {
+      case err: Throwable =>
+        val maybeCause = initial.toEither.left.toOption
+        AirstreamError.sendUnhandledError(DebugError(err, cause = maybeCause))
     }
+    initial
   }
 
-  /** Trigger JS debugger when signal is evaluating its initial value (if `when` passes at that time) */
-  def breakInitialEval(when: Try[A] => Boolean = always): DebugSelf[A] = {
-    spyInitialEval { value =>
-      if (when(value)) {
-        js.special.debugger()
-      }
-    }
+  override protected[this] def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
+    debugFireTry(nextValue)
+    super.fireTry(nextValue, transaction)
+  }
+
+  override protected[this] def onStart(): Unit = {
+    super.onStart()
+    debugOnStart()
+  }
+
+  override protected[this] def onStop(): Unit = {
+    super.onStop()
+    debugOnStop()
   }
 }
