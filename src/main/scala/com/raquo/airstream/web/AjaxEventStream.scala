@@ -120,6 +120,8 @@ class AjaxEventStream(
 
     // Actually initiate the network request
     AjaxEventStream.sendRequest(request, method, url, data)
+
+    super.onStart()
   }
 
   /** This stream will emit at most one event per request regardless of the outcome.
@@ -135,6 +137,7 @@ class AjaxEventStream(
 
   override protected[this] def onStop(): Unit = {
     pendingRequest = None
+    super.onStop()
   }
 }
 

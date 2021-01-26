@@ -1,9 +1,9 @@
 package com.raquo.airstream.core
 
+import com.raquo.airstream.debug.{DebugObservable, ObservableDebugger}
 import com.raquo.airstream.flatten.FlattenStrategy
 import com.raquo.airstream.flatten.FlattenStrategy.{SwitchFutureStrategy, SwitchSignalStrategy, SwitchStreamStrategy}
 import com.raquo.airstream.ownership.{Owner, Subscription}
-import org.scalajs.dom
 
 import scala.annotation.unused
 import scala.concurrent.Future
@@ -26,9 +26,18 @@ import scala.util.Try
   */
 trait Observable[+A] {
 
+  /** Basic type for this observable. Could be [[EventStream]] or [[Signal]] */
   type Self[+T] <: Observable[T]
 
-  // @TODO[API] This needs smarter permissions. See Laminar's DomEventStream
+  /** Observable with debug methods like .spy and .log. Could be [[DebugEventStream]] or [[DebugSignal]] */
+  type DebugSelf[+T] <: DebugObservable[T]
+
+  /** When subclassing Observable **outside of com.raquo.airstream package**, just make this field public:
+    *
+    *     override val topoRank: Int = ???
+    *
+    * "protected[airstream]" will allow this. See https://github.com/raquo/Airstream/issues/37
+    */
   protected[airstream] val topoRank: Int
 
   /** Note: Observer can be added more than once to an Observable.
@@ -84,50 +93,6 @@ trait Observable[+A] {
     }
   }
 
-  // @TODO[API] print with dom.console.log automatically only if a JS value detected? Not sure if possible to do well.
-
-  /** print events using println - use for Scala values */
-  def debugLog(prefix: String = "event", when: A => Boolean = _ => true): Self[A] = {
-    map(value => {
-      if (when(value)) {
-        println(prefix + ": " + value.asInstanceOf[js.Any])
-      }
-      value
-    })
-  }
-
-  /** print events using dom.console.log - use for JS values */
-  def debugLogJs(prefix: String = "event", when: A => Boolean = _ => true): Self[A] = {
-    map(value => {
-      if (when(value)) {
-        dom.console.log(prefix + ": ", value.asInstanceOf[js.Any])
-      }
-      value
-    })
-  }
-
-  def debugBreak(when: A => Boolean = _ => true): Self[A] = {
-    map(value => {
-      if (when(value)) {
-        js.special.debugger()
-      }
-      value
-    })
-  }
-
-  def debugSpy(fn: A => Unit): Self[A] = {
-    map(value => {
-      fn(value)
-      value
-    })
-  }
-
-  /** Print when the observable has just started or stopped */
-  def debugLogLifecycle(prefix: String): Self[A]
-
-  /** Run callbacks when the observable has just started or stopped */
-  def debugSpyLifecycle(start: () => Unit = () => (), stop: () => Unit = () => ()): Self[A]
-
   // @TODO[API] I don't like the Option[O] output type here very much. We should consider a sentinel error object instead (need to check performance). Or maybe add a recoverOrSkip method or something?
   /** @param pf Note: guarded against exceptions */
   def recover[B >: A](pf: PartialFunction[Throwable, Option[B]]): Self[B]
@@ -136,6 +101,20 @@ trait Observable[+A] {
 
   /** Convert this to an observable that emits Failure(err) instead of erroring */
   def recoverToTry: Self[Try[A]]
+
+  /** Create a new observable that listens to this one and has a debugger attached.
+    *
+    * The debugger doesn't do anything by default. Call methods like .spy() and .log()
+    * on the return value to add what you want.
+    * Use the resulting observable in place of the original observable in your code.
+    * See docs for details.
+    */
+  def debug(sourceName: String = this.toString): DebugSelf[A] = {
+    debugWith(ObservableDebugger(sourceName, topoRank))
+  }
+
+  /** Use [[debug]] unless you need / want to specify a debugger manually. */
+  def debugWith(debugger: ObservableDebugger[A]): DebugSelf[A]
 
   /** Create an external observer from a function and subscribe it to this observable.
     *

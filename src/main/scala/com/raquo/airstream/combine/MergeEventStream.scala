@@ -55,10 +55,12 @@ class MergeEventStream[A](
 
   override protected[this] def onStart(): Unit = {
     parentObservers.foreach(_.addToParent())
+    super.onStart()
   }
 
   override protected[this] def onStop(): Unit = {
     parentObservers.foreach(_.removeFromParent())
+    super.onStop()
   }
 
   private def makeInternalObserver(parent: Observable[A]): InternalParentObserver[A] = {

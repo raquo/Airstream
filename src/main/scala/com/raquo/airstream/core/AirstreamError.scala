@@ -11,7 +11,7 @@ sealed abstract class AirstreamError(message: String) extends Throwable(message)
 object AirstreamError {
 
   case class VarError(message: String, cause: Option[Throwable])
-    extends AirstreamError(message) {
+    extends AirstreamError(s"$message; cause: ${cause.map(_.getMessage)}") {
 
     cause.foreach(initCause)
 
@@ -44,7 +44,13 @@ object AirstreamError {
 
     initCause(cause)
 
-    override def toString: String = s"ObserverErrorHandlingError: $error, cause: $cause"
+    override def toString: String = s"ObserverErrorHandlingError: $error; cause: $cause"
+  }
+
+  case class DebugError(error: Throwable, cause: Option[Throwable])
+    extends AirstreamError(s"DebugError: ${error.getMessage}; cause: ${cause.map(_.getMessage)}") {
+
+    override def toString: String = s"DebugError: $error; cause: $cause"
   }
 
   // --

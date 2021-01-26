@@ -49,10 +49,12 @@ trait CustomSource[A] extends Observable[A] {
     Try(config.onStart()).recover {
       case err: Throwable => _fireError(err)
     }
+    super.onStart()
   }
 
   override protected[this] def onStop(): Unit = {
     config.onStop()
+    super.onStop()
   }
 }
 

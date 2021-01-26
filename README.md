@@ -69,7 +69,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Sync Delay](#sync-delay)
     * [Splitting Observables](#splitting-observables)
     * [Flattening Observables](#flattening-observables)
-    * [Debugging Operators](#debugging-operators)
+  * [Debugging](#debugging)
   * [Error Handling](#error-handling)
 * [Limitations](#limitations)
 * [My Related Projects](#my-related-projects)
@@ -1124,24 +1124,74 @@ All built-in strategies result in observables that emit each event in a new tran
 `SwitchFutureStrategy`, `ConcurrentFutureStrategy`, and `OverwriteFutureStrategy` treat futures slightly differently than `EventStream.fromFuture`. Namely, if the parent observable emits a future that has already resolved, it will be treated as if the future has just resolved, i.e. its value will be emitted (subject to the strategy's normal logic). This is useful to avoid "swallowing" already resolved futures and enables easy handling of use cases such as cached or default responses. If this behaviour is undesirable you can easily define an alternative flattening strategy – it's a matter of flipping a single boolean in the relevant classes.
 
 
-#### Debugging Operators
+### Debugging
 
-Observable trait includes a few operators for debugging events:
-* `debugLog` (log events)
-* `debugBreak` (invoke a JS debugger on every event)
-* `debugSpy` (call a function on every event)
-
-You can actually invoke the debugger (or logger) on a subset of events, like so:
+#### Debugging Observables
 
 ```scala
-val myIntStream: EventStream[Int] = ???
-val debuggedStream: EventStream[Int] = myIntStream.debugBreak(_ % 2 == 0) // break on even numbers only
+val stream: EventStream[Int] = ???
+val useJsLogger: Boolean = false
+
+val debugStream = stream
+  .debug("myStream") // optional sourceName will be printed as a prefix to any logs from this chain
+  .logEvents(when = _ < 0, useJsLogger)
+  .spyStarts(topoRank => ???)
+  .breakErrors()
+
+// Before:
+stream.addObserver(obs)
+
+// After: when debugging, replace with:
+debugStream.addObserver(obs)
 ```
 
-You can also debug observables lifecycle, i.e. starting, stopping, and Signals evaluating their initial value, using the following operators:
-* `debugLogLifecycle` (log when observable starts & stops)
-* `debugSpyLifecycle` (call a function when observable starts, stops, or signal evaluates its current value)
-  * Note: any errors thrown in these callbacks will be considered unhandled, without affecting the observable graph.
+Airstream offers many debugging operators for observables, letting you run a callbacks (`spy*`), log, or set a JS breakpoint (`break*`) at the most important times in the observable's lifecycle, including when emitting events or errors, starting or stopping, and evaluating the initial value (for signals). You can see all of these methods in `DebugObservable` and `DebugSignal`.
+
+Enabling debugging with Airstream methods is a two-step process:
+
+1. Call `debug()` on the observable you want to debug. This will create an observable that listens to the original observable and re-emits all of its events and errors, except it exposes debug methods like `log` and `logEvents`.
+
+2. Call one or more debug methods in a chain on the `debug()` observable. For example, `stream.debug().log()` will print all events **and errors** emitted by this observable, and `stream.debug().logEvents().breakErrors()` will log only the events, and set a JS breakpoint on errors.
+
+Very importantly, we do **not** monkey-patch the original observable to add debugging functionality to it. We create a new observable that depends on the original, and debug _that_. This is true for each debug operator: in `stream.debug().log()`, `.debug() creates an observable based on `stream`, and `.log()` creates an observable based on `stream.debug()`.
+
+To make it crystal clear: `stream.debug().log()` will log only the events that `stream.debug().log()` emits, so you need to make sure to listen to it, not (just) to `stream`. Easiest is to just use `stream.debug().log()` in place of `stream` in your code.
+
+Another important consideration is the **order** of debug procedures. It follows the propagation order. For example, in `stream.debug().log().spy(fn)` the observable `stream.debug().log()` will obviously emit before the observable `stream.debug().log().spy(fn)` emits, and so you will see the event printed first, and only after that will `fn` be called with that event. So if you're ever confused about why your debugger prints stuff in a weird order (e.g. event fired before stream is started), make sure your debug operators are in the right order.
+
+You can also use `debugWith(debugger)` method instead of `debug()` and provide an `ObservableDebugger` with all of the behaviour that you want, instead of adding it piece by piece.
+
+Also regarding timing, the per-event debuggers like (`spy()` / `log()` / `break()`) do their thing right _before_ the event is fired (by the debugged observable, not the original), and the start/stop debuggers do their thing right _after_ the observable is started or stopped.
+
+Logging debug operators generally offer an optional `when` filter to reduce noise, and a `useJsLogger` option that you should enable when you're logging native JS values. Logging plain JS objects with `println` will often result in `[object Object]`, but JS `dom.console.log` can print them nicely. Also, your logs will be prefixed with `sourceName` which defaults to `stream.toString` but you can provide a prettier name as a param to the `.debug()` method.
+
+We try to minimize the impact of debugging on the execution of your observable graph. To that end, any errors you throw in the callbacks you provide to `spy*` methods will be reported as unhandled (wrapped in `DebuggerError`), and will not affect the propagation of events.
+
+
+#### Debugging Observers
+
+```scala
+val stream: EventStream[Int] = ???
+val obs: Observer[Int] = ???
+
+val debuggedObs = obs
+  .debug[Int]("myObs") // optional sourceName will be printed as a prefix to any logs from this chain
+  .log()
+  .spyErrors(logError)
+
+// Before:
+stream.addObserver(obs)
+
+// After: when debugging, replace with:
+stream.addObserver(debuggedObs)
+```
+
+Observers have debugging functionality very similar to observables, but it works slightly differently. Whereas adding debuggers to observables is similar to mapping them, adding debuggers to observers is similar to **contra**mapping them.
+
+So just as in typical contramapping, you need to manually specify the type param for the `debug` method (it should be the same type as the type param of the underlying observer), and the order of execution is reversed, so in the example above `spyErrors()` callback will run before the error is logged by `log()`, and all the debugging happens before the original observer has a chance to run.
+
+Similarly to debugged observables, your debuggers throwing do not affect the execution of the observable graph, instead they result in an unhandled `DebuggerError` being reported.
+
 
 
 ### Error Handling

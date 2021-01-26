@@ -24,7 +24,7 @@ class Transaction(private[Transaction] val code: Transaction => Any) {
 
   @inline private[Transaction] def resolvePendingObservables(): Unit = {
     while (pendingObservables.nonEmpty) {
-      //      dom.console.log("RANKS: ", pendingObservables.map(_.topoRank))
+      //dom.console.log("RANKS: ", pendingObservables.debugQueue.map(_.topoRank))
       // Fire the first pending observable and remove it from the list
       pendingObservables.dequeue().syncFire(this)
     }

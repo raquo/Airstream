@@ -1,7 +1,7 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.core.AirstreamError.{ObserverError, ObserverErrorHandlingError}
-import org.scalajs.dom
+import com.raquo.airstream.debug.{DebugObserver, ObserverDebugger}
 
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
@@ -35,6 +35,11 @@ trait Observer[-A] {
     )
   }
 
+  /** @param project must not throw! */
+  def contramapTry[B](project: Try[B] => Try[A]): Observer[B] = {
+    Observer.fromTry { case nextValue => onTry(project(nextValue)) }
+  }
+
   /** Available only on Observers of Option, this is a shortcut for contramap[B](Some(_)) */
   def contramapSome[V](implicit evidence: Option[V] <:< A): Observer[V] = {
     contramap[V](value => evidence(Some(value)))
@@ -59,46 +64,16 @@ trait Observer[-A] {
     })
   }
 
-  /** print events using println - use for Scala values */
-  def debugLog[AA <: A](
-    prefix: String = "event",
-    when: AA => Boolean = (_: AA) => true
-  ): Observer[AA] = {
-    contramap(value => {
-      if (when(value)) {
-        println(prefix + ": " + value.asInstanceOf[js.Any])
-      }
-      value
-    })
-  }
-
-  /** print events using dom.console.log - use for JS values */
-  def debugLogJs[AA <: A](
-    prefix: String = "event",
-    when: AA => Boolean = (_: AA) => true
-  ): Observer[AA] = {
-    contramap(value => {
-      if (when(value)) {
-        dom.console.log(prefix + ": ", value.asInstanceOf[js.Any])
-      }
-      value
-    })
-  }
-
-  def debugBreak[AA <: A](when: AA => Boolean = (_: AA) => true): Observer[AA] = {
-    contramap(value => {
-      if (when(value)) {
-        js.special.debugger()
-      }
-      value
-    })
-  }
-
-  def debugSpy[AA <: A](fn: AA => Unit): Observer[AA] = {
-    contramap(value => {
-      fn(value)
-      value
-    })
+  /** Create a new observer that exposes debug methods like spy() and log().
+    * Call some of those methods to add debugging behaviour,
+    * and then use the result in place of the original observer in your code.
+    * See docs for details.
+    *
+    * Note: type inference doesn't work on this method, you need to provide the AA type param (it should be same as A).
+    */
+  def debug[AA <: A](sourceName: String = this.toString): DebugObserver[AA] = {
+    val debugger = ObserverDebugger(sourceName)
+    new DebugObserver[AA](this, debugger)
   }
 }
 
