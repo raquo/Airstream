@@ -22,7 +22,7 @@ class DebuggableSignal[+A](override val observable: Signal[A]) extends Debuggabl
 
   /** Execute fn when signal is evaluating its initial value */
   def debugSpyInitialEval(fn: Try[A] => Unit): Signal[A] = {
-    val debugger = ObservableDebugger(observable.topoRank, onInitialEval = fn)
+    val debugger = Debugger(observable.topoRank, onInitialEval = fn)
     observable.debugWith(debugger)
   }
 

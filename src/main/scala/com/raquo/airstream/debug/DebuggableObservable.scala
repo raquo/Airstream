@@ -28,7 +28,8 @@ class DebuggableObservable[+A](val observable: Observable[A]) {
   def debugTopoRank: Int = observable.topoRank
 
   /** Create a new observable that listens to the original, and
-    * set its debugName. This is different from `setDebugName`.
+    * set the debugName of the new observable.
+    * This is different from `setDebugName`.
     *
     * If you say `stream.debugWithName("foo").debugLog()`, the debugName
     * used by the logger will be "foo" verbatim, whereas if you say
@@ -37,7 +38,7 @@ class DebuggableObservable[+A](val observable: Observable[A]) {
     * the "foo" debugName of `stream` itself.
     */
   def debugWithName(debugName: String): Self[A] = {
-    val emptyDebugger = ObservableDebugger(observable.topoRank)
+    val emptyDebugger = Debugger(observable.topoRank)
     observable.debugWith(emptyDebugger).setDebugName(debugName)
   }
 
@@ -45,7 +46,7 @@ class DebuggableObservable[+A](val observable: Observable[A]) {
 
   /** Execute fn on every emitted event or error */
   def debugSpy(fn: Try[A] => Unit): Self[A] = {
-    val debugger = ObservableDebugger(
+    val debugger = Debugger(
       observable.topoRank,
       onFire = fn
     )
@@ -73,7 +74,7 @@ class DebuggableObservable[+A](val observable: Observable[A]) {
     * @param startFn topoRank => ()
     */
   def debugSpyLifecycle(startFn: Int => Unit, stopFn: () => Unit): Self[A] = {
-    val debugger = ObservableDebugger(
+    val debugger = Debugger(
       observable.topoRank,
       onStart = () => startFn(observable.topoRank),
       onStop = stopFn

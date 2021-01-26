@@ -2,10 +2,11 @@ package com.raquo.airstream.debug
 
 import scala.util.Try
 
-/** @param sourceName printed as prefix when logging
-  * @param onInitialEval when initial value is evaluated. Only for signals.
+/** Debugger for observables
+  *
+  * @param onInitialEval fired when initial value is evaluated. Only for signals.
   */
-case class ObservableDebugger[-A] (
+case class Debugger[-A] (
   topoRank: Int,
   onStart: () => Unit = () => (),
   onStop: () => Unit = () => (),

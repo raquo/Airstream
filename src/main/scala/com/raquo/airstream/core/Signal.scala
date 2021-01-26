@@ -4,7 +4,7 @@ import com.raquo.airstream.combine.CombineSignalN
 import com.raquo.airstream.combine.generated.{CombinableSignal, StaticSignalCombineOps}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
-import com.raquo.airstream.debug.{DebugSignal, DebuggableSignal, ObservableDebugger}
+import com.raquo.airstream.debug.{DebuggerSignal, DebuggableSignal, Debugger}
 import com.raquo.airstream.misc.generated._
 import com.raquo.airstream.misc.{FoldLeftSignal, MapEventStream, MapSignal}
 import com.raquo.airstream.ownership.Owner
@@ -99,8 +99,8 @@ trait Signal[+A] extends Observable[A] {
   override def recoverToTry: Signal[Try[A]] = map(Try(_)).recover[Try[A]] { case err => Some(Failure(err)) }
 
   /** See also [[debug]] convenience method in [[Observable]] */
-  override def debugWith(debugger: ObservableDebugger[A]): Signal[A] = {
-    new DebugSignal[A](this, debugger)
+  override def debugWith(debugger: Debugger[A]): Signal[A] = {
+    new DebuggerSignal[A](this, debugger)
   }
 
   /** Add a noop observer to this signal to ensure that it's started.

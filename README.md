@@ -1165,7 +1165,7 @@ Logging debug operators generally offer an optional `when` filter to reduce nois
 
 Also, your logs will be prefixed with `sourceName` which defaults to `stream.toString` but you can provide a prettier name as a param to the `.debug()` method.
 
-We try to minimize the impact of debugging on the execution of your observable graph. To that end, any errors you throw in the callbacks you provide to `spy*` methods will be reported as unhandled (wrapped in `DebuggerError`), and will not affect the propagation of events.
+We try to minimize the impact of debugging on the execution of your observable graph. To that end, any errors you throw in the callbacks you provide to `debugSpy*` methods will be reported as unhandled (wrapped in `DebuggerError`), and will not affect the propagation of events.
 
 
 ##### debugName
@@ -1182,6 +1182,8 @@ This should be the preferred method for adding **permanent** debug names to impo
 
 You can of course also `setDebugName` on the debugged stream directly: `stream.debugLog().setDebugName("MyDebuggedStream")`, but if you have a _chain_ of debug streams that you want to apply the same name to, you can use the `withDebugName` method: `stream.withDebugName("MyDebugName").debugLogEvents().debugSpyErrors().debugLogStarts()` – in this case all three debug* streams will have their `debugName` set to "MyDebugName", but `stream` will not. This is because unlike `setDebugName`, `withDebugName` does not patch the original observable, it creates a new debug observable and patches that instead. `withDebugName` works with debug chains because unlike regular observables, debug observables inherit their parent debug observable's `debugName` by default.
 
+Airstream does not require `debugName` to be unique, although if you want to keep your sanity, it should be descriptive enough to clearly tell you which instance it refers to.
+
 
 ##### debugTopoRank
 
@@ -1197,9 +1199,9 @@ val stream: EventStream[Int] = ???
 val obs: Observer[Int] = ???
 
 val debuggedObs = obs
-  .debug[Int]("myObs") // optional sourceName will be printed as a prefix to any logs from this chain
-  .log()
-  .spyErrors(logError)
+  .debugWithName("MyObserver")
+  .debugLog()
+  .debugSpyErrors(err => ???)
 
 // Before:
 stream.addObserver(obs)
@@ -1210,9 +1212,11 @@ stream.addObserver(debuggedObs)
 
 Observers have debugging functionality very similar to observables, but it works slightly differently. Whereas adding debuggers to observables is similar to mapping them, adding debuggers to observers is similar to **contra**mapping them.
 
-So just as in typical contramapping, you need to manually specify the type param for the `debug` method (it should be the same type as the type param of the underlying observer), and the order of execution is reversed, so in the example above `spyErrors()` callback will run before the error is logged by `log()`, and all the debugging happens before the original observer has a chance to run.
+Just as in typical contramapping, the order of execution is reversed, so in the example above `debugSpyErrors()` callback will run before the error is logged by `log()`, and all the debugging happens before the original observer runs.
 
 Similarly to debugged observables, your debuggers throwing do not affect the execution of the observable graph, instead they result in an unhandled `DebuggerError` being reported.
+
+Just like observables, observers can be named using `setDebugName` and `debugWithName`, with similar semantics. Note that even though observers are executed in "reverse" order (contramap semantics), debugged observers inherit `debugName` from their parent, so the `debugName` of all debugged observers in `obs.debugWithName("MyObserver").debugLog().debugSpy(???)` is "MyObserver".
 
 
 

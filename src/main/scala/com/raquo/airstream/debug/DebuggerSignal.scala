@@ -6,10 +6,10 @@ import com.raquo.airstream.core.{AirstreamError, Signal, Transaction}
 import scala.util.Try
 
 /** See [[DebuggableObservable]] and [[DebuggableSignal]] for user-facing debug methods */
-class DebugSignal[A](
+class DebuggerSignal[A](
   override protected val parent: Signal[A],
-  override protected val debugger: ObservableDebugger[A]
-) extends Signal[A] with DebugObservable[A] {
+  override protected val debugger: Debugger[A]
+) extends Signal[A] with DebuggerObservable[A] {
 
   override protected[airstream] val topoRank: Int = parent.topoRank + 1
 
