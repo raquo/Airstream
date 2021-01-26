@@ -5,10 +5,10 @@ import com.raquo.airstream.core.{EventStream, Transaction}
 import scala.util.{Failure, Success}
 
 /** See [[DebuggableObservable]] and [[DebuggableSignal]] for user-facing debug methods */
-class DebugEventStream[A](
+class DebuggerEventStream[A](
   override protected val parent: EventStream[A],
-  override protected val debugger: ObservableDebugger[A]
-) extends EventStream[A] with DebugObservable[A] {
+  override protected val debugger: Debugger[A]
+) extends EventStream[A] with DebuggerObservable[A] {
 
   override protected[airstream] val topoRank: Int = parent.topoRank + 1
 

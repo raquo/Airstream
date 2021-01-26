@@ -1,12 +1,12 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.core.AirstreamError.{ObserverError, ObserverErrorHandlingError}
-import com.raquo.airstream.debug.{DebugObserver, ObserverDebugger}
+import com.raquo.airstream.debug.DebuggableObserver
 
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
-trait Observer[-A] {
+trait Observer[-A] extends Named {
 
   lazy val toJsFn1: js.Function1[A, Unit] = onNext
 
@@ -64,26 +64,20 @@ trait Observer[-A] {
     })
   }
 
-  /** Create a new observer that exposes debug methods like spy() and log().
-    * Call some of those methods to add debugging behaviour,
-    * and then use the result in place of the original observer in your code.
-    * See docs for details.
-    *
-    * Note: type inference doesn't work on this method, you need to provide the AA type param (it should be same as A).
-    */
-  def debug[AA <: A](sourceName: String = this.toString): DebugObserver[AA] = {
-    val debugger = ObserverDebugger(sourceName)
-    new DebugObserver[AA](this, debugger)
-  }
 }
 
 object Observer {
+
+  private val _empty = Observer[Any](_ => ())
 
   /** An observer that does nothing. Use it to ensure that an Observable is started
     *
     * Used by SignalView and EventStreamView
     */
-  val empty: Observer[Any] = Observer[Any](_ => ())
+  def empty[A]: Observer[A] = _empty
+
+  /** Provides debug* methods for observers */
+  implicit def toDebuggableObserver[A](observer: Observer[A]): DebuggableObserver[A] = new DebuggableObserver(observer)
 
   /** @param onNext Note: guarded against exceptions */
   def apply[A](onNext: A => Unit): Observer[A] = {

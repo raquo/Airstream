@@ -6,13 +6,14 @@ import com.raquo.airstream.core.{AirstreamError, Transaction}
 
 import scala.util.Try
 
-trait DebugObservable[A] extends SingleParentObservable[A, A] with InternalTryObserver[A] {
+/** See [[DebuggableObservable]] and [[DebuggableSignal]] for user-facing debug methods */
+trait DebuggerObservable[A] extends SingleParentObservable[A, A] with InternalTryObserver[A] {
 
-  protected val debugger: ObservableDebugger[A]
+  protected val debugger: Debugger[A]
 
   override def defaultDebugName: String = {
     parent match {
-      case _: DebugObservable[_] =>
+      case _: DebuggerObservable[_] =>
         // When chaining multiple debug observables, they will inherit the parent's debugName
         parent.debugName
       case _ =>
