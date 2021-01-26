@@ -1183,6 +1183,13 @@ This should be the preferred method for adding **permanent** debug names to impo
 You can of course also `setDebugName` on the debugged stream directly: `stream.debugLog().setDebugName("MyDebuggedStream")`, but if you have a _chain_ of debug streams that you want to apply the same name to, you can use the `withDebugName` method: `stream.withDebugName("MyDebugName").debugLogEvents().debugSpyErrors().debugLogStarts()` – in this case all three debug* streams will have their `debugName` set to "MyDebugName", but `stream` will not. This is because unlike `setDebugName`, `withDebugName` does not patch the original observable, it creates a new debug observable and patches that instead. `withDebugName` works with debug chains because unlike regular observables, debug observables inherit their parent debug observable's `debugName` by default.
 
 
+##### debugTopoRank
+
+[Topological Ranks](#topological-rank) of observables determine the order of Airstream observable graph propagation. The new observables created using `debug*` operators will necessarily have different `topoRank`-s from the original observables. Due to (mostly) depth-first propagation in Airstream, debugging observables generally don't affect your graph's propagation, but if you're specifically debugging an issue related to topoRanks, you might want to avoid adding temporary observables to your observable graph.
+
+You can check the `topoRank` of an observable using `observable.debugTopoRank`. Unlike other `debug*` operators, this one does not affect the observable or create new observables, it just returns the observable's topoRank.
+
+
 #### Debugging Observers
 
 ```scala

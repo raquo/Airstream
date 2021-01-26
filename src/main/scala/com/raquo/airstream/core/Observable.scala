@@ -274,4 +274,6 @@ object Observable {
       strategy.flatten(parent)
     }
   }
+
+  def debugTopoRank(observable: Observable[_]): Int = observable.topoRank
 }

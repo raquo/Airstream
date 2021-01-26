@@ -24,6 +24,9 @@ class DebuggableObservable[+A](val observable: Observable[A]) {
 
   type Self[+T] = observable.Self[T]
 
+  /** Return the observable's topoRank. This does not affect the observable in any way. */
+  def debugTopoRank: Int = observable.topoRank
+
   /** Create a new observable that listens to the original, and
     * set its debugName. This is different from `setDebugName`.
     *
