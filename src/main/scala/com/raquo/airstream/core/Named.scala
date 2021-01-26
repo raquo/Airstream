@@ -13,24 +13,24 @@ trait Named {
     * Airstream uses this in `debugLog*` methods. In the future, we will expand on this.
     * #TODO[Debug] We don't use this to its full potential yet.
     */
-  protected[this] var maybeDebugName: js.UndefOr[String] = js.undefined
+  protected[this] var maybeDisplayName: js.UndefOr[String] = js.undefined
 
-  /** This is the method that subclasses override to preserve the user's ability to set custom debug names. */
-  protected def defaultDebugName: String = super.toString
+  /** This is the method that subclasses override to preserve the user's ability to set custom display names. */
+  protected def defaultDisplayName: String = super.toString
 
-  /** Override [[defaultDebugName]] instead of this, if you need to. */
-  final override def toString: String = debugName
+  /** Override [[defaultDisplayName]] instead of this, if you need to. */
+  final override def toString: String = displayName
 
-  final def debugName: String = maybeDebugName.getOrElse(defaultDebugName)
+  final def displayName: String = maybeDisplayName.getOrElse(defaultDisplayName)
 
-  /** Set the debug name for this instance (observable or observer).
+  /** Set the display name for this instance (observable or observer).
     * - This method modifies the instance and returns `this`. It does not create a new instance.
     * - New name you set will override the previous name, if any.
     *   This might change in the future. For the sake of sanity, don't call this more than once for the same instance.
-    * - If debug name is set, toString will output it instead of the standard type@hashcode string
+    * - If display name is set, toString will output it instead of the standard type@hashcode string
     */
-  def setDebugName(name: String): this.type = {
-    maybeDebugName = name // @TODO[Warn] Maybe we should emit a warning if name was already set
+  def setDisplayName(name: String): this.type = {
+    maybeDisplayName = name // @TODO[Warn] Maybe we should emit a warning if name was already set
     this
   }
 }

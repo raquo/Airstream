@@ -17,17 +17,17 @@ import scala.util.{Failure, Success, Try}
   */
 class DebuggableObserver[A](val observer: Observer[A]) extends AnyVal {
 
-  /** Create a new observer with a debugName, that sends all events
-    * to the original observer. This is different from `setDebugName`.
+  /** Create a new observer with a displayName, that sends all events
+    * to the original observer. This is different from `setDisplayName`.
     *
-    * If you say `observer.debugWithName("foo").debugLog()`, the debugName
+    * If you say `observer.debugWithName("foo").debugLog()`, the displayName
     * used by the logging observer will be "foo" verbatim, whereas if you say
-    * `observer.setDebugName("foo").debugLog()`, the logger's debugName
+    * `observer.setDisplayName("foo").debugLog()`, the logger's displayName
     * will be "foo|Debug" – with a suffix – to differentiate it from
-    * the "foo" debugName of `observer` itself.
+    * the "foo" displayName of `observer` itself.
     */
-  def debugWithName(debugName: String): Observer[A] = {
-    observer.debugSpy(_ => ()).setDebugName(debugName)
+  def debugWithName(displayName: String): Observer[A] = {
+    observer.debugSpy(_ => ()).setDisplayName(displayName)
   }
 
   // -- Spy with callbacks --
@@ -90,7 +90,7 @@ class DebuggableObserver[A](val observer: Observer[A]) extends AnyVal {
     value: Any,
     useJsLogger: Boolean
   ): Unit = {
-    val prefix = s"${observer.debugName} [$action]:"
+    val prefix = s"${observer.displayName} [$action]:"
     if (useJsLogger) {
       // This is useful if you're listening for native JS objects, they will be printed to the console nicer
       dom.console.log(prefix, value.asInstanceOf[js.Any])

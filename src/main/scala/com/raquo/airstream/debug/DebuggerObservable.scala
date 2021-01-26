@@ -11,15 +11,15 @@ trait DebuggerObservable[A] extends SingleParentObservable[A, A] with InternalTr
 
   protected val debugger: Debugger[A]
 
-  override def defaultDebugName: String = {
+  override def defaultDisplayName: String = {
     parent match {
       case _: DebuggerObservable[_] =>
-        // When chaining multiple debug observables, they will inherit the parent's debugName
-        parent.debugName
+        // When chaining multiple debug observables, they will inherit the parent's displayName
+        parent.displayName
       case _ =>
         // We need to indicate that this isn't the original observable, but a debugged one,
         // otherwise debugging could get really confusing
-        s"${parent.debugName}|Debug"
+        s"${parent.displayName}|Debug"
     }
   }
 
