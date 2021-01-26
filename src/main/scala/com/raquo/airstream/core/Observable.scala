@@ -1,6 +1,6 @@
 package com.raquo.airstream.core
 
-import com.raquo.airstream.debug.{DebugObservable, ObservableDebugger}
+import com.raquo.airstream.debug.{DebuggableObservable, ObservableDebugger}
 import com.raquo.airstream.flatten.FlattenStrategy
 import com.raquo.airstream.flatten.FlattenStrategy.{SwitchFutureStrategy, SwitchSignalStrategy, SwitchStreamStrategy}
 import com.raquo.airstream.ownership.{Owner, Subscription}
@@ -29,9 +29,6 @@ trait Observable[+A] {
   /** Basic type for this observable. Could be [[EventStream]] or [[Signal]] */
   type Self[+T] <: Observable[T]
 
-  /** Observable with debug methods like .spy and .log. Could be [[DebugEventStream]] or [[DebugSignal]] */
-  type DebugSelf[+T] <: DebugObservable[T]
-
   /** When subclassing Observable **outside of com.raquo.airstream package**, just make this field public:
     *
     *     override val topoRank: Int = ???
@@ -47,6 +44,32 @@ trait Observable[+A] {
 
   /** Note: This is enforced to be a Set outside of the type system #performance */
   protected[this] val internalObservers: ObserverList[InternalObserver[A]] = new ObserverList(js.Array())
+
+  /** Debug name of an observable should identify it uniquely enough for your purposes.
+    * You can read / write it to simplify debugging.
+    * Airstream uses this in `debugLog*` methods. In the future, we will expand on this.
+    * #TODO[Debug] We don't use this to its full potential yet.
+    */
+  protected[this] var maybeDebugName: js.UndefOr[String] = js.undefined
+
+  /** This is the method that subclasses override to preserve the user's ability to set custom debug names. */
+  protected def defaultDebugName: String = super.toString
+
+  /** Override [[defaultDebugName]] instead of this, if you need to. */
+  final override def toString: String = debugName
+
+  final def debugName: String = maybeDebugName.getOrElse(defaultDebugName)
+
+  /** Set this observable's debug name.
+    * - This method modifies the observable and returns `this`. It does not create a new observable.
+    * - New names you set will override the previous name, if any.
+    *   This might change in the future. For the sake of sanity, don't call this more than once per observable.
+    * - If debug name is set, toString will output it instead of the standard type@hashcode string
+    */
+  def setDebugName(name: String): this.type = {
+    maybeDebugName = name // @TODO[Warn] Maybe we should emit a warning if name was already set
+    this
+  }
 
   /** @param project Note: guarded against exceptions */
   def map[B](project: A => B): Self[B]
@@ -104,17 +127,13 @@ trait Observable[+A] {
 
   /** Create a new observable that listens to this one and has a debugger attached.
     *
-    * The debugger doesn't do anything by default. Call methods like .spy() and .log()
-    * on the return value to add what you want.
     * Use the resulting observable in place of the original observable in your code.
     * See docs for details.
+    *
+    * There are more convenient methods available implicitly from [[DebuggableObservable]] and [[DebuggableSignal]],
+    * such as debugLog(), debugSpyEvents(), etc.
     */
-  def debug(sourceName: String = this.toString): DebugSelf[A] = {
-    debugWith(ObservableDebugger(sourceName, topoRank))
-  }
-
-  /** Use [[debug]] unless you need / want to specify a debugger manually. */
-  def debugWith(debugger: ObservableDebugger[A]): DebugSelf[A]
+  def debugWith(debugger: ObservableDebugger[A]): Self[A]
 
   /** Create an external observer from a function and subscribe it to this observable.
     *
@@ -240,6 +259,9 @@ object Observable {
   implicit val switchSignalStrategy: FlattenStrategy[Signal, Signal, Signal] = SwitchSignalStrategy
 
   implicit val switchFutureStrategy: FlattenStrategy[Observable, Future, EventStream] = SwitchFutureStrategy
+
+  /** Provides debug* methods on Observable: debugSpy, debugLogEvents, debugBreakErrors, etc. */
+  implicit def toDebuggableObservable[A](observable: Observable[A]): DebuggableObservable[A] = new DebuggableObservable[A](observable)
 
   // @TODO[Elegance] Maybe use implicit evidence on a method instead?
   implicit class MetaObservable[A, Outer[+_] <: Observable[_], Inner[_]](

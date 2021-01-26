@@ -4,7 +4,7 @@ import com.raquo.airstream.combine.CombineSignalN
 import com.raquo.airstream.combine.generated.{CombinableSignal, StaticSignalCombineOps}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
-import com.raquo.airstream.debug.{DebugSignal, DebugWriteSignal, ObservableDebugger}
+import com.raquo.airstream.debug.{DebugSignal, DebuggableSignal, ObservableDebugger}
 import com.raquo.airstream.misc.generated._
 import com.raquo.airstream.misc.{FoldLeftSignal, MapEventStream, MapSignal}
 import com.raquo.airstream.ownership.Owner
@@ -21,8 +21,6 @@ import scala.util.{Failure, Success, Try}
 trait Signal[+A] extends Observable[A] {
 
   override type Self[+T] = Signal[T]
-
-  override type DebugSelf[+T] = DebugSignal[T]
 
   /** Evaluate initial value of this [[Signal]].
     * This method must only be called once, when this value is first needed.
@@ -101,8 +99,8 @@ trait Signal[+A] extends Observable[A] {
   override def recoverToTry: Signal[Try[A]] = map(Try(_)).recover[Try[A]] { case err => Some(Failure(err)) }
 
   /** See also [[debug]] convenience method in [[Observable]] */
-  override def debugWith(debugger: ObservableDebugger[A]): DebugSignal[A] = {
-    new DebugWriteSignal[A](this, debugger)
+  override def debugWith(debugger: ObservableDebugger[A]): Signal[A] = {
+    new DebugSignal[A](this, debugger)
   }
 
   /** Add a noop observer to this signal to ensure that it's started.
@@ -245,6 +243,9 @@ object Signal {
 
   /** Provides methods on Signal: splitOne, splitOneIntoSignals */
   implicit def toSplittableOneSignal[A](signal: Signal[A]): SplittableOneSignal[A] = new SplittableOneSignal[A](signal)
+
+  /** Provides signal-specific debug* methods: debugSpyInitialEval, debugLogInitialEval, debugBreakInitialEval */
+  implicit def toDebuggableSignal[A](signal: Signal[A]): DebuggableSignal[A] = new DebuggableSignal[A](signal)
 
   // toTupleSignalN conversions provide mapN method on Signals of tuples
 

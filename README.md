@@ -1133,10 +1133,10 @@ val stream: EventStream[Int] = ???
 val useJsLogger: Boolean = false
 
 val debugStream = stream
-  .debug("myStream") // optional sourceName will be printed as a prefix to any logs from this chain
-  .logEvents(when = _ < 0, useJsLogger)
-  .spyStarts(topoRank => ???)
-  .breakErrors()
+  .debugWithName("MyStream") // optional: use this prefix when logging below
+  .debugLogEvents(when = _ < 0, useJsLogger) // optional: only log negative numbers
+  .debugSpyStarts(topoRank => ???)
+  .debugBreakErrors()
 
 // Before:
 stream.addObserver(obs)
@@ -1145,27 +1145,42 @@ stream.addObserver(obs)
 debugStream.addObserver(obs)
 ```
 
-Airstream offers many debugging operators for observables, letting you run a callbacks (`spy*`), log, or set a JS breakpoint (`break*`) at the most important times in the observable's lifecycle, including when emitting events or errors, starting or stopping, and evaluating the initial value (for signals). You can see all of these methods in `DebugObservable` and `DebugSignal`.
+Airstream offers many debugging operators for observables, letting you run a callbacks (`debugSpy*`), log (`debugLog*`), or set a JS breakpoint (`debugBreak*`) at the most important times in the observable's lifecycle, including when emitting events or errors, starting or stopping, and evaluating the initial value (for signals). Those methods are available implicitly on every observable via `DebuggableObservable` and `DebuggableSignal`.
 
-Enabling debugging with Airstream methods is a two-step process:
+To debug an observable, call one of the available debug* methods to produce a new observable that listens to the original one and re-emits all its events and errors **and** also performs the specified debug action.
 
-1. Call `debug()` on the observable you want to debug. This will create an observable that listens to the original observable and re-emits all of its events and errors, except it exposes debug methods like `log` and `logEvents`.
+For example, `stream.debugLog()` will create a new observable that will simply print every event **and error** that it emits, that `stream` feeds to it, and `stream.debugLog().debugBreakErrors()` will do the same plus also set a JS breakpoint on errors in `stream`.
 
-2. Call one or more debug methods in a chain on the `debug()` observable. For example, `stream.debug().log()` will print all events **and errors** emitted by this observable, and `stream.debug().logEvents().breakErrors()` will log only the events, and set a JS breakpoint on errors.
+Very importantly, `debugLog` does **not** monkey-patch the original observable to add debugging functionality to it. We create a new observable that depends on the original, and debug _that_. This is true for every debug operator: in `stream.debugLog().debugBreakErrors()`, `debugLog()` creates an observable based on `stream`, and `debugBreakErrors()` creates an observable based on `stream.debugLog()`.
 
-Very importantly, we do **not** monkey-patch the original observable to add debugging functionality to it. We create a new observable that depends on the original, and debug _that_. This is true for each debug operator: in `stream.debug().log()`, `.debug() creates an observable based on `stream`, and `.log()` creates an observable based on `stream.debug()`.
+To make it crystal clear: `stream.debugLog()` will only log the events that `stream.debugLog()` emits, so you need to make sure to listen to it, not (just) to `stream`. Easiest is to just use `stream.debugLog()` in place of the original `stream` in your code.
 
-To make it crystal clear: `stream.debug().log()` will log only the events that `stream.debug().log()` emits, so you need to make sure to listen to it, not (just) to `stream`. Easiest is to just use `stream.debug().log()` in place of `stream` in your code.
+Another important consideration is the **order** of debug procedures. It follows the propagation order. For example, in `stream.debugLog().debugSpy(fn)` the observable `stream.debugLog()` will obviously emit before the observable `stream.debugLog().debugSpy(fn)` emits, and so you will see the event printed first, and only after that will `fn` be called with that event. So if you're ever confused about why your debugger prints stuff in a weird order (e.g. event fired before stream is started), make sure your debug operators are in the expected order.
 
-Another important consideration is the **order** of debug procedures. It follows the propagation order. For example, in `stream.debug().log().spy(fn)` the observable `stream.debug().log()` will obviously emit before the observable `stream.debug().log().spy(fn)` emits, and so you will see the event printed first, and only after that will `fn` be called with that event. So if you're ever confused about why your debugger prints stuff in a weird order (e.g. event fired before stream is started), make sure your debug operators are in the right order.
+You can also use `debugWith(debugger)` method instead of `debug*` methods to provide an `ObservableDebugger` with all of the behaviour that you want, instead of adding it piece by piece.
 
-You can also use `debugWith(debugger)` method instead of `debug()` and provide an `ObservableDebugger` with all of the behaviour that you want, instead of adding it piece by piece.
+Also regarding timing, the per-event debuggers like (`debugSpy()` / `debugLog()` / `debugBreak()`) do their thing right _before_ the event is fired (by the debugged observable, not the original), and the start/stop debuggers do their thing right _after_ the observable is started or stopped.
 
-Also regarding timing, the per-event debuggers like (`spy()` / `log()` / `break()`) do their thing right _before_ the event is fired (by the debugged observable, not the original), and the start/stop debuggers do their thing right _after_ the observable is started or stopped.
+Logging debug operators generally offer an optional `when` filter to reduce noise, and a `useJsLogger` option that you should enable when you're logging native JS values. Logging plain JS objects with `println` will often result in printing `[object Object]`, but JS `dom.console.log` can print them nicely.
 
-Logging debug operators generally offer an optional `when` filter to reduce noise, and a `useJsLogger` option that you should enable when you're logging native JS values. Logging plain JS objects with `println` will often result in `[object Object]`, but JS `dom.console.log` can print them nicely. Also, your logs will be prefixed with `sourceName` which defaults to `stream.toString` but you can provide a prettier name as a param to the `.debug()` method.
+Also, your logs will be prefixed with `sourceName` which defaults to `stream.toString` but you can provide a prettier name as a param to the `.debug()` method.
 
 We try to minimize the impact of debugging on the execution of your observable graph. To that end, any errors you throw in the callbacks you provide to `spy*` methods will be reported as unhandled (wrapped in `DebuggerError`), and will not affect the propagation of events.
+
+
+##### debugName
+
+When debugging, it's very useful to name your observables. There are two ways to do this: `stream.setDebugName("MyStream")` patches `stream` in place to set its `debugName`. It returns the same `stream`, it does **not** create a new observable.
+
+This should be the preferred method for adding **permanent** debug names to important observables. For example, if you have a global `val AuthSignal: Signal[AuthContext]`, you might want to add `.setDebugName("AuthSignal")` to its definition.
+
+`debugName`, if explicitly set, is returned by the observable's `toString` method. If not explicitly set, it defaults to `defaultDebugName`, which in turn defaults to java.Object's default `type@hashcode` toString implementation. If subclassing Observable, you can't override its toString method directly, but you can override `defaultDebugName`.
+
+`debugName` is of course useful to give human-readable identifiers to observables – seeing `AuthSignal` when print-debugging is much more useful than `MapSignal@f161`.
+
+`debugName` is also prepended to logs produced by `debugLog*` methods. However, given `stream.setDebugName("MyStream")`, while the `debugName` of `stream` is "MyStream", the `debugName` of `stream.setDebugName("MyStream").debugLog()` is "MyStream|Debug", to differentiate it from `stream`.
+
+You can of course also `setDebugName` on the debugged stream directly: `stream.debugLog().setDebugName("MyDebuggedStream")`, but if you have a _chain_ of debug streams that you want to apply the same name to, you can use the `withDebugName` method: `stream.withDebugName("MyDebugName").debugLogEvents().debugSpyErrors().debugLogStarts()` – in this case all three debug* streams will have their `debugName` set to "MyDebugName", but `stream` will not. This is because unlike `setDebugName`, `withDebugName` does not patch the original observable, it creates a new debug observable and patches that instead. `withDebugName` works with debug chains because unlike regular observables, debug observables inherit their parent debug observable's `debugName` by default.
 
 
 #### Debugging Observers

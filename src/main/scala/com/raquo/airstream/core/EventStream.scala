@@ -5,7 +5,7 @@ import com.raquo.airstream.combine.{CombineEventStreamN, MergeEventStream}
 import com.raquo.airstream.core.AirstreamError.ObserverError
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
-import com.raquo.airstream.debug.{DebugEventStream, DebugWriteEventStream, ObservableDebugger}
+import com.raquo.airstream.debug.{DebugEventStream, ObservableDebugger}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.misc.generated._
 import com.raquo.airstream.misc.{FilterEventStream, FoldLeftSignal, MapEventStream}
@@ -20,8 +20,6 @@ import scala.util.{Failure, Success, Try}
 trait EventStream[+A] extends Observable[A] {
 
   override type Self[+T] = EventStream[T]
-
-  override type DebugSelf[+T] = DebugEventStream[T]
 
   override def map[B](project: A => B): EventStream[B] = {
     new MapEventStream(this, project, recover = None)
@@ -114,8 +112,8 @@ trait EventStream[+A] extends Observable[A] {
   override def recoverToTry: EventStream[Try[A]] = map(Try(_)).recover[Try[A]] { case err => Some(Failure(err)) }
 
   /** See also [[debug]] convenience method in [[Observable]] */
-  override def debugWith(debugger: ObservableDebugger[A]): DebugEventStream[A] = {
-    new DebugWriteEventStream[A](this, debugger)
+  override def debugWith(debugger: ObservableDebugger[A]): EventStream[A] = {
+    new DebugEventStream[A](this, debugger)
   }
 
   override protected[this] def fireValue(nextValue: A, transaction: Transaction): Unit = {
