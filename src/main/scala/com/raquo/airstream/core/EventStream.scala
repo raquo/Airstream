@@ -5,7 +5,7 @@ import com.raquo.airstream.combine.{CombineEventStreamN, MergeEventStream}
 import com.raquo.airstream.core.AirstreamError.ObserverError
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
-import com.raquo.airstream.debug.{DebuggerEventStream, Debugger}
+import com.raquo.airstream.debug.{DebuggableEventStream, Debugger, DebuggerEventStream}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.misc.generated._
 import com.raquo.airstream.misc.{FilterEventStream, FoldLeftSignal, MapEventStream}
@@ -282,6 +282,9 @@ object EventStream {
 
   /** Provides methods on EventStream: splitOne, splitOneIntoSignals */
   implicit def toSplittableOneStream[A](stream: EventStream[A]): SplittableOneEventStream[A] = new SplittableOneEventStream(stream)
+
+  /** Provides debug* methods on EventStream: debugSpy, debugLogEvents, debugBreakErrors, etc. */
+  implicit def toDebuggableStream[A](stream: EventStream[A]): DebuggableEventStream[A] = new DebuggableEventStream[A](stream)
 
   // toTupleStreamN conversions provide mapN and filterN methods on Signals of tuples
 
