@@ -1,10 +1,10 @@
 package com.raquo.airstream
 
 import com.raquo.airstream.core.AirstreamError.DebugError
-import com.raquo.airstream.core.{AirstreamError, Observer}
+import com.raquo.airstream.core.{AirstreamError, EventStream, Observable, Observer, Signal}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
-import com.raquo.airstream.state.Var
+import com.raquo.airstream.state.{Val, Var}
 import org.scalatest.BeforeAndAfter
 
 import scala.collection.mutable
@@ -571,6 +571,15 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
         .setDisplayName("debugSpy")
         .toString == "debugSpy"
     )
+  }
+
+  it("observable debugger type inference") {
+
+    val observable: Observable[String] = EventStream.fromValue("a").debugSpy(_ => ()).debugLogStarts
+
+    val stream: EventStream[String] = EventStream.fromValue("a").debugSpy(_ => ()).debugLogStarts
+
+    val signal: Signal[String] = Val("a").debugSpy(_ => ()).debugLogStarts
   }
 
   it("observable debugger error") {
