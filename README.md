@@ -65,6 +65,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Merge Glitch-By-Design](#merge-glitch-by-design)
     * [Scheduling of Transactions](#scheduling-of-transactions)
   * [Operators](#operators)
+    * [N-arity Operators](#n-arity-operators)
     * [Compose Changes](#compose-changes)
     * [Sync Delay](#sync-delay)
     * [Splitting Observables](#splitting-observables)
@@ -935,6 +936,39 @@ Remember that all of this happens synchronously. There can be no async boundarie
 Airstream offers standard observables operators like `map` / `filter` / `compose` / `combineWith` etc. You will need to read the [API doc](https://javadoc.io/doc/com.raquo/airstream_sjs1_2.13/latest/com/raquo/airstream/index.html) or the actual code or use IDE autocompletion to discover those that aren't documented here or in other section of the Documentation. In the code, see `Observable`, `EventStream`, and `Signal` traits and their companion objects.
 
 Some of the more interesting / non-standard operators are documented below:
+
+
+#### N-arity Operators
+
+Airstream offers several methods and operators that work on up to 9 observables or tuples up to Tuple9:
+
+**mapN((a, b, ...) => ???)**
+
+Available on observables of `(A, B, ...)` tuples
+
+**filterN((a, b, ...) => ???)**
+
+Available on observables of `(A, B, ...)` tuples
+
+**observableA.combineWith(observableB, observableC, ...)**
+
+There is a bit of magic to this method for convenience. `streamOfA.combineWith(streamOfB)` returns a stream of `(A, B)` tuples only if neither A nor B are tuple types. Otherwise, `combineWith` flattens the tuple types, so for example both `streamOfA.combineWith(streamOfB).combineWith(streamOfC)` and `streamOfA.combineWith(streamOfB, streamOfC)` return a stream of `(A, B, C)`, **not** `((A, B), C)`. We achieve this using implicit `Composition` instances provided by the [tuplez](https://github.com/tulz-app/tuplez#composition) library.
+
+**observableA.combineWithFn(observableB, ...)((a, b, ...) => ???)** 
+
+Similar to `combineWith`, but you get to provide the combinator instead of relying on tuples. For example: `streamOfX.combineWithFn(streamOfY)(Point)` where Point is `case class Point(x: Int, y: Int)`.
+
+**EventStream.combine(streamA, streamB, ...)** et al.
+
+N-arity `combine` and `combineWithFn` methods are also available on EventStream and Signal companion objects.
+
+**observableA.withCurrentValueOf(signalB, signalC, ...)**
+
+Same auto-flattening of tuples as `combineWith`.
+
+**observable.sample(signalA, signalB, ...)**
+
+Returns an observable of `(A, B, ...)` tuples
 
 
 #### Compose Changes
