@@ -315,7 +315,7 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
     val s = Var(1)
     val d = s.zoom(_ + 100)(_ - 100)(owner)
 
-    val combinedSignal = d.signal.combineWith(s.signal)(_ * 1000 + _) // e.g. if s.now() is 2, this is 102002
+    val combinedSignal = d.signal.combineWithFn(s.signal)(_ * 1000 + _) // e.g. if s.now() is 2, this is 102002
 
     val sourceObs = Observer[Int](effects += Effect("source-obs", _))
     val derivedObs = Observer[Int](effects += Effect("derived-obs", _))

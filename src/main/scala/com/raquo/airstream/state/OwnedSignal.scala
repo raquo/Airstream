@@ -2,6 +2,7 @@ package com.raquo.airstream.state
 
 import com.raquo.airstream.ownership.Subscription
 
+// @TODO[API] Should we expose `killOriginalSubscription` to end users?
 trait OwnedSignal[+A] extends StrictSignal[A] {
 
   protected[this] val subscription: Subscription
