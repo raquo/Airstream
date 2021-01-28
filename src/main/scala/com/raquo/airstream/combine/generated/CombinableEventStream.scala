@@ -8,14 +8,14 @@ import com.raquo.airstream.core.{EventStream, Signal}
 
 class CombinableEventStream[A](val stream: EventStream[A]) extends AnyVal {
 
-  def combine[T1](
+  def combineWith[T1](
     s1: EventStream[T1]
   )(implicit c: Composition[A, (T1)]): EventStream[c.Composed] = {
-    combineWith(s1)((a, v1) => c.compose(a, (v1)))
+    combineWithFn(s1)((a, v1) => c.compose(a, (v1)))
   }
 
   /** @param combinator Must not throw! */
-  def combineWith[T1, Out](
+  def combineWithFn[T1, Out](
     s1: EventStream[T1]
   )(
     combinator: (A, T1) => Out
@@ -38,14 +38,14 @@ class CombinableEventStream[A](val stream: EventStream[A]) extends AnyVal {
 
   // --
 
-  def combine[T1, T2](
+  def combineWith[T1, T2](
     s1: EventStream[T1], s2: EventStream[T2]
   )(implicit c: Composition[A, (T1, T2)]): EventStream[c.Composed] = {
-    combineWith(s1, s2)((a, v1, v2) => c.compose(a, (v1, v2)))
+    combineWithFn(s1, s2)((a, v1, v2) => c.compose(a, (v1, v2)))
   }
 
   /** @param combinator Must not throw! */
-  def combineWith[T1, T2, Out](
+  def combineWithFn[T1, T2, Out](
     s1: EventStream[T1], s2: EventStream[T2]
   )(
     combinator: (A, T1, T2) => Out
@@ -68,14 +68,14 @@ class CombinableEventStream[A](val stream: EventStream[A]) extends AnyVal {
 
   // --
 
-  def combine[T1, T2, T3](
+  def combineWith[T1, T2, T3](
     s1: EventStream[T1], s2: EventStream[T2], s3: EventStream[T3]
   )(implicit c: Composition[A, (T1, T2, T3)]): EventStream[c.Composed] = {
-    combineWith(s1, s2, s3)((a, v1, v2, v3) => c.compose(a, (v1, v2, v3)))
+    combineWithFn(s1, s2, s3)((a, v1, v2, v3) => c.compose(a, (v1, v2, v3)))
   }
 
   /** @param combinator Must not throw! */
-  def combineWith[T1, T2, T3, Out](
+  def combineWithFn[T1, T2, T3, Out](
     s1: EventStream[T1], s2: EventStream[T2], s3: EventStream[T3]
   )(
     combinator: (A, T1, T2, T3) => Out
@@ -98,14 +98,14 @@ class CombinableEventStream[A](val stream: EventStream[A]) extends AnyVal {
 
   // --
 
-  def combine[T1, T2, T3, T4](
+  def combineWith[T1, T2, T3, T4](
     s1: EventStream[T1], s2: EventStream[T2], s3: EventStream[T3], s4: EventStream[T4]
   )(implicit c: Composition[A, (T1, T2, T3, T4)]): EventStream[c.Composed] = {
-    combineWith(s1, s2, s3, s4)((a, v1, v2, v3, v4) => c.compose(a, (v1, v2, v3, v4)))
+    combineWithFn(s1, s2, s3, s4)((a, v1, v2, v3, v4) => c.compose(a, (v1, v2, v3, v4)))
   }
 
   /** @param combinator Must not throw! */
-  def combineWith[T1, T2, T3, T4, Out](
+  def combineWithFn[T1, T2, T3, T4, Out](
     s1: EventStream[T1], s2: EventStream[T2], s3: EventStream[T3], s4: EventStream[T4]
   )(
     combinator: (A, T1, T2, T3, T4) => Out
@@ -128,14 +128,14 @@ class CombinableEventStream[A](val stream: EventStream[A]) extends AnyVal {
 
   // --
 
-  def combine[T1, T2, T3, T4, T5](
+  def combineWith[T1, T2, T3, T4, T5](
     s1: EventStream[T1], s2: EventStream[T2], s3: EventStream[T3], s4: EventStream[T4], s5: EventStream[T5]
   )(implicit c: Composition[A, (T1, T2, T3, T4, T5)]): EventStream[c.Composed] = {
-    combineWith(s1, s2, s3, s4, s5)((a, v1, v2, v3, v4, v5) => c.compose(a, (v1, v2, v3, v4, v5)))
+    combineWithFn(s1, s2, s3, s4, s5)((a, v1, v2, v3, v4, v5) => c.compose(a, (v1, v2, v3, v4, v5)))
   }
 
   /** @param combinator Must not throw! */
-  def combineWith[T1, T2, T3, T4, T5, Out](
+  def combineWithFn[T1, T2, T3, T4, T5, Out](
     s1: EventStream[T1], s2: EventStream[T2], s3: EventStream[T3], s4: EventStream[T4], s5: EventStream[T5]
   )(
     combinator: (A, T1, T2, T3, T4, T5) => Out
@@ -158,14 +158,14 @@ class CombinableEventStream[A](val stream: EventStream[A]) extends AnyVal {
 
   // --
 
-  def combine[T1, T2, T3, T4, T5, T6](
+  def combineWith[T1, T2, T3, T4, T5, T6](
     s1: EventStream[T1], s2: EventStream[T2], s3: EventStream[T3], s4: EventStream[T4], s5: EventStream[T5], s6: EventStream[T6]
   )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6)]): EventStream[c.Composed] = {
-    combineWith(s1, s2, s3, s4, s5, s6)((a, v1, v2, v3, v4, v5, v6) => c.compose(a, (v1, v2, v3, v4, v5, v6)))
+    combineWithFn(s1, s2, s3, s4, s5, s6)((a, v1, v2, v3, v4, v5, v6) => c.compose(a, (v1, v2, v3, v4, v5, v6)))
   }
 
   /** @param combinator Must not throw! */
-  def combineWith[T1, T2, T3, T4, T5, T6, Out](
+  def combineWithFn[T1, T2, T3, T4, T5, T6, Out](
     s1: EventStream[T1], s2: EventStream[T2], s3: EventStream[T3], s4: EventStream[T4], s5: EventStream[T5], s6: EventStream[T6]
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6) => Out
@@ -188,14 +188,14 @@ class CombinableEventStream[A](val stream: EventStream[A]) extends AnyVal {
 
   // --
 
-  def combine[T1, T2, T3, T4, T5, T6, T7](
+  def combineWith[T1, T2, T3, T4, T5, T6, T7](
     s1: EventStream[T1], s2: EventStream[T2], s3: EventStream[T3], s4: EventStream[T4], s5: EventStream[T5], s6: EventStream[T6], s7: EventStream[T7]
   )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7)]): EventStream[c.Composed] = {
-    combineWith(s1, s2, s3, s4, s5, s6, s7)((a, v1, v2, v3, v4, v5, v6, v7) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7)))
+    combineWithFn(s1, s2, s3, s4, s5, s6, s7)((a, v1, v2, v3, v4, v5, v6, v7) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7)))
   }
 
   /** @param combinator Must not throw! */
-  def combineWith[T1, T2, T3, T4, T5, T6, T7, Out](
+  def combineWithFn[T1, T2, T3, T4, T5, T6, T7, Out](
     s1: EventStream[T1], s2: EventStream[T2], s3: EventStream[T3], s4: EventStream[T4], s5: EventStream[T5], s6: EventStream[T6], s7: EventStream[T7]
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6, T7) => Out
@@ -218,14 +218,14 @@ class CombinableEventStream[A](val stream: EventStream[A]) extends AnyVal {
 
   // --
 
-  def combine[T1, T2, T3, T4, T5, T6, T7, T8](
+  def combineWith[T1, T2, T3, T4, T5, T6, T7, T8](
     s1: EventStream[T1], s2: EventStream[T2], s3: EventStream[T3], s4: EventStream[T4], s5: EventStream[T5], s6: EventStream[T6], s7: EventStream[T7], s8: EventStream[T8]
   )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8)]): EventStream[c.Composed] = {
-    combineWith(s1, s2, s3, s4, s5, s6, s7, s8)((a, v1, v2, v3, v4, v5, v6, v7, v8) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8)))
+    combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8)((a, v1, v2, v3, v4, v5, v6, v7, v8) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8)))
   }
 
   /** @param combinator Must not throw! */
-  def combineWith[T1, T2, T3, T4, T5, T6, T7, T8, Out](
+  def combineWithFn[T1, T2, T3, T4, T5, T6, T7, T8, Out](
     s1: EventStream[T1], s2: EventStream[T2], s3: EventStream[T3], s4: EventStream[T4], s5: EventStream[T5], s6: EventStream[T6], s7: EventStream[T7], s8: EventStream[T8]
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6, T7, T8) => Out

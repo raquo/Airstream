@@ -18,12 +18,12 @@ class SyntaxSpec extends UnitSpec {
     case class Foo(a: Int, b: Int, c: Boolean, d: String)
 
     locally {
-      val tuple4stream = bus.events.combine(bus1.events, bus2.events, bus3.events)
+      val tuple4stream = bus.events.combineWith(bus1.events, bus2.events, bus3.events)
       tuple4stream: EventStream[(Int, Int, Boolean, String)]
     }
 
     locally {
-      val tuple4stream = bus.events.combineWith(bus1.events, bus2.events, bus3.events)(Foo)
+      val tuple4stream = bus.events.combineWithFn(bus1.events, bus2.events, bus3.events)(Foo)
       tuple4stream: EventStream[Foo]
     }
 
@@ -52,7 +52,7 @@ class SyntaxSpec extends UnitSpec {
     }
 
     locally {
-      val combinedStream = EventStream.combineWith(bus.events, bus1.events, bus2.events, bus3.events)(Foo)
+      val combinedStream = EventStream.combineWithFn(bus.events, bus1.events, bus2.events, bus3.events)(Foo)
       combinedStream: EventStream[Foo]
     }
   }
