@@ -3,36 +3,47 @@ enablePlugins(ScalaJSPlugin)
 enablePlugins(ScalaJSBundlerPlugin)
 
 libraryDependencies ++= Seq(
-  "org.scala-js" %%% "scalajs-dom" % "1.1.0",
-  "app.tulz" %%% "tuplez-full-light" % "0.3.3",
-  "org.scalatest" %%% "scalatest" % "3.2.0" % Test
+  "org.scala-js" %%% "scalajs-dom" % Versions.ScalaJsDom,
+  "app.tulz" %%% "tuplez-full-light" % Versions.Tuplez,
+  "org.scalatest" %%% "scalatest" % Versions.ScalaTest % Test
 )
 
-val filterScalacOptions = { options: Seq[String] =>
+scalaVersion := Versions.Scala_2_13
+
+crossScalaVersions := Seq(Versions.Scala_2_12, Versions.Scala_2_13)
+
+scalacOptions ~= { options: Seq[String] =>
   options.filterNot(Set(
     "-Ywarn-value-discard",
     "-Wvalue-discard"
   ))
 }
 
-val filterTestScalacOptions = { options: Seq[String] =>
+scalacOptions in Test ~= { options: Seq[String] =>
   options.filterNot { o =>
     o.startsWith("-Ywarn-unused") || o.startsWith("-Wunused")
   }
 }
 
-scalaVersion := "2.13.4"
-
-crossScalaVersions := Seq("2.12.12", "2.13.4")
-
-scalacOptions ~= filterScalacOptions
-
-scalacOptions in Test ~= filterTestScalacOptions
-
 // @TODO[Build] Why does this need " in (Compile, doc)" while other options don't?
 scalacOptions in (Compile, doc) ++= Seq(
   "-no-link-warnings" // Suppress scaladoc "Could not find any member to link for" warnings
 )
+
+version in installJsdom := Versions.JsDom
+
+useYarn := true
+
+requireJsDomEnv in Test := true
+
+parallelExecution in Test := false
+
+scalaJSUseMainModuleInitializer := true
+
+scalaJSLinkerConfig in (Compile, fastOptJS) ~= { _.withSourceMap(false) }
+
+
+// -- Code generators for N-arity functionality
 
 val generateTupleCombinatorsFrom = 2
 val generateTupleCombinatorsTo = 9
@@ -106,15 +117,3 @@ Test / sourceGenerators += Def.task {
     ).run
   )
 }.taskValue
-
-version in installJsdom := "16.4.0"
-
-useYarn := true
-
-requireJsDomEnv in Test := true
-
-parallelExecution in Test := false
-
-scalaJSUseMainModuleInitializer := true
-
-scalaJSLinkerConfig in (Compile, fastOptJS) ~= { _.withSourceMap(false) }
