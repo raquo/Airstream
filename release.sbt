@@ -30,11 +30,29 @@ publishMavenStyle := true
 
 publishArtifact in Test := false
 
-publishTo := sonatypePublishTo.value
+publishTo := sonatypePublishToBundle.value
 
 releaseCrossBuild := true
 
 pomIncludeRepository := { _ => false }
+
+releaseProcess := {
+  import ReleaseTransformations._
+  Seq[ReleaseStep](
+    checkSnapshotDependencies,
+    inquireVersions,
+    runClean,
+    runTest,
+    setReleaseVersion,
+    commitReleaseVersion,
+    tagRelease,
+    releaseStepCommandAndRemaining("+publishSigned"),
+    releaseStepCommand("sonatypeBundleRelease"),
+    setNextVersion,
+    commitNextVersion,
+    pushChanges
+  )
+}
 
 //useGpg := true
 
