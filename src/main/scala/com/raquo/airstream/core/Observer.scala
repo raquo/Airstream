@@ -64,6 +64,15 @@ trait Observer[-A] extends Named {
     })
   }
 
+  /** Creates another Observer such that calling it calls the original observer after the specified delay. */
+  def delay(ms: Int): Observer[A] = {
+    Observer.fromTry { case nextValue =>
+      js.timers.setTimeout(ms.toDouble) {
+        onTry(nextValue)
+      }
+    }
+  }
+
 }
 
 object Observer {
@@ -195,7 +204,7 @@ object Observer {
       }
 
       override def onTry(nextValue: Try[A]): Unit = {
-        nextValue.fold(onError, onNext)
+        observers.foreach(_.onTry(nextValue))
       }
     }
   }

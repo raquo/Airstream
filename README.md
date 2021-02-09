@@ -247,6 +247,8 @@ Observers have a few convenience methods:
 
 `contracollect[B](pf: PartialFunction[B, A]): Observer[B]` – when you want to both `contramap` and `filter` at once.
 
+`delay(ms: Int)` – creates an observer that calls the original observer after the specified delay (for both events and errors)
+
 `Observer.combine[A](observers: Observer[A])` creates an observer that triggers all of the observers provided to it. Unlike `Observer[A](nextValue => observers.foreach(_.onNext(nextValue)))`, the combined observer will also trigger its child observers in case of `.onError` (more about that in [Error Handling](#error-handling)).
 
 ### Ownership
