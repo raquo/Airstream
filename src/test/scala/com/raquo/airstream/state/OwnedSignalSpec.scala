@@ -20,7 +20,7 @@ class OwnedSignalSpec extends UnitSpec {
     val signal = bus.events
       .map(Calculation.log("bus", calculations))
       .map(_ * 10)
-      .toSignal(initial = -1)
+      .startWith(-1)
       .map(Calculation.log("signal", calculations))
 
     // --

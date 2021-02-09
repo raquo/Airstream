@@ -76,17 +76,25 @@ trait Observable[+A] extends Named {
     strategy.flatten(map(compose))
   }
 
-  def toSignal[AA >: A](initialIfStream: => AA): Signal[AA] = {
+  def toStreamIfSignal[B >: A](ifSignal: Signal[A] => EventStream[B]): EventStream[B] = {
     this match {
-      case s: Signal[A @unchecked] => s
-      case s: EventStream[A @unchecked] => s.startWith(initialIfStream)
+      case s: Signal[A @unchecked] => ifSignal(s)
+      case s: EventStream[A @unchecked] => s
     }
   }
 
-  def toStreamOrSignalChanges: EventStream[A] = {
+  def toSignalIfStream[B >: A](ifStream: EventStream[A] => Signal[B]): Signal[B] = {
     this match {
-      case s: EventStream[A @unchecked] => s
-      case s: Signal[A @unchecked] => s.changes
+      case s: EventStream[A @unchecked] => ifStream(s)
+      case s: Signal[A @unchecked] => s
+    }
+  }
+
+  /** Convert this observable to a signal of Option[A]. If it is a stream, set initial value to None. */
+  def toWeakSignal: Signal[Option[A]] = {
+    map(Some(_)) match {
+      case s: EventStream[Option[A @unchecked] @unchecked] => s.toSignal(initial = None)
+      case s: Signal[Option[A @unchecked] @unchecked] => s
     }
   }
 

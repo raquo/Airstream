@@ -46,7 +46,7 @@ class ObserverErrorSpec extends UnitSpec with BeforeAndAfter {
     val effects = mutable.Buffer[Effect[Int]]()
 
     val bus = new EventBus[Int]
-    val signal = bus.events.toSignal(0)
+    val signal = bus.events.startWith(0)
 
     val knownErrors = List(err0, err1, err2, err3)
 
