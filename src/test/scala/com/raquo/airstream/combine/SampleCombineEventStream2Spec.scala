@@ -20,7 +20,7 @@ class SampleCombineEventStream2Spec extends UnitSpec {
     val calculations = mutable.Buffer[Calculation[Int]]()
     val effects = mutable.Buffer[Effect[Int]]()
 
-    val sampledSignal = bus2.events.toSignal(0).map(Calculation.log("signal", calculations))
+    val sampledSignal = bus2.events.startWith(0).map(Calculation.log("signal", calculations))
 
     val combinedStream = bus1.events
       .map(Calculation.log("stream", calculations))

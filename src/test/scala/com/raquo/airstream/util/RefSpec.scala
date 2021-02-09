@@ -27,7 +27,7 @@ class RefSpec extends UnitSpec {
     val bus = new EventBus[Int]
 
     val signal = bus.events
-      .toSignal(initial = -1)
+      .startWith(initial = -1)
       .map(v => Ref.ref(Foo(v % 2)))
       .map(log("foo"))
       .map(v => Bar(v.value.id))

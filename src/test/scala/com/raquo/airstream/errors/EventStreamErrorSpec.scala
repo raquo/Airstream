@@ -153,8 +153,8 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
     val bus = new EventBus[Int]
 
     val stream1 = bus.events.map(Calculation.log("stream1", calculations))
-    val signal1 = stream1.toSignal(-1).map(Calculation.log("signal1", calculations))
-    val signal2 = stream1.toSignal(-1).map(Calculation.log("signal2", calculations))
+    val signal1 = stream1.startWith(-1).map(Calculation.log("signal1", calculations))
+    val signal2 = stream1.startWith(-1).map(Calculation.log("signal2", calculations))
 
     // These subs do not handle errors, so they go to unhandled
 

@@ -226,7 +226,7 @@ You can `foldLeft(initialValue)(fn)` an EventStream into a Signal, or make a Sig
 
 You can get an EventStream of changes from a Signal – `signal.changes` – this stream will re-emit whatever the parent signal emits (subject to laziness of the stream), minus the Signal's initial value.
 
-If you have an observable, you can refine it to a Signal with `Observable#toSignal(initialIfStream)`, and to a Stream with `Observable#toStreamOrSignalChanges`. As the latter name suggests, if the observable is a Signal, the output stream will contain its changes, not the initial value. 
+If you have an observable, you can refine it to a Signal with `Observable#toWeakSignal` or `Observable#toSignalIfStream(ifStream = streamToSignal)`, and to a Stream with `Observable#toStreamOrSignal(ifSignal = signalToStream)`. For example, if you want to convert `Observable[String]` into `Signal[String]` with empty string as initial value in case this Observable is a stream, use `observable.toSignalIfStream(_.startWith(""))`.
 
 
 ### Observer

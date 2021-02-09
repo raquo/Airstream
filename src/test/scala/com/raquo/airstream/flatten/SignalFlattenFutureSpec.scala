@@ -36,7 +36,7 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
       val promise2 = makePromise()
 
       val futureBus = new EventBus[Future[Int]]()
-      val stream = futureBus.events.toSignal(promise0.future).flatten
+      val stream = futureBus.events.startWith(promise0.future).flatten
 
       stream.addObserver(obs)
 
@@ -83,7 +83,7 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
 
       val futureBus = new EventBus[Future[Int]]()
 
-      val stream = futureBus.events.toSignal(promise0.future).flatten
+      val stream = futureBus.events.startWith(promise0.future).flatten
       promise0.success(-100)
 
       stream.addObserver(obs)
@@ -132,7 +132,7 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
       promise0.success(-100)
 
       delay {
-        val stream = futureBus.events.toSignal(promise0.future).flatten
+        val stream = futureBus.events.startWith(promise0.future).flatten
         stream.addObserver(obs)
 
       }.flatMap { _ =>

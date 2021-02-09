@@ -1,7 +1,7 @@
 package com.raquo.airstream.syntax
 
 import com.raquo.airstream.UnitSpec
-import com.raquo.airstream.core.EventStream
+import com.raquo.airstream.core.{EventStream, Observable, Signal}
 import com.raquo.airstream.eventbus.EventBus
 
 import scala.concurrent.Future
@@ -70,5 +70,34 @@ class SyntaxSpec extends UnitSpec {
       val flatSignal = bus.events.startWith(0).flatMap(a => Future.successful(a))
       flatSignal: EventStream[Int]
     }
+  }
+
+  it("toSignalIfStream / toStreamIfSignal") {
+
+    val bus = new EventBus[Int]
+
+    val obs = (bus.events: Observable[Int])
+
+    val signal: Signal[Int] = bus.events.startWith(0)
+
+    bus.events.toSignal(initial = 0)
+    bus.events.toSignal(0)
+
+    bus.events.toSignalIfStream(_.startWith(0))
+    obs.toStreamIfSignal(_.changes)
+
+    // I wish these wouldn't compile, but can't get =:= evidence to help me here.
+    signal.toSignalIfStream(_.startWith(0))
+    signal.toStreamIfSignal(_.changes)
+    bus.events.toSignalIfStream(_.startWith(0))
+    bus.events.toStreamIfSignal(_.changes)
+
+    // -- Ensure weirdest type inference.
+
+    val weirdBus = new EventBus[EventStream[Int] => Signal[Int]]
+    val composer = (s: EventStream[Int]) => s.startWith(0)
+
+    weirdBus.events.toSignalIfStream(_.startWith(composer))
+    weirdBus.events.toSignal(composer)
   }
 }
