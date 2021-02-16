@@ -15,17 +15,20 @@ import com.raquo.airstream.eventbus.WriteBus
   *
   * Note that the dynamic subscription is NOT activated automatically upon creation.
   *
-  * @param activate Note: Must not throw!
+  * @param activate - Note: Must not throw!
+  * @param prepend  - If true, dynamic owner will prepend subscription to the list instead of appending.
+  *                   This affects activation and deactivation order of subscriptions.
   */
 class DynamicSubscription private (
   dynamicOwner: DynamicOwner,
-  activate: Owner => Option[Subscription]
+  activate: Owner => Option[Subscription],
+  prepend: Boolean
 ) {
 
   // @Note this can be None even if this dynamic subscription is active (if activate() returned None)
   private[this] var maybeCurrentSubscription: Option[Subscription] = None
 
-  dynamicOwner.addSubscription(this)
+  dynamicOwner.addSubscription(this, prepend)
 
   @inline def isOwnerActive: Boolean = dynamicOwner.isActive
 
@@ -35,6 +38,7 @@ class DynamicSubscription private (
   def kill(): Unit = dynamicOwner.removeSubscription(this)
 
   private[ownership] def onActivate(owner: Owner): Unit = {
+    //println(s"    - activating $this")
     maybeCurrentSubscription = activate(owner)
   }
 
@@ -53,19 +57,27 @@ object DynamicSubscription {
     *
     * @param activate Note: Must not throw!
     */
-  def apply(dynamicOwner: DynamicOwner, activate: Owner => Subscription): DynamicSubscription = {
-    new DynamicSubscription(dynamicOwner, (owner: Owner) => Some(activate(owner)))
+  def apply(
+    dynamicOwner: DynamicOwner,
+    activate: Owner => Subscription,
+    prepend: Boolean = false
+  ): DynamicSubscription = {
+    new DynamicSubscription(dynamicOwner, (owner: Owner) => Some(activate(owner)), prepend)
   }
 
   /** Use this when your activate() code does not require a cleanup on deactivation.
     *
     * @param activate Note: Must not throw!
     */
-  def subscribeCallback(dynamicOwner: DynamicOwner, activate: Owner => Unit): DynamicSubscription = {
+  def subscribeCallback(
+    dynamicOwner: DynamicOwner,
+    activate: Owner => Unit,
+    prepend: Boolean = false
+  ): DynamicSubscription = {
     new DynamicSubscription(dynamicOwner, (owner: Owner) => {
       activate(owner)
       None
-    })
+    }, prepend)
   }
 
   def subscribeObserver[A](
