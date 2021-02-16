@@ -39,6 +39,7 @@ class TransferableSubscription(
 
   /** Update the owner of this subscription. */
   def setOwner(nextOwner: DynamicOwner): Unit = {
+    //println(s"    - setOwner of ${this} to ${nextOwner}")
     if (isLiveTransferInProgress) {
       throw new Exception("Unable to set owner on DynamicTransferableSubscription while a transfer on this subscription is already in progress.")
     }
@@ -80,6 +81,7 @@ class TransferableSubscription(
           // because there is no gap in ownership, just a transfer.
           // (proof – the previous subscription is active)
           if (!isLiveTransferInProgress) {
+            //println(s"    - activating pilot dynSub which is:")
             activate()
           }
           new Subscription(parentOwner, cleanup = () => {
@@ -92,6 +94,8 @@ class TransferableSubscription(
           })
         }
       )
+
+      //println(s"    - created pilot $newPilotSubscription")
 
       maybeSubscription = Some(newPilotSubscription)
 
