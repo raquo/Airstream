@@ -1,7 +1,7 @@
 package com.raquo.airstream.eventbus
 
 import com.raquo.airstream.core.Source.EventSource
-import com.raquo.airstream.core.{EventStream, Observer, Sink}
+import com.raquo.airstream.core.{EventStream, Named, Observer, Sink}
 import com.raquo.airstream.eventbus.WriteBus.{BusTryTuple, BusTuple}
 
 import scala.util.Try
@@ -12,7 +12,7 @@ import scala.util.Try
   * For example, you can pass only the `writer` instance to a function that
   * should only have access to writing events, not reading all events from the bus.
   */
-class EventBus[A] extends EventSource[A] with Sink[A] {
+class EventBus[A] extends EventSource[A] with Sink[A] with Named {
 
   val writer: WriteBus[A] = new WriteBus[A]
 
