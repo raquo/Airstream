@@ -18,7 +18,7 @@ import scala.util.{Failure, Success, Try}
   * The performance penalty of one extra instantiation per debugged stream should
   * not be noticeable.
   */
-class DebuggableSignal[+A](override val observable: Signal[A]) extends DebuggableObservable[A](observable) {
+class DebuggableSignal[+A](override val observable: Signal[A]) extends DebuggableObservable[Signal, A](observable) {
 
   /** Execute fn when signal is evaluating its initial value */
   def debugSpyInitialEval(fn: Try[A] => Unit): Signal[A] = {

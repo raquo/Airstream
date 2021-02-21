@@ -3,6 +3,7 @@ package com.raquo.airstream.core
 import com.raquo.airstream.combine.generated._
 import com.raquo.airstream.combine.{CombineEventStreamN, MergeEventStream}
 import com.raquo.airstream.core.AirstreamError.ObserverError
+import com.raquo.airstream.core.Source.EventSource
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.debug.{DebuggableEventStream, Debugger, DebuggerEventStream}
@@ -17,9 +18,7 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
-trait EventStream[+A] extends Observable[A] {
-
-  override type Self[+T] = EventStream[T]
+trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] with EventSource[A] {
 
   override def map[B](project: A => B): EventStream[B] = {
     new MapEventStream(this, project, recover = None)
@@ -97,7 +96,7 @@ trait EventStream[+A] extends Observable[A] {
     *
     * @param pf Note: guarded against exceptions
     */
-  override def recover[B >: A](pf: PartialFunction[Throwable, Option[B]]): Self[B] = {
+  override def recover[B >: A](pf: PartialFunction[Throwable, Option[B]]): EventStream[B] = {
     new MapEventStream[A, B](
       parent = this,
       project = identity,
@@ -107,10 +106,12 @@ trait EventStream[+A] extends Observable[A] {
 
   override def recoverToTry: EventStream[Try[A]] = map(Try(_)).recover[Try[A]] { case err => Some(Failure(err)) }
 
-  /** See also [[debug]] convenience method in [[Observable]] */
+  /** See also [[debug]] convenience method in [[BaseObservable]] */
   override def debugWith(debugger: Debugger[A]): EventStream[A] = {
     new DebuggerEventStream[A](this, debugger)
   }
+
+  override def toObservable: EventStream[A] = this
 
   override protected[this] def fireValue(nextValue: A, transaction: Transaction): Unit = {
     // Note: Removal of observers is always done at the end of a transaction, so the iteration here is safe

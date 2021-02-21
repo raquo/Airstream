@@ -58,6 +58,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [DOM Events](#dom-events)
     * [Custom Event Sources](#custom-event-sources)
     * [Custom Observables](#custom-observables)
+  * [Sources & Sinks](#sources--sinks)
   * [FRP Glitches](#frp-glitches)
     * [Other Libraries](#other-libraries)
     * [Topological Rank](#topological-rank)
@@ -227,6 +228,8 @@ You can `foldLeft(initialValue)(fn)` an EventStream into a Signal, or make a Sig
 You can get an EventStream of changes from a Signal – `signal.changes` – this stream will re-emit whatever the parent signal emits (subject to laziness of the stream), minus the Signal's initial value.
 
 If you have an observable, you can refine it to a Signal with `Observable#toWeakSignal` or `Observable#toSignalIfStream(ifStream = streamToSignal)`, and to a Stream with `Observable#toStreamOrSignal(ifSignal = signalToStream)`. For example, if you want to convert `Observable[String]` into `Signal[String]` with empty string as initial value in case this Observable is a stream, use `observable.toSignalIfStream(_.startWith(""))`.
+
+See also: [Sources & Sinks](#sources--sinks)
 
 
 ### Observer
@@ -796,6 +799,32 @@ Note: Observable's `topoRank` field is `protected[airstream]`, so you'll need to
 
 
 
+### Sources & Sinks
+
+A `Source[A]` in Airstream is something that exposes a `toObservable` method, something that can be (explicitly, not implicitly) converted into an `Observable[A]`. For example, the observables themselves are Sources, but so are EventBus-es (`def toObservable = this.events`) and Var-s (`def toObservable = this.signal`).
+
+Source is further subtyped into – `EventSource` (EventStream, EventBus) and `SignalSource` (Signal, Var). Predictably, `eventSource.toObservable` returns an EventStream, whereas `signalSource.toObservable` returns a Signal.
+
+These types are useful when you want to create a method that can accept "anything that you can get a stream from", including not just observables but things like event buses and futures. For example, it's used in Laminar:
+
+```scala
+val textBus = new EventBus[String]
+val textFuture = Future.successful("")
+val elementFuture = Future.successful(span(""))
+div(value <-- textBus.events)
+div(value <-- textBus) // Also works because this <-- accepts Source[String]
+div(value <-- textFuture) // Works via Future[A] => EventSource[A] implicit conversion
+div(child.maybe <-- elementFuture) // Works via Future[A] => SignalSource[Option[A]] implicit
+```
+
+The counterparty to `Source` in Airstream is `Sink`. `Sink[A]` is something that exposes a `toObserver` method that can be explicitly (not implicitly) convert a Sink to an Observer. So Observers are sinks, as are EventBus-es and Var-s, and even `js.Function1[A, Unit]` has an implicit conversion to `Sink[A]`.
+
+However, there is no implicit conversion from `A => Unit` to `Sink` because unfortunately  Scala requires a lambda's type param to have a type ascription to implicitly convert it into a Sink[A], so syntax like `div(value <-- (_ => println("x"))` would not be possible with such an implicit defined. In Laminar we get around this by overloading the `<--` method to accept either a `Sink[A]` or `A => Unit`. If you need this conversion, just wrap your function in `Observer`. You'll still need to ascribe the types though.
+
+Speaking of implicits, why don't we have EventBus extend both `EventStream[A]` and `Observer[A]` instead of having separate Source and Sink types? On a technical level simply because Observable and Observer have overlapping methods defined, such as `filter` and `delay`, but more importantly, it would just be confusing. The whole point of Source and Sink is to not expose any methods other than toObservable, so that these types are only used as input types to methods that the developer wants to be flexible.
+
+
+
 ### FRP Glitches
 
 #### Other Libraries
@@ -935,7 +964,7 @@ Remember that all of this happens synchronously. There can be no async boundarie
 
 ### Operators
 
-Airstream offers standard observables operators like `map` / `filter` / `compose` / `combineWith` etc. You will need to read the [API doc](https://javadoc.io/doc/com.raquo/airstream_sjs1_2.13/latest/com/raquo/airstream/index.html) or the actual code or use IDE autocompletion to discover those that aren't documented here or in other section of the Documentation. In the code, see `Observable`, `EventStream`, and `Signal` traits and their companion objects.
+Airstream offers standard observables operators like `map` / `filter` / `compose` / `combineWith` etc. You will need to read the [API doc](https://javadoc.io/doc/com.raquo/airstream_sjs1_2.13/latest/com/raquo/airstream/index.html) or the actual code or use IDE autocompletion to discover those that aren't documented here or in other section of the Documentation. In the code, see `BaseObservable`, `Observable`, `EventStream`, and `Signal` traits and their companion objects.
 
 Some of the more interesting / non-standard operators are documented below:
 

@@ -28,7 +28,7 @@ class CombineSignalsSpec extends UnitSpec {
     val var1 = Var(T1(1))
     val var2 = Var(T2(1))
 
-    val combinedSignal = Signal.combine(var1.signal, var2.signal)
+    val combinedSignal = Signal.combine(var1, var2)
 
     val effects = mutable.Buffer[(T1, T2)]()
 
@@ -73,7 +73,7 @@ class CombineSignalsSpec extends UnitSpec {
     val var2 = Var(T2(1))
     val var3 = Var(T3(1))
 
-    val combinedSignal = Signal.combine(var1.signal, var2.signal, var3.signal)
+    val combinedSignal = Signal.combine(var1, var2, var3)
 
     val effects = mutable.Buffer[(T1, T2, T3)]()
 
@@ -121,7 +121,7 @@ class CombineSignalsSpec extends UnitSpec {
     val var3 = Var(T3(1))
     val var4 = Var(T4(1))
 
-    val combinedSignal = Signal.combine(var1.signal, var2.signal, var3.signal, var4.signal)
+    val combinedSignal = Signal.combine(var1, var2, var3, var4)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4)]()
 
@@ -172,7 +172,7 @@ class CombineSignalsSpec extends UnitSpec {
     val var4 = Var(T4(1))
     val var5 = Var(T5(1))
 
-    val combinedSignal = Signal.combine(var1.signal, var2.signal, var3.signal, var4.signal, var5.signal)
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4, T5)]()
 
@@ -226,7 +226,7 @@ class CombineSignalsSpec extends UnitSpec {
     val var5 = Var(T5(1))
     val var6 = Var(T6(1))
 
-    val combinedSignal = Signal.combine(var1.signal, var2.signal, var3.signal, var4.signal, var5.signal, var6.signal)
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6)]()
 
@@ -283,7 +283,7 @@ class CombineSignalsSpec extends UnitSpec {
     val var6 = Var(T6(1))
     val var7 = Var(T7(1))
 
-    val combinedSignal = Signal.combine(var1.signal, var2.signal, var3.signal, var4.signal, var5.signal, var6.signal, var7.signal)
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7)]()
 
@@ -343,7 +343,7 @@ class CombineSignalsSpec extends UnitSpec {
     val var7 = Var(T7(1))
     val var8 = Var(T8(1))
 
-    val combinedSignal = Signal.combine(var1.signal, var2.signal, var3.signal, var4.signal, var5.signal, var6.signal, var7.signal, var8.signal)
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8)]()
 
@@ -406,7 +406,7 @@ class CombineSignalsSpec extends UnitSpec {
     val var8 = Var(T8(1))
     val var9 = Var(T9(1))
 
-    val combinedSignal = Signal.combine(var1.signal, var2.signal, var3.signal, var4.signal, var5.signal, var6.signal, var7.signal, var8.signal, var9.signal)
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8, var9)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]()
 

@@ -28,7 +28,7 @@ class CombineEventStreamsSpec extends UnitSpec {
     val bus1 = new EventBus[T1]()
     val bus2 = new EventBus[T2]()
 
-    val combinedStream = EventStream.combine(bus1.events, bus2.events)
+    val combinedStream = EventStream.combine(bus1, bus2)
 
     val effects = mutable.Buffer[(T1, T2)]()
 
@@ -55,8 +55,8 @@ class CombineEventStreamsSpec extends UnitSpec {
     // --
     for (iteration <- 1 to 10) {
       effects.clear()
-      bus1.writer.onNext(T1(iteration))
-      bus2.writer.onNext(T2(iteration))
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
       effects.toList should ===(
         List(
           (T1(iteration), T2(iteration - 1)),
@@ -76,7 +76,7 @@ class CombineEventStreamsSpec extends UnitSpec {
     val bus2 = new EventBus[T2]()
     val bus3 = new EventBus[T3]()
 
-    val combinedStream = EventStream.combine(bus1.events, bus2.events, bus3.events)
+    val combinedStream = EventStream.combine(bus1, bus2, bus3)
 
     val effects = mutable.Buffer[(T1, T2, T3)]()
 
@@ -106,9 +106,9 @@ class CombineEventStreamsSpec extends UnitSpec {
     // --
     for (iteration <- 1 to 10) {
       effects.clear()
-      bus1.writer.onNext(T1(iteration))
-      bus2.writer.onNext(T2(iteration))
-      bus3.writer.onNext(T3(iteration))
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
       effects.toList should ===(
         List(
           (T1(iteration), T2(iteration - 1), T3(iteration - 1)),
@@ -130,7 +130,7 @@ class CombineEventStreamsSpec extends UnitSpec {
     val bus3 = new EventBus[T3]()
     val bus4 = new EventBus[T4]()
 
-    val combinedStream = EventStream.combine(bus1.events, bus2.events, bus3.events, bus4.events)
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4)]()
 
@@ -163,10 +163,10 @@ class CombineEventStreamsSpec extends UnitSpec {
     // --
     for (iteration <- 1 to 10) {
       effects.clear()
-      bus1.writer.onNext(T1(iteration))
-      bus2.writer.onNext(T2(iteration))
-      bus3.writer.onNext(T3(iteration))
-      bus4.writer.onNext(T4(iteration))
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
       effects.toList should ===(
         List(
           (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1)),
@@ -190,7 +190,7 @@ class CombineEventStreamsSpec extends UnitSpec {
     val bus4 = new EventBus[T4]()
     val bus5 = new EventBus[T5]()
 
-    val combinedStream = EventStream.combine(bus1.events, bus2.events, bus3.events, bus4.events, bus5.events)
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4, T5)]()
 
@@ -226,11 +226,11 @@ class CombineEventStreamsSpec extends UnitSpec {
     // --
     for (iteration <- 1 to 10) {
       effects.clear()
-      bus1.writer.onNext(T1(iteration))
-      bus2.writer.onNext(T2(iteration))
-      bus3.writer.onNext(T3(iteration))
-      bus4.writer.onNext(T4(iteration))
-      bus5.writer.onNext(T5(iteration))
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
       effects.toList should ===(
         List(
           (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1)),
@@ -256,7 +256,7 @@ class CombineEventStreamsSpec extends UnitSpec {
     val bus5 = new EventBus[T5]()
     val bus6 = new EventBus[T6]()
 
-    val combinedStream = EventStream.combine(bus1.events, bus2.events, bus3.events, bus4.events, bus5.events, bus6.events)
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6)]()
 
@@ -295,12 +295,12 @@ class CombineEventStreamsSpec extends UnitSpec {
     // --
     for (iteration <- 1 to 10) {
       effects.clear()
-      bus1.writer.onNext(T1(iteration))
-      bus2.writer.onNext(T2(iteration))
-      bus3.writer.onNext(T3(iteration))
-      bus4.writer.onNext(T4(iteration))
-      bus5.writer.onNext(T5(iteration))
-      bus6.writer.onNext(T6(iteration))
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
+      bus6.emit(T6(iteration))
       effects.toList should ===(
         List(
           (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1)),
@@ -328,7 +328,7 @@ class CombineEventStreamsSpec extends UnitSpec {
     val bus6 = new EventBus[T6]()
     val bus7 = new EventBus[T7]()
 
-    val combinedStream = EventStream.combine(bus1.events, bus2.events, bus3.events, bus4.events, bus5.events, bus6.events, bus7.events)
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7)]()
 
@@ -370,13 +370,13 @@ class CombineEventStreamsSpec extends UnitSpec {
     // --
     for (iteration <- 1 to 10) {
       effects.clear()
-      bus1.writer.onNext(T1(iteration))
-      bus2.writer.onNext(T2(iteration))
-      bus3.writer.onNext(T3(iteration))
-      bus4.writer.onNext(T4(iteration))
-      bus5.writer.onNext(T5(iteration))
-      bus6.writer.onNext(T6(iteration))
-      bus7.writer.onNext(T7(iteration))
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
+      bus6.emit(T6(iteration))
+      bus7.emit(T7(iteration))
       effects.toList should ===(
         List(
           (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1)),
@@ -406,7 +406,7 @@ class CombineEventStreamsSpec extends UnitSpec {
     val bus7 = new EventBus[T7]()
     val bus8 = new EventBus[T8]()
 
-    val combinedStream = EventStream.combine(bus1.events, bus2.events, bus3.events, bus4.events, bus5.events, bus6.events, bus7.events, bus8.events)
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8)]()
 
@@ -451,14 +451,14 @@ class CombineEventStreamsSpec extends UnitSpec {
     // --
     for (iteration <- 1 to 10) {
       effects.clear()
-      bus1.writer.onNext(T1(iteration))
-      bus2.writer.onNext(T2(iteration))
-      bus3.writer.onNext(T3(iteration))
-      bus4.writer.onNext(T4(iteration))
-      bus5.writer.onNext(T5(iteration))
-      bus6.writer.onNext(T6(iteration))
-      bus7.writer.onNext(T7(iteration))
-      bus8.writer.onNext(T8(iteration))
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
+      bus6.emit(T6(iteration))
+      bus7.emit(T7(iteration))
+      bus8.emit(T8(iteration))
       effects.toList should ===(
         List(
           (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
@@ -490,7 +490,7 @@ class CombineEventStreamsSpec extends UnitSpec {
     val bus8 = new EventBus[T8]()
     val bus9 = new EventBus[T9]()
 
-    val combinedStream = EventStream.combine(bus1.events, bus2.events, bus3.events, bus4.events, bus5.events, bus6.events, bus7.events, bus8.events, bus9.events)
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]()
 
@@ -538,15 +538,15 @@ class CombineEventStreamsSpec extends UnitSpec {
     // --
     for (iteration <- 1 to 10) {
       effects.clear()
-      bus1.writer.onNext(T1(iteration))
-      bus2.writer.onNext(T2(iteration))
-      bus3.writer.onNext(T3(iteration))
-      bus4.writer.onNext(T4(iteration))
-      bus5.writer.onNext(T5(iteration))
-      bus6.writer.onNext(T6(iteration))
-      bus7.writer.onNext(T7(iteration))
-      bus8.writer.onNext(T8(iteration))
-      bus9.writer.onNext(T9(iteration))
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
+      bus6.emit(T6(iteration))
+      bus7.emit(T7(iteration))
+      bus8.emit(T8(iteration))
+      bus9.emit(T9(iteration))
       effects.toList should ===(
         List(
           (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),

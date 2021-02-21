@@ -1,7 +1,8 @@
 package com.raquo.airstream.state
 
 import com.raquo.airstream.core.AirstreamError.VarError
-import com.raquo.airstream.core.{AirstreamError, Observer, Transaction}
+import com.raquo.airstream.core.Source.SignalSource
+import com.raquo.airstream.core.{AirstreamError, Observer, Signal, Sink, Transaction}
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.util.hasDuplicateTupleKeys
 
@@ -12,7 +13,7 @@ import scala.util.{Failure, Success, Try}
   * There are two kinds of Vars: SourceVar and DerivedVar. The latter you can obtain by calling zoom(a => b, b => a) on
   * a Var, however, unlike SourceVar, DerivedVar requires an Owner in order to run.
   */
-trait Var[A] {
+trait Var[A] extends SignalSource[A] with Sink[A] {
 
   /** Used to make sure we don't update the same var twice in the same transaction */
   private[state] def underlyingVar: SourceVar[_]
@@ -122,6 +123,10 @@ trait Var[A] {
 
   /** @throws Exception if currentValue is a Failure */
   @inline def now(): A = signal.now()
+
+  override def toObservable: Signal[A] = signal
+
+  override def toObserver: Observer[A] = writer
 }
 
 object Var {
