@@ -2,9 +2,10 @@ package com.raquo.airstream.core
 
 import com.raquo.airstream.combine.CombineSignalN
 import com.raquo.airstream.combine.generated.{CombinableSignal, StaticSignalCombineOps}
+import com.raquo.airstream.core.Source.SignalSource
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
-import com.raquo.airstream.debug.{DebuggerSignal, DebuggableSignal, Debugger}
+import com.raquo.airstream.debug.{DebuggableSignal, Debugger, DebuggerSignal}
 import com.raquo.airstream.misc.generated._
 import com.raquo.airstream.misc.{FoldLeftSignal, MapEventStream, MapSignal}
 import com.raquo.airstream.ownership.Owner
@@ -18,9 +19,7 @@ import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
 /** Signal is an Observable with a current value. */
-trait Signal[+A] extends Observable[A] {
-
-  override type Self[+T] = Signal[T]
+trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with SignalSource[A] {
 
   /** Evaluate initial value of this [[Signal]].
     * This method must only be called once, when this value is first needed.
@@ -98,7 +97,7 @@ trait Signal[+A] extends Observable[A] {
 
   override def recoverToTry: Signal[Try[A]] = map(Try(_)).recover[Try[A]] { case err => Some(Failure(err)) }
 
-  /** See also [[debug]] convenience method in [[Observable]] */
+  /** See also debug methods in [[com.raquo.airstream.debug.DebuggableObservable]] */
   override def debugWith(debugger: Debugger[A]): Signal[A] = {
     new DebuggerSignal[A](this, debugger)
   }
@@ -110,6 +109,8 @@ trait Signal[+A] extends Observable[A] {
     * value from event streams just as well.
     */
   def observe(implicit owner: Owner): OwnedSignal[A] = new ObservedSignal(this, Observer.empty, owner)
+
+  override def toObservable: Signal[A] = this
 
   /** Initial value is only evaluated if/when needed (when there are observers) */
   protected[airstream] def tryNow(): Try[A] = {

@@ -6,7 +6,7 @@ import com.raquo.airstream.debug.DebuggableObserver
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
-trait Observer[-A] extends Named {
+trait Observer[-A] extends Sink[A] with Named {
 
   lazy val toJsFn1: js.Function1[A, Unit] = onNext
 
@@ -73,6 +73,7 @@ trait Observer[-A] extends Named {
     }
   }
 
+  override def toObserver: Observer[A] = this
 }
 
 object Observer {

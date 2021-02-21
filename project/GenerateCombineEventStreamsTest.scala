@@ -37,7 +37,7 @@ case class GenerateCombineEventStreamsTest(
         line(s"val bus${i} = new EventBus[T${i}]()")
       }
       line()
-      line(s"val combinedStream = EventStream.combine(${tupleType(n, "bus", ".events")})")
+      line(s"val combinedStream = EventStream.combine(${tupleType(n, "bus")})")
       line()
       line(s"val effects = mutable.Buffer[(${tupleType(n)})]()")
       line()
@@ -71,7 +71,7 @@ case class GenerateCombineEventStreamsTest(
       enter("for (iteration <- 1 to 10) {")
       line("effects.clear()")
       for (i <- 1 to n) {
-        line(s"bus${i}.writer.onNext(T${i}(iteration))")
+        line(s"bus${i}.emit(T${i}(iteration))")
       }
       enter("effects.toList should ===(")
       enter("List(")

@@ -1,6 +1,7 @@
 package com.raquo.airstream.eventbus
 
-import com.raquo.airstream.core.EventStream
+import com.raquo.airstream.core.Source.EventSource
+import com.raquo.airstream.core.{EventStream, Observer, Sink}
 import com.raquo.airstream.eventbus.WriteBus.{BusTryTuple, BusTuple}
 
 import scala.util.Try
@@ -11,7 +12,7 @@ import scala.util.Try
   * For example, you can pass only the `writer` instance to a function that
   * should only have access to writing events, not reading all events from the bus.
   */
-class EventBus[A] {
+class EventBus[A] extends EventSource[A] with Sink[A] {
 
   val writer: WriteBus[A] = new WriteBus[A]
 
@@ -20,6 +21,10 @@ class EventBus[A] {
   def emit(event: A): Unit = writer.onNext(event)
 
   def emitTry(event: Try[A]): Unit = writer.onTry(event)
+
+  override def toObservable: EventStream[A] = events
+
+  override def toObserver: Observer[A] = writer
 }
 
 object EventBus {

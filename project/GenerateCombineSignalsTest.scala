@@ -37,7 +37,7 @@ case class GenerateCombineSignalsTest(
         line(s"val var${i} = Var(T${i}(1))")
       }
       line()
-      line(s"val combinedSignal = Signal.combine(${tupleType(n, "var", ".signal")})")
+      line(s"val combinedSignal = Signal.combine(${tupleType(n, "var")})")
       line()
       line(s"val effects = mutable.Buffer[(${tupleType(n)})]()")
       line()

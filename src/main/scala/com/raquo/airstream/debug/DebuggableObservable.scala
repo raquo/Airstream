@@ -1,6 +1,6 @@
 package com.raquo.airstream.debug
 
-import com.raquo.airstream.core.Observable
+import com.raquo.airstream.core.{Observable, BaseObservable}
 import com.raquo.airstream.util.always
 import org.scalajs.dom
 
@@ -20,9 +20,7 @@ import scala.util.{Failure, Success, Try}
   * The performance penalty of one extra instantiation per debugged stream should
   * not be noticeable.
   */
-class DebuggableObservable[+A](val observable: Observable[A]) {
-
-  type Self[+T] = observable.Self[T]
+class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseObservable[Self, A]) {
 
   /** Return the observable's topoRank. This does not affect the observable in any way. */
   def debugTopoRank: Int = observable.topoRank

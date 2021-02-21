@@ -4,7 +4,7 @@ import scala.scalajs.js
 
 /** This trait lets the user set an ad-hoc name for this instance. Used for debugging and tracing.
   *
-  * Subclasses: [[Observable]], [[Observer]]
+  * Subclasses: [[BaseObservable]], [[Observer]]
   */
 trait Named {
 
