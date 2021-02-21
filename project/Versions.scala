@@ -6,7 +6,7 @@ object Versions {
 
   val Scala_2_12 = "2.12.12"
 
-  val Scala_3_RC1 = "3.0.0-RC1-bin-20210113-8345078-NIGHTLY"
+  val Scala_3_RC1 = "3.0.0-RC1"
 
   val ScalaJsDom = "1.1.0"
 
