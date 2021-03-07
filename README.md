@@ -244,11 +244,13 @@ Observers have a few convenience methods:
 
 `def contramap[B](project: B => A): Observer[B]` – This is useful for separation of concerns. For example your Ajax service might expose an `Observer[Request]`, but you don't want a simple `UserProfile` component to know about your Ajax implementation details (`Request`), so you can instead provide it with `requestObserver.contramap(makeUpdateRequest)` which is a `Observer[User]`.
 
-`def contramapSome` is just an easy way to get `Observer[A]` from `Observer[Option[A]]`
-
 `def filter(passes: A => Boolean): Observer[A]` – useful if you have an `Observable` that you need to observe while filtering out some events (there is no `Observable.filter` method, only `EventStream.filter`).
 
-`contracollect[B](pf: PartialFunction[B, A]): Observer[B]` – when you want to both `contramap` and `filter` at once.
+`def contramapSome` is just an easy way to get `Observer[A]` from `Observer[Option[A]]`
+
+`def contracollect[B](pf: PartialFunction[B, A]): Observer[B]` – when you want to both `contramap` and `filter` at once.
+
+`def contramapOpt[B](project: B => Option[A]): Observer[B]` – like `contracollect` but designed for APIs that return Options, such as `NonEmptyList.fromList`.
 
 `delay(ms: Int)` – creates an observer that calls the original observer after the specified delay (for both events and errors)
 

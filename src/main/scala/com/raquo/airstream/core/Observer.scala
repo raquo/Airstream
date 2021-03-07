@@ -45,10 +45,26 @@ trait Observer[-A] extends Sink[A] with Named {
     contramap[V](value => evidence(Some(value)))
   }
 
-  /** Like `contramap` but with `collect` semantics: not calling the original observer when `pf` is not defined */
+  /** Like [[contramap]] but with `collect` semantics: not calling the original observer when `pf` is not defined
+    *
+    * @param pf Note: guarded against exceptions
+    */
   def contracollect[B](pf: PartialFunction[B, A]): Observer[B] = {
     Observer.withRecover(
       nextValue => pf.runWith(onNext)(nextValue),
+      { case nextError => onError(nextError) }
+    )
+  }
+
+  /** Like [[contramap]], but original observer only fires if `project` returns Some(value)
+    *
+    * So, similar to [[contracollect]] but optimized for APIs like `NonEmptyList.fromList` that return an Option.
+    *
+    * @param project Note: guarded against exceptions
+    */
+  def contramapOpt[B](project: B => Option[A]): Observer[B] = {
+    Observer.withRecover(
+      nextValue => project(nextValue).foreach(onNext),
       { case nextError => onError(nextError) }
     )
   }

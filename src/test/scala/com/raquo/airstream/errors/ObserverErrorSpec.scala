@@ -4,7 +4,7 @@ import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.AirstreamError.{ObserverError, ObserverErrorHandlingError}
 import com.raquo.airstream.core.{AirstreamError, Observer}
 import com.raquo.airstream.eventbus.EventBus
-import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
+import com.raquo.airstream.fixtures.{Calculation, Effect, ExpectedError, TestableOwner}
 import org.scalatest.BeforeAndAfter
 
 import scala.collection.mutable
@@ -339,4 +339,43 @@ class ObserverErrorSpec extends UnitSpec with BeforeAndAfter {
 
     effects.clear()
   }
+
+  it("contramapOpt emits value only if transformation returns a Some") {
+
+    val effects = mutable.Buffer[Try[Int]]()
+
+    val topObs = Observer.fromTry[Int] { case t => effects += t }
+
+    val lowObs = topObs.contramapOpt[Int](v => if (v != 2) Some(v) else None)
+
+    lowObs.onNext(1)
+    lowObs.onNext(2)
+    lowObs.onNext(3)
+
+    assert(effects.toList == List(Success(1), Success(3)))
+  }
+
+  it("contramapOpt handles thrown exception from transformation ") {
+    val effects = mutable.Buffer[Try[Int]]()
+
+    val topObs = Observer.fromTry[Int] { case t => effects += t }
+
+    val propagatedError = ExpectedError("propagated")
+    val lowObs = topObs.contramapOpt[Int](v => if (v == 2) throw ExpectedError("it's 2") else Some(v))
+
+    lowObs.onNext(1)
+    lowObs.onNext(2)
+    lowObs.onNext(3)
+    lowObs.onError(propagatedError)
+    lowObs.onNext(5)
+
+    assert(effects.toList == List(
+      Success(1),
+      Failure(ObserverError(ExpectedError("it's 2"))),
+      Success(3),
+      Failure(ExpectedError("propagated")),
+      Success(5),
+    ))
+  }
+
 }
