@@ -35,6 +35,24 @@ trait Observer[-A] extends Sink[A] with Named {
     )
   }
 
+  /**
+   * Similar to contramap, but does not emit event if the transformation function yields a None
+   *
+   * Example use case:
+   * Parsing numbers from a controlled text input and you want to prevent a value
+   * that is not a valid numeric string.
+   * @param project Note: guarded against exceptions
+   */
+  def contramapOpt[B](project: B => Option[A]): Observer[B] = {
+    Observer.withRecover(
+      nextValue => project(nextValue) match {
+        case Some(v) => onNext(v)
+        case None => // do nothing
+      },
+      { case nextError => onError(nextError) }
+    )
+  }
+
   /** @param project must not throw! */
   def contramapTry[B](project: Try[B] => Try[A]): Observer[B] = {
     Observer.fromTry { case nextValue => onTry(project(nextValue)) }
