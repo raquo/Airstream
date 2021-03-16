@@ -11,3 +11,5 @@ addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.8")
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.8.1")
 
 addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.1.16")
+
+addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.0")
