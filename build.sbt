@@ -19,6 +19,13 @@ scalacOptions ~= { options: Seq[String] =>
   ))
 }
 
+scalacOptions += {
+  val local = baseDirectory.value.toURI
+  val remote = s"https://raw.githubusercontent.com/raquo/Airstream/${git.gitHeadCommit.value.get}/"
+
+  s"-P:scalajs:mapSourceURI:$local->$remote"
+}
+
 scalacOptions in Test ~= { options: Seq[String] =>
   options.filterNot { o =>
     o.startsWith("-Ywarn-unused") || o.startsWith("-Wunused")
