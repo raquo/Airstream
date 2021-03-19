@@ -48,7 +48,7 @@ class AjaxEventStream(
   private var pendingRequest: Option[dom.XMLHttpRequest] = None
 
   override protected[this] def onStart(): Unit = {
-    val request = AjaxEventStream.initRequest(timeoutMs, headers, withCredentials, responseType)
+    val request = AjaxEventStream.initRequest(timeoutMs, withCredentials, responseType)
 
     pendingRequest = Some(request)
 
@@ -119,7 +119,7 @@ class AjaxEventStream(
     }
 
     // Actually initiate the network request
-    AjaxEventStream.sendRequest(request, method, url, data)
+    AjaxEventStream.sendRequest(request, method, url, data, headers)
 
     super.onStart()
   }
@@ -329,7 +329,6 @@ object AjaxEventStream {
     */
   def initRequest(
     timeoutMs: Int = 0,
-    headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
     responseType: String = ""
   ): dom.XMLHttpRequest = {
@@ -337,7 +336,6 @@ object AjaxEventStream {
     request.responseType = responseType
     request.timeout = timeoutMs.toDouble
     request.withCredentials = withCredentials
-    headers.foreach(Function.tupled(request.setRequestHeader))
     request
   }
 
@@ -349,9 +347,11 @@ object AjaxEventStream {
     request: dom.XMLHttpRequest,
     method: String,
     url: String,
-    data: dom.ext.Ajax.InputData = null
+    data: dom.ext.Ajax.InputData = null,
+    headers: Map[String, String] = Map.empty
   ): Unit = {
     request.open(method, url)
+    headers.foreach(Function.tupled(request.setRequestHeader))
     if (data == null) request.send() else request.send(data)
   }
 
