@@ -5,23 +5,27 @@
 
 If want to add a feature but are not sure how to do this or how it should behave in edge cases, feel free to chat us up in gitter. 
 
-When making PRs, please allow Airstream maintainers to make changes to your branch. We might make changes, so make a copy of your branch if you need to.
+When making PRs:
 
-Note: we will likely squash all your branch commits when merging into `master`.
+* Use `develop` as the base branch, not `master`
+
+* Please allow Airstream maintainers to make changes to your branch. We might make changes, so make a copy of your branch if you need to.
+
+Note: we will likely squash your commits when merging into `develop`.
 
 
 ## Code style
 
 Please try to match the existing code style, including naming conventions and formatting. I might fix up such things to my liking before merging.
 
-We don't have scalafmt setup at the moment. Previous versions weren't flexible enough for me, but I'll re-evaluate soon.
+We don't have scalafmt set up at the moment. Previous versions weren't flexible enough for me, but I'll re-evaluate soon.
 
 
 ## N-Generators
 
-Airstream offers several types of methods like `combineWith` and `mapN` in varying arities. These live in packages called `generated`, in implicit classes that are generated on compile by generators located in the `project` folder.
+Airstream offers several types of methods like `combineWith` and `mapN` in varying arities. These live in packages called `generated`, in implicit classes that are generated at compile time by generators located in the `project` folder.
 
-To apply and execute your changes to the generators, run `reload; compile` in sbt. We commit all generated files to git because invisible code is annoying to figure out.  
+To apply and execute your changes to the generators, run `reload; compile` in sbt. We commit all generated files to git because invisible code is annoying to figure out, and to help with source maps.
 
 
 # Documentation
