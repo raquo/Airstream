@@ -1,7 +1,7 @@
 package com.raquo.airstream.timing
 
-import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentObservable}
-import com.raquo.airstream.core.{EventStream, Transaction}
+import com.raquo.airstream.common.{ InternalNextErrorObserver, SingleParentObservable }
+import com.raquo.airstream.core.{ EventStream, Transaction, WritableEventStream }
 
 import scala.scalajs.js
 import scala.scalajs.js.timers.SetTimeoutHandle
@@ -9,7 +9,7 @@ import scala.scalajs.js.timers.SetTimeoutHandle
 class DelayEventStream[A](
   override protected val parent: EventStream[A],
   delayMs: Int
-) extends EventStream[A] with SingleParentObservable[A, A] with InternalNextErrorObserver[A] {
+) extends EventStream[A] with WritableEventStream[A] with SingleParentObservable[A, A] with InternalNextErrorObserver[A] {
 
   /** Async stream, so reset rank */
   override protected[airstream] val topoRank: Int = 1

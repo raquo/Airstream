@@ -1,7 +1,7 @@
 package com.raquo.airstream.combine
 
 import com.raquo.airstream.common.InternalParentObserver
-import com.raquo.airstream.core.EventStream
+import com.raquo.airstream.core.{ EventStream, WritableEventStream }
 
 import scala.util.Try
 
@@ -9,7 +9,7 @@ import scala.util.Try
 class CombineEventStreamN[A, Out](
   parents: Seq[EventStream[A]],
   combinator: Seq[A] => Out
-) extends EventStream[Out] with CombineObservable[Out] {
+) extends EventStream[Out] with WritableEventStream[Out] with CombineObservable[Out] {
 
   // @TODO[API] Maybe this should throw if parents.isEmpty
 

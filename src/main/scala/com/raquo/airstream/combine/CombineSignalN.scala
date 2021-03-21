@@ -1,7 +1,7 @@
 package com.raquo.airstream.combine
 
 import com.raquo.airstream.common.InternalParentObserver
-import com.raquo.airstream.core.Signal
+import com.raquo.airstream.core.{ Signal, WritableSignal }
 
 import scala.util.Try
 
@@ -9,7 +9,7 @@ import scala.util.Try
 class CombineSignalN[A, Out](
   protected[this] val parents: Seq[Signal[A]],
   protected[this] val combinator: Seq[A] => Out
-) extends Signal[Out] with CombineObservable[Out] {
+) extends Signal[Out] with WritableSignal[Out] with CombineObservable[Out] {
 
   // @TODO[API] Maybe this should throw if parents.isEmpty
 

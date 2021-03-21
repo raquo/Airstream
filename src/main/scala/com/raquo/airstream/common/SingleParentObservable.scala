@@ -1,9 +1,10 @@
 package com.raquo.airstream.common
 
-import com.raquo.airstream.core.{InternalObserver, Observable, Transaction}
+import com.raquo.airstream.core.{ InternalObserver, Observable, Transaction, WritableObservable }
 
 /** A simple observable that only has one parent. */
 trait SingleParentObservable[I, +O] extends Observable[O] with InternalObserver[I] {
+  self: WritableObservable[O] =>
 
   protected[this] val parent: Observable[I]
 

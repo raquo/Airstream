@@ -1,7 +1,7 @@
 package com.raquo.airstream.flatten
 
-import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentObservable}
-import com.raquo.airstream.core.{EventStream, Observable, Transaction}
+import com.raquo.airstream.common.{ InternalNextErrorObserver, SingleParentObservable }
+import com.raquo.airstream.core.{ EventStream, Observable, Transaction, WritableEventStream }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -19,7 +19,7 @@ class ConcurrentFutureStream[A](
   protected[this] val parent: Observable[Future[A]],
   dropPreviousValues: Boolean,
   emitIfFutureCompleted: Boolean
-) extends EventStream[A] with SingleParentObservable[Future[A], A] with InternalNextErrorObserver[Future[A]] {
+) extends EventStream[A] with WritableEventStream[A] with SingleParentObservable[Future[A], A] with InternalNextErrorObserver[Future[A]] {
 
   // @TODO[Integrity] We should probably eventually deal with the vars' overflow issue
 

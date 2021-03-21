@@ -1,7 +1,7 @@
 package com.raquo.airstream.debug
 
 import com.raquo.airstream.core.AirstreamError.DebugError
-import com.raquo.airstream.core.{AirstreamError, Signal, Transaction}
+import com.raquo.airstream.core.{ AirstreamError, Signal, Transaction, WritableSignal }
 
 import scala.util.Try
 
@@ -9,7 +9,7 @@ import scala.util.Try
 class DebuggerSignal[A](
   override protected val parent: Signal[A],
   override protected val debugger: Debugger[A]
-) extends Signal[A] with DebuggerObservable[A] {
+) extends Signal[A] with WritableSignal[A] with DebuggerObservable[A] {
 
   override protected[airstream] val topoRank: Int = parent.topoRank + 1
 

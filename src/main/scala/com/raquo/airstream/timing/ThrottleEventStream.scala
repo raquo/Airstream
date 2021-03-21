@@ -1,7 +1,7 @@
 package com.raquo.airstream.timing
 
-import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
-import com.raquo.airstream.core.{EventStream, Transaction}
+import com.raquo.airstream.common.{ InternalTryObserver, SingleParentObservable }
+import com.raquo.airstream.core.{ EventStream, Transaction, WritableEventStream }
 
 import scala.scalajs.js
 import scala.scalajs.js.timers.SetTimeoutHandle
@@ -22,7 +22,7 @@ class ThrottleEventStream[A](
   override protected[this] val parent: EventStream[A],
   intervalMs: Int,
   leading: Boolean
-) extends EventStream[A] with SingleParentObservable[A, A] with InternalTryObserver[A] {
+) extends EventStream[A] with WritableEventStream[A] with SingleParentObservable[A, A] with InternalTryObserver[A] {
 
   private[this] var lastEmittedEventMs: js.UndefOr[Double] = js.undefined
 

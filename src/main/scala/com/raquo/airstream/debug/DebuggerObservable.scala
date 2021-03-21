@@ -1,13 +1,14 @@
 package com.raquo.airstream.debug
 
-import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
+import com.raquo.airstream.common.{ InternalTryObserver, SingleParentObservable }
 import com.raquo.airstream.core.AirstreamError.DebugError
-import com.raquo.airstream.core.{AirstreamError, Transaction}
+import com.raquo.airstream.core.{ AirstreamError, Transaction, WritableObservable }
 
 import scala.util.Try
 
 /** See [[DebuggableObservable]] and [[DebuggableSignal]] for user-facing debug methods */
 trait DebuggerObservable[A] extends SingleParentObservable[A, A] with InternalTryObserver[A] {
+  self: WritableObservable[A] =>
 
   protected val debugger: Debugger[A]
 

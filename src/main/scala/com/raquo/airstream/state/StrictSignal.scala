@@ -1,8 +1,6 @@
 package com.raquo.airstream.state
 
-import com.raquo.airstream.core.Signal
-
-import scala.util.Try
+import com.raquo.airstream.core.{ Signal, WritableSignal }
 
 /** A Signal that lets you directly query its current value.
   *
@@ -10,8 +8,9 @@ import scala.util.Try
   * How this is actually accomplished is up to the concrete class extending this trait.
   */
 trait StrictSignal[+A] extends Signal[A] {
+  self: WritableSignal[A] =>
 
-  override def now(): A = super.now()
-
-  override def tryNow(): Try[A] = super.tryNow()
+//  override def now(): A = super.now()
+//
+//  override def tryNow(): Try[A] = super.tryNow()
 }

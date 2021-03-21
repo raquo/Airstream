@@ -1,10 +1,10 @@
 package com.raquo.airstream.misc
 
-import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
+import com.raquo.airstream.common.{ InternalTryObserver, SingleParentObservable }
 import com.raquo.airstream.core.AirstreamError.ErrorHandlingError
-import com.raquo.airstream.core.{Signal, Transaction}
+import com.raquo.airstream.core.{ Signal, Transaction, WritableSignal }
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 // @TODO[Elegance] Is this right that we shoved .recover into Map observables? Maybe it deserves its own class? But it's so many classes...
 
@@ -18,11 +18,11 @@ import scala.util.{Failure, Success, Try}
   * @param project Note: guarded against exceptions
   * @param recover Note: guarded against exceptions
   */
-class MapSignal[I, +O](
+class MapSignal[I, O](
   protected[this] val parent: Signal[I],
   protected[this] val project: I => O,
   protected[this] val recover: Option[PartialFunction[Throwable, Option[O]]]
-) extends Signal[O] with SingleParentObservable[I, O] with InternalTryObserver[I] {
+) extends Signal[O] with WritableSignal[O] with SingleParentObservable[I, O] with InternalTryObserver[I] {
 
   override protected[airstream] val topoRank: Int = parent.topoRank + 1
 

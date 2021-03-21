@@ -187,17 +187,17 @@ object Transaction { // extends GlobalCounter {
     * Note: To completely unsubscribe an Observer from this Observable, you need to remove it as many times
     * as you added it to this Observable.
     */
-  private[core] def removeExternalObserver[O[+_] <: Observable[_], A](
-    observable: BaseObservable[O, A],
+  private[core] def removeExternalObserver[A](
+    observable: WritableObservable[A],
     observer: Observer[A]
   ): Unit = {
     if (isSafeToRemoveObserver) {
       // remove right now – useful for efficient recursive removals
-      observable.removeExternalObserverNow(observer)
+      ObserverRegistry.removeExternalObserverNow(observable, observer)
     } else {
       // schedule removal to happen at the end of the transaction
       // (don't want to interfere with iteration over the list of observers)
-      pendingObserverRemovals.push(() => observable.removeExternalObserverNow(observer))
+      pendingObserverRemovals.push(() => ObserverRegistry.removeExternalObserverNow(observable, observer))
     }
   }
 

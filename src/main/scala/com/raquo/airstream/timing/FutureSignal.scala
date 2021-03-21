@@ -1,11 +1,11 @@
 package com.raquo.airstream.timing
 
-import com.raquo.airstream.core.Transaction
+import com.raquo.airstream.core.{ Transaction, WritableSignal }
 import com.raquo.airstream.state.StrictSignal
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.{Success, Try}
+import scala.util.{ Success, Try }
 
 // @TODO confirm that memory management is ok here between the future and this signal.
 
@@ -20,7 +20,7 @@ import scala.util.{Success, Try}
   */
 class FutureSignal[A](
   future: Future[A]
-) extends StrictSignal[Option[A]] {
+) extends StrictSignal[Option[A]] with WritableSignal[Option[A]] {
 
   override protected[airstream] val topoRank: Int = 1
 

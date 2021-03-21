@@ -5,7 +5,6 @@ import com.raquo.airstream.flatten.FlattenStrategy
 import com.raquo.airstream.ownership.{Owner, Subscription}
 
 import scala.annotation.unused
-import scala.scalajs.js
 import scala.util.Try
 
 /** This trait represents a reactive value that can be subscribed to.
@@ -27,6 +26,7 @@ import scala.util.Try
   *   when their subscriptions are killed by their owners)
   */
 trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Named {
+  self: WritableObservable[A] =>
 
   /** When subclassing Observable **outside of com.raquo.airstream package**, just make this field public:
     *
@@ -36,13 +36,6 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     */
   protected[airstream] val topoRank: Int
 
-  /** Note: Observer can be added more than once to an Observable.
-    * If so, it will observe each event as many times as it was added.
-    */
-  protected[this] val externalObservers: ObserverList[Observer[A]] = new ObserverList(js.Array())
-
-  /** Note: This is enforced to be a Set outside of the type system #performance */
-  protected[this] val internalObservers: ObserverList[InternalObserver[A]] = new ObserverList(js.Array())
 
   /** @param project Note: guarded against exceptions */
   def map[B](project: A => B): Self[B]
@@ -127,11 +120,9 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
 
   /** Subscribe an external observer to this observable */
   def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription = {
-    val subscription = new Subscription(owner, () => Transaction.removeExternalObserver(this, observer))
-    externalObservers.push(observer)
+    val subscription = ObserverRegistry.addObserver(this, observer)
     onAddedExternalObserver(observer)
     maybeStart()
-    //dom.console.log(s"Adding subscription: $subscription")
     subscription
   }
 
@@ -141,8 +132,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     * This observable calls [[onStart]] if this action has given it its first observer (internal or external).
     */
   protected[airstream] def addInternalObserver(observer: InternalObserver[A]): Unit = {
-    // @TODO Why does simple "protected" not work? Specialization?
-    internalObservers.push(observer)
+    ObserverRegistry.addInternalObserver(this, observer)
     maybeStart()
   }
 
@@ -150,7 +140,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     * This observable calls [[onStop]] if this action has removed its last observer (internal or external).
     */
   protected[airstream] def removeInternalObserverNow(observer: InternalObserver[A]): Unit = {
-    val removed = internalObservers.removeObserverNow(observer)
+    val removed = ObserverRegistry.removeInternalObserverNow(this, observer)
     if (removed) {
       maybeStop()
     }
@@ -158,13 +148,13 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
 
 
   protected[airstream] def removeExternalObserverNow(observer: Observer[A]): Unit = {
-    val removed = externalObservers.removeObserverNow(observer)
+    val removed = ObserverRegistry.removeExternalObserverNow(this, observer)
     if (removed) {
       maybeStop()
     }
   }
 
-  private[this] def numAllObservers: Int = externalObservers.length + internalObservers.length
+  private[this] def numAllObservers: Int = ObserverRegistry.numAllObservers(this)
 
   protected[this] def isStarted: Boolean = numAllObservers > 0
 
@@ -182,7 +172,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     */
   @inline protected[this] def onStop(): Unit = ()
 
-  private[this] def maybeStart(): Unit = {
+  private[core] def maybeStart(): Unit = {
     val isStarting = numAllObservers == 1
     if (isStarting) {
       // We've just added first observer
@@ -197,38 +187,4 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     }
   }
 
-  // === A note on performance with error handling ===
-  //
-  // Signals remember their current value as Try[A], whereas
-  // EventStream-s normally fire plain A values and do not need them
-  // wrapped in Try. To make things more complicated, user-provided
-  // callbacks like `project` in `.map(project)` need to be wrapped in
-  // Try() for safety.
-  //
-  // A worst case performance scenario would see Airstream constantly
-  // wrapping and unwrapping the values being propagated, initializing
-  // many Success() objects as we walk along the observables dependency
-  // graph.
-  //
-  // We avoid this by keeping the values unwrapped as much as possible
-  // in event streams, but wrapping them in signals and state. When
-  // switching between streams and memory observables and vice versa
-  // we have to pay a small price to wrap or unwrap the value. It's a
-  // miniscule penalty that doesn't matter, but if you're wondering
-  // how we decide whether to implement onTry or onNext+onError in a
-  // particular InternalObserver, this is one of the main factors.
-  //
-  // With this in mind, you can see fireValue / fireError / fireTry
-  // implementations in EventStream and Signal are somewhat
-  // redundant (non-DRY), but performance friendly.
-  //
-  // You must be careful when overriding these methods however, as you
-  // don't know which one of them will be called, but they need to be
-  // implemented to produce similar results
-
-  protected[this] def fireValue(nextValue: A, transaction: Transaction): Unit
-
-  protected[this] def fireError(nextError: Throwable, transaction: Transaction): Unit
-
-  protected[this] def fireTry(nextValue: Try[A], transaction: Transaction): Unit
 }
