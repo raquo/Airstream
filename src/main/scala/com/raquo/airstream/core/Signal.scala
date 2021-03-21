@@ -78,24 +78,11 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
 
   override def toObservable: Signal[A] = this
 
-  /** Initial value is only evaluated if/when needed (when there are observers) */
-  protected[airstream] def tryNow(): Try[A] = {
-    maybeLastSeenCurrentValue.getOrElse {
-      val currentValue = initialValue
-      setCurrentValue(currentValue)
-      currentValue
-    }
-  }
-
   /** See comment for [[tryNow]] right above
     *
     * @throws Exception if current value is an error
     */
   protected[airstream] def now(): A = tryNow().get
-
-  protected[this] def setCurrentValue(newValue: Try[A]): Unit = {
-    maybeLastSeenCurrentValue = js.defined(newValue)
-  }
 
   /** Here we need to ensure that Signal's default value has been evaluated.
     * It is important because if a Signal gets started by means of its .changes

@@ -1,1 +1,0 @@
-ThisBuild / githubWorkflowPublishTargetBranches := Seq()

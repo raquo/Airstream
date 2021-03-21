@@ -2,7 +2,6 @@ package com.raquo.airstream.core
 
 import com.raquo.airstream.combine.generated._
 import com.raquo.airstream.combine.{CombineEventStreamN, MergeEventStream}
-import com.raquo.airstream.core.AirstreamError.ObserverError
 import com.raquo.airstream.core.Source.EventSource
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
