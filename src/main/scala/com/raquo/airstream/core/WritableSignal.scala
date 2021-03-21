@@ -57,12 +57,12 @@ trait WritableSignal[A] extends WritableObservable[A] with SignalOps[A] {
       val isError = nextValue.isFailure
       var errorReported = false
 
-      ObserverRegistry.getExternalObservers(this).foreach { observer =>
+      externalObservers.foreach { observer =>
         observer.onTry(nextValue)
         if (isError && !errorReported) errorReported = true
       }
 
-      ObserverRegistry.getInternalObservers(this).foreach { observer =>
+      internalObservers.foreach { observer =>
         observer.onTry(nextValue, transaction)
         if (isError && !errorReported) errorReported = true
       }

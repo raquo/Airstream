@@ -193,11 +193,11 @@ object Transaction { // extends GlobalCounter {
   ): Unit = {
     if (isSafeToRemoveObserver) {
       // remove right now – useful for efficient recursive removals
-      ObserverRegistry.removeExternalObserverNow(observable, observer)
+      observable._removeExternalObserverNow(observer)
     } else {
       // schedule removal to happen at the end of the transaction
       // (don't want to interfere with iteration over the list of observers)
-      pendingObserverRemovals.push(() => ObserverRegistry.removeExternalObserverNow(observable, observer))
+      pendingObserverRemovals.push(() => observable._removeExternalObserverNow(observer))
     }
   }
 

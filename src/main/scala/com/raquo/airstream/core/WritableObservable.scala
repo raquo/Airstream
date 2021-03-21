@@ -2,7 +2,7 @@ package com.raquo.airstream.core
 
 import scala.util.Try
 
-trait WritableObservable[A] {
+trait WritableObservable[A] extends SubscribableObservable[A] {
 
   // === A note on performance with error handling ===
   //

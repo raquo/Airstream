@@ -12,7 +12,7 @@ trait WritableEventStream[A] extends WritableObservable[A] with EventStreamOps[A
     // === CAUTION ===
     // The following logic must match Signal's fireTry! It is separated here for performance.
 
-    ObserverRegistry.getExternalObservers(this).foreach { observer =>
+    externalObservers.foreach { observer =>
       try {
         observer.onNext(nextValue)
       } catch {
@@ -20,7 +20,7 @@ trait WritableEventStream[A] extends WritableObservable[A] with EventStreamOps[A
       }
     }
 
-    ObserverRegistry.getInternalObservers(this).foreach { observer =>
+    internalObservers.foreach { observer =>
       observer.onNext(nextValue, transaction)
     }
   }
@@ -31,11 +31,11 @@ trait WritableEventStream[A] extends WritableObservable[A] with EventStreamOps[A
     // === CAUTION ===
     // The following logic must match Signal's fireTry! It is separated here for performance.
 
-    ObserverRegistry.getExternalObservers(this).foreach { observer =>
+    externalObservers.foreach { observer =>
       observer.onError(nextError)
     }
 
-    ObserverRegistry.getInternalObservers(this).foreach { observer =>
+    internalObservers.foreach { observer =>
       observer.onError(nextError, transaction)
     }
   }

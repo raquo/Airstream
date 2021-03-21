@@ -120,7 +120,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
 
   /** Subscribe an external observer to this observable */
   def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription = {
-    val subscription = ObserverRegistry.addObserver(this, observer)
+    val subscription = addObserver(observer)
     onAddedExternalObserver(observer)
     maybeStart()
     subscription
@@ -132,7 +132,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     * This observable calls [[onStart]] if this action has given it its first observer (internal or external).
     */
   protected[airstream] def addInternalObserver(observer: InternalObserver[A]): Unit = {
-    ObserverRegistry.addInternalObserver(this, observer)
+    addInternalObserver(observer)
     maybeStart()
   }
 
@@ -140,7 +140,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     * This observable calls [[onStop]] if this action has removed its last observer (internal or external).
     */
   protected[airstream] def removeInternalObserverNow(observer: InternalObserver[A]): Unit = {
-    val removed = ObserverRegistry.removeInternalObserverNow(this, observer)
+    val removed = _removeInternalObserverNow(observer)
     if (removed) {
       maybeStop()
     }
@@ -148,29 +148,27 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
 
 
   protected[airstream] def removeExternalObserverNow(observer: Observer[A]): Unit = {
-    val removed = ObserverRegistry.removeExternalObserverNow(this, observer)
+    val removed = _removeExternalObserverNow(observer)
     if (removed) {
       maybeStop()
     }
   }
 
-  private[this] def numAllObservers: Int = ObserverRegistry.numAllObservers(this)
-
-  protected[this] def isStarted: Boolean = numAllObservers > 0
+  protected def isStarted: Boolean = numAllObservers > 0
 
   /** This method is fired when this observable starts working (listening for parent events and/or firing its own events),
     * that is, when it gets its first Observer (internal or external).
     *
     * [[onStart]] can potentially be called multiple times, the second time being after it has stopped (see [[onStop]]).
     */
-  @inline protected[this] def onStart(): Unit = ()
+  protected def onStart(): Unit = ()
 
   /** This method is fired when this observable stops working (listening for parent events and/or firing its own events),
     * that is, when it loses its last Observer (internal or external).
     *
     * [[onStop]] can potentially be called multiple times, the second time being after it has started again (see [[onStart]]).
     */
-  @inline protected[this] def onStop(): Unit = ()
+  protected def onStop(): Unit = ()
 
   private[core] def maybeStart(): Unit = {
     val isStarting = numAllObservers == 1
