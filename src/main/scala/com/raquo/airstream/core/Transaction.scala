@@ -188,7 +188,7 @@ object Transaction { // extends GlobalCounter {
     * as you added it to this Observable.
     */
   private[core] def removeExternalObserver[A](
-    observable: WritableObservable[A],
+    observable: Observable[A],
     observer: Observer[A]
   ): Unit = {
     if (isSafeToRemoveObserver) {
