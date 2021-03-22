@@ -12,10 +12,7 @@ import scala.concurrent.Future
   * This trait exists only as a sort of type alias for BaseObservable[Observable, A].
   * (I can't use an actual type alias for this due to an illegal cycle)
   */
-trait Observable[+A] extends BaseObservable[Observable, A] {
-  self: WritableObservable[A] =>
-
-}
+trait Observable[+A] extends BaseObservable[Observable, A] {}
 
 object Observable {
 

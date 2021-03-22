@@ -1,8 +1,8 @@
 package com.raquo.airstream.debug
 
-import com.raquo.airstream.core.{ EventStream, Transaction, WritableEventStream }
+import com.raquo.airstream.core.{EventStream, Transaction, WritableEventStream}
 
-import scala.util.{ Failure, Success }
+import scala.util.{Failure, Success, Try}
 
 /** See [[DebuggableObservable]] and [[DebuggableSignal]] for user-facing debug methods */
 class DebuggerEventStream[A](
@@ -30,5 +30,9 @@ class DebuggerEventStream[A](
   override protected[this] def onStop(): Unit = {
     super.onStop()
     debugOnStop()
+  }
+
+  override protected[airstream] def onTry(nextParentValue: Try[A], transaction: Transaction): Unit = {
+    fireTry(nextParentValue, transaction)
   }
 }

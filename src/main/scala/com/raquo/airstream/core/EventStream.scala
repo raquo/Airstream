@@ -18,7 +18,6 @@ import scala.scalajs.js
 import scala.util.{ Failure, Success, Try }
 
 trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] with EventSource[A] {
-  self: WritableEventStream[A] =>
 
   override def map[B](project: A => B): EventStream[B] = {
     new MapEventStream(this, project, recover = None)

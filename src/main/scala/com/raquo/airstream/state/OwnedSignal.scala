@@ -1,11 +1,9 @@
 package com.raquo.airstream.state
 
-import com.raquo.airstream.core.WritableSignal
 import com.raquo.airstream.ownership.Subscription
 
 // @TODO[API] Should we expose `killOriginalSubscription` to end users?
 trait OwnedSignal[+A] extends StrictSignal[A] {
-  self: WritableSignal[A] =>
 
   protected[this] val subscription: Subscription
 

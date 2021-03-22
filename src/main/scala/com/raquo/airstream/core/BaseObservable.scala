@@ -26,7 +26,6 @@ import scala.util.Try
   *   when their subscriptions are killed by their owners)
   */
 trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Named {
-  self: WritableObservable[A] =>
 
   /** When subclassing Observable **outside of com.raquo.airstream package**, just make this field public:
     *
@@ -72,6 +71,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     this match {
       case s: Signal[A @unchecked] => ifSignal(s)
       case s: EventStream[A @unchecked] => s
+      case _ => throw new Exception("All Observables must extend EventStream or Signal")
     }
   }
 
@@ -79,6 +79,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     this match {
       case s: EventStream[A @unchecked] => ifStream(s)
       case s: Signal[A @unchecked] => s
+      case _ => throw new Exception("All Observables must extend EventStream or Signal")
     }
   }
 
@@ -87,6 +88,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     map(Some(_)) match {
       case s: EventStream[Option[A @unchecked] @unchecked] => s.toSignal(initial = None)
       case s: Signal[Option[A @unchecked] @unchecked] => s
+      case _ => throw new Exception("All Observables must extend EventStream or Signal")
     }
   }
 
@@ -119,40 +121,26 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
   }
 
   /** Subscribe an external observer to this observable */
-  def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription = {
-    val subscription = addObserver(observer)
-    onAddedExternalObserver(observer)
-    maybeStart()
-    subscription
-  }
+  def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription
 
-  @inline protected def onAddedExternalObserver(@unused observer: Observer[A]): Unit = ()
+  protected[this] def addExternalObserver(observer: Observer[A], owner: Owner): Subscription
+
+  protected[this] def onAddedExternalObserver(@unused observer: Observer[A]): Unit = ()
 
   /** Child observable should call this method on its parents when it is started.
     * This observable calls [[onStart]] if this action has given it its first observer (internal or external).
     */
-  protected[airstream] def addInternalObserver(observer: InternalObserver[A]): Unit = {
-    addInternalObserver(observer)
-    maybeStart()
-  }
+  protected[airstream] def addInternalObserver(observer: InternalObserver[A]): Unit
 
   /** Child observable should call Transaction.removeInternalObserver(parent, childInternalObserver) when it is stopped.
     * This observable calls [[onStop]] if this action has removed its last observer (internal or external).
     */
-  protected[airstream] def removeInternalObserverNow(observer: InternalObserver[A]): Unit = {
-    val removed = _removeInternalObserverNow(observer)
-    if (removed) {
-      maybeStop()
-    }
-  }
+  protected[airstream] def removeInternalObserverNow(observer: InternalObserver[A]): Unit
 
+  protected[airstream] def removeExternalObserverNow(observer: Observer[A]): Unit
 
-  protected[airstream] def removeExternalObserverNow(observer: Observer[A]): Unit = {
-    val removed = _removeExternalObserverNow(observer)
-    if (removed) {
-      maybeStop()
-    }
-  }
+  /** Total number of internal and external observers */
+  protected def numAllObservers: Int
 
   protected def isStarted: Boolean = numAllObservers > 0
 
@@ -169,20 +157,5 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     * [[onStop]] can potentially be called multiple times, the second time being after it has started again (see [[onStart]]).
     */
   protected def onStop(): Unit = ()
-
-  private[core] def maybeStart(): Unit = {
-    val isStarting = numAllObservers == 1
-    if (isStarting) {
-      // We've just added first observer
-      onStart()
-    }
-  }
-
-  private[this] def maybeStop(): Unit = {
-    if (!isStarted) {
-      // We've just removed last observer
-      onStop()
-    }
-  }
 
 }

@@ -20,7 +20,6 @@ import scala.util.{Failure, Try}
 
 /** Signal is an Observable with a current value. */
 trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with SignalOps[A] with SignalSource[A] {
-  self: WritableSignal[A] =>
 
   /** @param project Note: guarded against exceptions */
   override def map[B](project: A => B): Signal[B] = {
@@ -115,7 +114,7 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
     super.onStart()
   }
 
-  // @TODO[API] Use pattern match instead when isInstanceOf performance is fixed: https://github.com/scala-js/scala-js/issues/2066
+  // @TODO[API] Use pattern match instead when isInstanceOf performance is fixed: https://github.com/scala-js/scala-js/issues/3815
   override protected def onAddedExternalObserver(observer: Observer[A]): Unit = {
     super.onAddedExternalObserver(observer)
     observer.onTry(tryNow()) // send current value immediately

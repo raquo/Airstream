@@ -8,7 +8,7 @@ libraryDependencies ++= Seq(
   ("org.scalatest" %%% "scalatest" % Versions.ScalaTest % Test).cross(CrossVersion.for3Use2_13)
 )
 
-scalaVersion := Versions.Scala_2_13
+scalaVersion := Versions.Scala_3_RC1
 
 crossScalaVersions := Seq(Versions.Scala_2_12, Versions.Scala_2_13, Versions.Scala_3_RC1)
 

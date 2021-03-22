@@ -1,8 +1,11 @@
 package com.raquo.airstream.core
 
+import com.raquo.airstream.ownership.{Owner, Subscription}
+
+import scala.scalajs.js
 import scala.util.Try
 
-trait WritableObservable[A] extends SubscribableObservable[A] {
+trait WritableObservable[A] extends Observable[A] {
 
   // === A note on performance with error handling ===
   //
@@ -39,4 +42,69 @@ trait WritableObservable[A] extends SubscribableObservable[A] {
 
   protected def fireTry(nextValue: Try[A], transaction: Transaction): Unit
 
+
+  /** Note: Observer can be added more than once to an Observable.
+    * If so, it will observe each event as many times as it was added.
+    */
+  protected val externalObservers: ObserverList[Observer[A]] = new ObserverList(js.Array())
+
+  /** Note: This is enforced to be a Set outside of the type system #performance */
+  protected val internalObservers: ObserverList[InternalObserver[A]] = new ObserverList(js.Array())
+
+  override def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription = {
+    val subscription = addExternalObserver(observer, owner)
+    onAddedExternalObserver(observer)
+    maybeStart()
+    subscription
+  }
+
+  /** Subscribe an external observer to this observable */
+  override protected[this] def addExternalObserver(observer: Observer[A], owner: Owner): Subscription = {
+    val subscription = new Subscription(owner, () => Transaction.removeExternalObserver(this, observer))
+    externalObservers.push(observer)
+    //dom.console.log(s"Adding subscription: $subscription")
+    subscription
+  }
+
+  /** Child observable should call this method on its parents when it is started.
+    * This observable calls [[onStart]] if this action has given it its first observer (internal or external).
+    */
+  override protected[airstream] def addInternalObserver(observer: InternalObserver[A]): Unit = {
+    internalObservers.push(observer)
+    maybeStart()
+  }
+
+  /** Child observable should call Transaction.removeInternalObserver(parent, childInternalObserver) when it is stopped.
+    * This observable calls [[onStop]] if this action has removed its last observer (internal or external).
+    */
+  override protected[airstream] def removeInternalObserverNow(observer: InternalObserver[A]): Unit = {
+    val removed = internalObservers.removeObserverNow(observer.asInstanceOf[InternalObserver[Any]])
+    if (removed) {
+      maybeStop()
+    }
+  }
+
+  override protected[airstream] def removeExternalObserverNow(observer: Observer[A]): Unit = {
+    val removed = externalObservers.removeObserverNow(observer.asInstanceOf[Observer[Any]])
+    if (removed) {
+      maybeStop()
+    }
+  }
+
+  private[this] def maybeStart(): Unit = {
+    val isStarting = numAllObservers == 1
+    if (isStarting) {
+      // We've just added first observer
+      onStart()
+    }
+  }
+
+  private[this] def maybeStop(): Unit = {
+    if (!isStarted) {
+      // We've just removed last observer
+      onStop()
+    }
+  }
+
+  override protected def numAllObservers: Int = externalObservers.length + internalObservers.length
 }

@@ -1,6 +1,6 @@
 package com.raquo.airstream.state
 
-import com.raquo.airstream.core.{ Signal, WritableSignal }
+import com.raquo.airstream.core.Signal
 
 /** A Signal that lets you directly query its current value.
   *
@@ -8,7 +8,6 @@ import com.raquo.airstream.core.{ Signal, WritableSignal }
   * How this is actually accomplished is up to the concrete class extending this trait.
   */
 trait StrictSignal[+A] extends Signal[A] {
-  self: WritableSignal[A] =>
 
 //  override def now(): A = super.now()
 //
