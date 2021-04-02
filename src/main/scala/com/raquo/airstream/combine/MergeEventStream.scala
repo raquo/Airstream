@@ -1,7 +1,7 @@
 package com.raquo.airstream.combine
 
-import com.raquo.airstream.common.{InternalParentObserver, Observation}
-import com.raquo.airstream.core.{EventStream, Observable, SyncObservable, Transaction}
+import com.raquo.airstream.common.{ InternalParentObserver, Observation }
+import com.raquo.airstream.core.{ Observable, SyncObservable, Transaction, WritableEventStream }
 import com.raquo.airstream.util.JsPriorityQueue
 
 import scala.scalajs.js
@@ -15,7 +15,7 @@ import scala.scalajs.js
   */
 class MergeEventStream[A](
   parents: Iterable[Observable[A]]
-) extends EventStream[A] with SyncObservable[A] {
+) extends WritableEventStream[A] with SyncObservable[A] {
 
   override protected[airstream] val topoRank: Int = {
     var maxParentRank = 0

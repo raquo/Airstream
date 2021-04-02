@@ -431,7 +431,7 @@ class GlitchSpec extends UnitSpec {
       EventStream.merge(
         EventStream.fromValue(n - 2, emitOnce = true),
         EventStream.fromValue(n - 1, emitOnce = true)
-      ).map(Append)
+      ).map(Append.apply)
     }
 
     val updatedState =

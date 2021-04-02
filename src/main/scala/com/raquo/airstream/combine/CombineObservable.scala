@@ -2,13 +2,13 @@ package com.raquo.airstream.combine
 
 import com.raquo.airstream.common.InternalParentObserver
 import com.raquo.airstream.core.AirstreamError.CombinedError
-import com.raquo.airstream.core.{SyncObservable, Transaction}
+import com.raquo.airstream.core.{ SyncObservable, Transaction, WritableObservable }
 import org.scalajs.dom
 
 import scala.scalajs.js
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
-trait CombineObservable[A] extends SyncObservable[A] { self =>
+trait CombineObservable[A] extends SyncObservable[A] { this: WritableObservable[A] =>
 
   /** This should only be called when all inputs are ready.
     * It will throw if the required parent values are missing.
@@ -27,9 +27,9 @@ trait CombineObservable[A] extends SyncObservable[A] { self =>
     * evaluate maybeCombinedValue and call .fireTry()
     */
   protected[this] def onInputsReady(transaction: Transaction): Unit = {
-    if (!transaction.pendingObservables.contains(self)) {
+    if (!transaction.pendingObservables.contains(this)) {
       // println(s"Marking CombineObs($id) as pending in TRX(${transaction.id})")
-      transaction.pendingObservables.enqueue(self)
+      transaction.pendingObservables.enqueue(this)
     }
   }
 

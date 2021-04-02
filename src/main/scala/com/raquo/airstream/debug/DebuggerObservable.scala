@@ -1,8 +1,8 @@
 package com.raquo.airstream.debug
 
 import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
+import com.raquo.airstream.core.AirstreamError
 import com.raquo.airstream.core.AirstreamError.DebugError
-import com.raquo.airstream.core.{AirstreamError, Transaction}
 
 import scala.util.Try
 
@@ -21,10 +21,6 @@ trait DebuggerObservable[A] extends SingleParentObservable[A, A] with InternalTr
         // otherwise debugging could get really confusing
         s"${parent.displayName}|Debug"
     }
-  }
-
-  override protected[airstream] def onTry(nextParentValue: Try[A], transaction: Transaction): Unit = {
-    fireTry(nextParentValue, transaction)
   }
 
   protected[this] def debugFireTry(nextValue: Try[A]): Unit = {

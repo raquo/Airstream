@@ -1,7 +1,7 @@
 package com.raquo.airstream.flatten
 
-import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
-import com.raquo.airstream.core.{InternalObserver, Signal, Transaction}
+import com.raquo.airstream.common.{ InternalTryObserver, SingleParentObservable }
+import com.raquo.airstream.core.{ InternalObserver, Signal, Transaction, WritableSignal }
 
 import scala.util.Try
 
@@ -16,7 +16,7 @@ import scala.util.Try
   */
 class SwitchSignal[A](
   override protected[this] val parent: Signal[Signal[A]]
-) extends Signal[A] with SingleParentObservable[Signal[A], A] with InternalTryObserver[Signal[A]] {
+) extends WritableSignal[A] with SingleParentObservable[Signal[A], A] with InternalTryObserver[Signal[A]] {
 
   override protected[airstream] val topoRank: Int = 1
 

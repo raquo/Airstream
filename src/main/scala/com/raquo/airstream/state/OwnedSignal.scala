@@ -9,4 +9,4 @@ trait OwnedSignal[+A] extends StrictSignal[A] {
 
   /** This only kills the subscription, but this signal might also have other listeners */
   def killOriginalSubscription(): Unit = subscription.kill()
-} 
+}

@@ -3,14 +3,14 @@ enablePlugins(ScalaJSPlugin)
 enablePlugins(ScalaJSBundlerPlugin)
 
 libraryDependencies ++= Seq(
-  "org.scala-js" %%% "scalajs-dom" % Versions.ScalaJsDom,
+  ("org.scala-js" %%% "scalajs-dom" % Versions.ScalaJsDom).cross(CrossVersion.for3Use2_13),
   "app.tulz" %%% "tuplez-full-light" % Versions.Tuplez,
   "org.scalatest" %%% "scalatest" % Versions.ScalaTest % Test
 )
 
 scalaVersion := Versions.Scala_2_13
 
-crossScalaVersions := Seq(Versions.Scala_2_12, Versions.Scala_2_13)
+crossScalaVersions := Seq(Versions.Scala_2_12, Versions.Scala_2_13, Versions.Scala_3_RC2)
 
 scalacOptions ~= { options: Seq[String] =>
   options.filterNot(Set(
@@ -20,34 +20,51 @@ scalacOptions ~= { options: Seq[String] =>
 }
 
 scalacOptions += {
-  val local = baseDirectory.value.toURI
-  val remote = s"https://raw.githubusercontent.com/raquo/Airstream/${git.gitHeadCommit.value.get}/"
+  val localSourcesPath = baseDirectory.value.toURI
+  val remoteSourcesPath = s"https://raw.githubusercontent.com/raquo/Airstream/${git.gitHeadCommit.value.get}/"
+  val sourcesOptionName = if (scalaVersion.value.startsWith("2.")) "-P:scalajs:mapSourceURI" else "-scalajs-mapSourceURI"
 
-  s"-P:scalajs:mapSourceURI:$local->$remote"
+  s"${sourcesOptionName}:$localSourcesPath->$remoteSourcesPath"
 }
 
-scalacOptions in Test ~= { options: Seq[String] =>
+(Test / scalacOptions) ~= { options: Seq[String] =>
   options.filterNot { o =>
     o.startsWith("-Ywarn-unused") || o.startsWith("-Wunused")
   }
 }
 
-// @TODO[Build] Why does this need " in (Compile, doc)" while other options don't?
-scalacOptions in (Compile, doc) ++= Seq(
+(Compile / doc / scalacOptions) ~= (_.filterNot(
+  Set(
+    "-scalajs",
+    "-deprecation",
+    "-explain-types",
+    "-explain",
+    "-feature",
+    "-language:existentials,experimental.macros,higherKinds,implicitConversions",
+    "-unchecked",
+    "-Xfatal-warnings",
+    "-Ykind-projector",
+    "-from-tasty",
+    "-encoding",
+    "utf8",
+  )
+))
+
+(Compile / doc / scalacOptions) ++= Seq(
   "-no-link-warnings" // Suppress scaladoc "Could not find any member to link for" warnings
 )
 
-version in installJsdom := Versions.JsDom
+(installJsdom / version) := Versions.JsDom
 
 useYarn := true
 
-requireJsDomEnv in Test := true
+(Test / requireJsDomEnv) := true
 
-parallelExecution in Test := false
+(Test / parallelExecution) := false
 
 scalaJSUseMainModuleInitializer := true
 
-scalaJSLinkerConfig in (Compile, fastOptJS) ~= { _.withSourceMap(false) }
+(Compile / fastOptJS / scalaJSLinkerConfig) ~= { _.withSourceMap(false) }
 
 
 // -- Code generators for N-arity functionality

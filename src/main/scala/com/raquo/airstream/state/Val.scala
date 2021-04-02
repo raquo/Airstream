@@ -1,19 +1,15 @@
 package com.raquo.airstream.state
 
-import scala.util.{Success, Try}
+import com.raquo.airstream.core.WritableSignal
 
-class Val[A](override protected[this] val initialValue: Try[A]) extends StrictSignal[A] {
+import scala.util.{ Success, Try }
+
+class Val[A](override protected[this] val initialValue: Try[A]) extends WritableSignal[A] with StrictSignal[A] {
 
   override protected[airstream] val topoRank: Int = 1
 
-  /** Public because it is evaluated immediately and never changes */
+  /** Value never changes, so we can use a simplified implementation */
   override def tryNow(): Try[A] = initialValue
-
-  /** Public because it is evaluated immediately and never changes
-    *
-    * @throws Exception if value is an error
-    */
-  override def now(): A = initialValue.get
 }
 
 object Val {

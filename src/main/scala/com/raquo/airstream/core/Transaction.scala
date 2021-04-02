@@ -187,8 +187,8 @@ object Transaction { // extends GlobalCounter {
     * Note: To completely unsubscribe an Observer from this Observable, you need to remove it as many times
     * as you added it to this Observable.
     */
-  private[core] def removeExternalObserver[O[+_] <: Observable[_], A](
-    observable: BaseObservable[O, A],
+  private[core] def removeExternalObserver[A](
+    observable: Observable[A],
     observer: Observer[A]
   ): Unit = {
     if (isSafeToRemoveObserver) {

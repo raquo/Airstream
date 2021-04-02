@@ -11,7 +11,7 @@ import scala.util.Try
   */
 trait StrictSignal[+A] extends Signal[A] {
 
-  override def now(): A = super.now()
+  abstract override def now(): A = super.now()
 
-  override def tryNow(): Try[A] = super.tryNow()
+  abstract override def tryNow(): Try[A] = super.tryNow()
 }

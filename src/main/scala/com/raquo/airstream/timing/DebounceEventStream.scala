@@ -1,7 +1,7 @@
 package com.raquo.airstream.timing
 
-import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
-import com.raquo.airstream.core.{EventStream, Transaction}
+import com.raquo.airstream.common.{ InternalTryObserver, SingleParentObservable }
+import com.raquo.airstream.core.{ EventStream, Transaction, WritableEventStream }
 
 import scala.scalajs.js
 import scala.scalajs.js.timers.SetTimeoutHandle
@@ -20,7 +20,7 @@ import scala.util.Try
 class DebounceEventStream[A](
   override protected[this] val parent: EventStream[A],
   intervalMs: Int
-) extends EventStream[A] with SingleParentObservable[A, A] with InternalTryObserver[A] {
+) extends WritableEventStream[A] with SingleParentObservable[A, A] with InternalTryObserver[A] {
 
   private[this] var maybeLastTimeoutHandle: js.UndefOr[SetTimeoutHandle] = js.undefined
 

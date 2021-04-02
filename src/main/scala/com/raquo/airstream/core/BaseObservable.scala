@@ -5,7 +5,6 @@ import com.raquo.airstream.flatten.FlattenStrategy
 import com.raquo.airstream.ownership.{Owner, Subscription}
 
 import scala.annotation.unused
-import scala.scalajs.js
 import scala.util.Try
 
 /** This trait represents a reactive value that can be subscribed to.
@@ -36,13 +35,6 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     */
   protected[airstream] val topoRank: Int
 
-  /** Note: Observer can be added more than once to an Observable.
-    * If so, it will observe each event as many times as it was added.
-    */
-  protected[this] val externalObservers: ObserverList[Observer[A]] = new ObserverList(js.Array())
-
-  /** Note: This is enforced to be a Set outside of the type system #performance */
-  protected[this] val internalObservers: ObserverList[InternalObserver[A]] = new ObserverList(js.Array())
 
   /** @param project Note: guarded against exceptions */
   def map[B](project: A => B): Self[B]
@@ -79,6 +71,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     this match {
       case s: Signal[A @unchecked] => ifSignal(s)
       case s: EventStream[A @unchecked] => s
+      case _ => throw new Exception("All Observables must extend EventStream or Signal")
     }
   }
 
@@ -86,6 +79,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     this match {
       case s: EventStream[A @unchecked] => ifStream(s)
       case s: Signal[A @unchecked] => s
+      case _ => throw new Exception("All Observables must extend EventStream or Signal")
     }
   }
 
@@ -94,6 +88,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     map(Some(_)) match {
       case s: EventStream[Option[A @unchecked] @unchecked] => s.toSignal(initial = None)
       case s: Signal[Option[A @unchecked] @unchecked] => s
+      case _ => throw new Exception("All Observables must extend EventStream or Signal")
     }
   }
 
@@ -126,109 +121,41 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
   }
 
   /** Subscribe an external observer to this observable */
-  def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription = {
-    val subscription = new Subscription(owner, () => Transaction.removeExternalObserver(this, observer))
-    externalObservers.push(observer)
-    onAddedExternalObserver(observer)
-    maybeStart()
-    //dom.console.log(s"Adding subscription: $subscription")
-    subscription
-  }
+  def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription
 
-  @inline protected def onAddedExternalObserver(@unused observer: Observer[A]): Unit = ()
+  protected[this] def addExternalObserver(observer: Observer[A], owner: Owner): Subscription
+
+  protected[this] def onAddedExternalObserver(@unused observer: Observer[A]): Unit = ()
 
   /** Child observable should call this method on its parents when it is started.
     * This observable calls [[onStart]] if this action has given it its first observer (internal or external).
     */
-  protected[airstream] def addInternalObserver(observer: InternalObserver[A]): Unit = {
-    // @TODO Why does simple "protected" not work? Specialization?
-    internalObservers.push(observer)
-    maybeStart()
-  }
+  protected[airstream] def addInternalObserver(observer: InternalObserver[A]): Unit
 
   /** Child observable should call Transaction.removeInternalObserver(parent, childInternalObserver) when it is stopped.
     * This observable calls [[onStop]] if this action has removed its last observer (internal or external).
     */
-  protected[airstream] def removeInternalObserverNow(observer: InternalObserver[A]): Unit = {
-    val removed = internalObservers.removeObserverNow(observer)
-    if (removed) {
-      maybeStop()
-    }
-  }
+  protected[airstream] def removeInternalObserverNow(observer: InternalObserver[A]): Unit
 
+  protected[airstream] def removeExternalObserverNow(observer: Observer[A]): Unit
 
-  protected[airstream] def removeExternalObserverNow(observer: Observer[A]): Unit = {
-    val removed = externalObservers.removeObserverNow(observer)
-    if (removed) {
-      maybeStop()
-    }
-  }
+  /** Total number of internal and external observers */
+  protected def numAllObservers: Int
 
-  private[this] def numAllObservers: Int = externalObservers.length + internalObservers.length
-
-  protected[this] def isStarted: Boolean = numAllObservers > 0
+  protected def isStarted: Boolean = numAllObservers > 0
 
   /** This method is fired when this observable starts working (listening for parent events and/or firing its own events),
     * that is, when it gets its first Observer (internal or external).
     *
     * [[onStart]] can potentially be called multiple times, the second time being after it has stopped (see [[onStop]]).
     */
-  @inline protected[this] def onStart(): Unit = ()
+  protected def onStart(): Unit = ()
 
   /** This method is fired when this observable stops working (listening for parent events and/or firing its own events),
     * that is, when it loses its last Observer (internal or external).
     *
     * [[onStop]] can potentially be called multiple times, the second time being after it has started again (see [[onStart]]).
     */
-  @inline protected[this] def onStop(): Unit = ()
+  protected def onStop(): Unit = ()
 
-  private[this] def maybeStart(): Unit = {
-    val isStarting = numAllObservers == 1
-    if (isStarting) {
-      // We've just added first observer
-      onStart()
-    }
-  }
-
-  private[this] def maybeStop(): Unit = {
-    if (!isStarted) {
-      // We've just removed last observer
-      onStop()
-    }
-  }
-
-  // === A note on performance with error handling ===
-  //
-  // Signals remember their current value as Try[A], whereas
-  // EventStream-s normally fire plain A values and do not need them
-  // wrapped in Try. To make things more complicated, user-provided
-  // callbacks like `project` in `.map(project)` need to be wrapped in
-  // Try() for safety.
-  //
-  // A worst case performance scenario would see Airstream constantly
-  // wrapping and unwrapping the values being propagated, initializing
-  // many Success() objects as we walk along the observables dependency
-  // graph.
-  //
-  // We avoid this by keeping the values unwrapped as much as possible
-  // in event streams, but wrapping them in signals and state. When
-  // switching between streams and memory observables and vice versa
-  // we have to pay a small price to wrap or unwrap the value. It's a
-  // miniscule penalty that doesn't matter, but if you're wondering
-  // how we decide whether to implement onTry or onNext+onError in a
-  // particular InternalObserver, this is one of the main factors.
-  //
-  // With this in mind, you can see fireValue / fireError / fireTry
-  // implementations in EventStream and Signal are somewhat
-  // redundant (non-DRY), but performance friendly.
-  //
-  // You must be careful when overriding these methods however, as you
-  // don't know which one of them will be called, but they need to be
-  // implemented to produce similar results
-
-  protected[this] def fireValue(nextValue: A, transaction: Transaction): Unit
-
-  protected[this] def fireError(nextError: Throwable, transaction: Transaction): Unit
-
-  protected[this] def fireTry(nextValue: Try[A], transaction: Transaction): Unit
 }
