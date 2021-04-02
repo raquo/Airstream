@@ -15,7 +15,7 @@ import scala.util.Try
 class FilterEventStream[A](
   override protected val parent: EventStream[A],
   passes: A => Boolean
-) extends EventStream[A] with WritableEventStream[A] with SingleParentObservable[A, A] with InternalNextErrorObserver[A] {
+) extends WritableEventStream[A] with SingleParentObservable[A, A] with InternalNextErrorObserver[A] {
 
   override protected[airstream] val topoRank: Int = parent.topoRank + 1
 

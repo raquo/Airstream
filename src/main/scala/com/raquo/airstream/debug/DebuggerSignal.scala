@@ -9,7 +9,7 @@ import scala.util.Try
 class DebuggerSignal[A](
   override protected val parent: Signal[A],
   override protected val debugger: Debugger[A]
-) extends Signal[A] with WritableSignal[A] with DebuggerObservable[A] {
+) extends WritableSignal[A] with DebuggerObservable[A] {
 
   override protected[airstream] val topoRank: Int = parent.topoRank + 1
 

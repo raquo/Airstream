@@ -19,7 +19,16 @@ import scala.scalajs.js
 import scala.util.{Failure, Try}
 
 /** Signal is an Observable with a current value. */
-trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with SignalOps[A] with SignalSource[A] {
+trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with SignalSource[A] {
+
+  /** Get the signal's current value */
+  protected[airstream] def tryNow(): Try[A]
+
+  /** Get the signal's current value
+    *
+    * @throws the signal's error if its current value is an error
+    */
+  protected[airstream] def now(): A = tryNow().get
 
   /** @param project Note: guarded against exceptions */
   override def map[B](project: A => B): Signal[B] = {

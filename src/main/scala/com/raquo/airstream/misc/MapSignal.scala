@@ -22,7 +22,7 @@ class MapSignal[I, O](
   protected[this] val parent: Signal[I],
   protected[this] val project: I => O,
   protected[this] val recover: Option[PartialFunction[Throwable, Option[O]]]
-) extends Signal[O] with WritableSignal[O] with SingleParentObservable[I, O] with InternalTryObserver[I] {
+) extends WritableSignal[O] with SingleParentObservable[I, O] with InternalTryObserver[I] {
 
   override protected[airstream] val topoRank: Int = parent.topoRank + 1
 

@@ -9,7 +9,7 @@ import scala.util.Try
 class CombineEventStreamN[A, Out](
   parents: Seq[EventStream[A]],
   combinator: Seq[A] => Out
-) extends EventStream[Out] with WritableEventStream[Out] with CombineObservable[Out] {
+) extends WritableEventStream[Out] with CombineObservable[Out] {
 
   // @TODO[API] Maybe this should throw if parents.isEmpty
 

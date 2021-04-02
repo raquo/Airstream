@@ -9,7 +9,7 @@ import scala.util.Try
 class SyncDelayEventStream[A] (
   override protected[this] val parent: EventStream[A],
   after: EventStream[_]
-) extends EventStream[A] with WritableEventStream[A] with SingleParentObservable[A, A] with InternalTryObserver[A] with SyncObservable[A] {
+) extends WritableEventStream[A] with SingleParentObservable[A, A] with InternalTryObserver[A] with SyncObservable[A] {
 
   private[this] var maybePendingValue: js.UndefOr[Try[A]] = js.undefined
 

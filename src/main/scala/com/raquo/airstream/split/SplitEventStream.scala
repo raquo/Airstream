@@ -22,7 +22,7 @@ class SplitEventStream[M[_], Input, Output, Key](
   key: Input => Key,
   project: (Key, Input, EventStream[Input]) => Output,
   splittable: Splittable[M]
-) extends EventStream[M[Output]] with WritableEventStream[M[Output]] with SingleParentObservable[M[Input], M[Output]] with InternalNextErrorObserver[M[Input]] {
+) extends WritableEventStream[M[Output]] with SingleParentObservable[M[Input], M[Output]] with InternalNextErrorObserver[M[Input]] {
 
   override protected[airstream] val topoRank: Int = parent.topoRank + 1
 

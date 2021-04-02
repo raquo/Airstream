@@ -9,7 +9,7 @@ import com.raquo.airstream.custom.CustomSource._
   */
 class CustomStreamSource[A] private (
   makeConfig: (FireValue[A], FireError, GetStartIndex, GetIsStarted) => CustomSource.Config,
-) extends EventStream[A] with WritableEventStream[A] with CustomSource[A] {
+) extends WritableEventStream[A] with CustomSource[A] {
 
   override protected[this] val config: Config = makeConfig(_fireValue, _fireError, getStartIndex, getIsStarted)
 }

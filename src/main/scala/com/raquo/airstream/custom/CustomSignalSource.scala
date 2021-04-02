@@ -14,7 +14,7 @@ import scala.util.{ Success, Try }
 class CustomSignalSource[A] (
   getInitialValue: => Try[A],
   makeConfig: (SetCurrentValue[A], GetCurrentValue[A], GetStartIndex, GetIsStarted) => CustomSource.Config,
-) extends Signal[A] with WritableSignal[A] with CustomSource[A] {
+) extends WritableSignal[A] with CustomSource[A] {
 
   override protected[this] def initialValue: Try[A] = getInitialValue
 

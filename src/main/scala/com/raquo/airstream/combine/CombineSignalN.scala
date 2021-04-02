@@ -9,7 +9,7 @@ import scala.util.Try
 class CombineSignalN[A, Out](
   protected[this] val parents: Seq[Signal[A]],
   protected[this] val combinator: Seq[A] => Out
-) extends Signal[Out] with WritableSignal[Out] with CombineObservable[Out] {
+) extends WritableSignal[Out] with CombineObservable[Out] {
 
   // @TODO[API] Maybe this should throw if parents.isEmpty
 

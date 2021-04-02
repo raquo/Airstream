@@ -16,7 +16,7 @@ import scala.util.{ Failure, Success }
   * */
 class ConcurrentEventStream[A](
   override protected[this] val parent: Observable[EventStream[A]]
-) extends EventStream[A] with WritableEventStream[A] with SingleParentObservable[EventStream[A], A] with InternalNextErrorObserver[EventStream[A]] {
+) extends WritableEventStream[A] with SingleParentObservable[EventStream[A], A] with InternalNextErrorObserver[EventStream[A]] {
 
   private val accumulatedStreams: js.Array[EventStream[A]] = js.Array()
 

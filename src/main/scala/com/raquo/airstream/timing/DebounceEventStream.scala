@@ -20,7 +20,7 @@ import scala.util.Try
 class DebounceEventStream[A](
   override protected[this] val parent: EventStream[A],
   intervalMs: Int
-) extends EventStream[A] with WritableEventStream[A] with SingleParentObservable[A, A] with InternalTryObserver[A] {
+) extends WritableEventStream[A] with SingleParentObservable[A, A] with InternalTryObserver[A] {
 
   private[this] var maybeLastTimeoutHandle: js.UndefOr[SetTimeoutHandle] = js.undefined
 

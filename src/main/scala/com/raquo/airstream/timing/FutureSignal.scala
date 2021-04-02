@@ -20,7 +20,7 @@ import scala.util.{ Success, Try }
   */
 class FutureSignal[A](
   future: Future[A]
-) extends StrictSignal[Option[A]] with WritableSignal[Option[A]] {
+) extends WritableSignal[Option[A]] with StrictSignal[Option[A]] {
 
   override protected[airstream] val topoRank: Int = 1
 

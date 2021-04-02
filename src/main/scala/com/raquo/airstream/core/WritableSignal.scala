@@ -3,7 +3,7 @@ package com.raquo.airstream.core
 import scala.scalajs.js
 import scala.util.{ Failure, Success, Try }
 
-trait WritableSignal[A] extends WritableObservable[A] with SignalOps[A] {
+trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
 
   /** Evaluate initial value of this [[Signal]].
     * This method must only be called once, when this value is first needed.
@@ -15,18 +15,12 @@ trait WritableSignal[A] extends WritableObservable[A] with SignalOps[A] {
 
   protected var maybeLastSeenCurrentValue: js.UndefOr[Try[A]] = js.undefined
 
-  /** See comment for [[tryNow]] right above
-    *
-    * @throws Exception if current value is an error
-    */
-  protected[airstream] def now(): A = tryNow().get
-
   protected def setCurrentValue(newValue: Try[A]): Unit = {
     maybeLastSeenCurrentValue = js.defined(newValue)
   }
 
-  /** Initial value is only evaluated if/when needed (when there are observers) */
-  protected[airstream] def tryNow(): Try[A] = {
+  /** Note: Initial value is only evaluated if/when needed (when there are observers) */
+  override protected[airstream] def tryNow(): Try[A] = {
     maybeLastSeenCurrentValue.getOrElse {
       val currentValue = initialValue
       setCurrentValue(currentValue)

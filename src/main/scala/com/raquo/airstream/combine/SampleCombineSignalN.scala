@@ -18,7 +18,7 @@ class SampleCombineSignalN[A, Out](
   samplingSignal: Signal[A],
   sampledSignals: Seq[Signal[A]],
   combinator: Seq[A] => Out
-) extends Signal[Out] with WritableSignal[Out] with CombineObservable[Out] {
+) extends WritableSignal[Out] with CombineObservable[Out] {
 
   override protected[airstream] val topoRank: Int = (samplingSignal +: sampledSignals).foldLeft(0)(_ max _.topoRank) + 1
 

@@ -22,7 +22,7 @@ class ThrottleEventStream[A](
   override protected[this] val parent: EventStream[A],
   intervalMs: Int,
   leading: Boolean
-) extends EventStream[A] with WritableEventStream[A] with SingleParentObservable[A, A] with InternalTryObserver[A] {
+) extends WritableEventStream[A] with SingleParentObservable[A, A] with InternalTryObserver[A] {
 
   private[this] var lastEmittedEventMs: js.UndefOr[Double] = js.undefined
 

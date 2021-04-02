@@ -8,7 +8,7 @@ import scala.util.{Failure, Success, Try}
 class DebuggerEventStream[A](
   override protected val parent: EventStream[A],
   override protected val debugger: Debugger[A]
-) extends EventStream[A] with WritableEventStream[A] with DebuggerObservable[A] {
+) extends WritableEventStream[A] with DebuggerObservable[A] {
 
   override protected[airstream] val topoRank: Int = parent.topoRank + 1
 

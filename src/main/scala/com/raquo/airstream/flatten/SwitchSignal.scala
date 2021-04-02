@@ -16,7 +16,7 @@ import scala.util.Try
   */
 class SwitchSignal[A](
   override protected[this] val parent: Signal[Signal[A]]
-) extends Signal[A] with WritableSignal[A] with SingleParentObservable[Signal[A], A] with InternalTryObserver[Signal[A]] {
+) extends WritableSignal[A] with SingleParentObservable[Signal[A], A] with InternalTryObserver[Signal[A]] {
 
   override protected[airstream] val topoRank: Int = 1
 

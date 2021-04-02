@@ -5,7 +5,7 @@ import com.raquo.airstream.core.{ EventStream, Transaction, WritableEventStream 
 
 import scala.scalajs.js
 
-class EventBusStream[A] private[eventbus] () extends EventStream[A] with WritableEventStream[A] with InternalNextErrorObserver[A] {
+class EventBusStream[A] private[eventbus] () extends WritableEventStream[A] with InternalNextErrorObserver[A] {
 
   private[eventbus] val sourceStreams: js.Array[EventStream[A]] = js.Array()
 

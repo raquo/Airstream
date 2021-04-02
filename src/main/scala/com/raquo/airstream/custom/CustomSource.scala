@@ -1,6 +1,6 @@
 package com.raquo.airstream.custom
 
-import com.raquo.airstream.core.{ Observable, Transaction, WritableObservable }
+import com.raquo.airstream.core.{ Transaction, WritableObservable }
 import com.raquo.airstream.custom.CustomSource._
 
 import scala.util.Try
@@ -13,7 +13,7 @@ import scala.util.Try
   * - [[com.raquo.airstream.custom.CustomStreamSource]]
   * - [[com.raquo.airstream.custom.CustomSignalSource]]
   */
-trait CustomSource[A] extends Observable[A] with WritableObservable[A] {
+trait CustomSource[A] extends WritableObservable[A] {
 
   protected[this] val config: Config
 

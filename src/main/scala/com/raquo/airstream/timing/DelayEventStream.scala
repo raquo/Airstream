@@ -9,7 +9,7 @@ import scala.scalajs.js.timers.SetTimeoutHandle
 class DelayEventStream[A](
   override protected val parent: EventStream[A],
   delayMs: Int
-) extends EventStream[A] with WritableEventStream[A] with SingleParentObservable[A, A] with InternalNextErrorObserver[A] {
+) extends WritableEventStream[A] with SingleParentObservable[A, A] with InternalNextErrorObserver[A] {
 
   /** Async stream, so reset rank */
   override protected[airstream] val topoRank: Int = 1
