@@ -4,7 +4,7 @@ import com.raquo.airstream.core.AirstreamError.ObserverError
 
 import scala.util.Try
 
-trait WritableEventStream[A] extends WritableObservable[A] with EventStreamOps[A] {
+trait WritableEventStream[A] extends WritableObservable[A] {
 
   override protected[this] def fireValue(nextValue: A, transaction: Transaction): Unit = {
     // Note: Removal of observers is always done at the end of a transaction, so the iteration here is safe
@@ -46,6 +46,5 @@ trait WritableEventStream[A] extends WritableObservable[A] with EventStreamOps[A
       fireValue(_, transaction)
     )
   }
-
 
 }
