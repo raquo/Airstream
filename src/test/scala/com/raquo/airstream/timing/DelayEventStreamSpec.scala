@@ -10,7 +10,7 @@ import scala.collection.mutable
 
 class DelayEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
 
-  implicit val owner = new TestableOwner
+  implicit val owner: TestableOwner = new TestableOwner
 
   val effects = mutable.Buffer[Effect[Int]]()
 
@@ -45,7 +45,8 @@ class DelayEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
         bus.writer.onNext(2)
         bus.writer.onNext(3)
 
-        effects shouldEqual mutable.Buffer()
+        assert(effects.isEmpty)
+        ()
       }
     }.flatMap[Unit] { _ =>
       delay(30) {
@@ -57,7 +58,7 @@ class DelayEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
 
         sub.kill() // this kills pending events even if we immediately restart
 
-        effects shouldEqual mutable.Buffer()
+        assert(effects.isEmpty)
 
         stream.addObserver(obs1)
 

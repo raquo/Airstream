@@ -23,7 +23,7 @@ class SyntaxSpec extends UnitSpec {
     }
 
     locally {
-      val tuple4stream = bus.events.combineWithFn(bus1.events, bus2.events, bus3.events)(Foo)
+      val tuple4stream = bus.events.combineWithFn(bus1.events, bus2.events, bus3.events)(Foo.apply)
       tuple4stream: EventStream[Foo]
     }
 
@@ -32,7 +32,7 @@ class SyntaxSpec extends UnitSpec {
         bus1.events.startWith(0),
         bus2.events.startWith(false),
         bus3.events.startWith("")
-      ).mapN(Foo)
+      ).mapN(Foo.apply)
       fooStream: EventStream[Foo]
     }
   }
@@ -52,7 +52,7 @@ class SyntaxSpec extends UnitSpec {
     }
 
     locally {
-      val combinedStream = EventStream.combineWithFn(bus.events, bus1.events, bus2.events, bus3.events)(Foo)
+      val combinedStream = EventStream.combineWithFn(bus.events, bus1.events, bus2.events, bus3.events)(Foo.apply)
       combinedStream: EventStream[Foo]
     }
   }
