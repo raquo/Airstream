@@ -268,7 +268,7 @@ If any of the above does not make sense, the rest of this section might be confu
 
 Without further ado:
 
-**Subscription** is a resource that must be killed in order to release memory or prevent some other leak. You can get it by calling `observable.addObserver(observer)`, `writeBus.addSource(stream)`, or other similar methods that take an implicit `owner` param.
+**Subscription** is a resource that must be killed in order to release memory or prevent some other leak. You can get it by calling `observable.addObserver(observer)`, `writer.addSource(stream)`, or other similar methods that take an implicit `owner` param.
 
 Every Subscription has an **Owner**. An Owner is an object that keeps track of its subscriptions and knows when to kill them, and kills them _when it's time_ (determined in its sole discretion). Airstream does not offer any concrete Owner classes, just the base trait. Unless you use [Dynamic Ownership](#dynamic-ownership), you need to instantiate (and thus implement) your own Owner-s.
 
@@ -473,15 +473,15 @@ callback(2) // `2` will be printed
 
 **`events`** is the stream of events emitted by the EventBus.
 
-**`writer`** is a WriteBus object that lets you trigger EventBus events in a few ways.
+**`writer`** is a Writer object that lets you trigger EventBus events in a few ways.
 
-WriteBus extends Observer, so you can call `onNext(newEventValue)` on it, or pass it as an observer to another stream's `addObserver` method. This will cause the event bus to emit `newEventValue` in a new transaction.
+Writer extends Observer, so you can call `onNext(newEventValue)` on it, or pass it as an observer to another stream's `addObserver` method. This will cause the event bus to emit `newEventValue` in a new transaction.
 
 Or you can just call `eventBus.emit(newEvent)` for the same effect.
 
 What sets EventBus apart from e.g. `EventStream.withObserver` is that you can also call `eventBus.addSource(otherStream)(owner)`, and the event bus will re-emit every event emitted by that stream. This is somewhat similar to adding `writer` as an observer to `otherStream`, except this will not cause `otherStream` to be started unless/until the EventBus's own stream is started (see [Laziness](#laziness)).
 
-You've probably noticed that `addSource` takes `owner` as an implicit param – this is for memory management purposes. You would typically pass a WriteBus to a child component if you want the child to send any events to the parent. Thus, we want `addSource` to be automatically undone when said child is discarded (see [Ownership](#ownership)), even if `writer.stream` is still being observed.
+You've probably noticed that `addSource` takes `owner` as an implicit param – this is for memory management purposes. You would typically pass a Writer to a child component if you want the child to send any events to the parent. Thus, we want `addSource` to be automatically undone when said child is discarded (see [Ownership](#ownership)), even if `writer.stream` is still being observed.
 
 An EventBus can have multiple sources simultaneously. In that case it will emit events from all of those sources in the order in which they come in. **EventBus always emits every event in a new [Transaction](#transactions).** Note that EventBus lets you create loops of Observables. It is up to you to make sure that a propagation of an event through such loops eventually terminates (via a proper `.filter(passes)` gate for example, or the implicit `==` equality filter in Signal).
 
@@ -489,20 +489,20 @@ You can manually remove a previously added source stream by calling `kill()` on 
 
 EventBus is particularly useful to get a single stream of events from a dynamic list of child components. You basically pass down the `writer` to every child component, and inside the child component you can add a source stream to it, or add the `writer` as an observer to some stream. Then when any given child component is discarded (i.e. its owner kills its subscriptions), its connection to the event bus will also be severed.
 
-Typically you don't pass EventBus itself down to child components as it provides both read and write access. Instead, you pass down either the writer or the event stream, depending on what is needed. This separation of concerns is the reason why EventBus doesn't just extend WriteBus and EventStream, by the way.
+Typically you don't pass EventBus itself down to child components as it provides both read and write access. Instead, you pass down either the writer or the event stream, depending on what is needed. This separation of concerns is the reason why EventBus doesn't just extend Writer and EventStream, by the way.
 
-WriteBus comes with a few ways to create new writers. Consider this:
+Writer comes with a few ways to create new writers. Consider this:
 
 ```scala
 val eventBus = new EventBus[Foo]
-val barWriter: WriteBus[Bar] = eventBus.writer
+val barWriter: Writer[Bar] = eventBus.writer
   .filterWriter(isGoodFoo)
   .contramapWriter(barToFoo)
 ```
 
 Now you can send `Bar` events to `barWriter`, and they will appear in `eventBus` processed with `barToFoo` then and filtered by `isGoodFoo`. This is useful when you want to get events from a child component, but the child component does not or should not know what `Foo` is. Generally if you don't need such separation of concerns, you can just `map`/`filter` the stream that's feeding the EventBus instead.
 
-WriteBus also offers a powerful `contracomposeWriter` method, which is like `contramapWriter` but with `compose` rather than `map` as the underlying transformation.
+Writer also offers a powerful `contracomposeWriter` method, which is like `contramapWriter` but with `compose` rather than `map` as the underlying transformation.
 
 ##### Batch EventBus Updates
 

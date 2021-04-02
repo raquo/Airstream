@@ -1,7 +1,7 @@
 package com.raquo.airstream.ownership
 
 import com.raquo.airstream.core.{EventStream, Observable, Observer, Sink}
-import com.raquo.airstream.eventbus.WriteBus
+import com.raquo.airstream.eventbus.Writer
 
 // @TODO[API] I could make the constructor public but it's less confusing if you use the companion object methods
 
@@ -107,8 +107,8 @@ object DynamicSubscription {
   def subscribeBus[A](
     dynamicOwner: DynamicOwner,
     eventStream: EventStream[A],
-    writeBus: WriteBus[A]
+    writer: Writer[A]
   ): DynamicSubscription = {
-    DynamicSubscription(dynamicOwner, owner => writeBus.addSource(eventStream)(owner))
+    DynamicSubscription(dynamicOwner, owner => writer.addSource(eventStream)(owner))
   }
 }

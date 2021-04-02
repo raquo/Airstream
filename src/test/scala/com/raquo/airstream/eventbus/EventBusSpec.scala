@@ -168,7 +168,7 @@ class EventBusSpec extends UnitSpec {
     )).isFailure shouldBe true
   }
 
-  it("disallow duplicate event buses in WriteBus.emit and WriteBus.emitTry") {
+  it("disallow duplicate event buses in Writer.emit and Writer.emitTry") {
     // If we allowed this, you would be able to send two events into the same Var
     // in the same transaction, which breaks Airstream contract.
     val bus1 = new EventBus[Int]
@@ -177,13 +177,13 @@ class EventBusSpec extends UnitSpec {
 
     // -- should not fail
 
-    WriteBus.emitTry(
+    Writer.emitTry(
       bus1.writer -> Success(1),
       bus2.writer -> Success(1),
       bus3.writer -> Failure(new Exception("Var 3 is broken"))
     )
 
-    WriteBus.emit(
+    Writer.emit(
       bus1.writer -> 1,
       bus2.writer -> 1,
       bus3.writer -> 1
@@ -191,7 +191,7 @@ class EventBusSpec extends UnitSpec {
 
     // --
 
-    Try(WriteBus.emit(
+    Try(Writer.emit(
       bus1.writer -> 2,
       bus2.writer -> 2,
       bus1.writer -> 2
@@ -199,7 +199,7 @@ class EventBusSpec extends UnitSpec {
 
     // --
 
-    Try(WriteBus.emitTry(
+    Try(Writer.emitTry(
       bus1.writer -> Success(3),
       bus2.writer -> Success(4),
       bus2.writer -> Success(5)
