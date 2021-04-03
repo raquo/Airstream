@@ -9,7 +9,7 @@ class EventBusStream[A] private[eventbus] () extends WritableEventStream[A] with
 
   private[eventbus] val sourceStreams: js.Array[EventStream[A]] = js.Array()
 
-  /** Made more public to allow usage from WriteBus */
+  /** Made more public to allow usage from Writer */
   override protected[eventbus] def isStarted: Boolean = super.isStarted
 
   override protected[airstream] val topoRank: Int = 1
@@ -37,7 +37,7 @@ class EventBusStream[A] private[eventbus] () extends WritableEventStream[A] with
     //dom.console.log(sources)
 
     // Note: We're not checking isStarted here because if this stream wasn't started, it wouldn't have been
-    // fired as an internal observer. WriteBus calls this method manually, so it checks .isStarted on its own.
+    // fired as an internal observer. Writer calls this method manually, so it checks .isStarted on its own.
     // @TODO ^^^^ We should document this contract in InternalObserver
 
     //println(s"> init trx from EventBusStream(${nextValue})")
@@ -45,12 +45,12 @@ class EventBusStream[A] private[eventbus] () extends WritableEventStream[A] with
     new Transaction(fireValue(nextValue, _))
   }
 
-  /** Helper method to support batch emit using `WriteBus.emit` / `WriteBus.emitTry` */
+  /** Helper method to support batch emit using `Writer.emit` / `Writer.emitTry` */
   private[eventbus] def onNextWithSharedTransaction(nextValue: A, sharedTransaction: Transaction): Unit = {
     fireValue(nextValue, sharedTransaction)
   }
 
-  /** Helper method to support batch emit using `WriteBus.emit` / `WriteBus.emitTry` */
+  /** Helper method to support batch emit using `Writer.emit` / `Writer.emitTry` */
   private[eventbus] def onErrorWithSharedTransaction(nextError: Throwable, sharedTransaction: Transaction): Unit = {
     fireError(nextError, sharedTransaction)
   }

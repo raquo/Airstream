@@ -3,6 +3,8 @@ package com.raquo.airstream.ownership
 import scala.annotation.unused
 import scala.scalajs.js
 
+// @nc add implicitNotFound to this (for Laminar)
+
 /** Owner decides when to kill its subscriptions.
   * - Ownership is defined at creation of the [[Subscription]]
   * - Ownership is non-transferable
