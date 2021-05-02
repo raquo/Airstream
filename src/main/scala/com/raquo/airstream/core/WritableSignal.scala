@@ -57,7 +57,7 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
       }
 
       internalObservers.foreach { observer =>
-        Protected.onTry(observer, nextValue, transaction)
+        InternalObserver.onTry(observer, nextValue, transaction)
         if (isError && !errorReported) errorReported = true
       }
 

@@ -8,7 +8,19 @@ class Protected private ()
 
 object Protected {
 
-  private[airstream] implicit val protectedAccessEvidence: Protected = new Protected()
+  /** This mechanism allows us to define `protected` methods that have more lax access requirements
+    * than Scala's `protected` keyword allows.
+    *
+    * Basically, if you created a custom observable subclass and inside of it you're trying to call
+    * topoRank(), tryNow() or now() on another observable, Scala will tell you that you don't have
+    * access to do that, but you can use one of these methods to access the required value.
+    *
+    * For example, instead of calling parentObservable.tryNow() you can call Protected.tryNow(parentObservable)
+    *
+    * The evidence is implicitly available inside BaseObservable, and so is available inside all
+    * BaseObservable subtypes / implementations.
+    */
+  private[airstream] val protectedAccessEvidence: Protected = new Protected()
 
   @inline def topoRank[O[+_] <: Observable[_]](observable: BaseObservable[O, _]): Int = {
     BaseObservable.topoRank(observable)
@@ -21,34 +33,4 @@ object Protected {
   @inline def tryNow[A](signal: Signal[A])(implicit @unused ev: Protected): Try[A] = signal.tryNow()
 
   @inline def now[A](signal: Signal[A])(implicit @unused ev: Protected): A = signal.now()
-
-  @inline def onNext[A](
-    observer: InternalObserver[A],
-    nextValue: A,
-    transaction: Transaction
-  )(
-    implicit @unused ev: Protected
-  ): Unit = {
-    InternalObserver.onNext(observer, nextValue, transaction)
-  }
-
-  @inline def onError(
-    observer: InternalObserver[_],
-    nextError: Throwable,
-    transaction: Transaction
-  )(
-    implicit @unused ev: Protected
-  ): Unit = {
-    InternalObserver.onError(observer, nextError, transaction)
-  }
-
-  @inline def onTry[A](
-    observer: InternalObserver[A],
-    nextValue: Try[A],
-    transaction: Transaction
-  )(
-    implicit @unused ev: Protected
-  ): Unit = {
-    InternalObserver.onTry(observer, nextValue, transaction)
-  }
 }
