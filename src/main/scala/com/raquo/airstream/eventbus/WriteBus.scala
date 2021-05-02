@@ -1,6 +1,6 @@
 package com.raquo.airstream.eventbus
 
-import com.raquo.airstream.core.{EventStream, Observer, Transaction}
+import com.raquo.airstream.core.{EventStream, Observer, Protected, Transaction}
 import com.raquo.airstream.ownership.{Owner, Subscription}
 import com.raquo.airstream.util.hasDuplicateTupleKeys
 
@@ -44,7 +44,7 @@ class WriteBus[A] extends Observer[A] {
   override def onNext(nextValue: A): Unit = {
     if (stream.isStarted) { // important check
       // @TODO[Integrity] We rely on the knowledge that EventBusStream discards the transaction it's given. Laaaame
-      stream.onNext(nextValue, ignoredTransaction = null)
+      Protected.onNext(stream, nextValue, transaction = null)
     }
     // else {
     //   println(">>>> WriteBus.onNext called, but stream is not started!")
@@ -54,7 +54,7 @@ class WriteBus[A] extends Observer[A] {
   override def onError(nextError: Throwable): Unit = {
     if (stream.isStarted) {
       // @TODO[Integrity] We rely on the knowledge that EventBusStream discards the transaction it's given. Laaaame
-      stream.onError(nextError, transaction = null)
+      Protected.onError(stream, nextError, transaction = null)
     }
   }
 

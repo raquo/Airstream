@@ -16,7 +16,7 @@ class DelayEventStream[A](
 
   private val timerHandles: js.Array[SetTimeoutHandle] = js.Array()
 
-  override protected[airstream] def onNext(nextValue: A, transaction: Transaction): Unit = {
+  override protected def onNext(nextValue: A, transaction: Transaction): Unit = {
     var timerHandle: SetTimeoutHandle = null
     timerHandle = js.timers.setTimeout(delayMs.toDouble) {
       //println(s"> init trx from DelayEventStream.onNext($nextValue)")

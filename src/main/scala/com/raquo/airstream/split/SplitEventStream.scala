@@ -33,11 +33,11 @@ class SplitEventStream[M[_], Input, Output, Key](
     super.onStop()
   }
 
-  override protected[airstream] def onNext(nextInputs: M[Input], transaction: Transaction): Unit = {
+  override protected def onNext(nextInputs: M[Input], transaction: Transaction): Unit = {
     fireValue(memoizedProject(nextInputs), transaction)
   }
 
-  override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
+  override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
     fireError(nextError, transaction)
   }
 

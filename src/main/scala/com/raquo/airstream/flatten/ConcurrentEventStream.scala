@@ -50,11 +50,11 @@ class ConcurrentEventStream[A](
     super.onStop()
   }
 
-  override protected[airstream] def onNext(nextStream: EventStream[A], transaction: Transaction): Unit = {
+  override protected def onNext(nextStream: EventStream[A], transaction: Transaction): Unit = {
     addStream(nextStream)
   }
 
-  override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
+  override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
     fireError(nextError, transaction)
   }
 

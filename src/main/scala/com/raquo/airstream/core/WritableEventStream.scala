@@ -21,7 +21,7 @@ trait WritableEventStream[A] extends EventStream[A] with WritableObservable[A] {
     }
 
     internalObservers.foreach { observer =>
-      observer.onNext(nextValue, transaction)
+      Protected.onNext(observer, nextValue, transaction)
     }
   }
 
@@ -36,7 +36,7 @@ trait WritableEventStream[A] extends EventStream[A] with WritableObservable[A] {
     }
 
     internalObservers.foreach { observer =>
-      observer.onError(nextError, transaction)
+      Protected.onError(observer, nextError, transaction)
     }
   }
 

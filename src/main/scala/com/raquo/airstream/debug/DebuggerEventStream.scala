@@ -32,7 +32,7 @@ class DebuggerEventStream[A](
     debugOnStop()
   }
 
-  override protected[airstream] def onTry(nextParentValue: Try[A], transaction: Transaction): Unit = {
+  override protected def onTry(nextParentValue: Try[A], transaction: Transaction): Unit = {
     fireTry(nextParentValue, transaction)
   }
 }

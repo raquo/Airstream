@@ -31,7 +31,7 @@ class SwitchSignal[A](
     }
   )
 
-  override protected[airstream] def onTry(nextSignalTry: Try[Signal[A]], transaction: Transaction): Unit = {
+  override protected def onTry(nextSignalTry: Try[Signal[A]], transaction: Transaction): Unit = {
     val isSameSignal = nextSignalTry.isSuccess && nextSignalTry == currentSignalTry
     if (!isSameSignal) {
       removeInternalObserverFromCurrentSignal()

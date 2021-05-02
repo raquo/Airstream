@@ -18,5 +18,37 @@ object Protected {
     parents.foldLeft(0)((maxRank, parent) => Protected.topoRank(parent) max maxRank)
   }
 
-  def tryNow[A](signal: Signal[A])(implicit @unused ev: Protected): Try[A] = signal.tryNow()
+  @inline def tryNow[A](signal: Signal[A])(implicit @unused ev: Protected): Try[A] = signal.tryNow()
+
+  @inline def now[A](signal: Signal[A])(implicit @unused ev: Protected): A = signal.now()
+
+  @inline def onNext[A](
+    observer: InternalObserver[A],
+    nextValue: A,
+    transaction: Transaction
+  )(
+    implicit @unused ev: Protected
+  ): Unit = {
+    InternalObserver.onNext(observer, nextValue, transaction)
+  }
+
+  @inline def onError(
+    observer: InternalObserver[_],
+    nextError: Throwable,
+    transaction: Transaction
+  )(
+    implicit @unused ev: Protected
+  ): Unit = {
+    InternalObserver.onError(observer, nextError, transaction)
+  }
+
+  @inline def onTry[A](
+    observer: InternalObserver[A],
+    nextValue: Try[A],
+    transaction: Transaction
+  )(
+    implicit @unused ev: Protected
+  ): Unit = {
+    InternalObserver.onTry(observer, nextValue, transaction)
+  }
 }

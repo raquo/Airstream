@@ -15,7 +15,7 @@ class SyncDelayEventStream[A] (
 
   override protected val topoRank: Int = Protected.maxParentTopoRank(parent :: after :: Nil) + 1
 
-  override protected[airstream] def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
+  override protected def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
     if (!transaction.pendingObservables.contains(this)) {
        //println(s"Marking SyncDelayEventStream(${this.toString.substring(this.toString.indexOf('@'))}) as pending in TRX(${transaction.id})")
       transaction.pendingObservables.enqueue(this)

@@ -51,7 +51,7 @@ class SwitchEventStream[I, O](
     }
   )
 
-  override protected[airstream] def onNext(nextValue: I, transaction: Transaction): Unit = {
+  override protected def onNext(nextValue: I, transaction: Transaction): Unit = {
     val nextStream = makeStream(nextValue)
     val isSameStream = maybeCurrentEventStream.exists { currentStream =>
       currentStream.isSuccess && (currentStream.get eq nextStream)
@@ -64,7 +64,7 @@ class SwitchEventStream[I, O](
     }
   }
 
-  override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
+  override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
     removeInternalObserverFromCurrentEventStream()
     maybeCurrentEventStream = Failure(nextError)
     fireError(nextError, transaction)

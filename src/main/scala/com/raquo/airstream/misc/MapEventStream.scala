@@ -28,14 +28,14 @@ class MapEventStream[I, O](
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
-  override protected[airstream] def onNext(nextParentValue: I, transaction: Transaction): Unit = {
+  override protected def onNext(nextParentValue: I, transaction: Transaction): Unit = {
     Try(project(nextParentValue)).fold(
       onError(_, transaction),
       fireValue(_, transaction)
     )
   }
 
-  override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
+  override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
     recover.fold(
       // if no `recover` specified, fire original error
       fireError(nextError, transaction))(

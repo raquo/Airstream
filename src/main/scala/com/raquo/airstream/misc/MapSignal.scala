@@ -26,7 +26,7 @@ class MapSignal[I, O](
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
-  override protected[airstream] def onTry(nextParentValue: Try[I], transaction: Transaction): Unit = {
+  override protected def onTry(nextParentValue: Try[I], transaction: Transaction): Unit = {
     nextParentValue.fold(
       nextError => recover.fold(
         // if no `recover` specified, fire original error

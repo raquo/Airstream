@@ -33,7 +33,7 @@ class ThrottleEventStream[A](
 
   override protected val topoRank: Int = 1
 
-  override protected[airstream] def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
+  override protected def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
 
     val nowMs = js.Date.now()
 

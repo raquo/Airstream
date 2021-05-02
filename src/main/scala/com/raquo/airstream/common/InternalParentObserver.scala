@@ -31,11 +31,11 @@ object InternalParentObserver {
 
       override protected[this] val parent: Observable[A] = parentParam
 
-      override protected[airstream] final def onNext(nextValue: A, transaction: Transaction): Unit = {
+      override protected final def onNext(nextValue: A, transaction: Transaction): Unit = {
         onNextParam(nextValue, transaction)
       }
 
-      override protected[airstream] final def onError(nextError: Throwable, transaction: Transaction): Unit = {
+      override protected final def onError(nextError: Throwable, transaction: Transaction): Unit = {
         onErrorParam(nextError, transaction)
       }
     }

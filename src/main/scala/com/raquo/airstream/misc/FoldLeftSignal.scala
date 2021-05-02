@@ -21,7 +21,7 @@ class FoldLeftSignal[A, B](
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
-  override protected[airstream] def onTry(nextParentValue: Try[A], transaction: Transaction): Unit = {
+  override protected def onTry(nextParentValue: Try[A], transaction: Transaction): Unit = {
     fireTry(fn(tryNow(), nextParentValue), transaction)
   }
 

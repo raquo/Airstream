@@ -19,7 +19,7 @@ class FilterEventStream[A](
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
-  override protected[airstream] def onNext(nextParentValue: A, transaction: Transaction): Unit = {
+  override protected def onNext(nextParentValue: A, transaction: Transaction): Unit = {
     // @TODO[Performance] Can / should we replace internal Try()-s with try-catch blocks?
     Try(passes(nextParentValue)).fold(
       onError(_, transaction),
@@ -27,7 +27,7 @@ class FilterEventStream[A](
     )
   }
 
-  override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
+  override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
     fireError(nextError, transaction)
   }
 }
