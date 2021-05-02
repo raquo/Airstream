@@ -20,7 +20,7 @@ trait CustomSource[A] extends WritableObservable[A] {
   // --
 
   /** CustomSource is intended for observables that don't synchronously depend on other observables. */
-  override protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
   protected[this] var startIndex: StartIndex = 0
 

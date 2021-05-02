@@ -1,8 +1,8 @@
 package com.raquo.airstream.misc
 
-import com.raquo.airstream.common.{ InternalNextErrorObserver, SingleParentObservable }
+import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentObservable}
 import com.raquo.airstream.core.AirstreamError.ErrorHandlingError
-import com.raquo.airstream.core.{ Observable, Transaction, WritableEventStream }
+import com.raquo.airstream.core.{BaseObservable, Observable, Transaction, WritableEventStream}
 
 import scala.util.Try
 
@@ -26,7 +26,7 @@ class MapEventStream[I, O](
   recover: Option[PartialFunction[Throwable, Option[O]]]
 ) extends WritableEventStream[O] with SingleParentObservable[I, O] with InternalNextErrorObserver[I] {
 
-  override protected[airstream] val topoRank: Int = parent.topoRank + 1
+  override protected val topoRank: Int = BaseObservable.topoRank(parent) + 1
 
   override protected[airstream] def onNext(nextParentValue: I, transaction: Transaction): Unit = {
     Try(project(nextParentValue)).fold(

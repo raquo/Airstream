@@ -24,7 +24,7 @@ class DebounceEventStream[A](
 
   private[this] var maybeLastTimeoutHandle: js.UndefOr[SetTimeoutHandle] = js.undefined
 
-  override protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
   /** Every time [[parent]] emits an event, we clear the previous timer and set a new one.
     * This stream only emits when the parent has stopped emitting for [[intervalMs]] ms.

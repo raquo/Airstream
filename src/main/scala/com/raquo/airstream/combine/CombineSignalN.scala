@@ -1,7 +1,7 @@
 package com.raquo.airstream.combine
 
 import com.raquo.airstream.common.InternalParentObserver
-import com.raquo.airstream.core.{ Signal, WritableSignal }
+import com.raquo.airstream.core.{BaseObservable, Signal, WritableSignal}
 
 import scala.util.Try
 
@@ -13,7 +13,7 @@ class CombineSignalN[A, Out](
 
   // @TODO[API] Maybe this should throw if parents.isEmpty
 
-  override protected[airstream] val topoRank: Int = parents.foldLeft(0)(_ max _.topoRank) + 1
+  override protected val topoRank: Int = BaseObservable.maxParentTopoRank(parents) + 1
 
   override protected[this] def initialValue: Try[Out] = combinedValue
 

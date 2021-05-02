@@ -12,7 +12,7 @@ class DelayEventStream[A](
 ) extends WritableEventStream[A] with SingleParentObservable[A, A] with InternalNextErrorObserver[A] {
 
   /** Async stream, so reset rank */
-  override protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
   private val timerHandles: js.Array[SetTimeoutHandle] = js.Array()
 

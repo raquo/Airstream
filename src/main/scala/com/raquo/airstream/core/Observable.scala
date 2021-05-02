@@ -37,5 +37,6 @@ object Observable {
     }
   }
 
-  def debugTopoRank(observable: Observable[_]): Int = observable.topoRank
+  // @nc deprecate this
+  def debugTopoRank(observable: Observable[_]): Int = BaseObservable.topoRank(observable)
 }

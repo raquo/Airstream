@@ -12,7 +12,7 @@ class EventBusStream[A] private[eventbus] () extends WritableEventStream[A] with
   /** Made more public to allow usage from WriteBus */
   override protected[eventbus] def isStarted: Boolean = super.isStarted
 
-  override protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
   @inline private[eventbus] def addSource(sourceStream: EventStream[A]): Unit = {
     sourceStreams.push(sourceStream)

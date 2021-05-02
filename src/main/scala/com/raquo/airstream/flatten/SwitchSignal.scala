@@ -18,7 +18,7 @@ class SwitchSignal[A](
   override protected[this] val parent: Signal[Signal[A]]
 ) extends WritableSignal[A] with SingleParentObservable[Signal[A], A] with InternalTryObserver[Signal[A]] {
 
-  override protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
   override protected def initialValue: Try[A] = parent.tryNow().flatMap(_.tryNow())
 

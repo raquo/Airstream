@@ -43,7 +43,7 @@ class AjaxEventStream(
   readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
 ) extends WritableEventStream[dom.XMLHttpRequest] {
 
-  protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
   private var pendingRequest: Option[dom.XMLHttpRequest] = None
 

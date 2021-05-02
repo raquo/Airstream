@@ -31,7 +31,7 @@ class ThrottleEventStream[A](
 
   private[this] var maybeLastTimeoutHandle: js.UndefOr[SetTimeoutHandle] = js.undefined
 
-  override protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
   override protected[airstream] def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
 

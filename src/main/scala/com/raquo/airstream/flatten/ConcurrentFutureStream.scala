@@ -27,7 +27,7 @@ class ConcurrentFutureStream[A](
 
   private[this] var lastEmittedValueIndex: Int = 0
 
-  override protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
   override protected[airstream] def onNext(nextFuture: Future[A], transaction: Transaction): Unit = {
     lastFutureIndex += 1
