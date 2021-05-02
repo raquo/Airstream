@@ -19,7 +19,7 @@ class Transaction(private[Transaction] val code: Transaction => Any) {
     * Corollary: An Observable that is dequeue-d from here does not synchronously depend on any other pending observables
     */
   private[airstream] val pendingObservables: JsPriorityQueue[SyncObservable[_]] = {
-    new JsPriorityQueue(BaseObservable.topoRank)
+    new JsPriorityQueue(Protected.topoRank)
   }
 
   Transaction.pendingTransactions.add(this)

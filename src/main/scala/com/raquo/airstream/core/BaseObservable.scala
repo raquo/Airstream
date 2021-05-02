@@ -29,7 +29,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
 
   @inline protected implicit def protectedAccessEvidence: Protected = Protected.protectedAccessEvidence
 
-  /** Note: Use BaseObservable.topoRank(observable) to read another observable's topoRank if needed */
+  /** Note: Use Protected.topoRank(observable) to read another observable's topoRank if needed */
   protected val topoRank: Int
 
 
@@ -159,9 +159,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
 
 object BaseObservable {
 
-  def topoRank[O[+_] <: Observable[_]](observable: BaseObservable[O, _]): Int = observable.topoRank
-
-  def maxParentTopoRank[O[+_] <: Observable[_]](parents: Iterable[BaseObservable[O, _]]): Int = {
-    parents.foldLeft(0)((maxRank, parent) => parent.topoRank max maxRank)
+  @inline private[airstream] def topoRank[O[+_] <: Observable[_]](observable: BaseObservable[O, _]): Int = {
+    observable.topoRank
   }
 }

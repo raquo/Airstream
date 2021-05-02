@@ -1,6 +1,6 @@
 package com.raquo.airstream.debug
 
-import com.raquo.airstream.core.{BaseObservable, EventStream, Transaction, WritableEventStream}
+import com.raquo.airstream.core.{EventStream, Protected, Transaction, WritableEventStream}
 
 import scala.util.{Failure, Success, Try}
 
@@ -10,7 +10,7 @@ class DebuggerEventStream[A](
   override protected val debugger: Debugger[A]
 ) extends WritableEventStream[A] with DebuggerObservable[A] {
 
-  override protected val topoRank: Int = BaseObservable.topoRank(parent) + 1
+  override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
   override protected[this] def fireValue(nextValue: A, transaction: Transaction): Unit = {
     debugFireTry(Success(nextValue))

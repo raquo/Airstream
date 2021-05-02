@@ -2,7 +2,7 @@ package com.raquo.airstream.misc
 
 import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
 import com.raquo.airstream.core.AirstreamError.ErrorHandlingError
-import com.raquo.airstream.core.{BaseObservable, Signal, Transaction, WritableSignal}
+import com.raquo.airstream.core.{Protected, Signal, Transaction, WritableSignal}
 
 import scala.util.{Failure, Success, Try}
 
@@ -24,7 +24,7 @@ class MapSignal[I, O](
   protected[this] val recover: Option[PartialFunction[Throwable, Option[O]]]
 ) extends WritableSignal[O] with SingleParentObservable[I, O] with InternalTryObserver[I] {
 
-  override protected val topoRank: Int = BaseObservable.topoRank(parent) + 1
+  override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
   override protected[airstream] def onTry(nextParentValue: Try[I], transaction: Transaction): Unit = {
     nextParentValue.fold(

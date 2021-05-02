@@ -37,6 +37,6 @@ object Observable {
     }
   }
 
-  // @nc deprecate this
-  def debugTopoRank(observable: Observable[_]): Int = BaseObservable.topoRank(observable)
+  @deprecated("0.13.0", "Use `Protected.topoRank` instead of `Observable.debugTopoRank`")
+  def debugTopoRank(observable: Observable[_]): Int = Protected.topoRank(observable)
 }

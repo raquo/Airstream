@@ -1,6 +1,6 @@
 package com.raquo.airstream.debug
 
-import com.raquo.airstream.core.{Observable, BaseObservable}
+import com.raquo.airstream.core.{BaseObservable, Observable, Protected}
 import com.raquo.airstream.util.always
 import org.scalajs.dom
 
@@ -23,7 +23,7 @@ import scala.util.{Failure, Success, Try}
 class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseObservable[Self, A]) {
 
   /** Return the observable's topoRank. This does not affect the observable in any way. */
-  def debugTopoRank: Int = BaseObservable.topoRank(observable)
+  def debugTopoRank: Int = Protected.topoRank(observable)
 
   /** Create a new observable that listens to the original, and
     * set the displayName of the new observable.
@@ -36,7 +36,7 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
     * the "foo" displayName of `stream` itself.
     */
   def debugWithName(displayName: String): Self[A] = {
-    val emptyDebugger = Debugger(BaseObservable.topoRank(observable))
+    val emptyDebugger = Debugger(Protected.topoRank(observable))
     observable.debugWith(emptyDebugger).setDisplayName(displayName)
   }
 
@@ -45,7 +45,7 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
   /** Execute fn on every emitted event or error */
   def debugSpy(fn: Try[A] => Unit): Self[A] = {
     val debugger = Debugger(
-      BaseObservable.topoRank(observable),
+      Protected.topoRank(observable),
       onFire = fn
     )
     observable.debugWith(debugger)
@@ -73,8 +73,8 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
     */
   def debugSpyLifecycle(startFn: Int => Unit, stopFn: () => Unit): Self[A] = {
     val debugger = Debugger(
-      BaseObservable.topoRank(observable),
-      onStart = () => startFn(BaseObservable.topoRank(observable)),
+      Protected.topoRank(observable),
+      onStart = () => startFn(Protected.topoRank(observable)),
       onStop = stopFn
     )
     observable.debugWith(debugger)
