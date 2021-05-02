@@ -1,7 +1,7 @@
 package com.somebody.`else`
 
 import com.raquo.airstream.UnitSpec
-import com.raquo.airstream.core.{BaseObservable, Observable, Signal, WritableSignal}
+import com.raquo.airstream.core.{BaseObservable, Protected, Signal, WritableSignal}
 
 import scala.util.Try
 
@@ -13,7 +13,7 @@ class ExtensionSpec extends UnitSpec {
 
       override protected val topoRank: Int = BaseObservable.topoRank(parent) + 1
 
-      override protected def initialValue: Try[O] = ??? //parent.tryNow().map(project) // @nc
+      override protected def initialValue: Try[O] = Protected.tryNow(parent).map(project)
     }
   }
 }

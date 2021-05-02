@@ -27,6 +27,8 @@ import scala.util.Try
   */
 trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Named {
 
+  @inline protected implicit def protectedAccessEvidence: Protected = Protected.protectedAccessEvidence
+
   /** Note: Use BaseObservable.topoRank(observable) to read another observable's topoRank if needed */
   protected val topoRank: Int
 
