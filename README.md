@@ -57,7 +57,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Websockets](#websockets)
     * [DOM Events](#dom-events)
     * [Custom Event Sources](#custom-event-sources)
-    * [Custom Observables](#custom-observables)
+    * [Extending Observables](#extending-observables)
   * [Sources & Sinks](#sources--sinks)
   * [FRP Glitches](#frp-glitches)
     * [Other Libraries](#other-libraries)
@@ -784,7 +784,7 @@ Let's look at the methods that `CustomStreamSource` makes available to us:
 ```scala
 class CustomSignalSource[A] (
   getInitialValue: => Try[A],
-  makeConfig: (SetCurrentValue[A], GetCurrentValue[A], GetStartIndex, GetIsStarted) => CustomSource.Config,
+  makeConfig: (SetCurrentValue[A], GetCurrentValue[A], GetStartIndex, GetIsStarted) => CustomSource.Config
 )
 ```
 
@@ -793,11 +793,24 @@ class CustomSignalSource[A] (
 Generally signals need to be started in order for their current value to update. Stopped signals generally don't update without listeners, unless they are a `StrictSignal` like `Var#signal`. `CustomSignalSource` is not a `StrictSignal` so there is no expectation for it to keep updating its value when it's stopped. Users should keep listening to signals that they care about.
 
 
-#### Custom Observables
+#### Extending Observables
 
-If you need a custom observable that depends on other Airstream observables, you can subclass EventStream or Signal. It can be intimidating at first, but actually it's pretty easy. Look at the various observables available in Airstream for inspiration, starting with `MapEventStream`.
+If you need a custom observable that depends on another Airstream observable, you can subclass WritableEventStream or WritableSignal. See existing classes for inspiration, such as `MapSignal` and `MapEventStream`.
 
-Note: Observable's `topoRank` field is `protected[airstream]`, so you'll need to override it with a **public** val in your non-airstream subclass. See [#37](https://github.com/raquo/Airstream/issues/37).
+You will likely want to mix in `SingleParentObservable` trait and either `InternalTryObserver` (for signals) or `InternalNextErrorObserver` (for streams). Then you will just need to implement `onTry` (for signals) or `onNext` / `onError` (for streams) methods, which will be triggered when the parent observable emits. In turn, those methods should call `fireValue`, `fireError` or `fireTry` to make your custom observable emit a value. Also, for signals you will need to implement `initivalValue` which you should derive from the parent observable's current value (NOT from the parent observable's `initialValue`).
+
+If you want to put asynchronous logic in your observable, make sure to have a good understanding of Airstream transactions and topoRank, and consult with other asynchronous observables implementations such as `DelayEventStream`.
+
+If your custom observable does not depend on any Airstream observables, e.g. if you're writing a compatibility layer for another streaming library, you generally should be able to use the simpler [Custom Sources](#custom-sources) API.
+
+
+##### Accessing protected members
+
+Some values and methods that you might want to access on observables are `protected`. That means that the compiler will only let you access those values and methods on the same instance. So, you can read `this.topoRank`, but you can't read `parentObservable.topoRank`. To get around this, use the `Protected` object: `Protected.topoRank(parentObservable)`.
+
+Aside from `topoRank`, you will need to access `tryNow()` and `now()` this way, e.g. when implementing a custom signal's `initialValue`. These methods require an implicit evidence of type `Protected`, which is automatically in scope if you're calling these methods from inside your custom observable. You're not supposed to access a signal's current value from the outside, without proving that the signal is running (e.g. by subscribing to it), otherwise you might get a stale value.
+
+Honestly all this "protected" business smells funny to me, but I couldn't figure out a better way to allow third party extensions without making these protected members public.
 
 
 
