@@ -795,13 +795,13 @@ Generally signals need to be started in order for their current value to update.
 
 #### Extending Observables
 
-If you need a custom observable that depends on another Airstream observable, you can subclass WritableEventStream or WritableSignal. See existing classes for inspiration, such as `MapSignal` and `MapEventStream`.
+If you need a custom observable that depends on another Airstream observable, you can subclass `WritableEventStream` or `WritableSignal`. See existing classes for inspiration, such as `MapSignal` and `MapEventStream`.
 
-You will likely want to mix in `SingleParentObservable` trait and either `InternalTryObserver` (for signals) or `InternalNextErrorObserver` (for streams). Then you will just need to implement `onTry` (for signals) or `onNext` / `onError` (for streams) methods, which will be triggered when the parent observable emits. In turn, those methods should call `fireValue`, `fireError` or `fireTry` to make your custom observable emit a value. Also, for signals you will need to implement `initivalValue` which you should derive from the parent observable's current value (NOT from the parent observable's `initialValue`).
+You will likely want to mix in the `SingleParentObservable` trait and either `InternalTryObserver` (for signals) or `InternalNextErrorObserver` (for streams). Then you will just need to implement `onTry` (for signals) or `onNext` / `onError` (for streams) methods, which will be triggered when the parent observable emits. In turn, those methods should call `fireValue`, `fireError` or `fireTry` to make your custom observable emit its own value. Also, for signals you will need to implement `initialValue` which you should derive from the parent observable's **current** value (NOT from the parent observable's `initialValue`).
 
 If you want to put asynchronous logic in your observable, make sure to have a good understanding of Airstream transactions and topoRank, and consult with other asynchronous observables implementations such as `DelayEventStream`.
 
-If your custom observable does not depend on any Airstream observables, e.g. if you're writing a compatibility layer for another streaming library, you generally should be able to use the simpler [Custom Sources](#custom-sources) API.
+If your custom observable does not depend on any Airstream observables, e.g. if you're writing a compatibility layer for a third party library, you generally should be able to use the simpler [Custom Sources](#custom-event-sources) API.
 
 
 ##### Accessing protected members
