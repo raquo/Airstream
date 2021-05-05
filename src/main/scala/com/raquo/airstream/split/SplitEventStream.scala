@@ -1,7 +1,7 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.common.{ InternalNextErrorObserver, SingleParentObservable }
-import com.raquo.airstream.core.{ EventStream, Signal, Transaction, WritableEventStream }
+import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentObservable}
+import com.raquo.airstream.core.{EventStream, Protected, Signal, Transaction, WritableEventStream}
 
 import scala.collection.mutable
 import scala.util.Try
@@ -24,7 +24,7 @@ class SplitEventStream[M[_], Input, Output, Key](
   splittable: Splittable[M]
 ) extends WritableEventStream[M[Output]] with SingleParentObservable[M[Input], M[Output]] with InternalNextErrorObserver[M[Input]] {
 
-  override protected[airstream] val topoRank: Int = parent.topoRank + 1
+  override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
   private[this] var memoized: Map[Key, (Input, Output)] = Map.empty
 
@@ -33,11 +33,11 @@ class SplitEventStream[M[_], Input, Output, Key](
     super.onStop()
   }
 
-  override protected[airstream] def onNext(nextInputs: M[Input], transaction: Transaction): Unit = {
+  override protected def onNext(nextInputs: M[Input], transaction: Transaction): Unit = {
     fireValue(memoizedProject(nextInputs), transaction)
   }
 
-  override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
+  override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
     fireError(nextError, transaction)
   }
 

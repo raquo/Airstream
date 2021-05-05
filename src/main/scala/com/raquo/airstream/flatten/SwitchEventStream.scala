@@ -33,7 +33,7 @@ class SwitchEventStream[I, O](
   makeStream: I => EventStream[O]
 ) extends WritableEventStream[O] with SingleParentObservable[I, O] with InternalNextErrorObserver[I] {
 
-  override protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
   private[this] var maybeCurrentEventStream: js.UndefOr[Try[EventStream[O]]] = parent match {
     case signal: Signal[I @unchecked] => signal.tryNow().map(makeStream)
@@ -51,7 +51,7 @@ class SwitchEventStream[I, O](
     }
   )
 
-  override protected[airstream] def onNext(nextValue: I, transaction: Transaction): Unit = {
+  override protected def onNext(nextValue: I, transaction: Transaction): Unit = {
     val nextStream = makeStream(nextValue)
     val isSameStream = maybeCurrentEventStream.exists { currentStream =>
       currentStream.isSuccess && (currentStream.get eq nextStream)
@@ -64,7 +64,7 @@ class SwitchEventStream[I, O](
     }
   }
 
-  override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
+  override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
     removeInternalObserverFromCurrentEventStream()
     maybeCurrentEventStream = Failure(nextError)
     fireError(nextError, transaction)

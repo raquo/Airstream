@@ -26,7 +26,7 @@ class ConcurrentEventStream[A](
     onError = (nextError, _) => new Transaction(fireError(nextError, _))
   )
 
-  override protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
   override protected[this] def onStart(): Unit = {
     parent match {
@@ -50,11 +50,11 @@ class ConcurrentEventStream[A](
     super.onStop()
   }
 
-  override protected[airstream] def onNext(nextStream: EventStream[A], transaction: Transaction): Unit = {
+  override protected def onNext(nextStream: EventStream[A], transaction: Transaction): Unit = {
     addStream(nextStream)
   }
 
-  override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
+  override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
     fireError(nextError, transaction)
   }
 

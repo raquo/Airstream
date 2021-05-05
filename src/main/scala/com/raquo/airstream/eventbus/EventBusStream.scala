@@ -12,7 +12,7 @@ class EventBusStream[A] private[eventbus] () extends WritableEventStream[A] with
   /** Made more public to allow usage from WriteBus */
   override protected[eventbus] def isStarted: Boolean = super.isStarted
 
-  override protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
   @inline private[eventbus] def addSource(sourceStream: EventStream[A]): Unit = {
     sourceStreams.push(sourceStream)
@@ -32,7 +32,7 @@ class EventBusStream[A] private[eventbus] () extends WritableEventStream[A] with
   }
 
   /** @param ignoredTransaction normally EventBus emits all events in a new transaction, so it ignores whatever is provided. */
-  override protected[airstream] def onNext(nextValue: A, ignoredTransaction: Transaction): Unit = {
+  override protected def onNext(nextValue: A, ignoredTransaction: Transaction): Unit = {
     //dom.console.log(s">>>>WBS.onNext($nextValue): isStarted=$isStarted")
     //dom.console.log(sources)
 
@@ -55,7 +55,7 @@ class EventBusStream[A] private[eventbus] () extends WritableEventStream[A] with
     fireError(nextError, sharedTransaction)
   }
 
-  override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
+  override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
     new Transaction(fireError(nextError, _))
   }
 

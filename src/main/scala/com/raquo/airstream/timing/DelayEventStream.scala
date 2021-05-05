@@ -12,11 +12,11 @@ class DelayEventStream[A](
 ) extends WritableEventStream[A] with SingleParentObservable[A, A] with InternalNextErrorObserver[A] {
 
   /** Async stream, so reset rank */
-  override protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
   private val timerHandles: js.Array[SetTimeoutHandle] = js.Array()
 
-  override protected[airstream] def onNext(nextValue: A, transaction: Transaction): Unit = {
+  override protected def onNext(nextValue: A, transaction: Transaction): Unit = {
     var timerHandle: SetTimeoutHandle = null
     timerHandle = js.timers.setTimeout(delayMs.toDouble) {
       //println(s"> init trx from DelayEventStream.onNext($nextValue)")

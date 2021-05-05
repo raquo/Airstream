@@ -16,7 +16,7 @@ class PeriodicEventStream[A](
   resetOnStop: Boolean
 ) extends WritableEventStream[A] {
 
-  override protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
   private var currentValue: A = initial
 

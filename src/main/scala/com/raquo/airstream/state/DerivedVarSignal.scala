@@ -16,7 +16,7 @@ class DerivedVarSignal[A, B](
   recover = None
 ) with OwnedSignal[B] {
 
-  override protected[airstream] def onTry(nextParentValue: Try[A], transaction: Transaction): Unit = {
+  override protected def onTry(nextParentValue: Try[A], transaction: Transaction): Unit = {
     super.onTry(nextParentValue, transaction)
   }
 

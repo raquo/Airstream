@@ -27,13 +27,10 @@ import scala.util.Try
   */
 trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Named {
 
-  /** When subclassing Observable **outside of com.raquo.airstream package**, just make this field public:
-    *
-    *     override val topoRank: Int = ???
-    *
-    * "protected[airstream]" will allow this. See https://github.com/raquo/Airstream/issues/37
-    */
-  protected[airstream] val topoRank: Int
+  @inline protected implicit def protectedAccessEvidence: Protected = Protected.protectedAccessEvidence
+
+  /** Note: Use Protected.topoRank(observable) to read another observable's topoRank if needed */
+  protected val topoRank: Int
 
 
   /** @param project Note: guarded against exceptions */
@@ -158,4 +155,11 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     */
   protected def onStop(): Unit = ()
 
+}
+
+object BaseObservable {
+
+  @inline private[airstream] def topoRank[O[+_] <: Observable[_]](observable: BaseObservable[O, _]): Int = {
+    observable.topoRank
+  }
 }

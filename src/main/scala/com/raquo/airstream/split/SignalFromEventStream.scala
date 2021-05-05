@@ -1,7 +1,7 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.common.{ InternalTryObserver, SingleParentObservable }
-import com.raquo.airstream.core.{ EventStream, Transaction, WritableSignal }
+import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
+import com.raquo.airstream.core.{EventStream, Protected, Transaction, WritableSignal}
 
 import scala.util.Try
 
@@ -10,11 +10,11 @@ class SignalFromEventStream[A](
   lazyInitialValue: => Try[A]
 ) extends WritableSignal[A] with SingleParentObservable[A, A] with InternalTryObserver[A] {
 
-  override protected[airstream] val topoRank: Int = parent.topoRank + 1
+  override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
   override protected def initialValue: Try[A] = lazyInitialValue
 
-  override protected[airstream] def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
+  override protected def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
     fireTry(nextValue, transaction)
   }
 }

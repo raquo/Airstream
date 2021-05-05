@@ -18,7 +18,7 @@ class SwitchSignal[A](
   override protected[this] val parent: Signal[Signal[A]]
 ) extends WritableSignal[A] with SingleParentObservable[Signal[A], A] with InternalTryObserver[Signal[A]] {
 
-  override protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
   override protected def initialValue: Try[A] = parent.tryNow().flatMap(_.tryNow())
 
@@ -31,7 +31,7 @@ class SwitchSignal[A](
     }
   )
 
-  override protected[airstream] def onTry(nextSignalTry: Try[Signal[A]], transaction: Transaction): Unit = {
+  override protected def onTry(nextSignalTry: Try[Signal[A]], transaction: Transaction): Unit = {
     val isSameSignal = nextSignalTry.isSuccess && nextSignalTry == currentSignalTry
     if (!isSameSignal) {
       removeInternalObserverFromCurrentSignal()

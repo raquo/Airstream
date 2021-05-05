@@ -22,7 +22,7 @@ class FutureSignal[A](
   future: Future[A]
 ) extends WritableSignal[Option[A]] with StrictSignal[Option[A]] {
 
-  override protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
   override protected[this] def initialValue: Try[Option[A]] = future.value.fold[Try[Option[A]]](
     Success(None)

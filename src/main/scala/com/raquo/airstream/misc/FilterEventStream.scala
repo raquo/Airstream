@@ -1,7 +1,7 @@
 package com.raquo.airstream.misc
 
-import com.raquo.airstream.common.{ InternalNextErrorObserver, SingleParentObservable }
-import com.raquo.airstream.core.{ EventStream, Transaction, WritableEventStream }
+import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentObservable}
+import com.raquo.airstream.core.{EventStream, Protected, Transaction, WritableEventStream}
 
 import scala.util.Try
 
@@ -17,9 +17,9 @@ class FilterEventStream[A](
   passes: A => Boolean
 ) extends WritableEventStream[A] with SingleParentObservable[A, A] with InternalNextErrorObserver[A] {
 
-  override protected[airstream] val topoRank: Int = parent.topoRank + 1
+  override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
-  override protected[airstream] def onNext(nextParentValue: A, transaction: Transaction): Unit = {
+  override protected def onNext(nextParentValue: A, transaction: Transaction): Unit = {
     // @TODO[Performance] Can / should we replace internal Try()-s with try-catch blocks?
     Try(passes(nextParentValue)).fold(
       onError(_, transaction),
@@ -27,7 +27,7 @@ class FilterEventStream[A](
     )
   }
 
-  override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
+  override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
     fireError(nextError, transaction)
   }
 }

@@ -19,7 +19,7 @@ trait InternalParentObserver[A] extends InternalObserver[A] {
 
 object InternalParentObserver {
 
-  protected[airstream] def apply[A](
+  def apply[A](
     parent: Observable[A],
     onNext: (A, Transaction) => Unit,
     onError: (Throwable, Transaction) => Unit
@@ -31,17 +31,17 @@ object InternalParentObserver {
 
       override protected[this] val parent: Observable[A] = parentParam
 
-      override protected[airstream] final def onNext(nextValue: A, transaction: Transaction): Unit = {
+      override protected final def onNext(nextValue: A, transaction: Transaction): Unit = {
         onNextParam(nextValue, transaction)
       }
 
-      override protected[airstream] final def onError(nextError: Throwable, transaction: Transaction): Unit = {
+      override protected final def onError(nextError: Throwable, transaction: Transaction): Unit = {
         onErrorParam(nextError, transaction)
       }
     }
   }
 
-  protected[airstream] def fromTry[A](
+  def fromTry[A](
     parent: Observable[A],
     onTry: (Try[A], Transaction) => Unit
   ): InternalParentObserver[A] = {
@@ -51,7 +51,7 @@ object InternalParentObserver {
 
       override protected[this] val parent: Observable[A] = parentParam
 
-      override protected[airstream] final def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
+      override protected final def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
         onTryParam(nextValue, transaction)
       }
     }

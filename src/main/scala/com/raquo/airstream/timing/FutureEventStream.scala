@@ -17,7 +17,7 @@ import scala.concurrent.Future
   */
 class FutureEventStream[A](future: Future[A], emitIfFutureCompleted: Boolean) extends WritableEventStream[A] {
 
-  override protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
   if (!future.isCompleted || emitIfFutureCompleted) {
     // @TODO[API] Do we need "isStarted" filter on these? Doesn't seem to affect anything for now...

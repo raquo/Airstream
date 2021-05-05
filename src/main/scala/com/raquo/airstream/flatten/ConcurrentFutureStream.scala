@@ -27,9 +27,9 @@ class ConcurrentFutureStream[A](
 
   private[this] var lastEmittedValueIndex: Int = 0
 
-  override protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
-  override protected[airstream] def onNext(nextFuture: Future[A], transaction: Transaction): Unit = {
+  override protected def onNext(nextFuture: Future[A], transaction: Transaction): Unit = {
     lastFutureIndex += 1
     val nextFutureIndex = lastFutureIndex
     if (!nextFuture.isCompleted || emitIfFutureCompleted) {
@@ -44,7 +44,7 @@ class ConcurrentFutureStream[A](
     }
   }
 
-  override protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit = {
+  override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
     lastFutureIndex += 1
     val nextFutureIndex = lastFutureIndex
     if (!dropPreviousValues || (nextFutureIndex > lastEmittedValueIndex)) {

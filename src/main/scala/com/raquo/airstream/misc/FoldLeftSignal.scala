@@ -1,7 +1,7 @@
 package com.raquo.airstream.misc
 
-import com.raquo.airstream.common.{ InternalTryObserver, SingleParentObservable }
-import com.raquo.airstream.core.{ Observable, Transaction, WritableSignal }
+import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
+import com.raquo.airstream.core.{Observable, Protected, Transaction, WritableSignal}
 
 import scala.util.Try
 
@@ -19,9 +19,9 @@ class FoldLeftSignal[A, B](
   fn: (Try[B], Try[A]) => Try[B]
 ) extends WritableSignal[B] with SingleParentObservable[A, B] with InternalTryObserver[A] {
 
-  override protected[airstream] val topoRank: Int = parent.topoRank + 1
+  override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
-  override protected[airstream] def onTry(nextParentValue: Try[A], transaction: Transaction): Unit = {
+  override protected def onTry(nextParentValue: Try[A], transaction: Transaction): Unit = {
     fireTry(fn(tryNow(), nextParentValue), transaction)
   }
 

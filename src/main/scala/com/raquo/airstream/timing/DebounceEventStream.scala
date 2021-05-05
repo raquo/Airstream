@@ -24,12 +24,12 @@ class DebounceEventStream[A](
 
   private[this] var maybeLastTimeoutHandle: js.UndefOr[SetTimeoutHandle] = js.undefined
 
-  override protected[airstream] val topoRank: Int = 1
+  override protected val topoRank: Int = 1
 
   /** Every time [[parent]] emits an event, we clear the previous timer and set a new one.
     * This stream only emits when the parent has stopped emitting for [[intervalMs]] ms.
     */
-  override protected[airstream] def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
+  override protected def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
     maybeLastTimeoutHandle.foreach(js.timers.clearTimeout)
     maybeLastTimeoutHandle = js.defined(
       js.timers.setTimeout(intervalMs.toDouble) {

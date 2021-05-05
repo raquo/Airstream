@@ -5,13 +5,13 @@ import scala.util.{Failure, Success, Try}
 trait InternalObserver[-A] {
 
   /** Must not throw */
-  protected[airstream] def onNext(nextValue: A, transaction: Transaction): Unit
+  protected def onNext(nextValue: A, transaction: Transaction): Unit
 
   /** Must not throw */
-  protected[airstream] def onError(nextError: Throwable, transaction: Transaction): Unit
+  protected def onError(nextError: Throwable, transaction: Transaction): Unit
 
   /** Must not throw */
-  protected[airstream] def onTry(nextValue: Try[A], transaction: Transaction): Unit
+  protected def onTry(nextValue: Try[A], transaction: Transaction): Unit
 }
 
 object InternalObserver {
@@ -56,5 +56,29 @@ object InternalObserver {
         onTryParam(nextValue, transaction)
       }
     }
+  }
+
+  @inline private[airstream] def onNext[A](
+    observer: InternalObserver[A],
+    nextValue: A,
+    transaction: Transaction
+  ): Unit = {
+    observer.onNext(nextValue, transaction)
+  }
+
+  @inline private[airstream] def onError(
+    observer: InternalObserver[_],
+    nextError: Throwable,
+    transaction: Transaction
+  ): Unit = {
+    observer.onError(nextError, transaction)
+  }
+
+  @inline private[airstream] def onTry[A](
+    observer: InternalObserver[A],
+    nextValue: Try[A],
+    transaction: Transaction
+  ): Unit = {
+    observer.onTry(nextValue, transaction)
   }
 }
