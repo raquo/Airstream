@@ -5,12 +5,12 @@ enablePlugins(ScalaJSBundlerPlugin)
 libraryDependencies ++= Seq(
   ("org.scala-js" %%% "scalajs-dom" % Versions.ScalaJsDom).cross(CrossVersion.for3Use2_13),
   "app.tulz" %%% "tuplez-full-light" % Versions.Tuplez,
-  "org.scalatest" %%% "scalatest" % (if (scalaVersion.value == Versions.Scala_3_RC2) "3.2.7" else "3.2.8") % Test
+  "org.scalatest" %%% "scalatest" % Versions.ScalaTest % Test
 )
 
 scalaVersion := Versions.Scala_2_13
 
-crossScalaVersions := Seq(Versions.Scala_2_12, Versions.Scala_2_13, Versions.Scala_3_RC2, Versions.Scala_3_RC3)
+crossScalaVersions := Seq(Versions.Scala_2_12, Versions.Scala_2_13, Versions.Scala_3)
 
 scalacOptions ~= { options: Seq[String] =>
   options.filterNot(Set(
