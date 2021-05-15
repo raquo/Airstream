@@ -8,9 +8,9 @@ libraryDependencies ++= Seq(
   "org.scalatest" %%% "scalatest" % Versions.ScalaTest % Test
 )
 
-scalaVersion := Versions.Scala_2_13
+scalaVersion := Versions.Scala_3
 
-crossScalaVersions := Seq(Versions.Scala_2_12, Versions.Scala_2_13, Versions.Scala_3)
+//crossScalaVersions := Seq(Versions.Scala_2_12, Versions.Scala_2_13, Versions.Scala_3)
 
 scalacOptions ~= { options: Seq[String] =>
   options.filterNot(Set(
