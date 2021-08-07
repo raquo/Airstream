@@ -213,14 +213,16 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
 
     val x = Var(1)
     val y = Var(100)
+    val z = Var("")
 
     lazy val err1 = new Exception("err1")
     lazy val err2 = new Exception("err2")
 
-    Var.set(x -> 2, y -> 200)
+    Var.set(x -> 2, y -> 200, z -> "z")
 
     assert(x.now() == 2)
     assert(y.now() == 200)
+    assert(z.now() == "z")
 
     // --
 
@@ -240,20 +242,23 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     // @TODO[API] Figure out if there is an elegant solution that would allow for type inference here
     val result = Try(Var.update(
       x -> ((_: Int) => 4),
-      y -> ((curr: Int) => curr + 100)
+      y -> ((curr: Int) => curr + 100),
+      z -> ((curr: String) => curr + "_")
     ))
 
     // Can't update 'x' because it's failed.
-    // Both updates will fail because of atomicity. All Vars will retain their previous values.
+    // All batched updates will fail because of atomicity. All Vars will retain their previous values.
     assert(x.tryNow() == Failure(err1))
     assert(y.now() == 300)
+    assert(z.now() == "z")
     assert(result.isFailure)
 
     // --
 
-    // Same as above but ordered differently
+    // Same as above but ordered differently, so that the failing update is last.
     val result2 = Try(Var.update(
       y -> ((curr: Int) => curr + 100),
+      z -> ((curr: String) => curr + "a"),
       x -> ((_: Int) => 4)
     ))
 
@@ -261,17 +266,20 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     // Both updates will fail because of atomicity. All Vars will retain their previous values.
     assert(x.tryNow() == Failure(err1))
     assert(y.now() == 300)
+    assert(z.now() == "z")
     assert(result2.isFailure)
 
     // --
 
     Var.tryUpdate(
       x -> ((_: Try[Int]) => Success(5)),
-      y -> ((_: Try[Int]) => Failure(err2))
+      y -> ((_: Try[Int]) => Failure(err2)),
+      z -> ((curr: Try[String]) => curr.map(_ + "a"))
     )
 
     assert(x.now() == 5)
     assert(y.tryNow() == Failure(err2))
+    assert(z.now() == "za")
 
     assert(errorEffects.toList == List(
       Effect("unhandled", err2)

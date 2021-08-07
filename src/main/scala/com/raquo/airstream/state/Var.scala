@@ -135,22 +135,23 @@ object Var {
 
   @inline def fromTry[A](initial: Try[A]): Var[A] = new SourceVar[A](initial)
 
+  // Unfortunately we need the following tuple types to be concrete classes to satisfy Scala 3
 
-  type VarTuple[A] = (Var[A], A)
+  implicit class VarTuple[A](val tuple: (Var[A], A)) extends AnyVal
 
-  type VarTryTuple[A] = (Var[A], Try[A])
+  implicit class VarTryTuple[A](val tuple: (Var[A], Try[A])) extends AnyVal
 
-  type VarModTuple[A] = (Var[A], A => A)
+  implicit class VarModTuple[A](val tuple: (Var[A], A => A)) extends AnyVal
 
-  type VarTryModTuple[A] = (Var[A], Try[A] => Try[A])
+  implicit class VarTryModTuple[A](val tuple: (Var[A], Try[A] => Try[A])) extends AnyVal
 
   /** Set multiple Var values in the same Transaction
     * Example usage: Var.set(var1 -> value1, var2 -> value2)
     *
     * @throws Exception if input contains duplicate vars. Airstream allows a maximum of one event per observable per transaction.
     */
-  def set[A](values: VarTuple[A]*): Unit = {
-    val tryValues: Seq[VarTryTuple[A]] = values.map(toTryTuple)
+  def set(values: VarTuple[_]*): Unit = {
+    val tryValues: Seq[VarTryTuple[_]] = values.map(t => toTryTuple(t))
     setTry(tryValues: _*)
   }
 
@@ -159,9 +160,9 @@ object Var {
     *
     * @throws Exception if input contains duplicate vars. Airstream allows a maximum of one event per observable per transaction.
     */
-  def setTry[A](values: VarTryTuple[A]*): Unit = {
+  def setTry(values: VarTryTuple[_]*): Unit = {
     //println(s"> init trx from Var.set/setTry")
-    if (hasDuplicateVars(values)) {
+    if (hasDuplicateVars(values.map(_.tuple))) {
       throw VarError("Unable to Var.{set,setTry}: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None)
     }
     new Transaction(trx => values.foreach(setTryValue(_, trx)))
@@ -179,20 +180,20 @@ object Var {
     *                      the batched updates in this call from going through.
     *                   2) if input contains duplicate vars. Airstream allows a maximum of one event per observable per transaction.
     */
-  def update[A](mods: VarModTuple[A]*): Unit = {
-    if (hasDuplicateVars(mods)) {
+  def update(mods: VarModTuple[_]*): Unit = {
+    if (hasDuplicateVars(mods.map(_.tuple))) {
       throw VarError("Unable to Var.update: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None)
     }
-    val tryMods: Seq[VarTryModTuple[A]] = mods.map(modToTryModTuple)
+    val tryMods: Seq[VarTryModTuple[_]] = mods.map(t => modToTryModTuple(t))
     //println(s"> init trx from Var.update")
     new Transaction(trx => {
-      val vars= mods.map(_._1)
+      val vars= mods.map(_.tuple._1)
       try {
         vars.foreach(_.now())
       } catch { case err: Throwable =>
         throw VarError("Unable to Var.update a failed Var. Consider Var.tryUpdate instead.", cause = Some(err))
       }
-      val tryValues: Seq[VarTryTuple[A]] = tryMods.map(tryModToTryTuple)
+      val tryValues: Seq[VarTryTuple[_]] = tryMods.map(t => tryModToTryTuple(t))
       tryValues.foreach(setTryValue(_, trx))
     })
   }
@@ -203,28 +204,34 @@ object Var {
     * Note: provided mods MUST NOT THROW.
     * @throws Exception if input contains duplicate vars. Airstream allows a maximum of one event per observable per transaction.
     */
-  def tryUpdate[A](mods: VarTryModTuple[A]*): Unit = {
+  def tryUpdate(mods: VarTryModTuple[_]*): Unit = {
     //println(s"> init trx from Var.tryUpdate")
-    if (hasDuplicateVars(mods)) {
+    if (hasDuplicateVars(mods.map(_.tuple))) {
       throw VarError("Unable to Var.tryUpdate: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None)
     }
     new Transaction(trx => {
-      val tryValues: Seq[VarTryTuple[A]] = mods.map(tryModToTryTuple)
+      val tryValues: Seq[VarTryTuple[_]] = mods.map(t => tryModToTryTuple(t))
       tryValues.foreach(setTryValue(_, trx))
     })
   }
 
-  @inline private def toTryTuple[A](varTuple: VarTuple[A]): VarTryTuple[A] = (varTuple._1, Success(varTuple._2))
-
-  @inline private def modToTryModTuple[A](modTuple: VarModTuple[A]): VarTryModTuple[A] = (modTuple._1, _.map(curr => modTuple._2(curr)))
-
-  @inline private def tryModToTryTuple[A](modTuple: VarTryModTuple[A]): VarTryTuple[A] = (modTuple._1, modTuple._2(modTuple._1.tryNow()))
-
-  @inline private def setTryValue[A](tuple: VarTryTuple[A], transaction: Transaction): Unit = {
-    tuple._1.setCurrentValue(tuple._2, transaction)
+  @inline private def toTryTuple[A](varTuple: VarTuple[A]): VarTryTuple[A] = {
+    VarTryTuple((varTuple.tuple._1, Success(varTuple.tuple._2)))
   }
 
-  private def hasDuplicateVars[A](tuples: Seq[(Var[A], _)]): Boolean = {
+  @inline private def modToTryModTuple[A](modTuple: VarModTuple[A]): VarTryModTuple[A] = {
+    VarTryModTuple((modTuple.tuple._1, (t: Try[A]) => t.map(curr => modTuple.tuple._2(curr))))
+  }
+
+  @inline private def tryModToTryTuple[A](modTuple: VarTryModTuple[A]): VarTryTuple[A] = {
+    VarTryTuple((modTuple.tuple._1, modTuple.tuple._2(modTuple.tuple._1.tryNow())))
+  }
+
+  @inline private def setTryValue[A](tuple: VarTryTuple[A], transaction: Transaction): Unit = {
+    tuple.tuple._1.setCurrentValue(tuple.tuple._2, transaction)
+  }
+
+  private def hasDuplicateVars(tuples: Seq[(Var[_], _)]): Boolean = {
     hasDuplicateTupleKeys(tuples.map(t => t.copy(_1 = t._1.underlyingVar)))
   }
 
