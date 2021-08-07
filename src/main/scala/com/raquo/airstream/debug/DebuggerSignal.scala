@@ -33,6 +33,7 @@ class DebuggerSignal[A](
   override protected[this] def onStart(): Unit = {
     super.onStart()
     debugOnStart()
+    debugFireTry(tryNow())
   }
 
   override protected[this] def onStop(): Unit = {

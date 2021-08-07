@@ -7,7 +7,6 @@ import scala.util.Try
   * @param onInitialEval fired when initial value is evaluated. Only for signals.
   */
 case class Debugger[-A] (
-  topoRank: Int,
   onStart: () => Unit = () => (),
   onStop: () => Unit = () => (),
   onFire: Try[A] => Unit = (_: Try[A]) => (),

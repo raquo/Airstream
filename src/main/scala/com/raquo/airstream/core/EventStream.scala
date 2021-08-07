@@ -1,21 +1,21 @@
 package com.raquo.airstream.core
 
-import com.raquo.airstream.combine.{ CombineEventStreamN, MergeEventStream }
 import com.raquo.airstream.combine.generated._
+import com.raquo.airstream.combine.{CombineEventStreamN, MergeEventStream}
 import com.raquo.airstream.core.Source.EventSource
-import com.raquo.airstream.custom.{ CustomSource, CustomStreamSource }
 import com.raquo.airstream.custom.CustomSource._
-import com.raquo.airstream.debug.{ DebuggableEventStream, Debugger, DebuggerEventStream }
+import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
+import com.raquo.airstream.debug.{DebuggableEventStream, Debugger, DebuggerEventStream}
 import com.raquo.airstream.eventbus.EventBus
-import com.raquo.airstream.misc.{ FilterEventStream, FoldLeftSignal, MapEventStream }
 import com.raquo.airstream.misc.generated._
+import com.raquo.airstream.misc.{FilterEventStream, FoldLeftSignal, MapEventStream}
 import com.raquo.airstream.split._
-import com.raquo.airstream.timing.{ FutureEventStream, _ }
+import com.raquo.airstream.timing.{FutureEventStream, _}
 
 import scala.annotation.unused
 import scala.concurrent.Future
 import scala.scalajs.js
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] with EventSource[A] {
 

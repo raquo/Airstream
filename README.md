@@ -1241,6 +1241,8 @@ You can also use `debugWith(debugger)` method instead of `debug*` methods to pro
 
 Also regarding timing, the per-event debuggers like (`debugSpy()` / `debugLog()` / `debugBreak()`) do their thing right _before_ the event is fired (by the debugged observable, not the original), and the start/stop debuggers do their thing right _after_ the observable is started or stopped.
 
+**Note for signals:** Any `debug*` method that triggers when the signal emits an event or an error will also trigger when the signal is **started**. This ensures that you won't miss the signal's initial value when debugging, even though the Signal's initial value technically isn't ever "emitted", in Airstream terms.
+
 Logging debug operators generally offer an optional `when` filter to reduce noise, and a `useJsLogger` option that you should enable when you're logging native JS values. Logging plain JS objects with `println` will often result in printing `[object Object]`, but JS `dom.console.log` can print them nicely.
 
 Also, your logs will be prefixed with `sourceName` which defaults to `stream.toString` but you can provide a prettier name as a param to the `.debug()` method.

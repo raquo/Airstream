@@ -210,8 +210,8 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
 
     val signal1 = signal
       .debugSpyInitialEval(ev => Calculation.log("signal-1-initial", calculations)(ev))
-      .debugSpy(ev => Calculation.log("signal-1", calculations)(ev))
       .debugSpyStarts(_ => Calculation.log("signal-1-start", calculations)(Success(-1)))
+      .debugSpy(ev => Calculation.log("signal-1", calculations)(ev))
       .debugSpyStops(() => Calculation.log("signal-1-stop", calculations)(Success(-1)))
 
     val signal2 = signal
@@ -243,12 +243,14 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
 
     val sub1 = signal1.addObserver(obs1)
 
-    // Order of logs is affected by debug statements
+    // Order of logs is affected by order of debug statements above. It's slightly different for signal1 and signal2
     assert(calculations.toList == List(
       Calculation("var.signal-initial", Success(1)),
       Calculation("signal-1-initial", Success(1)),
       Calculation("obs-1", Success(1)),
-      Calculation("signal-1-start", Success(-1))
+      Calculation("var.signal", Success(1)),
+      Calculation("signal-1-start", Success(-1)),
+      Calculation("signal-1", Success(1)),
     ))
 
     calculations.clear()
@@ -309,9 +311,12 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
 
     assert(calculations.toList == List(
       Calculation("obs-1", Success(3)), // receive current value (initial value was already evaluated)
+      Calculation("var.signal", Success(3)),
       Calculation("signal-1-start", Success(-1)),
+      Calculation("signal-1", Success(3)),
       Calculation("signal-2-initial", Success(3)),
       Calculation("obs-21", Success(3)),
+      Calculation("signal-2", Success(3)),
       Calculation("signal-2-start", Success(-1)),
       Calculation("obs-22", Success(3)) // Adding obs21 triggered the full start first, THEN this obs22 was added.
     ))

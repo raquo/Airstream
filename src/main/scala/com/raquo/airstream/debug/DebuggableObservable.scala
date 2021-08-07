@@ -36,22 +36,23 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
     * the "foo" displayName of `stream` itself.
     */
   def debugWithName(displayName: String): Self[A] = {
-    val emptyDebugger = Debugger(Protected.topoRank(observable))
+    val emptyDebugger = Debugger()
     observable.debugWith(emptyDebugger).setDisplayName(displayName)
   }
 
   // -- Callback spies --
 
-  /** Execute fn on every emitted event or error */
+  /** Execute fn on every emitted event or error
+    * Note: for Signals this also triggers onStart (with the current value at the time)
+    */
   def debugSpy(fn: Try[A] => Unit): Self[A] = {
-    val debugger = Debugger(
-      Protected.topoRank(observable),
-      onFire = fn
-    )
+    val debugger = Debugger(onFire = fn)
     observable.debugWith(debugger)
   }
 
-  /** Execute fn on every emitted event (but not error) */
+  /** Execute fn on every emitted event (but not error)
+    * Note: for Signals this also triggers onStart (if current value is not an error)
+    */
   def debugSpyEvents(fn: A => Unit): Self[A] = {
     debugSpy {
       case Success(ev) => fn(ev)
@@ -59,7 +60,9 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
     }
   }
 
-  /** Execute fn on every emitted error (but not regular events) */
+  /** Execute fn on every emitted error (but not regular events)
+    * Note: for Signals this also triggers onStart (if current value is an error)
+    */
   def debugSpyErrors(fn: Throwable => Unit): Self[A] = {
     debugSpy {
       case Failure(err) => fn(err)
@@ -73,7 +76,6 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
     */
   def debugSpyLifecycle(startFn: Int => Unit, stopFn: () => Unit): Self[A] = {
     val debugger = Debugger(
-      Protected.topoRank(observable),
       onStart = () => startFn(Protected.topoRank(observable)),
       onStop = stopFn
     )
@@ -97,7 +99,9 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
 
   // @TODO[API] print with dom.console.log automatically only if a JS value detected? Not sure if possible to do well.
 
-  /** Log emitted events and errors if `when` condition passes, using dom.console.log if `useJsLogger` is true. */
+  /** Log emitted events and errors if `when` condition passes, using dom.console.log if `useJsLogger` is true.
+    * Note: for Signals this also triggers onStart (with the current value at the time)
+    */
   def debugLog(
     when: Try[A] => Boolean = always,
     useJsLogger: Boolean = false
@@ -112,7 +116,9 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
     }
   }
 
-  /** Log emitted events (but not errors) if `when` condition passes, using dom.console.log if `useJsLogger` is true. */
+  /** Log emitted events (but not errors) if `when` condition passes, using dom.console.log if `useJsLogger` is true.
+    * Note: for Signals this also triggers onStart (if current value is not an error)
+    */
   def debugLogEvents(
     when: A => Boolean = always,
     useJsLogger: Boolean = false
@@ -124,7 +130,9 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
     debugLog(whenEvent, useJsLogger)
   }
 
-  /** Log emitted errors (but not regular events) if `when` condition passes */
+  /** Log emitted errors (but not regular events) if `when` condition passes
+    * Note: for Signals this also triggers onStart (if current value is an error)
+    */
   def debugLogErrors(
     when: Throwable => Boolean = always
   ): Self[A] = {
@@ -177,7 +185,9 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
 
   // -- Trigger JS debugger --
 
-  /** Trigger JS debugger for emitted events and errors if `when` passes */
+  /** Trigger JS debugger for emitted events and errors if `when` passes
+    * Note: for Signals this also triggers onStart (with the current value at the time)
+    */
   def debugBreak(when: Try[A] => Boolean = always): Self[A] = {
     debugSpy { value =>
       if (when(value)) {
@@ -186,7 +196,9 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
     }
   }
 
-  /** Trigger JS debugger for emitted events (but not errors) if `when` passes */
+  /** Trigger JS debugger for emitted events (but not errors) if `when` passes
+    * Note: for Signals this also triggers onStart (if current value is not an error)
+    */
   def debugBreakEvents(when: A => Boolean = always): Self[A] = {
     debugSpyEvents { ev =>
       if (when(ev)) {
@@ -195,7 +207,9 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
     }
   }
 
-  /** Trigger JS debugger for emitted errors (but not events) if `when` passes */
+  /** Trigger JS debugger for emitted errors (but not events) if `when` passes
+    * Note: for Signals this also triggers onStart (if current value is an error)
+    */
   def debugBreakErrors(when: Throwable => Boolean = always): Self[A] = {
     debugSpyErrors { err =>
       if (when(err)) {

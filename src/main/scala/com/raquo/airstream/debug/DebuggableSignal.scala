@@ -1,6 +1,6 @@
 package com.raquo.airstream.debug
 
-import com.raquo.airstream.core.{Protected, Signal}
+import com.raquo.airstream.core.Signal
 import com.raquo.airstream.util.always
 
 import scala.scalajs.js
@@ -22,7 +22,7 @@ class DebuggableSignal[+A](override val observable: Signal[A]) extends Debuggabl
 
   /** Execute fn when signal is evaluating its initial value */
   def debugSpyInitialEval(fn: Try[A] => Unit): Signal[A] = {
-    val debugger = Debugger(Protected.topoRank(observable), onInitialEval = fn)
+    val debugger = Debugger(onInitialEval = fn)
     observable.debugWith(debugger)
   }
 
