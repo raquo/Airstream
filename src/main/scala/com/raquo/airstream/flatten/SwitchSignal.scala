@@ -1,8 +1,9 @@
 package com.raquo.airstream.flatten
 
-import com.raquo.airstream.common.{ InternalTryObserver, SingleParentObservable }
-import com.raquo.airstream.core.{ InternalObserver, Signal, Transaction, WritableSignal }
+import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
+import com.raquo.airstream.core.{InternalObserver, Signal, Transaction, WritableSignal}
 
+import scala.scalajs.js
 import scala.util.Try
 
 /** This flattens a Signal[ Signal[A] ] into a Signal[A]
@@ -22,7 +23,13 @@ class SwitchSignal[A](
 
   override protected def initialValue: Try[A] = parent.tryNow().flatMap(_.tryNow())
 
-  private[this] var currentSignalTry: Try[Signal[A]] = parent.tryNow()
+  private[this] var maybeCurrentSignalTry: js.UndefOr[Try[Signal[A]]] = js.undefined
+
+  private[this] def currentSignalTry: Try[Signal[A]] = maybeCurrentSignalTry.getOrElse {
+    val initialSignal = parent.tryNow()
+    maybeCurrentSignalTry = initialSignal
+    initialSignal
+  }
 
   private[this] val internalEventObserver: InternalObserver[A] = InternalObserver.fromTry[A](
     onTry = (nextTry, _) => {
@@ -35,7 +42,7 @@ class SwitchSignal[A](
     val isSameSignal = nextSignalTry.isSuccess && nextSignalTry == currentSignalTry
     if (!isSameSignal) {
       removeInternalObserverFromCurrentSignal()
-      currentSignalTry = nextSignalTry
+      maybeCurrentSignalTry = nextSignalTry
 
       // If we're receiving events, this signal is started, so no need to check for that
       nextSignalTry.foreach { nextSignal =>
@@ -48,8 +55,8 @@ class SwitchSignal[A](
   }
 
   override protected[this] def onStart(): Unit = {
-    currentSignalTry.foreach(_.addInternalObserver(internalEventObserver))
     super.onStart()
+    currentSignalTry.foreach(_.addInternalObserver(internalEventObserver))
   }
 
   override protected[this] def onStop(): Unit = {
