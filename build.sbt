@@ -3,7 +3,7 @@ enablePlugins(ScalaJSPlugin)
 enablePlugins(ScalaJSBundlerPlugin)
 
 libraryDependencies ++= Seq(
-  ("org.scala-js" %%% "scalajs-dom" % Versions.ScalaJsDom).cross(CrossVersion.for3Use2_13),
+  "org.scala-js" %%% "scalajs-dom" % Versions.ScalaJsDom,
   "app.tulz" %%% "tuplez-full-light" % Versions.Tuplez,
   "org.scalatest" %%% "scalatest" % Versions.ScalaTest % Test
 )
