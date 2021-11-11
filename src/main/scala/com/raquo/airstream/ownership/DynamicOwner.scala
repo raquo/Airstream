@@ -1,5 +1,7 @@
 package com.raquo.airstream.ownership
 
+import com.raquo.airstream.JsArray
+
 import scala.scalajs.js
 
 // @Warning[Fragile]
@@ -23,7 +25,7 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
     *       subscriptions to code that didn't create those subscriptions.
     *       We rely on that in TransferableSubscription for example.
     */
-  private[this] val subscriptions: js.Array[DynamicSubscription] = js.Array()
+  private[this] val subscriptions: JsArray[DynamicSubscription] = JsArray()
 
   private var isSafeToRemoveSubscription = true
 
@@ -35,7 +37,7 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
 
   @inline def isActive: Boolean = _maybeCurrentOwner.isDefined
 
-  @inline def hasSubscriptions: Boolean = subscriptions.nonEmpty
+  @inline def hasSubscriptions: Boolean = numSubscriptions != 0
 
   /** Exposing this for testing mostly. Outside world should not need to know anything about this owner's subscriptions. */
   @inline def numSubscriptions: Int = subscriptions.length
@@ -89,7 +91,7 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
 
       isSafeToRemoveSubscription = false
 
-      subscriptions.foreach(_.onDeactivate())
+      subscriptions.forEach(_.onDeactivate())
 
       removePendingSubscriptionsNow()
 

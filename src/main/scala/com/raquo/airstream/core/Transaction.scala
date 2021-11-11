@@ -2,7 +2,6 @@ package com.raquo.airstream.core
 
 import com.raquo.airstream.util.JsPriorityQueue
 
-import scala.collection.mutable
 import scala.scalajs.js
 
 // @TODO[Naming] Should probably be renamed to something like "Propagation"
@@ -47,7 +46,7 @@ object Transaction { // extends GlobalCounter {
     /** first transaction is the top of the stack, currently running */
     private var stack: List[Transaction] = Nil
 
-    private val children: mutable.Map[Transaction, List[Transaction]] = mutable.Map.empty
+    private val children: js.Map[Transaction, List[Transaction]] = js.Map.empty
 
     def add(newTransaction: Transaction): Unit = {
       // 1. Regarding calling `run`:

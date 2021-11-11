@@ -1,5 +1,7 @@
 package com.raquo.airstream.ownership
 
+import com.raquo.airstream.JsArray
+
 import scala.annotation.unused
 import scala.scalajs.js
 
@@ -20,10 +22,12 @@ trait Owner {
 
   /** Note: This is enforced to be a sorted set outside the type system. #performance */
   protected[this] val subscriptions: js.Array[Subscription] = js.Array()
+  //protected[this] val subscriptions: js.Set[Subscription] = js.Set()
 
   protected[this] def killSubscriptions(): Unit = {
-    subscriptions.foreach(_.onKilledByOwner())
-    subscriptions.clear()
+    subscriptions.asInstanceOf[JsArray[Subscription]].forEach(_.onKilledByOwner())
+    //subscriptions.clear()
+    subscriptions.length = 0
   }
 
   // @TODO[API] This method only exists because I can't figure out how to better deal with permissions.
@@ -36,7 +40,10 @@ trait Owner {
   protected[this] def onOwned(@unused subscription: Subscription): Unit = ()
 
   private[ownership] def onKilledExternally(subscription: Subscription): Unit = {
-    val index = subscriptions.indexOf(subscription)
+    //if (!subscriptions.remove(subscription)) {
+    //  throw new Exception("Can not remove Subscription from Owner: subscription not found.")
+    //}
+    val index = subscriptions.asInstanceOf[JsArray[Subscription]].indexOf(subscription)
     if (index != -1) {
       subscriptions.splice(index, deleteCount = 1)
     } else {
@@ -45,6 +52,7 @@ trait Owner {
   }
 
   private[ownership] def own(subscription: Subscription): Unit = {
+    //subscriptions.add(subscription)
     subscriptions.push(subscription)
     onOwned(subscription)
   }
