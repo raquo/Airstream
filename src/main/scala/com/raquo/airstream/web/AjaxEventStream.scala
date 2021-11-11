@@ -1,10 +1,11 @@
 package com.raquo.airstream.web
 
-import com.raquo.airstream.core.{ EventStream, Observer, Transaction, WritableEventStream }
+import com.raquo.airstream.core.{EventStream, Observer, Transaction, WritableEventStream}
 import com.raquo.airstream.web.AjaxEventStream._
 import org.scalajs.dom
 
 import scala.scalajs.js
+import scala.scalajs.js.|
 
 // @TODO[Test] Needs testing
 
@@ -32,7 +33,7 @@ import scala.scalajs.js
 class AjaxEventStream(
   method: String,
   url: String,
-  data: dom.ext.Ajax.InputData,
+  data: InputData,
   timeoutMs: Int,
   headers: Map[String, String],
   withCredentials: Boolean,
@@ -143,6 +144,8 @@ class AjaxEventStream(
 
 object AjaxEventStream {
 
+  type InputData = String | js.typedarray.ArrayBufferView | dom.Blob | dom.FormData
+
   /** A more detailed version of [[dom.ext.AjaxException]] (no relation) */
   sealed abstract class AjaxStreamError(val xhr: dom.XMLHttpRequest, message: String) extends Exception(message)
 
@@ -168,7 +171,7 @@ object AjaxEventStream {
     */
   def get(
     url: String,
-    data: dom.ext.Ajax.InputData = null,
+    data: InputData = null,
     timeoutMs: Int = 0,
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
@@ -200,7 +203,7 @@ object AjaxEventStream {
     */
   def post(
     url: String,
-    data: dom.ext.Ajax.InputData = null,
+    data: InputData = null,
     timeoutMs: Int = 0,
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
@@ -232,7 +235,7 @@ object AjaxEventStream {
     */
   def put(
     url: String,
-    data: dom.ext.Ajax.InputData = null,
+    data: InputData = null,
     timeoutMs: Int = 0,
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
@@ -264,7 +267,7 @@ object AjaxEventStream {
     */
   def patch(
     url: String,
-    data: dom.ext.Ajax.InputData = null,
+    data: InputData = null,
     timeoutMs: Int = 0,
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
@@ -296,7 +299,7 @@ object AjaxEventStream {
     */
   def delete(
     url: String,
-    data: dom.ext.Ajax.InputData = null,
+    data: InputData = null,
     timeoutMs: Int = 0,
     headers: Map[String, String] = Map.empty,
     withCredentials: Boolean = false,
@@ -347,12 +350,12 @@ object AjaxEventStream {
     request: dom.XMLHttpRequest,
     method: String,
     url: String,
-    data: dom.ext.Ajax.InputData = null,
+    data: InputData = null,
     headers: Map[String, String] = Map.empty
   ): Unit = {
     request.open(method, url)
     headers.foreach(Function.tupled(request.setRequestHeader))
-    if (data == null) request.send() else request.send(data)
+    if (data == null) request.send() else request.send(data.asInstanceOf[js.Any])
   }
 
   def defaultIsStatusCodeSuccess(status: Int): Boolean = {
