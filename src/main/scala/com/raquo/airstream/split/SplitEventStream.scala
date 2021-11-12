@@ -1,11 +1,9 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.JsMap
 import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentObservable}
 import com.raquo.airstream.core.{EventStream, Protected, Signal, Transaction, WritableEventStream}
 
 import scala.collection.mutable
-//import scala.scalajs.js
 import scala.util.Try
 
 /** Broadly equivalent to `parent.map(_.map(project))`, but the `project` part
@@ -28,10 +26,10 @@ class SplitEventStream[M[_], Input, Output, Key](
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
-  private[this] var memoized: JsMap[Key, (Input, Output)] = JsMap.empty
+  private[this] var memoized: mutable.Map[Key, (Input, Output)] = mutable.Map.empty
 
   protected override def onStop(): Unit = {
-    memoized = JsMap.empty
+    memoized = mutable.Map.empty
     super.onStop()
   }
 
@@ -64,7 +62,7 @@ class SplitEventStream[M[_], Input, Output, Key](
         // = Therefore, we look at a stream of changes populated with a known initial value
 
         // @TODO[Performance] I don't like this `collect`, can't we do this better?
-        val inputStream = map(_ => memoized.get(memoizedKey).map(_._1).toOption).collect { case Some(input) => input }
+        val inputStream = map(_ => memoized.get(memoizedKey).map(_._1)).collect { case Some(input) => input }
         val newOutput = project(memoizedKey, initialInput, inputStream)
         newOutput
       }){ memoizedTuple =>
@@ -73,14 +71,14 @@ class SplitEventStream[M[_], Input, Output, Key](
       }
 
       // Create initial record, or update `nextInput`
-      memoized.set(memoizedKey, (nextInput, nextOutput))
+      memoized.update(memoizedKey, (nextInput, nextOutput))
 
       nextOutput
     })
 
-    memoized.keys().toIterator.foreach { memoizedKey =>
+    memoized.keys.foreach { memoizedKey =>
       if (!nextKeysDict.contains(memoizedKey)) {
-        memoized.delete(memoizedKey)
+        memoized.remove(memoizedKey)
       }
     }
 
