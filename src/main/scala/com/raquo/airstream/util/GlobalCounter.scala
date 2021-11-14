@@ -1,7 +1,7 @@
 package com.raquo.airstream.util
 
 // @TODO this is pretty much unused, consider removing
-trait GlobalCounter {
+private[airstream] trait GlobalCounter {
 
   private var lastCreatedId: Int = 0
 
