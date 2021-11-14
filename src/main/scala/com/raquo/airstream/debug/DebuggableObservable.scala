@@ -100,7 +100,7 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
   // @TODO[API] print with dom.console.log automatically only if a JS value detected? Not sure if possible to do well.
 
   /** Log emitted events and errors if `when` condition passes, using dom.console.log if `useJsLogger` is true.
-    * Note: for Signals this also triggers onStart (with the current value at the time)
+    * Note: for Signals this also triggers on start (with the current value at the time)
     */
   def debugLog(
     when: Try[A] => Boolean = always,
@@ -177,9 +177,17 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
     val prefix = s"${observable.displayName} [$action]$maybeColon"
     if (useJsLogger) {
       // This is useful if you're emitting native JS objects, they will be printed to the console nicer
-      dom.console.log(prefix, value.asInstanceOf[js.Any])
+      if (value.isDefined) {
+        dom.console.log(prefix, value.get.asInstanceOf[js.Any])
+      } else {
+        dom.console.log(prefix)
+      }
     } else {
-      println(s"$prefix $value")
+      if (value.isDefined) {
+        println(s"$prefix ${value.get}")
+      } else {
+        println(prefix)
+      }
     }
   }
 
