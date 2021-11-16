@@ -38,37 +38,34 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
 
   /** Signal propagates only if its value has changed */
   override protected def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
+
+    setCurrentValue(nextValue)
+
+    // === CAUTION ===
+    // The following logic must match EventStream's fireValue / fireError! It is separated here for performance.
+
+    val isError = nextValue.isFailure
+    var errorReported = false
+
     // @TODO[API] It is rather curious/unintuitive that firing external observers first seems to make more sense. Think about it some more.
-    // @TODO[Performance] This might be suboptimal for some data structures (e.g. big maps). Document this along with workarounds.
-    // Note: This comparison is using the Scala `equals` method. Typically `equals` calls `eq` first,
-    // to check for reference equality, then proceeds to check for structural equality if needed.
-    if (tryNow() != nextValue) {
-      setCurrentValue(nextValue)
 
-      // === CAUTION ===
-      // The following logic must match EventStream's fireValue / fireError! It is separated here for performance.
+    externalObservers.foreach { observer =>
+      observer.onTry(nextValue)
+      if (isError && !errorReported) errorReported = true
+    }
 
-      val isError = nextValue.isFailure
-      var errorReported = false
+    internalObservers.foreach { observer =>
+      InternalObserver.onTry(observer, nextValue, transaction)
+      if (isError && !errorReported) errorReported = true
+    }
 
-      externalObservers.foreach { observer =>
-        observer.onTry(nextValue)
-        if (isError && !errorReported) errorReported = true
-      }
-
-      internalObservers.foreach { observer =>
-        InternalObserver.onTry(observer, nextValue, transaction)
-        if (isError && !errorReported) errorReported = true
-      }
-
-      // This will only ever happen for special Signals that maintain their current value even without observers.
-      // Currently we only have one kind of such signal: StrictSignal.
-      //
-      // We want to report unhandled errors on such signals if they have no observers (including internal observers)
-      // because if we don't, the error will not be reported anywhere, and I think we would usually want it.
-      if (isError && !errorReported) {
-        nextValue.fold(AirstreamError.sendUnhandledError, _ => ())
-      }
+    // This will only ever happen for special Signals that maintain their current value even without observers.
+    // Currently we only have one kind of such signal: StrictSignal.
+    //
+    // We want to report unhandled errors on such signals if they have no observers (including internal observers)
+    // because if we don't, the error will not be reported anywhere, and I think we would usually want it to be reported.
+    if (isError && !errorReported) {
+      nextValue.fold(AirstreamError.sendUnhandledError, _ => ())
     }
   }
 

@@ -234,7 +234,11 @@ class SwitchSignalSpec extends UnitSpec {
 
     outerBus.writer.onNext(1)
 
-    assert(calculations.isEmpty) // Signal == filter eats this up
+    assert(calculations.toList == List(
+      Calculation("flat", "small-bus-0")
+    ))
+
+    calculations.clear()
 
     // --
 
@@ -248,9 +252,13 @@ class SwitchSignalSpec extends UnitSpec {
 
     // --
 
-    outerBus.writer.onNext(2) // Signal == filter eats this up
+    outerBus.writer.onNext(2)
 
-    assert(calculations.isEmpty)
+    assert(calculations.toList == List(
+      Calculation("flat", "small-bus-1")
+    ))
+
+    calculations.clear()
 
     // --
 
@@ -266,21 +274,8 @@ class SwitchSignalSpec extends UnitSpec {
 
     outerBus.writer.onNext(10) // #Note switch to big
 
-    // @TODO[API] I expected `big-0` to be emitted here first, because that was the initial state of `bigSignal`
-    //  - However, the reason why it's not emitted is kinda compelling. I'm not sure how it should behave.
-    //  - The switching logic first starts the signal that it's switching to (if it wasn't started already, like in this case)
-    //    and then it schedules a transaction to emit the signal's current value.
-    //  - But if the inner signal being started emits new events in new transactions, those transactions will be scheduled
-    //    BEFORE the transaction in the switching logic, and so those transactions will have a chance to update the
-    //    inner signal's current state before it has a chance to be observed by the switching transaction.
-    //  - I guess you could say the idea here is that the signal should be fully started before we read its current value,
-    //    but I'm not sure if I'm buying this.
-    //  - Keep in mind this is not only about observing the original initial value, but also about observing stale values
-    //    of signals that haven't been running. I think the solution to this might depend on https://github.com/raquo/Airstream/issues/43
-    //  - Maybe what needs to change is EventStream.fromSeq's timing...
-    //  - So well, it is what it is for now. We should look into this some time (this behaviour didn't change in this commit)
     assert(calculations.toList == List(
-      //Calculation("flat", "big-0"),
+      Calculation("flat", "big-0"),
       Calculation("flat", "big-1"),
       Calculation("flat", "big-2")
     ))
@@ -307,7 +302,11 @@ class SwitchSignalSpec extends UnitSpec {
 
     outerBus.writer.onNext(11)
 
-    assert(calculations.isEmpty)
+    assert(calculations.toList == List(
+      Calculation("flat", "big-bus-1")
+    ))
+
+    calculations.clear()
 
     // --
 

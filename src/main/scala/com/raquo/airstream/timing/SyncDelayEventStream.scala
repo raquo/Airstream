@@ -1,14 +1,19 @@
 package com.raquo.airstream.timing
 
 import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
-import com.raquo.airstream.core.{EventStream, Protected, SyncObservable, Transaction, WritableEventStream}
+import com.raquo.airstream.core.{Observable, Protected, SyncObservable, Transaction, WritableEventStream}
 
 import scala.scalajs.js
 import scala.util.Try
 
+/** Note: This is generally supposed to be used only with streams as inputs.
+  * Make sure you know what you're doing if using signals.
+  * - if `parent` is a Signal, this stream mirrors `parent.changes`, not `parent`.
+  * - if `after` is a Signal, this stream ignores its initial value
+  */
 class SyncDelayEventStream[A] (
-  override protected[this] val parent: EventStream[A],
-  after: EventStream[_]
+  override protected[this] val parent: Observable[A],
+  after: Observable[_]
 ) extends WritableEventStream[A] with SingleParentObservable[A, A] with InternalTryObserver[A] with SyncObservable[A] {
 
   private[this] var maybePendingValue: js.UndefOr[Try[A]] = js.undefined
@@ -17,7 +22,6 @@ class SyncDelayEventStream[A] (
 
   override protected def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
     if (!transaction.pendingObservables.contains(this)) {
-       //println(s"Marking SyncDelayEventStream(${this.toString.substring(this.toString.indexOf('@'))}) as pending in TRX(${transaction.id})")
       transaction.pendingObservables.enqueue(this)
     }
     maybePendingValue = nextValue

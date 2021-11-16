@@ -99,7 +99,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     errorEffects shouldEqual mutable.Buffer()
 
 
-    // Encountering the same error should not trigger it again (because value didn't change)
+    // Encountering the same error should trigger it again (because we didn't apply `distinctTry`)
 
     signalVar.writer.onError(err1)
 
@@ -108,7 +108,11 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
 
     calculations shouldEqual mutable.Buffer()
     effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer()
+    errorEffects shouldEqual mutable.Buffer(
+      Effect("sub-err", err1)
+    )
+
+    errorEffects.clear()
   }
 
   it("initial value Failure()") {
@@ -244,7 +248,9 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     calculations shouldEqual mutable.Buffer(
       Calculation("signalDown", -123)
     )
-    effects shouldEqual mutable.Buffer(Effect("sub", -123))
+    effects shouldEqual mutable.Buffer(
+      Effect("sub", -123)
+    )
     errorEffects shouldEqual mutable.Buffer()
 
     calculations.clear()
@@ -257,16 +263,23 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     signalDown.tryNow() shouldEqual Success(-123)
 
 
-    // Fold is now broken because it needs previous state which it doesn't have. This is unlike other operators
+    // Fold is now broken because it needs previous state, which it doesn't have. This is unlike other operators.
 
     bus.writer.onNext(1)
 
     signalUp.tryNow() shouldEqual Failure(err1)
     signalDown.tryNow() shouldEqual Success(-123)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldEqual mutable.Buffer(
+      Calculation("signalDown",-123)
+    )
+    effects shouldEqual mutable.Buffer(
+      Effect("sub", -123)
+    )
     errorEffects shouldEqual mutable.Buffer()
+
+    calculations.clear()
+    effects.clear()
   }
 
 
@@ -339,7 +352,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
 
     val err = new Exception("No signal")
 
-    val myVar  = Var(0)
+    val myVar = Var(0)
 
     // @TODO[Airstream] Add Signal.fromValue / fromTry that creates a Val
     val stream = myVar.signal.flatMap(Val(_))
@@ -348,7 +361,9 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
 
     stream.addObserver(Observer.withRecover(
       onNext = ev => effects += Effect("onNext", ev),
-      onError = { case err => effects += Effect("onError", err.getMessage) }
+      onError = {
+        case err => effects += Effect("onError", err.getMessage)
+      }
     ))(owner)
 
     // -- initial value
@@ -383,7 +398,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
 
     val err = new Exception("No signal")
 
-    val myVar  = Var.fromTry[Int](Failure(err))
+    val myVar = Var.fromTry[Int](Failure(err))
 
     // @TODO[Airstream] Add Signal.fromValue / fromTry that creates a Val
     val stream = myVar.signal.flatMap(Val(_))
@@ -392,7 +407,9 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
 
     stream.addObserver(Observer.withRecover(
       onNext = ev => effects += Effect("onNext", ev),
-      onError = { case err => effects += Effect("onError", err.getMessage) }
+      onError = {
+        case err => effects += Effect("onError", err.getMessage)
+      }
     ))(owner)
 
     // -- initial value

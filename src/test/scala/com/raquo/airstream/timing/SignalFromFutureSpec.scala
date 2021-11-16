@@ -26,9 +26,11 @@ class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     assert(true)
   }
 
-  def makeSignal(promise: Promise[Int]): Signal[Option[Int]] = Signal
-    .fromFuture(promise.future)
-    .map(Calculation.log("signal", calculations))
+  def makeSignal(promise: Promise[Int]): Signal[Option[Int]] = {
+    Signal
+      .fromFuture(promise.future)
+      .map(Calculation.log("signal", calculations))
+  }
 
 
   before {
@@ -121,7 +123,9 @@ class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
 
     promise.success(100)
 
-    // @TODO[API] Well, this here is not very desirable, but I don't see a way around it
+    // @TODO[API] This is empty because we've triggered signal's initialValue evaluation by the assert above.
+    //  - After that, we can only track Future's updates asynchronously using onComplete.
+    //  - I don't think we want to implement a pull-based system for this.
     assert(signal.now().isEmpty)
 
     delay {

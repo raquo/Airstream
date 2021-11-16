@@ -8,7 +8,7 @@ import scala.util.{ Failure, Success }
 
 /** This is essentially a dynamic version of `EventStream.merge`.
   * - The resulting stream re-emits all the events emitted by all of the streams
-  *   emitted by the input observable.
+  *   previously emitted by the input observable.
   * - If you stop observing the resulting stream, it will forget all of the
   *   streams it previously listened to.
   * - When you start it up again, it will start listening to the input observable
@@ -21,8 +21,7 @@ class ConcurrentEventStream[A](
   private val accumulatedStreams: js.Array[EventStream[A]] = js.Array()
 
   private val internalEventObserver: InternalObserver[A] = InternalObserver[A](
-    onNext = (nextEvent, _) => new Transaction(fireValue(nextEvent, _))
-    ,
+    onNext = (nextEvent, _) => new Transaction(fireValue(nextEvent, _)),
     onError = (nextError, _) => new Transaction(fireError(nextError, _))
   )
 

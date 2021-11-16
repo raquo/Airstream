@@ -1,32 +1,19 @@
 package com.raquo.airstream.split
 
 import com.raquo.airstream.core.{EventStream, Signal}
-import com.raquo.airstream.split.Splittable.IdSplittable
-import com.raquo.airstream.util.Id
 
 class SplittableOneEventStream[Input](val stream: EventStream[Input]) extends AnyVal {
 
   def splitOne[Output, Key](
-    key: Input => Key)(
-    project: (Key, Input, EventStream[Input]) => Output
-  ): EventStream[Output] = {
-    new SplitEventStream[Id, Input, Output, Key](
-      parent = stream,
-      key,
-      project,
-      IdSplittable
-    )
-  }
-
-  def splitOneIntoSignals[Output, Key](
-    key: Input => Key)(
+    key: Input => Key,
+    distinctCompose: Signal[Input] => Signal[Input] = _.distinct
+  )(
     project: (Key, Input, Signal[Input]) => Output
   ): EventStream[Output] = {
-    new SplitEventStream[Id, Input, Output, Key](
-      parent = stream,
-      key = key,
-      project = (key, initialValue, eventStream) => project(key, initialValue, eventStream.toSignal(initialValue)),
-      IdSplittable
-    )
+    // @TODO[Performance] Would be great if we didn't need .toWeakSignal and .map, but I can't figure out how to do that
+    new SplittableSignal(stream.toWeakSignal)
+      .split(key, distinctCompose)(project)
+      .changes
+      .map(_.get)
   }
 }

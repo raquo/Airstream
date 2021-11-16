@@ -144,11 +144,11 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
 
     // --
 
-    val sub11 = events1.addObserver(obs1)
+    events1.addObserver(obs1)
 
-    val sub21 = events2.addObserver(obs21)
+    events2.addObserver(obs21)
 
-    val sub22 = events2.addObserver(obs22)
+    events2.addObserver(obs22)
 
     assert(calculations.toList == List(
       Calculation("events-1-start", Success(-1)),
@@ -303,11 +303,11 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
 
     // --
 
-    val sub11 = signal1.addObserver(obs1)
+    signal1.addObserver(obs1)
 
-    val sub21 = signal2.addObserver(obs21)
+    signal2.addObserver(obs21)
 
-    val sub22 = signal2.addObserver(obs22)
+    signal2.addObserver(obs22)
 
     assert(calculations.toList == List(
       Calculation("obs-1", Success(3)), // receive current value (initial value was already evaluated)
@@ -580,11 +580,11 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
 
   it("observable debugger type inference") {
 
-    val observable: Observable[String] = EventStream.fromValue("a").debugSpy(_ => ()).debugLogStarts
+    val _: Observable[String] = EventStream.fromValue("a").debugSpy(_ => ()).debugLogStarts
 
-    val stream: EventStream[String] = EventStream.fromValue("a").debugSpy(_ => ()).debugLogStarts
+    val _: EventStream[String] = EventStream.fromValue("a").debugSpy(_ => ()).debugLogStarts
 
-    val signal: Signal[String] = Val("a").debugSpy(_ => ()).debugLogStarts
+    val _: Signal[String] = Val("a").debugSpy(_ => ()).debugLogStarts
   }
 
   it("observable debugger error") {

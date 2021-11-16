@@ -1,4 +1,4 @@
-package com.raquo.airstream.split
+package com.raquo.airstream.misc
 
 import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
 import com.raquo.airstream.core.{EventStream, Protected, Transaction, WritableSignal}

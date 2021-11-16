@@ -349,7 +349,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
 
     val mergeVar = Var[EventStream[Int]](stream1)
 
-    val mergeSignal = mergeVar.signal.flatten(ConcurrentStreamStrategy).map(Calculation.log("merge", calculations))
+    val mergeSignal = mergeVar.signal.distinct.flatten(ConcurrentStreamStrategy).map(Calculation.log("merge", calculations))
 
     val sub1 = mergeSignal.addObserver(Observer.empty)
 

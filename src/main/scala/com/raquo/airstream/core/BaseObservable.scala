@@ -5,7 +5,7 @@ import com.raquo.airstream.flatten.FlattenStrategy
 import com.raquo.airstream.ownership.{Owner, Subscription}
 
 import scala.annotation.unused
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /** This trait represents a reactive value that can be subscribed to.
   *
@@ -51,18 +51,47 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     */
   def mapToStrict[B](value: B): Self[B] = map(_ => value)
 
-  // @TODO[API] Not sure if `distinct` `should accept A => Key or (A, A) => Boolean. We'll start with a more constrained version for now.
-  // @TODO[API] Implement this. We should consider making a slide() operator to support this
-
-  /** Emit a value unless its key matches the key of the last emitted value */
-  // def distinct[Key](key: A => Key): Self[A]
-
   /** @param compose Note: guarded against exceptions */
   @inline def flatMap[B, Inner[_], Output[+_] <: Observable[_]](compose: A => Inner[B])(
     implicit strategy: FlattenStrategy[Self, Inner, Output]
   ): Output[B] = {
     strategy.flatten(map(compose))
   }
+
+  /** Distinct events (but keep all errors) by == (equals) comparison */
+  def distinct: Self[A] = distinctBy(_ == _)
+
+  /** Distinct events (but keep all errors) by reference equality (eq) */
+  def distinctByRef(implicit ev: A <:< AnyRef): Self[A] = distinctBy(ev(_) eq ev(_))
+
+  /** Distinct events (but keep all errors) by matching key
+    * Note: `key(event)` might be evaluated more than once for each event
+    */
+  def distinctByKey(key: A => Any): Self[A] = distinctBy(key(_) == key(_))
+
+  /** Distinct events (but keep all errors) using a comparison function
+    *
+    * @param fn (prev, next) => isSame
+    */
+  def distinctBy(fn: (A, A) => Boolean): Self[A] = distinctTry {
+    case (Success(prev), Success(next)) => fn(prev, next)
+    case _ => false
+  }
+
+  /** Distinct errors only (but keep all events) using a comparison function
+    *
+    * @param fn (prevErr, nextErr) => isSame
+    */
+  def distinctErrors(fn: (Throwable, Throwable) => Boolean): Self[A] = distinctTry {
+    case (Failure(prevErr), Failure(nextErr)) => fn(prevErr, nextErr)
+    case _ => false
+  }
+
+  /** Distinct all values (both events and errors) using a comparison function
+    *
+    * @param fn (prev, next) => isSame
+    */
+  def distinctTry(fn: (Try[A], Try[A]) => Boolean): Self[A]
 
   def toStreamIfSignal[B >: A](ifSignal: Signal[A] => EventStream[B]): EventStream[B] = {
     this match {

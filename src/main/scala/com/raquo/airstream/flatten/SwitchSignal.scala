@@ -40,17 +40,41 @@ class SwitchSignal[A](
 
   override protected def onTry(nextSignalTry: Try[Signal[A]], transaction: Transaction): Unit = {
     val isSameSignal = nextSignalTry.isSuccess && nextSignalTry == currentSignalTry
-    if (!isSameSignal) {
+
+    if (isSameSignal) {
+      // We want to re-emit the signal's current value in this case to be consistent
+      // with signals not having a built-in `==` check (since 0.15.0)
+
+      //println(s"> init trx from SwitchSignal.onTry (same signal)")
+      new Transaction(fireTry(nextSignalTry.flatMap(_.tryNow()), _))
+
+    } else {
       removeInternalObserverFromCurrentSignal()
       maybeCurrentSignalTry = nextSignalTry
 
-      // If we're receiving events, this signal is started, so no need to check for that
-      nextSignalTry.foreach { nextSignal =>
-        nextSignal.addInternalObserver(internalEventObserver)
-      }
-      //println(s"> init trx from SwitchSignal.onTry")
+      //println(s"> init trx from SwitchSignal.onTry (new signal)")
       // Update this signal's value with nextSignal's current value (or an error if we don't have nextSignal)
-      new Transaction(fireTry(nextSignalTry.flatMap(_.tryNow()), _))
+      new Transaction(trx => {
+
+        // #Note: Timing is important here.
+        // 1. Create the `trx` transaction, since we need that boundary when flattening
+        // 2. Ensure next signal is started by adding an internal observer to it
+        // 3. Starting the signal might cause it to emit event(s) in a new transaction.
+        //    For example, EventStream.fromSeq(1, 2, 3).startWith(0) will schedule three events in three transactions
+        // 4. Now that the next signal's current value is initialized, we can update SwitchSignal's current value to match
+        //    IMPORTANT: This will be done IMMEDIATELY, without any delay because we're already inside `trx`.
+        //    Conversely, any events scheduled in point (3) above will run AFTER `trx` is done.
+        //    This is as desired. It lets SwitchSignal emit the next signal's initial value before
+        //    emitting subsequent updates to it that might have been triggered by starting it.
+        //    Prior to Airstream 0.15.0 the next signal's initial value would have been missed in such cases.
+
+        // If we're receiving events, this signal is started, so no need to check for that
+        nextSignalTry.foreach { nextSignal =>
+          nextSignal.addInternalObserver(internalEventObserver)
+        }
+
+        fireTry(nextSignalTry.flatMap(_.tryNow()), trx)
+      })
     }
   }
 

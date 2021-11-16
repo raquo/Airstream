@@ -24,16 +24,28 @@ class FutureSignal[A](
 
   override protected val topoRank: Int = 1
 
-  override protected[this] def initialValue: Try[Option[A]] = future.value.fold[Try[Option[A]]](
-    Success(None)
-  )(
-    value => value.map(Some(_))
-  )
+  override protected[this] def initialValue: Try[Option[A]] = {
 
-  if (!future.isCompleted) {
-    future.onComplete(value => {
-      //println(s"> init trx from FutureSignal($value)")
-      new Transaction(fireTry(value.map(Some(_)), _))
-    })
+    val futureValue = future.value.fold[Try[Option[A]]](
+      Success(None)
+    )(
+      value => value.map(Some(_))
+    )
+
+    // Subscribing to this signal, or requesting now() or tryNow() will trigger initialValue
+    // evaluation, which will register an onComplete callback on the future if it's not resolved yet.
+
+    // @nc @TODO If implementing https://github.com/raquo/Airstream/issues/43
+    //      This needs to be adjusted to avoid more than one onComplete calls per instance of signal.
+    //      Just add a boolean (don't look at tryNow, because that might cause infinite loop)
+
+    if (!future.isCompleted) {
+      future.onComplete(value => {
+        //println(s"> init trx from FutureSignal($value)")
+        new Transaction(fireTry(value.map(Some(_)), _))
+      })
+    }
+
+    futureValue
   }
 }

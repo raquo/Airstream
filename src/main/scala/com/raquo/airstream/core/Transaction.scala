@@ -6,7 +6,7 @@ import scala.scalajs.js
 
 // @TODO[Naming] Should probably be renamed to something like "Propagation"
 /** @param code Note: Must not throw! */
-class Transaction(private[Transaction] val code: Transaction => Any) {
+class Transaction(private[Transaction] var code: Transaction => Any) {
 
   // @TODO this is not used except for debug logging. Remove eventually
   //val id: Int = Transaction.nextId()
@@ -82,6 +82,8 @@ object Transaction { // extends GlobalCounter {
 
       putNextTransactionOnStack(doneTransaction = transaction)
 
+      transaction.code = throwDeadTrxError  // stop holding up `trx` contents in memory
+
       peekStack().fold {
         if (children.nonEmpty) {
           //println(s"Stack is empty but children remain: ${children.map(t => (t._1.id, t._2.map(_.id)))}")
@@ -113,6 +115,10 @@ object Transaction { // extends GlobalCounter {
       }
     }
 
+    def peekStack(): Option[Transaction] = {
+      stack.headOption
+    }
+
     private def childrenFor(transaction: Transaction): List[Transaction] = {
       children.getOrElse(transaction, Nil)
     }
@@ -132,10 +138,6 @@ object Transaction { // extends GlobalCounter {
       result
     }
 
-    private def peekStack(): Option[Transaction] = {
-      stack.headOption
-    }
-
     private def enqueueChild(parent: Transaction, newChild: Transaction): Unit = {
       //println(s"enqueueChild parent = ${parent.id} newChild = ${newChild.id}")
       val newChildren = childrenFor(parent) :+ newChild
@@ -146,8 +148,8 @@ object Transaction { // extends GlobalCounter {
       //println(s"dequeueChild parent = ${parent.id}")
       val parentChildren = childrenFor(parent)
       if (parentChildren.nonEmpty) {
-        //println("- found some children")
         val nextChild = parentChildren.head
+        //println(s"- found some children, first: ${nextChild.id}")
         val updatedChildren = parentChildren.tail
         if (updatedChildren.nonEmpty) {
           children.update(parent, updatedChildren)
@@ -173,6 +175,8 @@ object Transaction { // extends GlobalCounter {
   private[core] def isClearState: Boolean = {
     pendingTransactions.isClearState && pendingObserverRemovals.isEmpty
   }
+
+  private[airstream] def currentTransaction(): Option[Transaction] = pendingTransactions.peekStack()
 
   /** Note: this is core-private for subscription safety. See https://github.com/raquo/Airstream/issues/10
     *
@@ -240,6 +244,10 @@ object Transaction { // extends GlobalCounter {
       //println(s"--end trx ${transaction.id}")
       pendingTransactions.done(transaction)
     }
+  }
+
+  private val throwDeadTrxError: Transaction => Any = { trx =>
+    throw new Exception(s"Attempted to run Transaction $trx after it was already executed.")
   }
 
 }

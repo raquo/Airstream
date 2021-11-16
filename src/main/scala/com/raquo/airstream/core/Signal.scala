@@ -6,6 +6,7 @@ import com.raquo.airstream.core.Source.SignalSource
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.debug.{DebuggableSignal, Debugger, DebuggerSignal}
+import com.raquo.airstream.distinct.DistinctSignal
 import com.raquo.airstream.misc.generated._
 import com.raquo.airstream.misc.{FoldLeftSignal, MapEventStream, MapSignal}
 import com.raquo.airstream.ownership.Owner
@@ -83,6 +84,14 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
       makeInitialValue = () => makeInitial(tryNow()),
       fn
     )
+  }
+
+  /** Distinct all values (both events and errors) using a comparison function
+    *
+    * @param fn (prev, next) => isSame
+    */
+  override def distinctTry(fn: (Try[A], Try[A]) => Boolean): Signal[A] = {
+    new DistinctSignal[A](parent = this, fn)
   }
 
   /** @param pf Note: guarded against exceptions */

@@ -6,6 +6,7 @@ import com.raquo.airstream.core.Source.EventSource
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.debug.{DebuggableEventStream, Debugger, DebuggerEventStream}
+import com.raquo.airstream.distinct.DistinctEventStream
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.misc.generated._
 import com.raquo.airstream.misc.{FilterEventStream, FoldLeftSignal, MapEventStream}
@@ -89,6 +90,14 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
 
   def compose[B](operator: EventStream[A] => EventStream[B]): EventStream[B] = {
     operator(this)
+  }
+
+  /** Distinct all values (both events and errors) using a comparison function
+    *
+    * @param fn (prev, next) => isSame
+    */
+  override def distinctTry(fn: (Try[A], Try[A]) => Boolean): EventStream[A] = {
+    new DistinctEventStream[A](parent = this, fn)
   }
 
   /** See docs for [[MapEventStream]]
