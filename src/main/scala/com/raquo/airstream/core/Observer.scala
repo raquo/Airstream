@@ -56,13 +56,18 @@ trait Observer[-A] extends Sink[A] with Named {
     )
   }
 
+  // #TODO[API] Does this operator even make sense?
+  //def contracollectSome: Observer[Option[A]] = {
+  //  contracollectOpt[Option[A]](identity)
+  //}
+
   /** Like [[contramap]], but original observer only fires if `project` returns Some(value)
     *
     * So, similar to [[contracollect]] but optimized for APIs like `NonEmptyList.fromList` that return an Option.
     *
     * @param project Note: guarded against exceptions
     */
-  def contramapOpt[B](project: B => Option[A]): Observer[B] = {
+  def contracollectOpt[B](project: B => Option[A]): Observer[B] = {
     Observer.withRecover(
       nextValue => project(nextValue).foreach(onNext),
       { case nextError => onError(nextError) }
@@ -80,7 +85,17 @@ trait Observer[-A] extends Sink[A] with Named {
     })
   }
 
-  /** Creates another Observer such that calling it calls the original observer after the specified delay. */
+  /** Creates another Observer such that calling it calls the original observer after the specified delay.
+    *
+    * Note: unlike Observable operators, Observer operators are not ownership-aware, so this can fire the
+    * observer even after the subscription that bound this observer to the observable has been killed.
+    * So in Laminar for example, it's possible for such a delayed observer to fire even after the element
+    * that owns this subscription was unmounted. Use the Observable delay operator to avoid that.
+    *
+    * Of course, whether anything happens if the observer is fired is a separate issue altogether.
+    * For example, if the observer is an EventBus writer, firing into it won't do anything if the EventBus
+    * stream is stopped.
+    */
   def delay(ms: Int): Observer[A] = {
     Observer.fromTry { case nextValue =>
       js.timers.setTimeout(ms.toDouble) {

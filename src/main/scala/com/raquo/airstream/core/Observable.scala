@@ -36,7 +36,4 @@ object Observable {
       strategy.flatten(parent)
     }
   }
-
-  @deprecated("0.13.0", "Use `Protected.topoRank` instead of `Observable.debugTopoRank`")
-  def debugTopoRank(observable: Observable[_]): Int = Protected.topoRank(observable)
 }

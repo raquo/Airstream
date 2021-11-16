@@ -340,13 +340,13 @@ class ObserverErrorSpec extends UnitSpec with BeforeAndAfter {
     effects.clear()
   }
 
-  it("contramapOpt emits value only if transformation returns a Some") {
+  it("contracollectOpt emits value only if transformation returns a Some") {
 
     val effects = mutable.Buffer[Try[Int]]()
 
     val topObs = Observer.fromTry[Int] { case t => effects += t }
 
-    val lowObs = topObs.contramapOpt[Int](v => if (v != 2) Some(v) else None)
+    val lowObs = topObs.contracollectOpt[Int](v => if (v != 2) Some(v) else None)
 
     lowObs.onNext(1)
     lowObs.onNext(2)
@@ -355,13 +355,13 @@ class ObserverErrorSpec extends UnitSpec with BeforeAndAfter {
     assert(effects.toList == List(Success(1), Success(3)))
   }
 
-  it("contramapOpt handles thrown exception from transformation ") {
+  it("contracollectOpt handles thrown exception from transformation ") {
     val effects = mutable.Buffer[Try[Int]]()
 
     val topObs = Observer.fromTry[Int] { case t => effects += t }
 
     val propagatedError = ExpectedError("propagated")
-    val lowObs = topObs.contramapOpt[Int](v => if (v == 2) throw ExpectedError("it's 2") else Some(v))
+    val lowObs = topObs.contracollectOpt[Int](v => if (v == 2) throw ExpectedError("it's 2") else Some(v))
 
     lowObs.onNext(1)
     lowObs.onNext(2)

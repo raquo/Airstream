@@ -9,8 +9,8 @@ import com.raquo.airstream.debug.{DebuggableEventStream, Debugger, DebuggerEvent
 import com.raquo.airstream.distinct.DistinctEventStream
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.misc.generated._
-import com.raquo.airstream.misc.{FilterEventStream, FoldLeftSignal, MapEventStream}
-import com.raquo.airstream.split._
+import com.raquo.airstream.misc.{CollectEventStream, DropEventStream, FilterEventStream, FoldLeftSignal, MapEventStream, SignalFromEventStream}
+import com.raquo.airstream.split.{SplittableEventStream, SplittableOneEventStream}
 import com.raquo.airstream.timing.{FutureEventStream, _}
 
 import scala.annotation.unused
@@ -31,10 +31,21 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
 
   def filterNot(predicate: A => Boolean): EventStream[A] = filter(!predicate(_))
 
-  /** @param pf Note: guarded against exceptions */
-  def collect[B](pf: PartialFunction[A, B]): EventStream[B] = {
-    // @TODO[Performance] Use applyOrElse
-    filter(pf.isDefinedAt).map(pf)
+  /** Apply `pf` to event and emit the resulting value, or emit nothing if `pf` is not defined for that event.
+    *
+    * @param pf Note: guarded against exceptions
+    */
+  def collect[B](pf: PartialFunction[A, B]): EventStream[B] = collectOpt(pf.lift)
+
+  /** Emit `x` if parent stream emits `Some(x)`, nothing otherwise */
+  def collectSome[B](implicit ev: A <:< Option[B]): EventStream[B] = collectOpt(ev(_))
+
+  /** Apply `fn` to parent stream event, and emit resulting x if it returns Some(x)
+    *
+    * @param fn Note: guarded against exceptions
+    */
+  def collectOpt[B](fn: A => Option[B]): EventStream[B] = {
+    new CollectEventStream(parent = this, fn)
   }
 
   /** @param ms milliseconds of delay */

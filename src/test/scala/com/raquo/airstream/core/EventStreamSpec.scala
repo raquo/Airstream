@@ -4,6 +4,7 @@ import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.ownership.Owner
+import org.scalactic.anyvals.NonEmptyList
 
 import scala.collection.mutable
 
@@ -39,64 +40,155 @@ class EventStreamSpec extends UnitSpec {
     effects.toList shouldBe range.filterNot(f).map(i => Effect("obs0", i))
   }
 
-  // @TODO Enable this when we implement it
-  ignore("distinct") {
+  it("collect") {
 
     implicit val owner: Owner = new TestableOwner
 
-    case class Foo(id: String, version: Int)
-
-    val bus = new EventBus[Foo]
+    val bus = new EventBus[Either[String, Int]]
 
     val effects = mutable.Buffer[Effect[_]]()
-
-    bus.events/**.distinct(_.id)*/.foreach { ev =>
-      effects += Effect("obs", ev)
-    }
-
-    effects shouldBe mutable.Buffer()
-
-    // --
-
-    bus.writer.onNext(Foo("bar", 1))
-
-    effects shouldBe mutable.Buffer(Effect("obs", Foo("bar", 1)))
-    effects.clear()
-
-    // --
-
-    bus.writer.onNext(Foo("bar", 2))
+    bus
+      .events
+      .collect { case Right(i) => i }
+      .foreach(v => effects += Effect("obs", v))
 
     effects shouldBe mutable.Buffer()
 
     // --
 
-    bus.writer.onNext(Foo("bar", 3))
+    bus.emit(Right(1))
+
+    effects shouldBe mutable.Buffer(
+      Effect("obs", 1)
+    )
+    effects.clear()
+
+    // --
+
+    bus.emit(Right(2))
+
+    effects shouldBe mutable.Buffer(
+      Effect("obs", 2)
+    )
+    effects.clear()
+
+    // --
+
+    bus.emit(Left("yo"))
 
     effects shouldBe mutable.Buffer()
 
     // --
 
-    bus.writer.onNext(Foo("baz", 1))
+    bus.emit(Right(3))
 
-    effects shouldBe mutable.Buffer(Effect("obs", Foo("baz", 1)))
-    effects.clear()
-
-    // --
-
-    bus.writer.onNext(Foo("baz", 2))
-
-    effects shouldBe mutable.Buffer(Effect("obs", Foo("baz", 2)))
-    effects.clear()
-
-    // --
-
-    bus.writer.onNext(Foo("bar", 4))
-
-    effects shouldBe mutable.Buffer(Effect("obs", Foo("bar", 4)))
+    effects shouldBe mutable.Buffer(
+      Effect("obs", 3)
+    )
     effects.clear()
 
   }
 
+  it("collectSome") {
+
+    implicit val owner: Owner = new TestableOwner
+
+    val bus = new EventBus[Option[Int]]
+
+    val effects = mutable.Buffer[Effect[_]]()
+    bus
+      .events
+      .collectSome
+      .foreach(v => effects += Effect("obs", v))
+
+    effects shouldBe mutable.Buffer()
+
+    // --
+
+    bus.emit(Some(1))
+
+    effects shouldBe mutable.Buffer(
+      Effect("obs", 1)
+    )
+    effects.clear()
+
+    // --
+
+    bus.emit(Some(2))
+
+    effects shouldBe mutable.Buffer(
+      Effect("obs", 2)
+    )
+    effects.clear()
+
+    // --
+
+    bus.emit(None)
+
+    effects shouldBe mutable.Buffer()
+
+    // --
+
+    bus.emit(Some(3))
+
+    effects shouldBe mutable.Buffer(
+      Effect("obs", 3)
+    )
+    effects.clear()
+
+  }
+
+  it("collectOpt") {
+
+    //def NonEmptyList[A](list: List[A]): Option[List[A]] = {
+    //  if (list.nonEmpty) Some(list) else None
+    //}
+
+    implicit val owner: Owner = new TestableOwner
+
+    val bus = new EventBus[List[Int]]
+
+    val effects = mutable.Buffer[Effect[_]]()
+    bus
+      .events
+      .collectOpt(NonEmptyList.from(_))
+      .foreach(v => effects += Effect("obs", v.head))
+
+    effects shouldBe mutable.Buffer()
+
+    // --
+
+    bus.emit(List(1))
+
+    effects shouldBe mutable.Buffer(
+      Effect("obs", 1)
+    )
+    effects.clear()
+
+    // --
+
+    bus.emit(List(2))
+
+    effects shouldBe mutable.Buffer(
+      Effect("obs", 2)
+    )
+    effects.clear()
+
+    // --
+
+    bus.emit(Nil)
+
+    effects shouldBe mutable.Buffer()
+
+    // --
+
+    bus.emit(List(3))
+
+    effects shouldBe mutable.Buffer(
+      Effect("obs", 3)
+    )
+    effects.clear()
+
+  }
 
 }
