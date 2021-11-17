@@ -9,7 +9,7 @@ import com.raquo.airstream.debug.{DebuggableEventStream, Debugger, DebuggerEvent
 import com.raquo.airstream.distinct.DistinctEventStream
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.misc.generated._
-import com.raquo.airstream.misc.{CollectEventStream, DropEventStream, FilterEventStream, FoldLeftSignal, MapEventStream, SignalFromEventStream}
+import com.raquo.airstream.misc.{CollectEventStream, FilterEventStream, FoldLeftSignal, MapEventStream, SignalFromEventStream}
 import com.raquo.airstream.split.{SplittableEventStream, SplittableOneEventStream}
 import com.raquo.airstream.timing.{FutureEventStream, _}
 
@@ -129,6 +129,9 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
   override def debugWith(debugger: Debugger[A]): EventStream[A] = {
     new DebuggerEventStream[A](this, debugger)
   }
+
+  /** This is used in Signal-s. It's a no-op for Streams. */
+  override protected def onAddedExternalObserver(observer: Observer[A]): Unit = ()
 
   override def toObservable: EventStream[A] = this
 

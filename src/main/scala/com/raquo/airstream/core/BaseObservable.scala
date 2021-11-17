@@ -151,7 +151,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
 
   protected[this] def addExternalObserver(observer: Observer[A], owner: Owner): Subscription
 
-  protected[this] def onAddedExternalObserver(@unused observer: Observer[A]): Unit = ()
+  protected[this] def onAddedExternalObserver(@unused observer: Observer[A]): Unit
 
   /** Child observable should call this method on its parents when it is started.
     * This observable calls [[onStart]] if this action has given it its first observer (internal or external).

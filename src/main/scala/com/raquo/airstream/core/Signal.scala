@@ -134,7 +134,6 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
 
   // @TODO[API] Use pattern match instead when isInstanceOf performance is fixed: https://github.com/scala-js/scala-js/issues/3815
   override protected def onAddedExternalObserver(observer: Observer[A]): Unit = {
-    super.onAddedExternalObserver(observer)
     observer.onTry(tryNow()) // send current value immediately
   }
 
