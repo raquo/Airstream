@@ -5,14 +5,6 @@ import scala.util.{Failure, Success, Try}
 
 trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
 
-  /** Evaluate initial value of this [[Signal]].
-    * This method must only be called once, when this value is first needed.
-    * You should override this method as `def` (no `val` or lazy val) to avoid
-    * holding a reference to the initial value beyond the duration of its relevance.
-    */
-  // @TODO[Integrity] ^^^ Does this memory management advice even hold water?
-  protected def initialValue: Try[A]
-
   protected var maybeLastSeenCurrentValue: js.UndefOr[Try[A]] = js.undefined
 
   protected def setCurrentValue(newValue: Try[A]): Unit = {
@@ -22,9 +14,9 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
   /** Note: Initial value is only evaluated if/when needed (when there are observers) */
   override protected[airstream] def tryNow(): Try[A] = {
     maybeLastSeenCurrentValue.getOrElse {
-      val currentValue = initialValue
-      setCurrentValue(currentValue)
-      currentValue
+      val nextValue = currentValueFromParent()
+      setCurrentValue(nextValue)
+      nextValue
     }
   }
 
@@ -38,6 +30,7 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
 
   /** Signal propagates only if its value has changed */
   override protected def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
+    //println(s"$this > FIRE > $nextValue")
 
     setCurrentValue(nextValue)
 

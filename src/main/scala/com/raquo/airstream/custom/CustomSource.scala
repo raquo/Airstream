@@ -1,6 +1,6 @@
 package com.raquo.airstream.custom
 
-import com.raquo.airstream.core.{ Transaction, WritableObservable }
+import com.raquo.airstream.core.{Transaction, WritableObservable}
 import com.raquo.airstream.custom.CustomSource._
 
 import scala.util.Try
@@ -24,30 +24,14 @@ trait CustomSource[A] extends WritableObservable[A] {
 
   protected[this] var startIndex: StartIndex = 0
 
-
-  protected[this] val _fireValue: FireValue[A] = { value =>
-    //println(s"> init trx from CustomSource(${value})")
-    new Transaction(fireValue(value, _))
+  override protected def onWillStart(): Unit = {
+    startIndex += 1
+    config.onWillStart()
   }
-
-  protected[this] val _fireError: FireError = { error =>
-    //println(s"> init error trx from CustomSource(${error})")
-    new Transaction(fireError(error, _))
-  }
-
-  protected[this] val _fireTry: SetCurrentValue[A] = { value =>
-    //println(s"> init try trx from CustomSource(${value})")
-    new Transaction(fireTry(value, _))
-  }
-
-  protected[this] val getStartIndex: GetStartIndex = () => startIndex
-
-  protected[this] val getIsStarted: GetIsStarted = () => isStarted
 
   override protected[this] def onStart(): Unit = {
-    startIndex += 1
-    Try(config.onStart()).recover {
-      case err: Throwable => _fireError(err)
+    Try(config.onStart()).recover[Unit] {
+      case err: Throwable => new Transaction(fireError(err, _))
     }
     super.onStart()
   }
@@ -62,9 +46,10 @@ object CustomSource {
 
   /** See docs for custom sources */
   final class Config private (
+    val onWillStart: () => Unit,
     val onStart: () => Unit,
     val onStop: () => Unit
-  ) {
+  ) { self =>
 
     /** Create a version of a config that only runs start / stop if the predicate passes.
       * - `start` will be run when the CustomSource is about to start
@@ -73,19 +58,24 @@ object CustomSource {
       *   if your `start` code ran the last time CustomSource started
       */
     def when(passes: () => Boolean): Config = {
-      var started = false
+      var passed = false
       new Config(
-        () => {
-          if (passes()) {
-            started = true
-            onStart()
+        onWillStart = () => {
+          passed = passes()
+          if (passed) {
+            self.onWillStart()
+          }
+        },
+        onStart = () => {
+          if (passed) {
+            self.onStart()
           }
         },
         onStop = () => {
-          if (started) {
-            onStop()
+          if (passed) {
+            self.onStop()
           }
-          started = false
+          passed = false
         }
       )
     }
@@ -93,8 +83,19 @@ object CustomSource {
 
   object Config {
 
-    def apply(onStart: () => Unit, onStop: () => Unit): Config = {
-      new Config(onStart, onStop)
+    def apply(
+      onWillStart: () => Unit,
+      onStart: () => Unit,
+      onStop: () => Unit
+    ): Config = {
+      new Config(onWillStart, onStart, onStop)
+    }
+
+    def apply(
+      onStart: () => Unit,
+      onStop: () => Unit
+    ): Config = {
+      new Config(onWillStart = () => (), onStart, onStop)
     }
   }
 

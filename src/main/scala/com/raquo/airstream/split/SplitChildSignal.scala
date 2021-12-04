@@ -1,7 +1,7 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
-import com.raquo.airstream.core.{Protected, Transaction, WritableSignal}
+import com.raquo.airstream.common.{InternalTryObserver, SingleParentSignal}
+import com.raquo.airstream.core.{Protected, Transaction}
 import com.raquo.airstream.timing.SyncDelayEventStream
 
 import scala.util.{Success, Try}
@@ -20,7 +20,9 @@ private[airstream] class SplitChildSignal[M[_], A](
   override protected[this] val parent: SyncDelayEventStream[M[A]],
   initial: A,
   getMemoizedValue: () => Option[A]
-) extends WritableSignal[A] with SingleParentObservable[M[A], A] with InternalTryObserver[M[A]] {
+) extends SingleParentSignal[M[A], A] with InternalTryObserver[M[A]] {
+
+  private var hasEmittedEvents = false
 
   private var maybeInitialTransaction: Option[Transaction] = Transaction.currentTransaction()
 
@@ -28,18 +30,27 @@ private[airstream] class SplitChildSignal[M[_], A](
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
-  override protected def initialValue: Try[A] = Success(initial)
+  override protected def currentValueFromParent(): Try[A] = {
+    // #Note See also SignalFromEventStream for similar logic
+    // #Note This can be called from inside tryNow(), so make sure to avoid an infinite loop
+    if (maybeLastSeenCurrentValue.nonEmpty && hasEmittedEvents) {
+      tryNow()
+    } else {
+      Success(initial)
+    }
+  }
 
   override protected def onTry(nextValue: Try[M[A]], transaction: Transaction): Unit = {
     getMemoizedValue().foreach { freshMemoizedInput =>
-      // #Note I do think we want to compare both `None` and `Some` cases.
+      // #Note I do think we want to compare both `None` and `Some` cases of maybeTransaction.
       //  I'm not sure if None is possible, but if it is, this is probably the right thing to do.
-      //  I think None might be possible when evaluating this signal's initial value
+      //  I think None might be possible when evaluating this signal's initial value when starting it
       if (!droppedDuplicateEvent && maybeInitialTransaction == Transaction.currentTransaction()) {
         //println(s">>>>> DROPPED EVENT ${freshMemoizedInput}, TRX IS ${maybeInitialTransaction}")
         maybeInitialTransaction = None
         droppedDuplicateEvent = true
       } else {
+        hasEmittedEvents = true
         fireTry(Success(freshMemoizedInput), transaction)
       }
     }

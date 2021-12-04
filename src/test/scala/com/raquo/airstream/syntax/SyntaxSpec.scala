@@ -57,18 +57,18 @@ class SyntaxSpec extends UnitSpec {
     }
   }
 
-  it("SwitchFutureStrategy") {
+  it("Replacement for ye olde SwitchFutureStrategy") {
 
     val bus = new EventBus[Int]
 
     locally {
-      val flatStream = bus.events.flatMap(a => Future.successful(a))
+      val flatStream = bus.events.flatMap(a => EventStream.fromFuture(Future.successful(a)))
       flatStream: EventStream[Int]
     }
 
     locally {
-      val flatSignal = bus.events.startWith(0).flatMap(a => Future.successful(a))
-      flatSignal: EventStream[Int]
+      val flatSignal = bus.events.startWith(0).flatMap(a => Signal.fromFuture(Future.successful(a), initial = 0))
+      flatSignal: Signal[Int]
     }
   }
 

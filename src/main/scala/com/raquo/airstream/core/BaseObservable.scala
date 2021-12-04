@@ -4,7 +4,6 @@ import com.raquo.airstream.debug.Debugger
 import com.raquo.airstream.flatten.FlattenStrategy
 import com.raquo.airstream.ownership.{Owner, Subscription}
 
-import scala.annotation.unused
 import scala.util.{Failure, Success, Try}
 
 /** This trait represents a reactive value that can be subscribed to.
@@ -151,12 +150,12 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
 
   protected[this] def addExternalObserver(observer: Observer[A], owner: Owner): Subscription
 
-  protected[this] def onAddedExternalObserver(@unused observer: Observer[A]): Unit
+  protected[this] def onAddedExternalObserver(observer: Observer[A]): Unit
 
   /** Child observable should call this method on its parents when it is started.
     * This observable calls [[onStart]] if this action has given it its first observer (internal or external).
     */
-  protected[airstream] def addInternalObserver(observer: InternalObserver[A]): Unit
+  protected[airstream] def addInternalObserver(observer: InternalObserver[A], shouldCallMaybeWillStart: Boolean): Unit
 
   /** Child observable should call Transaction.removeInternalObserver(parent, childInternalObserver) when it is stopped.
     * This observable calls [[onStop]] if this action has removed its last observer (internal or external).
@@ -169,6 +168,28 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
   protected def numAllObservers: Int
 
   protected def isStarted: Boolean = numAllObservers > 0
+
+  /** When starting an observable, this is called recursively on every one of its parents that are not started.
+    * This whole chain happens before onStart callback is called. This chain serves to prepare the internal states
+    * of observables that are about to start, e.g. you should update the signal's value to match its parent signal's
+    * value in this callback, if applicable.
+    *
+    * Default implementation, for observables that don't need anything,
+    * should be to call `parent.maybeWillStart()` for every parent observable.
+    *
+    * If custom behaviour is required, you should generally call `parent.maybeWillStart()`
+    * BEFORE your custom logic. Then your logic will be able to make use of parent's
+    * updated value.
+    *
+    * Note: THIS METHOD MUST NOT CREATE TRANSACTIONS OR FIRE ANY EVENTS! DO IT IN ONSTART IF NEEDED.
+    */
+  protected def onWillStart(): Unit
+
+  protected def maybeWillStart(): Unit = {
+    if (!isStarted) {
+      onWillStart()
+    }
+  }
 
   /** This method is fired when this observable starts working (listening for parent events and/or firing its own events),
     * that is, when it gets its first Observer (internal or external).
@@ -184,11 +205,26 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     */
   protected def onStop(): Unit = ()
 
+  /** Airstream may internally use Scala library functions which use `==` or `hashCode` for equality, for example List.contains.
+    * Comparing observables by structural equality pretty much never makes sense, yet it's not that hard to run into that, all
+    * you need is to create a `case class` subclass, and the Scala compiler will generate a structural-equality `equals` and
+    * `hashCode` methods for you behind the scenes.
+    *
+    * To prevent that, we make equals and hashCode methods final, using the default implementation (which is reference equality).
+    */
+  final override def equals(obj: Any): Boolean = super.equals(obj)
+
+  /** Force reference equality checks. See comment for `equals`. */
+  final override def hashCode(): Int = super.hashCode()
 }
 
 object BaseObservable {
 
   @inline private[airstream] def topoRank[O[+_] <: Observable[_]](observable: BaseObservable[O, _]): Int = {
     observable.topoRank
+  }
+
+  @inline private[airstream] def maybeWillStart[O[+_] <: Observable[_]](observable: BaseObservable[O, _]): Unit = {
+    observable.maybeWillStart()
   }
 }

@@ -313,11 +313,22 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
 
     // --
 
+    // We don't reset list of streams anymore
+
     mergeStream.addObserver(Observer.empty)
     bus1.writer.onNext(5)
     bus2.writer.onNext(30)
     bus3.writer.onNext(200)
-    calculations shouldBe mutable.Buffer()
+    calculations shouldBe mutable.Buffer(
+      Calculation("stream1", 5),
+      Calculation("merge", 5),
+      Calculation("stream2", 30),
+      Calculation("merge", 30),
+      Calculation("stream3", 200),
+      Calculation("merge", 200)
+    )
+
+    calculations.clear()
 
     // --
 
@@ -330,6 +341,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
       Calculation("stream1", 7),
       Calculation("merge", 7)
     )
+    calculations.clear()
 
     done
   }
@@ -347,9 +359,13 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     val stream2 = bus2.events.map(Calculation.log("stream2", calculations))
     val stream3 = bus3.events.map(Calculation.log("stream3", calculations))
 
-    val mergeVar = Var[EventStream[Int]](stream1)
+    val streamVar = Var[EventStream[Int]](stream1)
 
-    val mergeSignal = mergeVar.signal.distinct.flatten(ConcurrentStreamStrategy).map(Calculation.log("merge", calculations))
+    val mergeSignal = streamVar
+      .signal
+      .distinct
+      .flatten(ConcurrentStreamStrategy)
+      .map(Calculation.log("merge", calculations))
 
     val sub1 = mergeSignal.addObserver(Observer.empty)
 
@@ -367,7 +383,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
 
     // --
 
-    mergeVar.writer.onNext(stream1)
+    streamVar.writer.onNext(stream1)
     calculations shouldBe mutable.Buffer()
 
     // --
@@ -390,8 +406,8 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
 
     // --
 
-    mergeVar.writer.onNext(stream2)
-    mergeVar.writer.onNext(stream3)
+    streamVar.writer.onNext(stream2)
+    streamVar.writer.onNext(stream3)
     bus1.writer.onNext(3)
     bus2.writer.onNext(10)
     bus3.writer.onNext(100)
@@ -422,11 +438,17 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
 
     // --
 
+    // We don't reset the list of streams on stop anymore
+
     mergeSignal.addObserver(Observer.empty)
     bus1.writer.onNext(5)
     bus2.writer.onNext(30)
     bus3.writer.onNext(200) // `stream3` is current value of mergeSignal
     calculations shouldBe mutable.Buffer(
+      Calculation("stream1", 5),
+      Calculation("merge", 5),
+      Calculation("stream2", 30),
+      Calculation("merge", 30),
       Calculation("stream3", 200),
       Calculation("merge", 200)
     )
@@ -434,7 +456,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
 
     // --
 
-    mergeVar.writer.onNext(stream1)
+    streamVar.writer.onNext(stream1) // Adding this stream a second time – there is no deduplication, that's why we see duplicate output events
     bus1.writer.onNext(6)
     bus1.writer.onNext(7)
     calculations shouldBe mutable.Buffer(

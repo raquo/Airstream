@@ -1,6 +1,6 @@
 package com.raquo.airstream.state
 
-import com.raquo.airstream.core.{ Transaction, WritableSignal }
+import com.raquo.airstream.core.{Transaction, WritableSignal}
 
 import scala.util.Try
 
@@ -12,11 +12,13 @@ import scala.util.Try
   * (see StrictSignal).
   */
 private[state] class VarSignal[A] private[state](
-  override protected[this] val initialValue: Try[A]
+  initial: Try[A]
 ) extends WritableSignal[A] with StrictSignal[A] {
 
   /** SourceVar does not directly depend on other observables, so it breaks the graph. */
   override protected val topoRank: Int = 1
+
+  setCurrentValue(initial)
 
   /** Note: we do not check if isStarted() here, this is how we ensure that this
     * signal's current value stays up to date. If this signal is stopped, this
@@ -25,4 +27,8 @@ private[state] class VarSignal[A] private[state](
   private[state] def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
     fireTry(nextValue, transaction)
   }
+
+  override protected def currentValueFromParent(): Try[A] = tryNow() // noop
+
+  override protected def onWillStart(): Unit = () // noop
 }

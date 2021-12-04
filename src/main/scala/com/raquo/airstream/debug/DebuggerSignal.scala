@@ -1,28 +1,31 @@
 package com.raquo.airstream.debug
 
+import com.raquo.airstream.common.SingleParentSignal
 import com.raquo.airstream.core.AirstreamError.DebugError
-import com.raquo.airstream.core.{AirstreamError, Protected, Signal, Transaction, WritableSignal}
+import com.raquo.airstream.core.{AirstreamError, Protected, Signal, Transaction}
 
 import scala.util.Try
 
 /** See [[DebuggableObservable]] and [[DebuggableSignal]] for user-facing debug methods */
 class DebuggerSignal[A](
-  override protected val parent: Signal[A],
+  override protected[this] val parent: Signal[A],
   override protected val debugger: Debugger[A]
-) extends WritableSignal[A] with DebuggerObservable[A] {
+) extends SingleParentSignal[A, A] with DebuggerObservable[A] {
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
-  override protected[this] def initialValue: Try[A] = {
-    val initial = parent.tryNow()
+  override protected def defaultDisplayName: String = DebuggerObservable.defaultDisplayName(parent)
+
+  override protected def currentValueFromParent(): Try[A] = {
+    val parentValue = parent.tryNow()
     try {
-      debugger.onInitialEval(initial)
+      debugger.onEvalFromParent(parentValue)
     } catch {
       case err: Throwable =>
-        val maybeCause = initial.toEither.left.toOption
+        val maybeCause = parentValue.toEither.left.toOption
         AirstreamError.sendUnhandledError(DebugError(err, cause = maybeCause))
     }
-    initial
+    parentValue
   }
 
   override protected[this] def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {

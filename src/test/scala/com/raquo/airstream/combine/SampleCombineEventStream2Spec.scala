@@ -93,11 +93,14 @@ class SampleCombineEventStream2Spec extends UnitSpec {
     subCombined.kill()
     sampledSignal.addObserver(signalObserver)
 
-    calculations shouldEqual mutable.Buffer()
+    calculations shouldEqual mutable.Buffer(
+      Calculation("signal", 100)
+    )
     effects shouldEqual mutable.Buffer(
       Effect("signal", 100)
     )
 
+    calculations.clear()
     effects.clear()
 
     // --

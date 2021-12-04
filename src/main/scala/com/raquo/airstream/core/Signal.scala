@@ -8,7 +8,7 @@ import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.debug.{DebuggableSignal, Debugger, DebuggerSignal}
 import com.raquo.airstream.distinct.DistinctSignal
 import com.raquo.airstream.misc.generated._
-import com.raquo.airstream.misc.{FoldLeftSignal, MapEventStream, MapSignal}
+import com.raquo.airstream.misc.{ChangesEventStream, FoldLeftSignal, MapSignal}
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.split.{SplittableOneSignal, SplittableSignal}
 import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
@@ -44,8 +44,9 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
   /** @param operator Note: Must not throw! */
   def composeChanges[AA >: A](
     operator: EventStream[A] => EventStream[AA]
+    //emitChangeOnRestart: Boolean = false
   ): Signal[AA] = {
-    composeAll(operator, initialOperator = identity)
+    composeAll(changesOperator = operator, initialOperator = identity/*, emitChangeOnRestart*/)
   }
 
   /** @param changesOperator Note: Must not throw!
@@ -54,11 +55,19 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
   def composeAll[B](
     changesOperator: EventStream[A] => EventStream[B],
     initialOperator: Try[A] => Try[B]
+    //emitChangeOnRestart: Boolean = false
   ): Signal[B] = {
+    //val changesStream = if (emitChangeOnRestart) changesEmitChangeOnRestart else changes
     changesOperator(changes).toSignalWithTry(initialOperator(tryNow()))
   }
 
-  def changes: EventStream[A] = new MapEventStream[A, A](parent = this, project = identity, recover = None)
+  def changes: EventStream[A] = {
+    new ChangesEventStream[A](parent = this/*, emitChangeOnRestart = false*/)
+  }
+
+  //def changesEmitChangeOnRestart: EventStream[A] = {
+  //  new ChangesEventStream[A](parent = this, emitChangeOnRestart = true)
+  //}
 
   /**
     * @param makeInitial Note: guarded against exceptions
@@ -91,7 +100,7 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
     * @param fn (prev, next) => isSame
     */
   override def distinctTry(fn: (Try[A], Try[A]) => Boolean): Signal[A] = {
-    new DistinctSignal[A](parent = this, fn)
+    new DistinctSignal[A](parent = this, fn, resetOnStop = false)
   }
 
   /** @param pf Note: guarded against exceptions */
@@ -120,17 +129,29 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
 
   override def toObservable: Signal[A] = this
 
-  /** Here we need to ensure that Signal's default value has been evaluated.
-    * It is important because if a Signal gets started by means of its .changes
-    * stream acquiring an observer, nothing else would trigger this evaluation
-    * because initialValue is not directly used by the .changes stream.
-    * However, when the events start coming in, we will need this initialValue
-    * because Signal needs to know when its current value has changed.
+  /** Here we need to ensure that Signal's default value has been evaluated at
+    * least once. It is important because if a Signal gets started by means of
+    * its .changes stream acquiring an observer, nothing else would trigger
+    * this evaluation because initialValue is not directly used by the .changes
+    * stream. However, when the events start coming in, we will need this
+    * initialValue because Signal needs to know when its current value has
+    * changed.
     */
   override protected[this] def onStart(): Unit = {
+    //println(s"$this onStart")
     tryNow() // trigger setCurrentValue if we didn't initialize this before
     super.onStart()
   }
+
+  /** Recalculate the signal's current value. Typically this asks the parent signal
+    * for its current value, and does the math from there, according to the particular
+    * signal's logic (e.g. MapSignal would apply the `project` function.
+    *
+    * This method is used to calculate the signal's initial value, but also to
+    * recalculate, this signal's value, to re-sync it with the parent, when this signal
+    * is restarted after being stopped. See https://github.com/raquo/Airstream/issues/43
+    */
+  protected def currentValueFromParent(): Try[A]
 
   // @TODO[API] Use pattern match instead when isInstanceOf performance is fixed: https://github.com/scala-js/scala-js/issues/3815
   override protected def onAddedExternalObserver(observer: Observer[A]): Unit = {
@@ -147,6 +168,17 @@ object Signal {
 
   def fromFuture[A](future: Future[A]): Signal[Option[A]] = {
     new FutureSignal(future)
+  }
+
+  /** Note: If the future is already resolved by the time this signal is started,
+    * the provided initial value is not used, and the future's value is used as
+    * the initial (and only) value instead.
+    */
+  def fromFuture[A](future: Future[A], initial: => A): Signal[A] = {
+    new FutureSignal(future).map {
+      case None => initial
+      case Some(value) => value
+    }
   }
 
   def fromJsPromise[A](promise: js.Promise[A]): Signal[Option[A]] = {

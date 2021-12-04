@@ -85,18 +85,34 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
     new FoldLeftSignal(parent = this, () => initial, fn)
   }
 
-  @inline def startWith[B >: A](initial: => B): Signal[B] = toSignal(initial)
+  /** @param cacheInitialValue if false, signal's initial value will be re-evaluated on every
+    *                          restart (so long as the parent stream does not emit any values)
+    */
+  @inline def startWith[B >: A](initial: => B, cacheInitialValue: Boolean = false): Signal[B] = {
+    toSignal(initial, cacheInitialValue)
+  }
 
-  @inline def startWithTry[B >: A](initial: => Try[B]): Signal[B] = toSignalWithTry(initial)
+  /** @param cacheInitialValue if false, signal's initial value will be re-evaluated on every
+    *                          restart (so long as the parent stream does not emit any values)
+    */
+  @inline def startWithTry[B >: A](initial: => Try[B], cacheInitialValue: Boolean = false): Signal[B] = {
+    toSignalWithTry(initial, cacheInitialValue)
+  }
 
   @inline def startWithNone: Signal[Option[A]] = toWeakSignal
 
-  def toSignal[B >: A](initial: => B): Signal[B] = {
-    toSignalWithTry(Success(initial))
+  /** @param cacheInitialValue if false, signal's initial value will be re-evaluated on every
+    *                          restart (so long as the parent stream does not emit any values)
+    */
+  def toSignal[B >: A](initial: => B, cacheInitialValue: Boolean = false): Signal[B] = {
+    toSignalWithTry(Success(initial), cacheInitialValue)
   }
 
-  def toSignalWithTry[B >: A](initial: => Try[B]): Signal[B] = {
-    new SignalFromEventStream(this, initial)
+  /** @param cacheInitialValue if false, signal's initial value will be re-evaluated on every
+    *                          restart (so long as the parent stream does not emit any values)
+    */
+  def toSignalWithTry[B >: A](initial: => Try[B], cacheInitialValue: Boolean = false): Signal[B] = {
+    new SignalFromEventStream(this, initial, cacheInitialValue)
   }
 
   def compose[B](operator: EventStream[A] => EventStream[B]): EventStream[B] = {
@@ -108,7 +124,7 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
     * @param fn (prev, next) => isSame
     */
   override def distinctTry(fn: (Try[A], Try[A]) => Boolean): EventStream[A] = {
-    new DistinctEventStream[A](parent = this, fn)
+    new DistinctEventStream[A](parent = this, fn, resetOnStop = false)
   }
 
   /** See docs for [[MapEventStream]]
@@ -178,8 +194,8 @@ object EventStream {
     )
   }
 
-  def fromFuture[A](future: Future[A], emitFutureIfCompleted: Boolean = false): EventStream[A] = {
-    new FutureEventStream[A](future, emitFutureIfCompleted)
+  def fromFuture[A](future: Future[A]): EventStream[A] = {
+    new FutureEventStream[A](future)
   }
 
   def fromJsPromise[A](promise: js.Promise[A]): EventStream[A] = {

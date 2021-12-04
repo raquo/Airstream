@@ -48,6 +48,19 @@ class AjaxEventStream(
 
   private var pendingRequest: Option[dom.XMLHttpRequest] = None
 
+  /** This stream will emit at most one event per request regardless of the outcome.
+    *
+    * You need to introspect the result to determine whether the request
+    * succeeded, failed, timed out, or was aborted.
+    */
+  lazy val completeEvents: EventStream[dom.XMLHttpRequest] = {
+    this.recover {
+      case err: AjaxStreamError => Some(err.xhr)
+    }
+  }
+
+  override protected def onWillStart(): Unit = ()
+
   override protected[this] def onStart(): Unit = {
     val request = AjaxEventStream.initRequest(timeoutMs, withCredentials, responseType)
 
@@ -123,17 +136,6 @@ class AjaxEventStream(
     AjaxEventStream.sendRequest(request, method, url, data, headers)
 
     super.onStart()
-  }
-
-  /** This stream will emit at most one event per request regardless of the outcome.
-    *
-    * You need to introspect the result to determine whether the request
-    * succeeded, failed, timed out, or was aborted.
-    */
-  lazy val completeEvents: EventStream[dom.XMLHttpRequest] = {
-    this.recover {
-      case err: AjaxStreamError => Some(err.xhr)
-    }
   }
 
   override protected[this] def onStop(): Unit = {

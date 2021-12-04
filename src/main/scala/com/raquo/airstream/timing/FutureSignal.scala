@@ -1,51 +1,46 @@
 package com.raquo.airstream.timing
 
-import com.raquo.airstream.core.{ Transaction, WritableSignal }
-import com.raquo.airstream.state.StrictSignal
+import com.raquo.airstream.core.{Transaction, WritableSignal}
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue // #TODO #nc remove this in 15.0.0
 import scala.concurrent.Future
-import scala.util.{ Success, Try }
+import scala.util.{Success, Try}
 
-// @TODO confirm that memory management is ok here between the future and this signal.
-
-/** This signal behaves a bit differently than other signals typically do:
-  * it keeps track of state regardless of whether it is started.
-  * This is possible because this case requires no special memory management.
-  *
-  * Note that being a StrictSignal, this exposes `now` and `tryNow` methods,
-  * however if the `future` was not yet completed when this signal was created,
-  * this signal's current value will be updated *asynchronously* after the future
-  * has completed.
-  */
-class FutureSignal[A](
-  future: Future[A]
-) extends WritableSignal[Option[A]] with StrictSignal[Option[A]] {
+class FutureSignal[A](future: Future[A]) extends WritableSignal[Option[A]] {
 
   override protected val topoRank: Int = 1
 
-  override protected[this] def initialValue: Try[Option[A]] = {
+  private var futureSubscribed = false
 
-    val futureValue = future.value.fold[Try[Option[A]]](
-      Success(None)
-    )(
-      value => value.map(Some(_))
-    )
-
-    // Subscribing to this signal, or requesting now() or tryNow() will trigger initialValue
-    // evaluation, which will register an onComplete callback on the future if it's not resolved yet.
-
-    // @nc @TODO If implementing https://github.com/raquo/Airstream/issues/43
-    //      This needs to be adjusted to avoid more than one onComplete calls per instance of signal.
-    //      Just add a boolean (don't look at tryNow, because that might cause infinite loop)
-
-    if (!future.isCompleted) {
-      future.onComplete(value => {
-        //println(s"> init trx from FutureSignal($value)")
-        new Transaction(fireTry(value.map(Some(_)), _))
-      })
+  override protected def currentValueFromParent(): Try[Option[A]] = {
+    future.value match {
+      case Some(value) => value.map(Some(_))
+      case None => Success(None)
     }
+  }
 
-    futureValue
+  override protected def onWillStart(): Unit = {
+    // #TODO[sync] Not sure if we need this line or not.
+    setCurrentValue(currentValueFromParent())
+
+    if (!futureSubscribed && !future.isCompleted) {
+      futureSubscribed = true
+      // #Note onWillStart must not create transactions / emit values, but this is ok here
+      //  because onComplete is always asynchronous in ScalaJS, so any value will be emitted
+      //  long after the onWillStart / onStart chain has finished.
+      // #Note fireTry sets current value even if the signal has no observers
+      future.onComplete { value =>
+        val nextValue = value.map(Some(_))
+        if (nextValue.map(_.map(_ => ())) != tryNow().map(_.map(_ => ()))) {
+          // #TODO[sync] If somehow the signal's current value has already been updated with the Future's resolved value,
+          //  we don't want to emit a separate event. The `_.map(_ => ())` trick is just to avoid comparing the resolved
+          //  values using `==` – that could be expensive, and it's not necessary since we know that a resolved Future
+          //  can never change its value.
+          //  I'm not actually sure if this condition is necessary, it would have to be some weird timing.
+          //println(s"> init trx from FutureSignal($value)")
+          new Transaction(fireTry(nextValue, _)) // #Note[onStart,trx,async]
+        }
+      }
+    }
   }
 }

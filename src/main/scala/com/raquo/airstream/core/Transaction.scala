@@ -1,6 +1,6 @@
 package com.raquo.airstream.core
 
-import com.raquo.airstream.util.JsPriorityQueue
+import com.raquo.airstream.util.{GlobalCounter, JsPriorityQueue}
 
 import scala.scalajs.js
 
@@ -9,7 +9,7 @@ import scala.scalajs.js
 class Transaction(private[Transaction] var code: Transaction => Any) {
 
   // @TODO this is not used except for debug logging. Remove eventually
-  //val id: Int = Transaction.nextId()
+  val id: Int = Transaction.nextId()
 
   //println(s"  - create trx $id")
 
@@ -32,14 +32,7 @@ class Transaction(private[Transaction] var code: Transaction => Any) {
   }
 }
 
-object Transaction { // extends GlobalCounter {
-
-  //private var lastId: Int = 0;
-
-  //private def nextId(): Int = {
-  //  lastId += 1
-  //  lastId
-  //}
+object Transaction extends GlobalCounter { // @nc[remove]
 
   private object pendingTransactions {
 
@@ -66,6 +59,7 @@ object Transaction { // extends GlobalCounter {
     }
 
     def done(transaction: Transaction): Unit = {
+      //println(s"--done trx: ${transaction.id}")
       //if (lastId > 50) {
       //  throw new Exception(">>> Overflow!!!!!")
       //}

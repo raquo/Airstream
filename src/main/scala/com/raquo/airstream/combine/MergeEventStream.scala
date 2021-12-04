@@ -1,7 +1,7 @@
 package com.raquo.airstream.combine
 
-import com.raquo.airstream.common.{InternalParentObserver, Observation}
-import com.raquo.airstream.core.{Observable, Protected, SyncObservable, Transaction, WritableEventStream}
+import com.raquo.airstream.common.{InternalParentObserver, MultiParentEventStream, Observation}
+import com.raquo.airstream.core.{EventStream, Observable, Protected, SyncObservable, Transaction, WritableEventStream}
 import com.raquo.airstream.util.JsPriorityQueue
 
 import scala.scalajs.js
@@ -14,8 +14,8 @@ import scala.scalajs.js
   * does not make sense, conceptually (what do you even do with their current values?).
   */
 class MergeEventStream[A](
-  parents: Iterable[Observable[A]]
-) extends WritableEventStream[A] with SyncObservable[A] {
+  override protected[this] val parents: Seq[EventStream[A]],
+) extends WritableEventStream[A] with SyncObservable[A] with MultiParentEventStream[A, A] {
 
   override protected val topoRank: Int = Protected.maxParentTopoRank(parents) + 1
 
@@ -50,7 +50,7 @@ class MergeEventStream[A](
   }
 
   override protected[this] def onStart(): Unit = {
-    parentObservers.foreach(_.addToParent())
+    parentObservers.foreach(_.addToParent(shouldCallMaybeWillStart = false))
     super.onStart()
   }
 

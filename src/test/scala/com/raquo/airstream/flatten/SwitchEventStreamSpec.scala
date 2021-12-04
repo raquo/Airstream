@@ -161,7 +161,7 @@ class SwitchEventStreamSpec extends UnitSpec {
     val flattenStream = $latestNumber
       .map(Calculation.log("flattened", calculations))
 
-    val subFlatten = flattenStream.addObserver(flattenObserver)
+    val subFlatten1 = flattenStream.addObserver(flattenObserver)
 
     calculations shouldEqual mutable.Buffer()
     effects shouldEqual mutable.Buffer()
@@ -209,8 +209,8 @@ class SwitchEventStreamSpec extends UnitSpec {
 
     val sourceStream2Observer = Observer[Int](effects += Effect("source-2-obs", _))
 
-    sourceStreams(2).addObserver(sourceStream2Observer)
-    subFlatten.kill()
+    val sourceSub2 = sourceStreams(2).addObserver(sourceStream2Observer)
+    subFlatten1.kill()
 
     calculations shouldEqual mutable.Buffer()
     effects shouldEqual mutable.Buffer()
@@ -231,6 +231,37 @@ class SwitchEventStreamSpec extends UnitSpec {
 
     // --
 
+    val subFlatten2 = flattenStream.addObserver(flattenObserver) // re-activate flattened stream
+
+    calculations shouldEqual mutable.Buffer()
+    effects shouldEqual mutable.Buffer()
+
+    // -- re-subscribing to the same stream keeps memory of last stream
+
+    sourceBuses(2).writer.onNext(4)
+
+    calculations shouldEqual mutable.Buffer(
+      Calculation("source-2", 4),
+      Calculation("flattened", 4)
+    )
+    effects shouldEqual mutable.Buffer(
+      Effect("source-2-obs", 4),
+      Effect("flattened-obs", 4)
+    )
+
+    calculations.clear()
+    effects.clear()
+
+    // -- re-subscribing to a new stream pulls it from parent signal
+
+    subFlatten2.kill()
+    sourceSub2.kill()
+
+    metaVar.writer.onNext(sourceStreams(3))
+
+    sourceBuses(1).writer.onNext(5)
+    sourceBuses(3).writer.onNext(6)
+
     flattenStream.addObserver(flattenObserver) // re-activate flattened stream
 
     calculations shouldEqual mutable.Buffer()
@@ -238,18 +269,20 @@ class SwitchEventStreamSpec extends UnitSpec {
 
     // --
 
-    // flatten stream does not run because it forgot the stream
-    sourceBuses(2).writer.onNext(4)
+    sourceBuses(1).writer.onNext(7)
+    sourceBuses(3).writer.onNext(8)
 
     calculations shouldEqual mutable.Buffer(
-      Calculation("source-2", 4)
+      Calculation("source-3", 8),
+      Calculation("flattened", 8)
     )
     effects shouldEqual mutable.Buffer(
-      Effect("source-2-obs", 4)
+      Effect("flattened-obs", 8)
     )
 
     calculations.clear()
     effects.clear()
+
   }
 
   it("EventStream: emitting the same inner stream does not cause it to stop and re-start") {

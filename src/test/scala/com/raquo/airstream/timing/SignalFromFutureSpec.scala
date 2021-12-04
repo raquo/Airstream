@@ -115,30 +115,4 @@ class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     }
   }
 
-  it("exposes current value even without observers (unresolved future)") {
-    val promise = makePromise()
-    val signal = Signal.fromFuture(promise.future) // Don't use `makeSignal` here, we need the _original_, strict signal
-
-    assert(signal.now().isEmpty)
-
-    promise.success(100)
-
-    // @TODO[API] This is empty because we've triggered signal's initialValue evaluation by the assert above.
-    //  - After that, we can only track Future's updates asynchronously using onComplete.
-    //  - I don't think we want to implement a pull-based system for this.
-    assert(signal.now().isEmpty)
-
-    delay {
-      assert(signal.now().contains(100))
-    }
-  }
-
-  it("exposes current value even without observers (resolved future)") {
-    val promise = makePromise()
-    promise.success(100)
-
-    val signal = Signal.fromFuture(promise.future) // Don't use `makeSignal` here, we need the _original_, strict signal
-
-    assert(signal.now().contains(100))
-  }
 }

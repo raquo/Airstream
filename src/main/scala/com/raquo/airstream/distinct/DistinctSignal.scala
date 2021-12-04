@@ -1,15 +1,16 @@
 package com.raquo.airstream.distinct
 
-import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
-import com.raquo.airstream.core.{Protected, Signal, Transaction, WritableSignal}
+import com.raquo.airstream.common.{InternalTryObserver, SingleParentSignal}
+import com.raquo.airstream.core.{Protected, Signal, Transaction}
 
 import scala.util.Try
 
 /** Emits only values that are distinct from the last emitted value, according to isSame function */
 class DistinctSignal[A](
-  override protected val parent: Signal[A],
-  isSame: (Try[A], Try[A]) => Boolean
-) extends WritableSignal[A] with SingleParentObservable[A, A] with InternalTryObserver[A] {
+  override protected[this] val parent: Signal[A],
+  isSame: (Try[A], Try[A]) => Boolean,
+  resetOnStop: Boolean
+) extends SingleParentSignal[A, A] with InternalTryObserver[A] {
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
@@ -19,5 +20,19 @@ class DistinctSignal[A](
     }
   }
 
-  override protected def initialValue: Try[A] = parent.tryNow()
+  override protected def currentValueFromParent(): Try[A] = parent.tryNow()
+
+  /** Special implementation to add the distinct-ness filter */
+  override protected def updateCurrentValueFromParent(): Try[A] = {
+    val currentValue = tryNow()
+    val nextValue = currentValueFromParent()
+    // #Note We check this signal's standard distinction condition with !isSame instead of `==`
+    //  because isSame might be something incompatible, e.g. reference equality
+    if (resetOnStop || !isSame(nextValue, currentValue)) {
+      setCurrentValue(nextValue)
+      nextValue
+    } else {
+      currentValue
+    }
+  }
 }

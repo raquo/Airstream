@@ -2,11 +2,11 @@ package com.raquo.airstream.combine
 
 import com.raquo.airstream.common.InternalParentObserver
 import com.raquo.airstream.core.AirstreamError.CombinedError
-import com.raquo.airstream.core.{ SyncObservable, Transaction, WritableObservable }
+import com.raquo.airstream.core.{SyncObservable, Transaction, WritableObservable}
 import org.scalajs.dom
 
 import scala.scalajs.js
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 trait CombineObservable[A] extends SyncObservable[A] { this: WritableObservable[A] =>
 
@@ -45,7 +45,7 @@ trait CombineObservable[A] extends SyncObservable[A] { this: WritableObservable[
   }
 
   override protected[this] def onStart(): Unit = {
-    parentObservers.foreach(_.addToParent())
+    parentObservers.foreach(_.addToParent(shouldCallMaybeWillStart = false))
     super.onStart()
   }
 

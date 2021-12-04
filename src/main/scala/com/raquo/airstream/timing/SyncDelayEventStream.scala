@@ -1,7 +1,7 @@
 package com.raquo.airstream.timing
 
-import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
-import com.raquo.airstream.core.{Observable, Protected, SyncObservable, Transaction, WritableEventStream}
+import com.raquo.airstream.common.{InternalTryObserver, SingleParentEventStream}
+import com.raquo.airstream.core.{Observable, Protected, SyncObservable, Transaction}
 
 import scala.scalajs.js
 import scala.util.Try
@@ -14,7 +14,7 @@ import scala.util.Try
 class SyncDelayEventStream[A] (
   override protected[this] val parent: Observable[A],
   after: Observable[_]
-) extends WritableEventStream[A] with SingleParentObservable[A, A] with InternalTryObserver[A] with SyncObservable[A] {
+) extends SingleParentEventStream[A, A] with InternalTryObserver[A] with SyncObservable[A] {
 
   private[this] var maybePendingValue: js.UndefOr[Try[A]] = js.undefined
 

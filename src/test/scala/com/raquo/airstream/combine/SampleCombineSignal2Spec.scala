@@ -98,11 +98,14 @@ class SampleCombineSignal2Spec extends UnitSpec {
     subCombined.kill()
     sampledSignal.addObserver(sampledObserver)
 
-    calculations shouldEqual mutable.Buffer()
+    calculations shouldEqual mutable.Buffer(
+      Calculation("sampled", 20)
+    )
     effects shouldEqual mutable.Buffer(
       Effect("sampled", 20)
     )
 
+    calculations.clear()
     effects.clear()
 
     // --
@@ -123,11 +126,15 @@ class SampleCombineSignal2Spec extends UnitSpec {
 
     combinedSignal.addObserver(combinedObserver)
 
-    calculations shouldEqual mutable.Buffer()
+    calculations shouldEqual mutable.Buffer(
+      Calculation("sampling", 300),
+      Calculation("combined", 330)
+    )
     effects shouldEqual mutable.Buffer(
-      Effect("combined", 320) // @TODO[API] This could be 330 if we implement https://github.com/raquo/Airstream/issues/43
+      Effect("combined", 330)
     )
 
+    calculations.clear()
     effects.clear()
 
     // --

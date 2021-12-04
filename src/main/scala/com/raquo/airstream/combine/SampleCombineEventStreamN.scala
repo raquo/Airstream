@@ -1,7 +1,7 @@
 package com.raquo.airstream.combine
 
-import com.raquo.airstream.common.InternalParentObserver
-import com.raquo.airstream.core.{EventStream, Protected, Signal, Transaction, WritableEventStream}
+import com.raquo.airstream.common.{InternalParentObserver, MultiParentEventStream}
+import com.raquo.airstream.core.{EventStream, Observable, Protected, Signal, Transaction}
 
 import scala.util.Try
 
@@ -18,13 +18,15 @@ class SampleCombineEventStreamN[A, Out](
   samplingStream: EventStream[A],
   sampledSignals: Seq[Signal[A]],
   combinator: Seq[A] => Out
-) extends WritableEventStream[Out] with CombineObservable[Out] {
+) extends MultiParentEventStream[A, Out] with CombineObservable[Out] {
 
   override protected val topoRank: Int = Protected.maxParentTopoRank(samplingStream +: sampledSignals) + 1
 
   private[this] var maybeLastSamplingValue: Option[Try[A]] = None
 
   override protected[this] def inputsReady: Boolean = maybeLastSamplingValue.nonEmpty
+
+  override protected[this] val parents: Seq[Observable[A]] = samplingStream +: sampledSignals
 
   override protected[this] def combinedValue: Try[Out] = {
     val parentValues = maybeLastSamplingValue.get +: sampledSignals.map(_.tryNow())

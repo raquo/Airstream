@@ -1,6 +1,6 @@
 package com.raquo.airstream.timing
 
-import com.raquo.airstream.core.{ Transaction, WritableEventStream }
+import com.raquo.airstream.core.{Transaction, WritableEventStream}
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue // #TODO #nc remove this in 15.0.0
 import scala.concurrent.Future
@@ -11,15 +11,12 @@ import scala.concurrent.Future
   * future was resolved, except as provided by `emitIfFutureCompleted`.
   *
   * @param future Note: guarded against failures
-  * @param emitIfFutureCompleted If false, this stream will emit an event when it's initialized with
-  *                              an already completed future. Generally you should avoid this and use
-  *                              [[FutureSignal]] instead.
   */
-class FutureEventStream[A](future: Future[A], emitIfFutureCompleted: Boolean) extends WritableEventStream[A] {
+class FutureEventStream[A](future: Future[A]) extends WritableEventStream[A] {
 
   override protected val topoRank: Int = 1
 
-  if (!future.isCompleted || emitIfFutureCompleted) {
+  if (!future.isCompleted) {
     // @TODO[API] Do we need "isStarted" filter on these? Doesn't seem to affect anything for now...
     future.onComplete(_.fold(
       nextError => {
@@ -32,4 +29,6 @@ class FutureEventStream[A](future: Future[A], emitIfFutureCompleted: Boolean) ex
       }
     ))
   }
+
+  override protected def onWillStart(): Unit = () // noop
 }

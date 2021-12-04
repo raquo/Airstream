@@ -37,10 +37,10 @@ class DistinctSpec extends UnitSpec {
 
     bus.writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("stream", 1)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("obs", 1)
     )
 
@@ -51,17 +51,17 @@ class DistinctSpec extends UnitSpec {
 
     bus.writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     bus.writer.onNext(2)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("stream", 2)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("obs", 2)
     )
 
@@ -76,17 +76,17 @@ class DistinctSpec extends UnitSpec {
 
     bus.writer.onNext(2)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     bus.writer.onNext(3)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("stream", 3)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("obs", 3)
     )
 
@@ -95,15 +95,15 @@ class DistinctSpec extends UnitSpec {
 
     // --
 
-    errorEffects shouldEqual mutable.Buffer() // nothing failed yet
+    errorEffects shouldBe mutable.Buffer() // nothing failed yet
 
     bus.writer.onError(err1)
 
-    calculations shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
 
-    effects shouldEqual mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
-    errorEffects shouldEqual mutable.Buffer(
+    errorEffects shouldBe mutable.Buffer(
       Effect("obs-err", "err1")
     )
 
@@ -113,7 +113,7 @@ class DistinctSpec extends UnitSpec {
 
     bus.writer.onError(err1)
 
-    errorEffects shouldEqual mutable.Buffer(
+    errorEffects shouldBe mutable.Buffer(
       Effect("obs-err", "err1")
     )
   }
@@ -142,10 +142,10 @@ class DistinctSpec extends UnitSpec {
 
     // --
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal", 0)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("obs", 0)
     )
 
@@ -156,10 +156,10 @@ class DistinctSpec extends UnitSpec {
 
     $var.writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal", 1)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("obs", 1)
     )
 
@@ -170,17 +170,17 @@ class DistinctSpec extends UnitSpec {
 
     $var.writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     $var.writer.onNext(2)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal", 2)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("obs", 2)
     )
 
@@ -193,22 +193,30 @@ class DistinctSpec extends UnitSpec {
 
     signal.addObserver(obs)(testOwner)
 
-    $var.writer.onNext(2)
-
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
+      Calculation("signal", 2)
+    )
+    effects shouldBe mutable.Buffer(
       Effect("obs", 2)
     )
+    calculations.clear()
     effects.clear()
+    
+    // --
+    
+    $var.writer.onNext(2)
 
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    
     // --
 
     $var.writer.onNext(3)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal", 3)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("obs", 3)
     )
 
@@ -217,15 +225,15 @@ class DistinctSpec extends UnitSpec {
 
     // --
 
-    errorEffects shouldEqual mutable.Buffer() // nothing failed yet
+    errorEffects shouldBe mutable.Buffer() // nothing failed yet
 
     $var.writer.onError(err1)
 
-    calculations shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
 
-    effects shouldEqual mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
-    errorEffects shouldEqual mutable.Buffer(
+    errorEffects shouldBe mutable.Buffer(
       Effect("obs-err", "err1")
     )
 
@@ -235,7 +243,7 @@ class DistinctSpec extends UnitSpec {
 
     $var.writer.onError(err1)
 
-    errorEffects shouldEqual mutable.Buffer(
+    errorEffects shouldBe mutable.Buffer(
       Effect("obs-err", "err1")
     )
   }
@@ -268,9 +276,9 @@ class DistinctSpec extends UnitSpec {
 
     bus.writer.onError(err1)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer(
       Effect("obs-err", "err1")
     )
 
@@ -280,9 +288,9 @@ class DistinctSpec extends UnitSpec {
 
     bus.writer.onError(err2)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer(
       Effect("obs-err", "err2")
     )
 
@@ -292,17 +300,17 @@ class DistinctSpec extends UnitSpec {
 
     bus.writer.onError(err2)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer()
 
     // --
 
     bus.writer.onError(err3)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer(
       Effect("obs-err", "err3")
     )
 
@@ -312,13 +320,13 @@ class DistinctSpec extends UnitSpec {
 
     bus.writer.onNext(2)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("stream", 2)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("obs", 2)
     )
-    errorEffects shouldEqual mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer()
 
     calculations.clear()
     effects.clear()
@@ -327,9 +335,9 @@ class DistinctSpec extends UnitSpec {
 
     bus.writer.onError(err3)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer(
       Effect("obs-err", "err3")
     )
 

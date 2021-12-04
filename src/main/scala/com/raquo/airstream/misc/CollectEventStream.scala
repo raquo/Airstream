@@ -1,7 +1,7 @@
 package com.raquo.airstream.misc
 
-import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentObservable}
-import com.raquo.airstream.core.{EventStream, Protected, Transaction, WritableEventStream}
+import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentEventStream}
+import com.raquo.airstream.core.{EventStream, Protected, Transaction}
 
 import scala.util.Try
 
@@ -12,9 +12,9 @@ import scala.util.Try
   * @param fn Note: guarded against exceptions
   */
 class CollectEventStream[A, B](
-  override protected val parent: EventStream[A],
+  override protected[this] val parent: EventStream[A],
   fn: A => Option[B],
-) extends WritableEventStream[B] with SingleParentObservable[A, B] with InternalNextErrorObserver[A] {
+) extends SingleParentEventStream[A, B] with InternalNextErrorObserver[A] {
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 

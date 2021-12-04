@@ -2,9 +2,7 @@ package com.raquo.airstream.core
 
 import com.raquo.airstream.debug.DebuggableObservable
 import com.raquo.airstream.flatten.FlattenStrategy
-import com.raquo.airstream.flatten.FlattenStrategy.{SwitchFutureStrategy, SwitchSignalStrategy, SwitchStreamStrategy}
-
-import scala.concurrent.Future
+import com.raquo.airstream.flatten.FlattenStrategy.{SwitchSignalStrategy, SwitchStreamStrategy}
 
 // @TODO[Scala3] Put this trait together with BaseObservable in the same file, and make BaseObservable sealed.
 
@@ -19,8 +17,6 @@ object Observable {
   implicit val switchStreamStrategy: FlattenStrategy[Observable, EventStream, EventStream] = SwitchStreamStrategy
 
   implicit val switchSignalStrategy: FlattenStrategy[Signal, Signal, Signal] = SwitchSignalStrategy
-
-  implicit val switchFutureStrategy: FlattenStrategy[Observable, Future, EventStream] = SwitchFutureStrategy
 
   /** Provides debug* methods on Observable: debugSpy, debugLogEvents, debugBreakErrors, etc. */
   implicit def toDebuggableObservable[A](observable: Observable[A]): DebuggableObservable[Observable, A] = new DebuggableObservable[Observable, A](observable)

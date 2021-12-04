@@ -1,22 +1,21 @@
 package com.raquo.airstream.flatten
 
-import com.raquo.airstream.common.{ InternalNextErrorObserver, SingleParentObservable }
-import com.raquo.airstream.core.{ EventStream, InternalObserver, Observable, Signal, Transaction, WritableEventStream }
+import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentEventStream}
+import com.raquo.airstream.core.{EventStream, InternalObserver, Observable, Protected, Signal, Transaction}
 
 import scala.scalajs.js
-import scala.util.{ Failure, Success }
+import scala.util.{Failure, Success}
 
 /** This is essentially a dynamic version of `EventStream.merge`.
   * - The resulting stream re-emits all the events emitted by all of the streams
   *   previously emitted by the input observable.
-  * - If you stop observing the resulting stream, it will forget all of the
+  * - If you restart the resulting stream, it will remember and resubscribe to all of the
   *   streams it previously listened to.
-  * - When you start it up again, it will start listening to the input observable
-  *   from scratch, as if it's the first time you started it.
-  * */
+  * - If the input observable emits the same stream more than once, that stream will only added once.
+  */
 class ConcurrentEventStream[A](
   override protected[this] val parent: Observable[EventStream[A]]
-) extends WritableEventStream[A] with SingleParentObservable[EventStream[A], A] with InternalNextErrorObserver[EventStream[A]] {
+) extends SingleParentEventStream[EventStream[A], A] with InternalNextErrorObserver[EventStream[A]] {
 
   private val accumulatedStreams: js.Array[EventStream[A]] = js.Array()
 
@@ -27,38 +26,57 @@ class ConcurrentEventStream[A](
 
   override protected val topoRank: Int = 1
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onWillStart(): Unit = {
+    super.onWillStart()
+    accumulatedStreams.foreach(Protected.maybeWillStart)
     parent match {
-      case signal: Signal[EventStream[A] @unchecked] =>
+      case signal: Signal[EventStream[A @unchecked] @unchecked] =>
         signal.tryNow() match {
-          case Success(initialStream) =>
-            addStream(initialStream)
-          case Failure(err) =>
-            // @TODO[API] Not 100% that we should emit this error, but since
-            //  we expect to use signal's current value, I think this is right.
-            new Transaction(fireError(err, _))
+          case Success(stream) =>
+            // We add internal observer later, in `onStart`. onWillStart should not start any observables.
+            maybeAddStream(stream, addInternalObserver = false)
+          case _ => ()
         }
-      case _ => js.undefined
+      case _ => ()
     }
+  }
+
+  override protected[this] def onStart(): Unit = {
     super.onStart()
+    accumulatedStreams.foreach(_.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false))
+    parent match {
+      case signal: Signal[EventStream[A @unchecked] @unchecked] =>
+        signal.tryNow() match {
+          case Failure(err) =>
+            // @TODO[API] Not 100% sure that we should emit this error, but since
+            //  we expect to use signal's current value, I think this is right.
+            new Transaction(fireError(err, _)) // #Note[onStart,trx,loop]
+          case _ => ()
+        }
+      case _ => ()
+    }
   }
 
   override protected[this] def onStop(): Unit = {
     accumulatedStreams.foreach(Transaction.removeInternalObserver(_, internalEventObserver))
-    accumulatedStreams.clear()
     super.onStop()
   }
 
   override protected def onNext(nextStream: EventStream[A], transaction: Transaction): Unit = {
-    addStream(nextStream)
+    maybeAddStream(nextStream, addInternalObserver = true)
   }
 
   override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
     fireError(nextError, transaction)
   }
 
-  private def addStream(stream: EventStream[A]): Unit = {
-    accumulatedStreams.push(stream)
-    stream.addInternalObserver(internalEventObserver)
+  private def maybeAddStream(stream: EventStream[A], addInternalObserver: Boolean): Unit = {
+    if (!accumulatedStreams.contains(stream)) {
+      accumulatedStreams.push(stream)
+      if (addInternalObserver) {
+        stream.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = true)
+      }
+    }
   }
+
 }

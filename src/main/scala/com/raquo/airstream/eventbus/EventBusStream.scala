@@ -1,7 +1,7 @@
 package com.raquo.airstream.eventbus
 
 import com.raquo.airstream.common.InternalNextErrorObserver
-import com.raquo.airstream.core.{ EventStream, Transaction, WritableEventStream }
+import com.raquo.airstream.core.{EventStream, Protected, Transaction, WritableEventStream}
 
 import scala.scalajs.js
 
@@ -17,7 +17,7 @@ class EventBusStream[A] private[eventbus] () extends WritableEventStream[A] with
   @inline private[eventbus] def addSource(sourceStream: EventStream[A]): Unit = {
     sourceStreams.push(sourceStream)
     if (isStarted) {
-      sourceStream.addInternalObserver(this)
+      sourceStream.addInternalObserver(this, shouldCallMaybeWillStart = true)
     }
   }
 
@@ -59,8 +59,12 @@ class EventBusStream[A] private[eventbus] () extends WritableEventStream[A] with
     new Transaction(fireError(nextError, _))
   }
 
+  override protected def onWillStart(): Unit = {
+    sourceStreams.foreach(Protected.maybeWillStart)
+  }
+
   override protected[this] def onStart(): Unit = {
-    sourceStreams.foreach(_.addInternalObserver(this))
+    sourceStreams.foreach(_.addInternalObserver(this, shouldCallMaybeWillStart = false))
     super.onStart()
   }
 

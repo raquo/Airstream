@@ -139,10 +139,11 @@ class SignalSpec extends UnitSpec {
 
     // --
 
-    // Adding the observer again will work exactly the same as adding it initially
     signal.addObserver(signalObserver2)
 
-    calculations shouldEqual mutable.Buffer() // Using cached calculation
+    calculations shouldEqual mutable.Buffer(
+      Calculation("map-signal", 40)
+    )
     effects shouldEqual mutable.Buffer(
       Effect("signal-obs-2", 40)
     )
@@ -295,7 +296,7 @@ class SignalSpec extends UnitSpec {
     effects shouldEqual mutable.Buffer()
   }
 
-  it("MapSignal.now/onNext combination does not redundantly evaluate project/initialValue") {
+  it("MapSignal.now/onNext re-evaluates project/initialValue when restarting") {
 
     implicit val testOwner: TestableOwner = new TestableOwner
 
@@ -333,11 +334,14 @@ class SignalSpec extends UnitSpec {
 
     signal.addObserver(signalObserver)
 
-    calculations shouldEqual mutable.Buffer()
+    calculations shouldEqual mutable.Buffer(
+      Calculation("map-signal", -1)
+    )
     effects shouldEqual mutable.Buffer(
       Effect("signal-obs", -1)
     )
 
+    calculations.clear()
     effects.clear()
 
     // --

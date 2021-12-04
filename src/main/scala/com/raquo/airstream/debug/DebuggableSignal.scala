@@ -20,30 +20,33 @@ import scala.util.{Failure, Success, Try}
   */
 class DebuggableSignal[+A](override val observable: Signal[A]) extends DebuggableObservable[Signal, A](observable) {
 
-  /** Execute fn when signal is evaluating its initial value */
-  def debugSpyInitialEval(fn: Try[A] => Unit): Signal[A] = {
-    val debugger = Debugger(onInitialEval = fn)
+  /** Execute fn when signal is evaluating its `currentValueFromParent`.
+    * This is typically triggered when evaluating signal's initial value onStart,
+    * as well as on subsequent re-starts when the signal is syncing its value
+    * to the parent's new current value. */
+  def debugSpyEvalFromParent(fn: Try[A] => Unit): Signal[A] = {
+    val debugger = Debugger(onEvalFromParent = fn)
     observable.debugWith(debugger)
   }
 
   /** Log when signal is evaluating its initial value (if `when` passes at that time) */
-  def debugLogInitialEval(
+  def debugLogEvalFromParent(
     when: Try[A] => Boolean = always,
     useJsLogger: Boolean = false
   ): Signal[A] = {
-    debugSpyInitialEval { value =>
+    debugSpyEvalFromParent { value =>
       if (when(value)) {
         value match {
-          case Success(ev) => log("initial-eval[event]", Some(ev), useJsLogger)
-          case Failure(err) => log("initial-eval[error]", Some(err), useJsLogger)
+          case Success(ev) => log("eval-from-parent", Some(ev), useJsLogger)
+          case Failure(err) => log("eval-from-parent[error]", Some(err), useJsLogger)
         }
       }
     }
   }
 
   /** Trigger JS debugger when signal is evaluating its initial value (if `when` passes at that time) */
-  def debugBreakInitialEval(when: Try[A] => Boolean = always): Signal[A] = {
-    debugSpyInitialEval { value =>
+  def debugBreakEvalFromParent(when: Try[A] => Boolean = always): Signal[A] = {
+    debugSpyEvalFromParent { value =>
       if (when(value)) {
         js.special.debugger()
       }

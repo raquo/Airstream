@@ -1,15 +1,15 @@
 package com.raquo.airstream.combine
 
-import com.raquo.airstream.common.InternalParentObserver
-import com.raquo.airstream.core.{EventStream, Protected, WritableEventStream}
+import com.raquo.airstream.common.{InternalParentObserver, MultiParentEventStream}
+import com.raquo.airstream.core.{EventStream, Protected}
 
 import scala.util.Try
 
 /** @param combinator Must not throw! */
 class CombineEventStreamN[A, Out](
-  parents: Seq[EventStream[A]],
+  override protected[this] val parents: Seq[EventStream[A]],
   combinator: Seq[A] => Out
-) extends WritableEventStream[Out] with CombineObservable[Out] {
+) extends MultiParentEventStream[A, Out] with CombineObservable[Out] {
 
   // @TODO[API] Maybe this should throw if parents.isEmpty
 
@@ -39,10 +39,5 @@ class CombineEventStreamN[A, Out](
       )
     }: _*
   )
-
-  override protected[this] def onStop(): Unit = {
-    maybeLastParentValues.indices.foreach(maybeLastParentValues.update(_, None))
-    super.onStop()
-  }
 
 }

@@ -1,7 +1,7 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
-import com.raquo.airstream.core.{Protected, Signal, Transaction, WritableSignal}
+import com.raquo.airstream.common.{InternalTryObserver, SingleParentSignal}
+import com.raquo.airstream.core.{Protected, Signal, Transaction}
 import com.raquo.airstream.timing.SyncDelayEventStream
 
 import scala.collection.mutable
@@ -33,11 +33,11 @@ class SplitSignal[M[_], Input, Output, Key](
   distinctCompose: Signal[Input] => Signal[Input],
   project: (Key, Input, Signal[Input]) => Output,
   splittable: Splittable[M]
-) extends WritableSignal[M[Output]] with SingleParentObservable[M[Input], M[Output]] with InternalTryObserver[M[Input]] {
+) extends SingleParentSignal[M[Input], M[Output]] with InternalTryObserver[M[Input]] {
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
-  override protected def initialValue: Try[M[Output]] = parent.tryNow().map(memoizedProject)
+  override protected def currentValueFromParent(): Try[M[Output]] = parent.tryNow().map(memoizedProject)
 
   private[this] val memoized: mutable.Map[Key, (Input, Output)] = mutable.Map.empty
 

@@ -1,9 +1,9 @@
 package com.raquo.airstream.timing
 
-import com.raquo.airstream.core.{ Transaction, WritableEventStream }
+import com.raquo.airstream.core.{Transaction, WritableEventStream}
 
 import scala.scalajs.js
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 /** @param next (currentState => (nextState, nextIntervalMs)
   *             Note: guarded against exceptions.
@@ -42,7 +42,7 @@ class PeriodicEventStream[A](
   }
 
   private def tick(isStarting: Boolean): Unit = {
-    new Transaction(trx => {
+    new Transaction(trx => { // #Note[onStart,trx,async]
       if (emitInitial || !isStarting) {
         fireValue(currentValue, trx)
       }
@@ -60,9 +60,11 @@ class PeriodicEventStream[A](
       case Success(None) =>
         resetTo(initial, tickNext = false)
       case Failure(err) =>
-        new Transaction(fireError(err, _))
+        new Transaction(fireError(err, _)) // #Note[onStart,trx,async]
     }
   }
+
+  override protected def onWillStart(): Unit = () // noop
 
   override protected[this] def onStart(): Unit = {
     super.onStart()

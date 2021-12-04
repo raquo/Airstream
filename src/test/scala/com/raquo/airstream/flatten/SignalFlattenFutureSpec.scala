@@ -1,7 +1,7 @@
 package com.raquo.airstream.flatten
 
 import com.raquo.airstream.AsyncUnitSpec
-import com.raquo.airstream.core.Observer
+import com.raquo.airstream.core.{Observer, Signal}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import org.scalatest.Assertion
@@ -11,11 +11,9 @@ import scala.concurrent.{Future, Promise}
 
 class SignalFlattenFutureSpec extends AsyncUnitSpec {
 
-  // Note: default strategy is SwitchFutureStrategy
-
   describe("Signal.flatten") {
 
-    it("initial unresolved future results in an async event") {
+    it("initial unresolved future results in emitted default value and an async event") {
 
       implicit val owner: TestableOwner = new TestableOwner
 
@@ -36,13 +34,16 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
       val promise2 = makePromise()
 
       val futureBus = new EventBus[Future[Int]]()
-      val stream = futureBus.events.startWith(promise0.future).flatten
+      val signal = futureBus.events
+        .startWith(promise0.future)
+        .flatMap(Signal.fromFuture(_, initial = -200))
 
-      stream.addObserver(obs)
+      signal.addObserver(obs)
 
       delay {
         promise0.success(-100)
-        effects shouldEqual mutable.Buffer()
+        effects shouldEqual mutable.Buffer(Effect("obs", -200))
+        clearLogs()
 
       }.flatMap { _ =>
         effects shouldEqual mutable.Buffer(Effect("obs", -100))
@@ -52,17 +53,24 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
         futureBus.writer.onNext(promise2.future)
 
         promise2.success(200)
+
         promise1.success(100)
 
-        effects shouldEqual mutable.Buffer()
+        // Since this is a Signal, and the futures were emitted prior to being resolved, we get their defined initial values
+        effects shouldEqual mutable.Buffer(
+          Effect("obs", -200),
+          Effect("obs", -200)
+        )
+        clearLogs()
 
       }.flatMap { _ =>
+        // Since the signal is only listening to the latest emitted future, we only get 200 here
         effects shouldEqual mutable.Buffer(Effect("obs", 200))
         clearLogs()
       }
     }
 
-    it("initial future that is resolved at the same time as stream created and observer added result in an async event") {
+    it("initial future that is resolved sync-before the observer is added results in future's value used as signal's initial value") {
 
       implicit val owner: TestableOwner = new TestableOwner
 
@@ -83,16 +91,18 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
 
       val futureBus = new EventBus[Future[Int]]()
 
-      val stream = futureBus.events.startWith(promise0.future).flatten
+      val signal = futureBus.events.startWith(promise0.future).flatMap(Signal.fromFuture(_, initial = -200))
       promise0.success(-100)
 
-      stream.addObserver(obs)
+      signal.addObserver(obs)
 
-      effects shouldEqual mutable.Buffer()
+      effects shouldEqual mutable.Buffer(
+        Effect("obs", -100)
+      )
+      clearLogs()
 
       delay {
-        effects shouldEqual mutable.Buffer(Effect("obs", -100))
-        clearLogs()
+        effects shouldEqual mutable.Buffer()
 
         futureBus.writer.onNext(promise1.future)
         futureBus.writer.onNext(promise2.future)
@@ -100,7 +110,12 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
         promise2.success(200)
         promise1.success(100)
 
-        effects shouldEqual mutable.Buffer()
+        // Emitting futures' initial values since they weren't resolved at the time of propagation
+        effects shouldEqual mutable.Buffer(
+          Effect("obs", -200),
+          Effect("obs", -200)
+        )
+        effects.clear()
 
       }.flatMap { _ =>
         effects shouldEqual mutable.Buffer(Effect("obs", 200))
@@ -132,12 +147,14 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
       promise0.success(-100)
 
       delay {
-        val stream = futureBus.events.startWith(promise0.future).flatten
-        stream.addObserver(obs)
+        val signal = futureBus.events.startWith(promise0.future).flatMap(Signal.fromFuture(_, initial = -200))
+        signal.addObserver(obs)
 
-      }.flatMap { _ =>
         effects shouldEqual mutable.Buffer(Effect("obs", -100))
         clearLogs()
+
+      }.flatMap { _ =>
+        effects shouldEqual mutable.Buffer()
 
         futureBus.writer.onNext(promise1.future)
         futureBus.writer.onNext(promise2.future)
@@ -145,7 +162,12 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
         promise2.success(200)
         promise1.success(100)
 
-        effects shouldEqual mutable.Buffer()
+        // Emitting futures' initial values since they weren't resolved at the time of propagation
+        effects shouldEqual mutable.Buffer(
+          Effect("obs", -200),
+          Effect("obs", -200)
+        )
+        clearLogs()
 
       }.flatMap { _ =>
         effects shouldEqual mutable.Buffer(Effect("obs", 200))

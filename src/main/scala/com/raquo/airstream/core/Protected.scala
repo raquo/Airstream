@@ -33,4 +33,8 @@ object Protected {
   @inline def tryNow[A](signal: Signal[A])(implicit @unused ev: Protected): Try[A] = signal.tryNow()
 
   @inline def now[A](signal: Signal[A])(implicit @unused ev: Protected): A = signal.now()
+
+  @inline def maybeWillStart[O[+_] <: Observable[_]](observable: BaseObservable[O, _]): Unit = {
+    BaseObservable.maybeWillStart(observable)
+  }
 }

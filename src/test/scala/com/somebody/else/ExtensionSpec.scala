@@ -1,8 +1,8 @@
 package com.somebody.`else`
 
 import com.raquo.airstream.UnitSpec
-import com.raquo.airstream.common.{InternalTryObserver, SingleParentObservable}
-import com.raquo.airstream.core.{Protected, Signal, Transaction, WritableSignal}
+import com.raquo.airstream.common.{InternalTryObserver, SingleParentSignal}
+import com.raquo.airstream.core.{Protected, Signal, Transaction}
 import com.somebody.`else`.ExtensionSpec.ExtSignal
 
 import scala.util.Try
@@ -20,14 +20,14 @@ object ExtensionSpec {
   class ExtSignal[I, O](
     override protected[this] val parent: Signal[I],
     project: I => O
-  ) extends WritableSignal[O] with SingleParentObservable[I, O] with InternalTryObserver[I] {
+  ) extends SingleParentSignal[I, O] with InternalTryObserver[I] {
 
     override protected val topoRank: Int = Protected.topoRank(parent) + 1
-
-    override protected def initialValue: Try[O] = Protected.tryNow(parent).map(project)
 
     override protected def onTry(nextParentValue: Try[I], transaction: Transaction): Unit = {
       fireTry(nextParentValue.map(project), transaction)
     }
+
+    override protected def currentValueFromParent(): Try[O] = Protected.tryNow(parent).map(project)
   }
 }

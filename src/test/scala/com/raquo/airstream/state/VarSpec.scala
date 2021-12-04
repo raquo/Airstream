@@ -119,10 +119,11 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
 
     signal.addObserver(obs)(owner)
 
-    // Emit a value to the new external observer. Standard Signal behaviour.
-    assert(calculations == mutable.Buffer())
-    assert(effects == mutable.Buffer(Effect("obs", 3)))
+    // Re-sync the value and emit it to the new external observer. Standard Signal behaviour.
+    assert(calculations == mutable.Buffer(Calculation("signal", 4)))
+    assert(effects == mutable.Buffer(Effect("obs", 4)))
 
+    calculations.clear()
     effects.clear()
 
     // --

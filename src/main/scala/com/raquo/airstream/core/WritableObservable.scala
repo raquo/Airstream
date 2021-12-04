@@ -52,9 +52,14 @@ trait WritableObservable[A] extends Observable[A] {
   protected val internalObservers: ObserverList[InternalObserver[A]] = new ObserverList(js.Array())
 
   override def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription = {
+    //println(s"$this >> maybeWillStart")
+    maybeWillStart()
+    //println(s"$this << maybeWillStart")
     val subscription = addExternalObserver(observer, owner)
     onAddedExternalObserver(observer)
+    //println(s"$this >> ao")
     maybeStart()
+    //println(s"$this << ao")
     subscription
   }
 
@@ -69,7 +74,12 @@ trait WritableObservable[A] extends Observable[A] {
   /** Child observable should call this method on its parents when it is started.
     * This observable calls [[onStart]] if this action has given it its first observer (internal or external).
     */
-  override protected[airstream] def addInternalObserver(observer: InternalObserver[A]): Unit = {
+  override protected[airstream] def addInternalObserver(observer: InternalObserver[A], shouldCallMaybeWillStart: Boolean): Unit = {
+    //println(s"$this > aio   shouldCallMaybeWillStart=$shouldCallMaybeWillStart")
+    if (!isStarted && shouldCallMaybeWillStart) {
+      maybeWillStart()
+    }
+    //println(s"$this < aio")
     internalObservers.push(observer)
     maybeStart()
   }

@@ -132,15 +132,18 @@ class SwitchSignalSpec extends UnitSpec {
 
     // --
 
-    // flattened signal remembers its last tracked signal but wasn't keeping track of state so it emits old state
+    // flattened signal pulls current value from parent on restart
 
     flattenSignal.addObserver(flattenObserver) // re-activate flattened signal
 
-    calculations shouldEqual mutable.Buffer()
+    calculations shouldEqual mutable.Buffer(
+      Calculation("flattened", 2)
+    )
     effects shouldEqual mutable.Buffer(
-      Effect("flattened-obs", -1)
+      Effect("flattened-obs", 2)
     )
 
+    calculations.clear()
     effects.clear()
 
     // --
