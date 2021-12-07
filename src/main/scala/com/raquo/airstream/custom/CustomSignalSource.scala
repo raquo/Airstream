@@ -27,7 +27,7 @@ class CustomSignalSource[A] (
       hasEmittedEvents = true
       new Transaction(fireTry(value, _))
     },
-    tryNow,
+    () => tryNow(),
     () => startIndex,
     () => isStarted
   )

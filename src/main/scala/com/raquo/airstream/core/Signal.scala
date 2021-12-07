@@ -12,11 +12,13 @@ import com.raquo.airstream.misc.{ChangesEventStream, FoldLeftSignal, MapSignal}
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.split.{SplittableOneSignal, SplittableSignal}
 import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
-import com.raquo.airstream.timing.FutureSignal
+import com.raquo.airstream.timing.JsPromiseSignal
 
 import scala.annotation.unused
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters._
 import scala.util.{Failure, Try}
 
 /** Signal is an Observable with a current value. */
@@ -69,7 +71,8 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
   //  new ChangesEventStream[A](parent = this, emitChangeOnRestart = true)
   //}
 
-  /**
+  /** A signal that emits the accumulated value every time that the parent signal emits.
+    *
     * @param makeInitial Note: guarded against exceptions
     * @param fn Note: guarded against exceptions
     */
@@ -82,7 +85,8 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
   }
 
   // @TODO[Naming]
-  /**
+  /** A signal that emits the accumulated value every time that the parent signal emits.
+    *
     * @param makeInitial currentParentValue => initialValue   Note: must not throw
     * @param fn (currentValue, nextParentValue) => nextValue
     * @return
@@ -167,7 +171,7 @@ object Signal {
   def fromTry[A](value: Try[A]): Val[A] = Val.fromTry(value)
 
   def fromFuture[A](future: Future[A]): Signal[Option[A]] = {
-    new FutureSignal(future)
+    fromJsPromise(future.toJSPromise)
   }
 
   /** Note: If the future is already resolved by the time this signal is started,
@@ -175,14 +179,14 @@ object Signal {
     * the initial (and only) value instead.
     */
   def fromFuture[A](future: Future[A], initial: => A): Signal[A] = {
-    new FutureSignal(future).map {
+    fromJsPromise(future.toJSPromise).map {
       case None => initial
       case Some(value) => value
     }
   }
 
   def fromJsPromise[A](promise: js.Promise[A]): Signal[Option[A]] = {
-    new FutureSignal(promise.toFuture)
+    new JsPromiseSignal(promise)
   }
 
   /** Easy helper for custom signals. See [[CustomSignalSource]] for docs.

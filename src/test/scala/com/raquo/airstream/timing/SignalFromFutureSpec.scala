@@ -65,24 +65,25 @@ class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     }
   }
 
-  it("synchronously emits if observer added synchronously right after the future resolves") {
+  it("asynchronously emits if observer added synchronously right after the future resolves") {
     val promise = makePromise()
     val signal = makeSignal(promise)
 
     promise.success(100)
     signal.addObserver(obs1)
 
-    calculations shouldEqual mutable.Buffer(Calculation("signal", Some(100)))
-    effects shouldEqual mutable.Buffer(Effect("obs1", Some(100)))
+    calculations shouldEqual mutable.Buffer(Calculation("signal", None))
+    effects shouldEqual mutable.Buffer(Effect("obs1", None))
     clearLogs()
 
     delay {
-      calculations shouldEqual mutable.Buffer()
-      effects shouldEqual mutable.Buffer()
+      calculations shouldEqual mutable.Buffer(Calculation("signal", Some(100)))
+      effects shouldEqual mutable.Buffer(Effect("obs1", Some(100)))
+      clearLogs()
     }
   }
 
-  it("synchronously emits if observers added asynchronously after the future resolves") {
+  it("synchronously emits if observers added asynchronously after the future resolves and signal already emitted") {
     val promise = makePromise()
     val signal = makeSignal(promise)
 
@@ -93,14 +94,16 @@ class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
       effects shouldEqual mutable.Buffer()
       signal.addObserver(obs1)
 
-      calculations shouldEqual mutable.Buffer(Calculation("signal", Some(100)))
-      effects shouldEqual mutable.Buffer(Effect("obs1", Some(100)))
+      calculations shouldEqual mutable.Buffer(Calculation("signal", None))
+      effects shouldEqual mutable.Buffer(Effect("obs1", None))
       clearLogs()
 
     }.flatMap { _ =>
       delay {
-        calculations shouldEqual mutable.Buffer()
-        effects shouldEqual mutable.Buffer()
+        calculations shouldEqual mutable.Buffer(Calculation("signal", Some(100)))
+        effects shouldEqual mutable.Buffer(Effect("obs1", Some(100)))
+        clearLogs()
+
         signal.addObserver(obs2)
 
         effects shouldEqual mutable.Buffer(Effect("obs2", Some(100)))

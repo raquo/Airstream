@@ -64,13 +64,15 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
         clearLogs()
 
       }.flatMap { _ =>
-        // Since the signal is only listening to the latest emitted future, we only get 200 here
-        effects shouldEqual mutable.Buffer(Effect("obs", 200))
-        clearLogs()
+        delay {
+          // Since the signal is only listening to the latest emitted future, we only get 200 here
+          effects shouldEqual mutable.Buffer(Effect("obs", 200))
+          clearLogs()
+        }
       }
     }
 
-    it("initial future that is resolved sync-before the observer is added results in future's value used as signal's initial value") {
+    it("initial future that is resolved sync-before the observer is added results in initial value of None") {
 
       implicit val owner: TestableOwner = new TestableOwner
 
@@ -96,13 +98,12 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
 
       signal.addObserver(obs)
 
-      effects shouldEqual mutable.Buffer(
-        Effect("obs", -100)
-      )
+      effects shouldEqual mutable.Buffer(Effect("obs", -200))
       clearLogs()
 
       delay {
-        effects shouldEqual mutable.Buffer()
+        effects shouldEqual mutable.Buffer(Effect("obs", -100))
+        clearLogs()
 
         futureBus.writer.onNext(promise1.future)
         futureBus.writer.onNext(promise2.future)
@@ -150,11 +151,12 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
         val signal = futureBus.events.startWith(promise0.future).flatMap(Signal.fromFuture(_, initial = -200))
         signal.addObserver(obs)
 
-        effects shouldEqual mutable.Buffer(Effect("obs", -100))
+        effects shouldEqual mutable.Buffer(Effect("obs", -200))
         clearLogs()
 
       }.flatMap { _ =>
-        effects shouldEqual mutable.Buffer()
+        effects shouldEqual mutable.Buffer(Effect("obs", -100))
+        clearLogs()
 
         futureBus.writer.onNext(promise1.future)
         futureBus.writer.onNext(promise2.future)
@@ -170,8 +172,10 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
         clearLogs()
 
       }.flatMap { _ =>
-        effects shouldEqual mutable.Buffer(Effect("obs", 200))
-        clearLogs()
+        delay {
+          effects shouldEqual mutable.Buffer(Effect("obs", 200))
+          clearLogs()
+        }
       }
     }
   }

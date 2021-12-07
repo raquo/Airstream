@@ -1,8 +1,5 @@
 package com.raquo.airstream.core
 
-import scala.concurrent.Future
-import scala.scalajs.js
-
 /** A Source is something that can be converted to an [[Observable]].
   * The counterparty to Source is a [[Sink]], something that can be converted to an [[Observer]].
   *
@@ -30,12 +27,14 @@ object Source {
     override def toObservable: Signal[A]
   }
 
-  implicit def futureToEventSource[A](future: Future[A]): EventSource[A] = EventStream.fromFuture(future)
+  // #TODO[API] Disable integrations, see if anyone complains. These conversions are unfortunately not smooth enough to be implicit.
 
-  implicit def futureToSignalSource[A](future: Future[A]): SignalSource[Option[A]] = Signal.fromFuture(future)
-
-  implicit def jsPromiseToEventSource[A](promise: js.Promise[A]): EventSource[A] = EventStream.fromJsPromise(promise)
-
-  implicit def jsPromiseToSignalSource[A](promise: js.Promise[A]): SignalSource[Option[A]] = Signal.fromJsPromise(promise)
+  //implicit def futureToEventSource[A](future: Future[A]): EventSource[A] = EventStream.fromFuture(future)
+  //
+  //implicit def futureToSignalSource[A](future: Future[A]): SignalSource[Option[A]] = Signal.fromFuture(future)
+  //
+  //implicit def jsPromiseToEventSource[A](promise: js.Promise[A]): EventSource[A] = EventStream.fromJsPromise(promise)
+  //
+  //implicit def jsPromiseToSignalSource[A](promise: js.Promise[A]): SignalSource[Option[A]] = Signal.fromJsPromise(promise)
 
 }

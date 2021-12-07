@@ -6,6 +6,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue // #TODO #nc 
 import scala.concurrent.Future
 import scala.util.{Success, Try}
 
+// #nc[remove]
 class FutureSignal[A](future: Future[A]) extends WritableSignal[Option[A]] {
 
   override protected val topoRank: Int = 1

@@ -5,10 +5,11 @@ import com.raquo.airstream.core.{Transaction, WritableEventStream}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue // #TODO #nc remove this in 15.0.0
 import scala.concurrent.Future
 
+// #nc[Remove]
 /** This stream emits a value that the future resolves with.
   *
   * This stream will not emit any events to subscribers added after the
-  * future was resolved, except as provided by `emitIfFutureCompleted`.
+  * future was resolved. Use [[FutureSignal]] if that is desired.
   *
   * @param future Note: guarded against failures
   */

@@ -11,11 +11,13 @@ import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.misc._
 import com.raquo.airstream.misc.generated._
 import com.raquo.airstream.split.{SplittableEventStream, SplittableOneEventStream}
-import com.raquo.airstream.timing.{FutureEventStream, _}
+import com.raquo.airstream.timing._
 
 import scala.annotation.unused
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters._
 import scala.util.{Failure, Success, Try}
 
 trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] with EventSource[A] {
@@ -175,7 +177,10 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
 
 
   // @TODO[API] Should we introduce some kind of FoldError() wrapper?
-  /** @param fn Note: guarded against exceptions */
+  /** A signal that emits the accumulated value every time that the parent stream emits.
+    *
+    * @param fn Note: guarded against exceptions
+    */
   def foldLeft[B](initial: B)(fn: (B, A) => B): Signal[B] = {
     foldLeftRecover(
       Success(initial)
@@ -184,7 +189,10 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
     )
   }
 
-  /** @param fn Note: Must not throw! */
+  /** A signal that emits the accumulated value every time that the parent stream emits.
+    *
+    * @param fn Note: Must not throw!
+    */
   def foldLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
     new FoldLeftSignal(parent = this, () => initial, fn)
   }
@@ -298,12 +306,12 @@ object EventStream {
     )
   }
 
-  def fromFuture[A](future: Future[A]): EventStream[A] = {
-    new FutureEventStream[A](future)
+  def fromFuture[A](future: Future[A], emitOnce: Boolean = false): EventStream[A] = {
+    fromJsPromise(future.toJSPromise, emitOnce)
   }
 
-  def fromJsPromise[A](promise: js.Promise[A]): EventStream[A] = {
-    fromFuture(promise.toFuture)
+  def fromJsPromise[A](promise: js.Promise[A], emitOnce: Boolean = false): EventStream[A] = {
+    new JsPromiseEventStream[A](promise, emitOnce)
   }
 
   /** Easy helper for custom events. See [[CustomStreamSource]] for docs.

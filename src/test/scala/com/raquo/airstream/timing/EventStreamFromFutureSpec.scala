@@ -82,7 +82,7 @@ class EventStreamFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     }
   }
 
-  it("does not emit if observer added asynchronously after the future resolves") {
+  it("asynchronously emits if observer added asynchronously after the future resolves") {
     val promise = makePromise()
     val stream = makeStream(promise)
 
@@ -92,14 +92,19 @@ class EventStreamFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     promise.success(100)
 
     delay {
+      stream.addObserver(obs1)
       calculations shouldEqual mutable.Buffer()
       effects shouldEqual mutable.Buffer()
-      stream.addObserver(obs1)
 
     }.flatMap { _ =>
       delay {
-        calculations shouldEqual mutable.Buffer()
-        effects shouldEqual mutable.Buffer()
+        calculations shouldEqual mutable.Buffer(
+          Calculation("stream", 100)
+        )
+        effects shouldEqual mutable.Buffer(
+          Effect("obs1", 100)
+        )
+        clearLogs()
       }
     }
   }
