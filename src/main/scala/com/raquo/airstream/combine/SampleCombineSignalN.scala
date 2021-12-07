@@ -20,7 +20,7 @@ class SampleCombineSignalN[A, Out](
   combinator: Seq[A] => Out
 ) extends MultiParentSignal[A, Out] with CombineObservable[Out] {
 
-  override protected val topoRank: Int = Protected.maxParentTopoRank(samplingSignal +: sampledSignals) + 1
+  override protected val topoRank: Int = Protected.maxTopoRank(samplingSignal +: sampledSignals) + 1
 
   override protected[this] def inputsReady: Boolean = true
 

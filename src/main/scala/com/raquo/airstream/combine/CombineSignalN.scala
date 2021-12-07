@@ -13,7 +13,7 @@ class CombineSignalN[A, Out](
 
   // @TODO[API] Maybe this should throw if parents.isEmpty
 
-  override protected val topoRank: Int = Protected.maxParentTopoRank(parents) + 1
+  override protected val topoRank: Int = Protected.maxTopoRank(parents) + 1
 
   override protected[this] def inputsReady: Boolean = true
 

@@ -20,7 +20,7 @@ class SampleCombineEventStreamN[A, Out](
   combinator: Seq[A] => Out
 ) extends MultiParentEventStream[A, Out] with CombineObservable[Out] {
 
-  override protected val topoRank: Int = Protected.maxParentTopoRank(samplingStream +: sampledSignals) + 1
+  override protected val topoRank: Int = Protected.maxTopoRank(samplingStream +: sampledSignals) + 1
 
   private[this] var maybeLastSamplingValue: Option[Try[A]] = None
 

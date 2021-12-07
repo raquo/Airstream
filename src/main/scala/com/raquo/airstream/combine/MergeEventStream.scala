@@ -17,7 +17,7 @@ class MergeEventStream[A](
   override protected[this] val parents: Seq[EventStream[A]],
 ) extends WritableEventStream[A] with SyncObservable[A] with MultiParentEventStream[A, A] {
 
-  override protected val topoRank: Int = Protected.maxParentTopoRank(parents) + 1
+  override protected val topoRank: Int = Protected.maxTopoRank(parents) + 1
 
   private[this] val pendingParentValues: JsPriorityQueue[Observation[A]] = {
     new JsPriorityQueue(observation => Protected.topoRank(observation.observable))

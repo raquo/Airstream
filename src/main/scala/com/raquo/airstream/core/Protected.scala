@@ -26,8 +26,8 @@ object Protected {
     BaseObservable.topoRank(observable)
   }
 
-  def maxParentTopoRank[O[+_] <: Observable[_]](parents: Iterable[BaseObservable[O, _]]): Int = {
-    parents.foldLeft(0)((maxRank, parent) => Protected.topoRank(parent) max maxRank)
+  def maxTopoRank[O[+_] <: Observable[_]](observables: Iterable[BaseObservable[O, _]]): Int = {
+    observables.foldLeft(0)((maxRank, parent) => Protected.topoRank(parent) max maxRank)
   }
 
   @inline def tryNow[A](signal: Signal[A])(implicit @unused ev: Protected): Try[A] = signal.tryNow()

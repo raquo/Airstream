@@ -13,7 +13,7 @@ class CombineEventStreamN[A, Out](
 
   // @TODO[API] Maybe this should throw if parents.isEmpty
 
-  override protected val topoRank: Int = Protected.maxParentTopoRank(parents) + 1
+  override protected val topoRank: Int = Protected.maxTopoRank(parents) + 1
 
   private[this] val maybeLastParentValues: Array[Option[Try[A]]] = Array.fill(parents.size)(None)
 
