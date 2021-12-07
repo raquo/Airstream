@@ -63,6 +63,7 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
     changesOperator(changes).toSignalWithTry(initialOperator(tryNow()))
   }
 
+  // #TODO[API] Make this into a lazy val? Are they encoded efficiently in JS?
   def changes: EventStream[A] = {
     new ChangesEventStream[A](parent = this/*, emitChangeOnRestart = false*/)
   }

@@ -126,6 +126,16 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
   /** Convert this to an observable that emits Failure(err) instead of erroring */
   def recoverToTry: Self[Try[A]]
 
+  /** Unwrap Try to "undo" `recoverToTry` – Encode Failure(err) as observable errors, and Success(v) as events */
+  def throwFailure[B](implicit ev: A <:< Try[B]): Self[B] = {
+    map { value =>
+      ev(value) match {
+        case Success(v) => v
+        case Failure(err) => throw err
+      }
+    }
+  }
+
   /** Create a new observable that listens to this one and has a debugger attached.
     *
     * Use the resulting observable in place of the original observable in your code.
