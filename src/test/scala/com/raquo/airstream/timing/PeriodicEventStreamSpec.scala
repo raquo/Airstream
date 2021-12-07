@@ -7,25 +7,21 @@ import org.scalatest.BeforeAndAfter
 
 import scala.collection.mutable
 
-class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
-
-  implicit val owner: TestableOwner = new TestableOwner
-
-  private val effects = mutable.Buffer[Effect[Int]]()
-
-  private val obs1 = Observer[Int](effects += Effect("obs1", _))
+class PeriodicEventStreamSpec extends AsyncUnitSpec {
 
   private val done = assert(true)
 
-  before {
-    owner.killSubscriptions()
-    effects.clear()
-  }
+  it("resetOnStop=true") {
 
-  it("emitInitial=true, resetOnStop=true") {
+    implicit val owner: TestableOwner = new TestableOwner
+
+    val effects = mutable.Buffer[Effect[Int]]()
+
+    val obs1 = Observer[Int](effects += Effect("obs1", _))
+
     val testInterval = 50
 
-    val stream = EventStream.periodic(intervalMs = testInterval, emitInitial = true, resetOnStop = true)
+    val stream = EventStream.periodic(intervalMs = testInterval, resetOnStop = true)
 
     val sub1 = stream.addObserver(obs1)
 
@@ -73,8 +69,16 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
     } yield done
   }
 
-  it("emitInitial=false, resetOnStop=true") {
-    val stream = EventStream.periodic(intervalMs = 15, emitInitial = false, resetOnStop = true)
+  it("resetOnStop=true + drop(1)") {
+
+    implicit val owner: TestableOwner = new TestableOwner
+
+    val effects = mutable.Buffer[Effect[Int]]()
+
+    val obs1 = Observer[Int](effects += Effect("obs1", _))
+
+    val source = EventStream.periodic(intervalMs = 15, resetOnStop = true)
+    val stream = source.drop(1, resetOnStop = true)
 
     val sub1 = stream.addObserver(obs1)
 
@@ -95,8 +99,9 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
         effects.clear()
       }
       _ <- delay {
-        stream.resetTo(1)
-        effects shouldEqual mutable.Buffer()
+        source.resetTo(1)
+        effects shouldEqual mutable.Buffer(Effect("obs1", 1))
+        effects.clear()
       }
       _ <- delay(15) {
         effects shouldEqual mutable.Buffer(Effect("obs1", 2))
@@ -119,8 +124,15 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
     } yield done
   }
 
-  it("emitInitial=true, resetOnStop=false") {
-    val stream = EventStream.periodic(intervalMs = 15, emitInitial = true, resetOnStop = false)
+  it("resetOnStop=false") {
+
+    implicit val owner: TestableOwner = new TestableOwner
+
+    val effects = mutable.Buffer[Effect[Int]]()
+
+    val obs1 = Observer[Int](effects += Effect("obs1", _))
+
+    val stream = EventStream.periodic(intervalMs = 15, resetOnStop = false)
 
     val sub1 = stream.addObserver(obs1)
 
@@ -168,8 +180,16 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
     } yield done
   }
 
-  it("emitInitial=false, resetOnStop=false") {
-    val stream = EventStream.periodic(intervalMs = 50, emitInitial = false, resetOnStop = false)
+  it("resetOnStop=false + drop(1)") {
+
+    implicit val owner: TestableOwner = new TestableOwner
+
+    val effects = mutable.Buffer[Effect[Int]]()
+
+    val obs1 = Observer[Int](effects += Effect("obs1", _))
+
+    val source = EventStream.periodic(intervalMs = 50, resetOnStop = false)
+    val stream = source.drop(1, resetOnStop = true)
 
     val sub1 = stream.addObserver(obs1)
 
@@ -191,8 +211,9 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
         effects.clear()
       }
       _ <- delay {
-        stream.resetTo(1)
-        effects shouldEqual mutable.Buffer()
+        source.resetTo(1)
+        effects shouldEqual mutable.Buffer(Effect("obs1", 1))
+        effects.clear()
       }
       _ <- delay(50) {
         effects shouldEqual mutable.Buffer(Effect("obs1", 2))
@@ -216,6 +237,13 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
   }
 
   it("dynamic interval") {
+
+    implicit val owner: TestableOwner = new TestableOwner
+
+    val effects = mutable.Buffer[Effect[Int]]()
+
+    val obs1 = Observer[Int](effects += Effect("obs1", _))
+
     val stream = new PeriodicEventStream[Int](
       initial = 0,
       next = index => {
@@ -227,7 +255,6 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
           None
         }
       },
-      emitInitial = true,
       resetOnStop = true
     )
 

@@ -8,8 +8,8 @@ import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.debug.{DebuggableEventStream, Debugger, DebuggerEventStream}
 import com.raquo.airstream.distinct.DistinctEventStream
 import com.raquo.airstream.eventbus.EventBus
+import com.raquo.airstream.misc._
 import com.raquo.airstream.misc.generated._
-import com.raquo.airstream.misc.{CollectEventStream, FilterEventStream, FoldLeftSignal, MapEventStream, SignalFromEventStream}
 import com.raquo.airstream.split.{SplittableEventStream, SplittableOneEventStream}
 import com.raquo.airstream.timing.{FutureEventStream, _}
 
@@ -69,6 +69,110 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
   def debounce(ms: Int): EventStream[A] = {
     new DebounceEventStream(parent = this, ms)
   }
+
+  /** Drop (skip) the first `numEvents` events from this stream. Note: errors are NOT dropped.
+    *
+    * @param resetOnStop  Reset the count if the stream stops
+    */
+  def drop(numEvents: Int, resetOnStop: Boolean = false): EventStream[A] = {
+    var numDropped = 0
+    new DropEventStream[A](
+      parent = this,
+      dropWhile = _ => {
+        val shouldDrop = numDropped < numEvents
+        if (shouldDrop) {
+          numDropped += 1
+        }
+        shouldDrop
+      },
+      reset = () => {
+        numDropped = 0
+      },
+      resetOnStop
+    )
+  }
+
+  /** Drop (skip) events from this stream as long as they pass the test (as soon as they stop passing, stop dropping)
+    * Note: errors are NOT dropped.
+    *
+    * @param passes       Note: MUST NOT THROW!
+    * @param resetOnStop  Forget everything and start dropping again if the stream stops
+    */
+  def dropWhile(passes: A => Boolean, resetOnStop: Boolean = false): EventStream[A] = {
+    new DropEventStream[A](
+      parent = this,
+      dropWhile = ev => passes(ev),
+      reset = () => (),
+      resetOnStop
+    )
+  }
+
+  /** Drop (skip) events from this stream as long as they do NOT pass the test (as soon as they start passing, stop dropping)
+    * Note: errors are NOT dropped.
+    *
+    * @param passes       Note: MUST NOT THROW!
+    * @param resetOnStop  Forget everything and start dropping again if the stream stops
+    */
+  def dropUntil(passes: A => Boolean, resetOnStop: Boolean = false): EventStream[A] = {
+    new DropEventStream[A](
+      parent = this,
+      dropWhile = ev => !passes(ev),
+      () => (),
+      resetOnStop
+    )
+  }
+
+  /** Take the first `numEvents` events from this stream, ignore the rest.
+    * Note: As long as events are being taken, ALL errors are also taken
+    *
+    * @param resetOnStop  Reset the count if the stream stops
+    */
+  def take(numEvents: Int, resetOnStop: Boolean = false): EventStream[A] = {
+    var numTaken = 0
+    new TakeEventStream[A](
+      parent = this,
+      takeWhile = _ => {
+        val shouldTake = numTaken < numEvents
+        if (shouldTake) {
+          numTaken += 1
+        }
+        shouldTake
+      },
+      reset = () => {
+        numTaken = 0
+      },
+      resetOnStop
+    )
+  }
+
+  /** Imitate parent stream as long as events pass the test; stop emitting after that.
+    *
+    * @param passes       Note: MUST NOT THROW!
+    * @param resetOnStop  Forget everything and start dropping again if the stream stops
+    */
+  def takeWhile(passes: A => Boolean, resetOnStop: Boolean = false): EventStream[A] = {
+    new TakeEventStream[A](
+      parent = this,
+      takeWhile = ev => passes(ev),
+      reset = () => (),
+      resetOnStop
+    )
+  }
+
+  /** Imitate parent stream as long as events to NOT pass the test; stop emitting after that.
+    *
+    * @param passes       Note: MUST NOT THROW!
+    * @param resetOnStop  Forget everything and start dropping again if the stream stops
+    */
+  def takeUntil(passes: A => Boolean, resetOnStop: Boolean = false): EventStream[A] = {
+    new TakeEventStream[A](
+      parent = this,
+      takeWhile = ev => !passes(ev),
+      () => (),
+      resetOnStop
+    )
+  }
+
 
   // @TODO[API] Should we introduce some kind of FoldError() wrapper?
   /** @param fn Note: guarded against exceptions */
@@ -241,13 +345,11 @@ object EventStream {
 
   def periodic(
     intervalMs: Int,
-    emitInitial: Boolean = true,
-    resetOnStop: Boolean = true
+    resetOnStop: Boolean = false
   ): PeriodicEventStream[Int] = {
     new PeriodicEventStream[Int](
       initial = 0,
       next = eventNumber => Some((eventNumber + 1, intervalMs)),
-      emitInitial = emitInitial,
       resetOnStop = resetOnStop
     )
   }

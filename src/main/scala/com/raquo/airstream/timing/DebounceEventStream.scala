@@ -15,6 +15,8 @@ import scala.util.Try
   * Essentially, this stream emits the parent's last event, but only once the parent stops emitting
   * events for `intervalMs`.
   *
+  * When stopped, this stream "forgets" about any pending events.
+  *
   * See also [[ThrottleEventStream]]
   */
 class DebounceEventStream[A](

@@ -441,7 +441,7 @@ This is provided as a kludge until it becomes more clear that this is not needed
 
 #### `EventStream.periodic`
 
-An event stream that emits events at an interval. `EventStream.periodic` emits the index of the event, starting with `0` for the initial event that's emitted without delay. If you want to skip the initial event, pass `emitInitial = false`. The `resetOnStop` option determines whether the index will be reset to `0` when the stream is stopped due to lack of observers. You can also reset the stream to any index manually by calling `resetTo(value)` on it. This will immediately emit this index if `emitInitial` is true, or emit the next index after a delay otherwise.
+An event stream that emits events at an interval. `EventStream.periodic` emits the index of the event, starting with `0` for the initial event that's emitted without delay. If you want to skip the initial event, use `drop(1)`. The `resetOnStop` option determines whether the index will be reset to `0` when the stream is stopped due to lack of observers. You can also reset the stream to any index manually by calling `resetTo(value)` on it. This will immediately emit this new index.
 
 The underlying `PeriodicEventStream` class offers more functionality, including the ability to emit values other than index, set a custom interval for every subsequent event, and stop the stream while it still has observers.
 

@@ -12,7 +12,6 @@ import scala.util.{Failure, Success, Try}
 class PeriodicEventStream[A](
   initial: A,
   next: A => Option[(A, Int)],
-  emitInitial: Boolean, // @TODO[API] replace with drop(1)
   resetOnStop: Boolean
 ) extends WritableEventStream[A] {
 
@@ -32,7 +31,7 @@ class PeriodicEventStream[A](
     clearTimeout()
     currentValue = value
     if (tickNext && isStarted) {
-      tick(isStarting = true)
+      tick()
     }
   }
 
@@ -41,11 +40,9 @@ class PeriodicEventStream[A](
     maybeTimeoutHandle = js.undefined
   }
 
-  private def tick(isStarting: Boolean): Unit = {
+  private def tick(): Unit = {
     new Transaction(trx => { // #Note[onStart,trx,async]
-      if (emitInitial || !isStarting) {
-        fireValue(currentValue, trx)
-      }
+      fireValue(currentValue, trx)
       setNext()
     })
   }
@@ -55,7 +52,7 @@ class PeriodicEventStream[A](
       case Success(Some((nextValue, nextIntervalMs))) =>
         currentValue = nextValue
         maybeTimeoutHandle = js.timers.setTimeout(nextIntervalMs.toDouble) {
-          tick(isStarting = false)
+          tick()
         }
       case Success(None) =>
         resetTo(initial, tickNext = false)
@@ -68,7 +65,7 @@ class PeriodicEventStream[A](
 
   override protected[this] def onStart(): Unit = {
     super.onStart()
-    tick(isStarting = true)
+    tick()
   }
 
   override protected[this] def onStop(): Unit = {
