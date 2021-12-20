@@ -3,6 +3,7 @@ package com.raquo.airstream.timing
 import com.raquo.airstream.core.{Transaction, WritableEventStream}
 
 import scala.scalajs.js
+import scala.scalajs.js.|
 
 /** This stream emits a value that the promise resolves with, even if the promise
   * was already resolved.
@@ -33,7 +34,7 @@ class JsPromiseEventStream[A](promise: js.Promise[A], emitOnce: Boolean) extends
           isPending = false
           //println(s"> init trx from FutureEventStream.init($nextValue)")
           new Transaction(fireValue(nextValue, _))
-          ()
+          (): Unit | js.Thenable[Unit]
         },
         js.defined { (rawException: Any) => {
           isPending = false
@@ -43,7 +44,7 @@ class JsPromiseEventStream[A](promise: js.Promise[A], emitOnce: Boolean) extends
           }
           //println(s"> init trx from JsPromiseEventStream.init($nextError)")
           new Transaction(fireError(nextError, _))
-          ()
+          (): Unit | js.Thenable[Unit]
         }}
       )
     }

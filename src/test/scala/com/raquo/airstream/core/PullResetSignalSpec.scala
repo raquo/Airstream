@@ -48,8 +48,9 @@ class PullResetSignalSpec extends UnitSpec {
           .map(Calculation.log("down", calculations))
           .setDisplayName("downSignal")
 
-        val upObs = Observer(Effect.log("up-obs", effects))
-        val changesObs = Observer(Effect.log("changes-obs", effects))
+        // #TODO[Scala3] Scala 3.0.2 requires the manual `Int` type ascription here, boo
+        val upObs = Observer[Int](Effect.log("up-obs", effects))
+        val changesObs = Observer[Int](Effect.log("changes-obs", effects))
         val downObs = Observer[Int](v => {
           Effect.log("down-obs", effects)(v)
         })
@@ -527,8 +528,9 @@ class PullResetSignalSpec extends UnitSpec {
       .map(_ * 10)
       .map(Calculation.log("signal_x10", calculations))
 
-    val obs = Observer(Effect.log("obs", effects))
-    val obs_x10 = Observer(Effect.log("obs_x10", effects))
+    // #TODO[Scala3] Scala 3.0.2 requires the manual `Int` type ascription here, boo
+    val obs = Observer[Int](Effect.log("obs", effects))
+    val obs_x10 = Observer[Int](Effect.log("obs_x10", effects))
 
     // --
 
