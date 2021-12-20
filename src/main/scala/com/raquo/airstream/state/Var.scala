@@ -187,7 +187,7 @@ object Var {
     val tryMods: Seq[VarTryModTuple[_]] = mods.map(t => modToTryModTuple(t))
     //println(s"> init trx from Var.update")
     new Transaction(trx => {
-      val vars= mods.map(_.tuple._1)
+      val vars = mods.map(_.tuple._1)
       try {
         vars.foreach(_.now())
       } catch { case err: Throwable =>

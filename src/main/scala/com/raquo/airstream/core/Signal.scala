@@ -15,8 +15,7 @@ import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
 import com.raquo.airstream.timing.JsPromiseSignal
 
 import scala.annotation.unused
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 import scala.util.{Failure, Try}
@@ -171,16 +170,16 @@ object Signal {
 
   def fromTry[A](value: Try[A]): Val[A] = Val.fromTry(value)
 
-  def fromFuture[A](future: Future[A]): Signal[Option[A]] = {
-    fromJsPromise(future.toJSPromise)
+  def fromFuture[A](future: Future[A])(implicit ec: ExecutionContext): Signal[Option[A]] = {
+    fromJsPromise(future.toJSPromise(ec))
   }
 
   /** Note: If the future is already resolved by the time this signal is started,
     * the provided initial value is not used, and the future's value is used as
     * the initial (and only) value instead.
     */
-  def fromFuture[A](future: Future[A], initial: => A): Signal[A] = {
-    fromJsPromise(future.toJSPromise).map {
+  def fromFuture[A](future: Future[A], initial: => A)(implicit ec: ExecutionContext): Signal[A] = {
+    fromJsPromise(future.toJSPromise(ec)).map {
       case None => initial
       case Some(value) => value
     }

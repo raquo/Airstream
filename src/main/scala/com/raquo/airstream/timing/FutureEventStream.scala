@@ -2,8 +2,7 @@ package com.raquo.airstream.timing
 
 import com.raquo.airstream.core.{Transaction, WritableEventStream}
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue // #TODO #nc remove this in 15.0.0
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 // #nc[Remove]
 /** This stream emits a value that the future resolves with.
@@ -13,7 +12,7 @@ import scala.concurrent.Future
   *
   * @param future Note: guarded against failures
   */
-class FutureEventStream[A](future: Future[A]) extends WritableEventStream[A] {
+class FutureEventStream[A](future: Future[A])(implicit ec: ExecutionContext) extends WritableEventStream[A] {
 
   override protected val topoRank: Int = 1
 
@@ -28,7 +27,7 @@ class FutureEventStream[A](future: Future[A]) extends WritableEventStream[A] {
         //println(s"> init trx from FutureEventStream.init($nextValue)")
         new Transaction(fireValue(nextValue, _))
       }
-    ))
+    ))(ec)
   }
 
   override protected def onWillStart(): Unit = () // noop

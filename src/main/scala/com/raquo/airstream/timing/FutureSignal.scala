@@ -2,12 +2,11 @@ package com.raquo.airstream.timing
 
 import com.raquo.airstream.core.{Transaction, WritableSignal}
 
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue // #TODO #nc remove this in 15.0.0
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Try}
 
 // #nc[remove]
-class FutureSignal[A](future: Future[A]) extends WritableSignal[Option[A]] {
+class FutureSignal[A](future: Future[A])(implicit ec: ExecutionContext) extends WritableSignal[Option[A]] {
 
   override protected val topoRank: Int = 1
 
@@ -41,7 +40,7 @@ class FutureSignal[A](future: Future[A]) extends WritableSignal[Option[A]] {
           //println(s"> init trx from FutureSignal($value)")
           new Transaction(fireTry(nextValue, _)) // #Note[onStart,trx,async]
         }
-      }
+      }(ec)
     }
   }
 }

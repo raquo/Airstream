@@ -14,8 +14,7 @@ import com.raquo.airstream.split.{SplittableEventStream, SplittableOneEventStrea
 import com.raquo.airstream.timing._
 
 import scala.annotation.unused
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 import scala.util.{Failure, Success, Try}
@@ -306,8 +305,8 @@ object EventStream {
     )
   }
 
-  def fromFuture[A](future: Future[A], emitOnce: Boolean = false): EventStream[A] = {
-    fromJsPromise(future.toJSPromise, emitOnce)
+  def fromFuture[A](future: Future[A], emitOnce: Boolean = false)(implicit ec: ExecutionContext): EventStream[A] = {
+    fromJsPromise(future.toJSPromise(ec), emitOnce)
   }
 
   def fromJsPromise[A](promise: js.Promise[A], emitOnce: Boolean = false): EventStream[A] = {
