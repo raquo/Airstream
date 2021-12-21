@@ -13,37 +13,6 @@ trait Splittable[M[_]] {
 
 object Splittable extends LowPrioritySplittableImplicits {
 
-  implicit object SeqSplittable extends Splittable[collection.Seq] {
-
-    override def map[A, B](inputs: collection.Seq[A], project: A => B): collection.Seq[B] = inputs.map(project)
-
-    override def empty[A]: collection.Seq[A] = Nil
-  }
-
-  implicit object OptionSplittable extends Splittable[Option] {
-
-    override def map[A, B](inputs: Option[A], project: A => B): Option[B] = inputs.map(project)
-
-    override def empty[A]: Option[A] = None
-  }
-
-  implicit object JsArraySplittable extends Splittable[js.Array] {
-
-    override def map[A, B](inputs: js.Array[A], project: A => B): js.Array[B] = inputs.map(project)
-
-    override def empty[A]: js.Array[A] = js.Array()
-  }
-}
-
-/** Scala 3.0.0 is smart enough to not need these implicits. SOMETIMES.
-  * Other times, it needs them, depending on random crap like whether
-  * you provided a `distinctCompose` argument to `split` or not.
-  *
-  * Thus, we need to store these implicits in a separate trait
-  * to avoid ambiguous-implicit errors.
-  */
-trait LowPrioritySplittableImplicits {
-
   implicit object ListSplittable extends Splittable[List] {
 
     override def map[A, B](inputs: List[A], project: A => B): List[B] = inputs.map(project)
@@ -65,10 +34,40 @@ trait LowPrioritySplittableImplicits {
     override def empty[A]: Set[A] = Set.empty
   }
 
+  implicit object OptionSplittable extends Splittable[Option] {
+
+    override def map[A, B](inputs: Option[A], project: A => B): Option[B] = inputs.map(project)
+
+    override def empty[A]: Option[A] = None
+  }
+
+  implicit object JsArraySplittable extends Splittable[js.Array] {
+
+    override def map[A, B](inputs: js.Array[A], project: A => B): js.Array[B] = inputs.map(project)
+
+    override def empty[A]: js.Array[A] = js.Array()
+  }
+}
+
+/** If changing the order, check it first on all Scala versions (and be disappointed).
+  * Some of the errors caused by implicit ambiguity are not very deterministic in Scala 3. Be conservative.
+  */
+trait LowPrioritySplittableImplicits extends LowestPrioritySplittableImplicits {
+
   implicit object ImmutableSeqSplittable extends Splittable[immutable.Seq] {
 
     override def map[A, B](inputs: immutable.Seq[A], project: A => B): immutable.Seq[B] = inputs.map(project)
 
     override def empty[A]: immutable.Seq[A] = Nil
+  }
+}
+
+trait LowestPrioritySplittableImplicits {
+
+  implicit object SeqSplittable extends Splittable[collection.Seq] {
+
+    override def map[A, B](inputs: collection.Seq[A], project: A => B): collection.Seq[B] = inputs.map(project)
+
+    override def empty[A]: collection.Seq[A] = Nil
   }
 }
