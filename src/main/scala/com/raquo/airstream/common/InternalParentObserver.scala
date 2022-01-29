@@ -13,7 +13,7 @@ trait InternalParentObserver[A] extends InternalObserver[A] {
   }
 
   def removeFromParent(): Unit = {
-    Transaction.removeInternalObserver(parent, observer = this)
+    parent.removeInternalObserver(observer = this)
   }
 }
 

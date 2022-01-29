@@ -354,7 +354,6 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
 
     val myVar = Var(0)
 
-    // @TODO[Airstream] Add Signal.fromValue / fromTry that creates a Val
     val stream = myVar.signal.flatMap(Val(_))
 
     val effects = mutable.Buffer[Effect[_]]()

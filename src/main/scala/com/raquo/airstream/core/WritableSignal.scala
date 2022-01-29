@@ -42,6 +42,8 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
 
     // @TODO[API] It is rather curious/unintuitive that firing external observers first seems to make more sense. Think about it some more.
 
+    isSafeToRemoveObserver = false
+
     externalObservers.foreach { observer =>
       observer.onTry(nextValue)
       if (isError && !errorReported) errorReported = true
@@ -50,6 +52,13 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
     internalObservers.foreach { observer =>
       InternalObserver.onTry(observer, nextValue, transaction)
       if (isError && !errorReported) errorReported = true
+    }
+
+    isSafeToRemoveObserver = true
+
+    maybePendingObserverRemovals.foreach { pendingObserverRemovals =>
+      pendingObserverRemovals.foreach(remove => remove())
+      pendingObserverRemovals.clear()
     }
 
     // This will only ever happen for special Signals that maintain their current value even without observers.

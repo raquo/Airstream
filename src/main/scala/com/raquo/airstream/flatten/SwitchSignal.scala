@@ -139,7 +139,7 @@ class SwitchSignal[A](
 
   private def removeInternalObserverFromCurrentSignal(): Unit = {
     currentSignalTry.foreach { currentSignal =>
-      Transaction.removeInternalObserver(currentSignal, internalEventObserver)
+      currentSignal.removeInternalObserver(internalEventObserver)
     }
   }
 }

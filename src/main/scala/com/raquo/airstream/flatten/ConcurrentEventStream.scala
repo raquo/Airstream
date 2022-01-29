@@ -58,7 +58,7 @@ class ConcurrentEventStream[A](
   }
 
   override protected[this] def onStop(): Unit = {
-    accumulatedStreams.foreach(Transaction.removeInternalObserver(_, internalEventObserver))
+    accumulatedStreams.foreach(_.removeInternalObserver(internalEventObserver))
     super.onStop()
   }
 

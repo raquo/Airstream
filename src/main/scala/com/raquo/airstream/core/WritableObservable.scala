@@ -65,7 +65,7 @@ trait WritableObservable[A] extends Observable[A] {
 
   /** Subscribe an external observer to this observable */
   override protected[this] def addExternalObserver(observer: Observer[A], owner: Owner): Subscription = {
-    val subscription = new Subscription(owner, () => Transaction.removeExternalObserver(this, observer))
+    val subscription = new Subscription(owner, () => removeExternalObserver(observer))
     externalObservers.push(observer)
     //dom.console.log(s"Adding subscription: $subscription")
     subscription
@@ -84,18 +84,18 @@ trait WritableObservable[A] extends Observable[A] {
     maybeStart()
   }
 
-  /** Child observable should call Transaction.removeInternalObserver(parent, childInternalObserver) when it is stopped.
+  /** Child observable should call parent.removeInternalObserver(childInternalObserver) when it is stopped.
     * This observable calls [[onStop]] if this action has removed its last observer (internal or external).
     */
   override protected[airstream] def removeInternalObserverNow(observer: InternalObserver[A]): Unit = {
-    val removed = internalObservers.removeObserverNow(observer.asInstanceOf[InternalObserver[Any]])
+    val removed = internalObservers.removeObserverNow(observer)
     if (removed) {
       maybeStop()
     }
   }
 
   override protected[airstream] def removeExternalObserverNow(observer: Observer[A]): Unit = {
-    val removed = externalObservers.removeObserverNow(observer.asInstanceOf[Observer[Any]])
+    val removed = externalObservers.removeObserverNow(observer)
     if (removed) {
       maybeStop()
     }

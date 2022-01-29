@@ -1,6 +1,6 @@
 package com.raquo.airstream.common
 
-import com.raquo.airstream.core.{InternalObserver, Observable, Protected, Transaction, WritableEventStream}
+import com.raquo.airstream.core.{InternalObserver, Observable, Protected, WritableEventStream}
 
 /** A simple stream that only has one parent. */
 trait SingleParentEventStream[I, O] extends WritableEventStream[O] with InternalObserver[I] {
@@ -19,7 +19,7 @@ trait SingleParentEventStream[I, O] extends WritableEventStream[O] with Internal
   }
 
   override protected[this] def onStop(): Unit = {
-    Transaction.removeInternalObserver(parent, observer = this)
+    parent.removeInternalObserver(observer = this)
     super.onStop()
   }
 }

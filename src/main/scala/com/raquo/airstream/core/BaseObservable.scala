@@ -4,6 +4,7 @@ import com.raquo.airstream.debug.Debugger
 import com.raquo.airstream.flatten.FlattenStrategy
 import com.raquo.airstream.ownership.{Owner, Subscription}
 
+import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
 /** This trait represents a reactive value that can be subscribed to.
@@ -167,7 +168,51 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     */
   protected[airstream] def addInternalObserver(observer: InternalObserver[A], shouldCallMaybeWillStart: Boolean): Unit
 
-  /** Child observable should call Transaction.removeInternalObserver(parent, childInternalObserver) when it is stopped.
+  /** Note: do not expose this to end users. See https://github.com/raquo/Airstream/issues/10
+    *
+    * Removal still happens synchronously, just after we're done iterating over this observable's observers,
+    * to avoid interference with that logic.
+    *
+    * Note: The delay is necessary not just because of interference with actual while(index < observers.length)
+    * iteration, but also because on a high level it is too risky to remove observers from arbitrary observables
+    * while the propagation is running. This would mean that some graphs would not propagate fully, which would
+    * break very basic expectations of end users.
+    *
+    * UPDATE: In 0.15.0 we made the observable removal delay more fine grained – previously we would wait until
+    * the whole transaction completed before removing observers, now we only wait until this observable's
+    * iteration is done. This helped us fix https://github.com/raquo/Airstream/issues/95
+    *
+    * Note: To completely unsubscribe an Observer from this Observable, you need to remove it as many times
+    * as you added it to this Observable.
+    */
+  protected[airstream] def removeExternalObserver(
+    observer: Observer[A]
+  ): Unit = {
+    if (isSafeToRemoveObserver) {
+      // remove right now – useful for efficient recursive removals
+      removeExternalObserverNow(observer)
+    } else {
+      // schedule removal to happen when it's safe
+      getOrCreatePendingObserverRemovals.push(() => removeExternalObserverNow(observer))
+    }
+  }
+
+  /** Safely remove internal observer (such that it doesn't interfere with iteration over the list of observers).
+    * Removal still happens synchronously, just after we're done iterating over this observable's observers.
+    *
+    * Child observable should call this method on its parents when it is stopped.
+    */
+  protected[airstream] def removeInternalObserver(observer: InternalObserver[A]): Unit = {
+    if (isSafeToRemoveObserver) {
+      // remove right now – useful for efficient recursive removals
+      removeInternalObserverNow(observer)
+    } else {
+      // schedule removal to happen when it's safe
+      getOrCreatePendingObserverRemovals.push(() => removeInternalObserverNow(observer))
+    }
+  }
+
+  /** Child observable should call removeInternalObserver(parent, childInternalObserver) when it is stopped.
     * This observable calls [[onStop]] if this action has removed its last observer (internal or external).
     */
   protected[airstream] def removeInternalObserverNow(observer: InternalObserver[A]): Unit
@@ -178,6 +223,21 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
   protected def numAllObservers: Int
 
   protected def isStarted: Boolean = numAllObservers > 0
+
+  protected var isSafeToRemoveObserver: Boolean = true
+
+  /** Observer removals scheduled to run as soon as this observable's event propagation finishes.
+    * Only put calls to `removeInternalObserverNow` and `removeExternalObserverNow` here, no custom logic.
+    */
+  protected var maybePendingObserverRemovals: js.UndefOr[js.Array[() => Unit]] = js.undefined
+
+  protected def getOrCreatePendingObserverRemovals: js.Array[() => Unit] = {
+    maybePendingObserverRemovals.getOrElse {
+      val newArray = js.Array[() => Unit]()
+      maybePendingObserverRemovals = js.defined(newArray)
+      newArray
+    }
+  }
 
   /** When starting an observable, this is called recursively on every one of its parents that are not started.
     * This whole chain happens before onStart callback is called. This chain serves to prepare the internal states

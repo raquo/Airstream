@@ -26,7 +26,7 @@ class EventBusStream[A] private[eventbus] () extends WritableEventStream[A] with
     if (index != -1) {
       sourceStreams.splice(index, deleteCount = 1)
       if (isStarted) {
-        Transaction.removeInternalObserver(sourceStream, observer = this)
+        sourceStream.removeInternalObserver(observer = this)
       }
     }
   }
@@ -70,7 +70,7 @@ class EventBusStream[A] private[eventbus] () extends WritableEventStream[A] with
 
   override protected[this] def onStop(): Unit = {
     // dom.console.log("EventBusStream STOPPED!", this.toString)
-    sourceStreams.foreach(sourceStream => Transaction.removeInternalObserver(sourceStream, observer = this))
+    sourceStreams.foreach(_.removeInternalObserver(observer = this))
     super.onStop()
   }
 }

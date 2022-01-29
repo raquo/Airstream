@@ -70,10 +70,6 @@ object Transaction extends GlobalCounter { // @nc[remove]
         throw new Exception("Transaction queue error: Completed transaction is not the first in stack. This is a bug in Airstream.")
       }
 
-      // Do this first on the off chance that some super custom observable creates a new transaction here,
-      // which would be crazy, but if it does happen, it would be handled correctly.
-      resolvePendingObserverRemovals()
-
       putNextTransactionOnStack(doneTransaction = transaction)
 
       transaction.code = throwDeadTrxError  // stop holding up `trx` contents in memory
@@ -162,69 +158,12 @@ object Transaction extends GlobalCounter { // @nc[remove]
     private[core] def isClearState: Boolean = stack.isEmpty && children.isEmpty
   }
 
-  private var isSafeToRemoveObserver: Boolean = true
-
-  private[this] val pendingObserverRemovals: js.Array[() => Unit] = js.Array()
-
-  private[core] def isClearState: Boolean = {
-    pendingTransactions.isClearState && pendingObserverRemovals.isEmpty
-  }
+  private[core] def isClearState: Boolean = pendingTransactions.isClearState
 
   private[airstream] def currentTransaction(): Option[Transaction] = pendingTransactions.peekStack()
 
-  /** Note: this is core-private for subscription safety. See https://github.com/raquo/Airstream/issues/10
-    *
-    * Safely remove external observer (such that it doesn't interfere with iteration over the list of observers).
-    * Removal still happens synchronously, just at the end of a transaction if one is running right now, so that it
-    * does not interfere with iteration over the observables' lists of observers during the current transaction.
-    *
-    * Note: The delay is necessary not just because of interference with actual while(index < observers.length)
-    * iteration, but also because on a high level it is too risky to remove observers from arbitrary observables
-    * while the propagation is running. This would mean that some graphs would not propagate fully, which would
-    * break very basic expectations of end users.
-    *
-    * Note: To completely unsubscribe an Observer from this Observable, you need to remove it as many times
-    * as you added it to this Observable.
-    */
-  private[core] def removeExternalObserver[A](
-    observable: Observable[A],
-    observer: Observer[A]
-  ): Unit = {
-    if (isSafeToRemoveObserver) {
-      // remove right now – useful for efficient recursive removals
-      observable.removeExternalObserverNow(observer)
-    } else {
-      // schedule removal to happen at the end of the transaction
-      // (don't want to interfere with iteration over the list of observers)
-      pendingObserverRemovals.push(() => observable.removeExternalObserverNow(observer))
-    }
-  }
-
-  /** Safely remove internal observer (such that it doesn't interfere with iteration over the list of observers).
-    * Removal still happens synchronously, just at the end of a transaction if one is running right now.
-    */
-  def removeInternalObserver[A](observable: Observable[A], observer: InternalObserver[A]): Unit = {
-    if (isSafeToRemoveObserver) {
-      // remove right now – useful for efficient recursive removals
-      observable.removeInternalObserverNow(observer)
-    } else {
-      // schedule removal to happen at the end of the transaction
-      // (don't want to interfere with iteration over observables' lists of observers)
-      pendingObserverRemovals.push(() => observable.removeInternalObserverNow(observer))
-    }
-  }
-
-  private def resolvePendingObserverRemovals(): Unit = {
-    if (!isSafeToRemoveObserver) {
-      throw new Exception("It's not safe to remove observers right now!")
-    }
-    pendingObserverRemovals.foreach(remove => remove())
-    pendingObserverRemovals.clear()
-  }
-
   private def run(transaction: Transaction): Unit = {
     //println(s"--start trx ${transaction.id}")
-    isSafeToRemoveObserver = false
     try {
       transaction.code(transaction) // @TODO[API] Shouldn't we guard against exceptions in `code` here? It can be provided by the user.
       transaction.resolvePendingObservables()
@@ -234,7 +173,6 @@ object Transaction extends GlobalCounter { // @nc[remove]
       //  but it doesn't actually catch the exception, so `new Transaction(code)` actually throws
       //  iff `code` throws AND the transaction was created while no other transaction is running
       //  This is not very predictable, so we should fix it.
-      isSafeToRemoveObserver = true
       //println(s"--end trx ${transaction.id}")
       pendingTransactions.done(transaction)
     }

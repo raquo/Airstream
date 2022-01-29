@@ -109,7 +109,7 @@ class SwitchEventStream[I, O](
 
   private def removeInternalObserverFromCurrentEventStream(): Unit = {
     maybeCurrentEventStream.foreach { _.foreach { currentStream =>
-      Transaction.removeInternalObserver(currentStream, internalEventObserver)
+      currentStream.removeInternalObserver(internalEventObserver)
     }}
   }
 

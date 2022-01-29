@@ -1,6 +1,6 @@
 package com.raquo.airstream.common
 
-import com.raquo.airstream.core.{InternalObserver, Observable, Protected, Transaction, WritableSignal}
+import com.raquo.airstream.core.{InternalObserver, Observable, Protected, WritableSignal}
 
 import scala.util.Try
 
@@ -33,7 +33,7 @@ trait SingleParentSignal[I, O] extends WritableSignal[O] with InternalObserver[I
   }
 
   override protected[this] def onStop(): Unit = {
-    Transaction.removeInternalObserver(parent, observer = this)
+    parent.removeInternalObserver(observer = this)
     super.onStop()
   }
 }

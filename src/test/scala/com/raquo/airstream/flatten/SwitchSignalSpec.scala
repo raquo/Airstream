@@ -5,7 +5,7 @@ import com.raquo.airstream.core.Observable.MetaObservable
 import com.raquo.airstream.core.{EventStream, Observer}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
-import com.raquo.airstream.state.Var
+import com.raquo.airstream.state.{Val, Var}
 
 import scala.collection.mutable
 
@@ -346,5 +346,67 @@ class SwitchSignalSpec extends UnitSpec {
     bigBus.writer.onNext("big bus - unrelated change")
 
     assert(calculations.isEmpty)
+  }
+
+  it("map parent inside flatMap") {
+
+    // @see https://github.com/raquo/Airstream/issues/95
+
+    val effects = mutable.Buffer[Effect[String]]()
+
+    var smallI = -1
+    var bigI = -1
+
+    val owner = new TestableOwner
+
+    val intVar = Var(2000)
+
+    val intSignal = intVar.signal
+
+    val brokenSignal =
+      intSignal
+        .flatMap { num =>
+          if (num < 1000) {
+            smallI += 1
+            // #TODO[API]: if this `intSignal.map("small: " + _)` signal was cached / reused instead, it would
+            //  result in duplicate events, which is not great, but kind of expected, because SwitchSignal
+            //  ensures that it emits an event every time that the parent emits, for consistency. But since
+            //  the inner signal is also the parent signal, this results in event duplication.
+            //  - See the isSameSignal logic in SwitchSignal
+            intSignal.map("small: " + _).setDisplayName(s"small-$smallI") //.debugLogLifecycle()
+          } else {
+            bigI += 1
+            Val("big").setDisplayName(s"val-$bigI")
+          }
+        }
+
+    brokenSignal.foreach(Effect.log("output", effects))(owner)
+
+    def setVar(v: Int): Unit = {
+      Effect.log("set", effects)(v.toString)
+      intVar.set(v)
+    }
+
+    // --
+
+    setVar(884)
+    setVar(887)
+    setVar(1018)
+    setVar(1141)
+    setVar(1142)
+
+    effects shouldBe mutable.Buffer(
+      Effect("output", "big"),
+      Effect("set", "884"),
+      Effect("output", "small: 884"),
+      Effect("set", "887"),
+      Effect("output", "small: 887"),
+      Effect("set", "1018"),
+      Effect("output", "big"),
+      Effect("set", "1141"),
+      Effect("output", "big"),
+      Effect("set", "1142"),
+      Effect("output", "big")
+    )
   }
 }

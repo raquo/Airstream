@@ -33,12 +33,21 @@ trait WritableEventStream[A] extends EventStream[A] with WritableObservable[A] {
     // === CAUTION ===
     // The following logic must match Signal's fireTry! It is separated here for performance.
 
+    isSafeToRemoveObserver = false
+
     externalObservers.foreach { observer =>
       observer.onError(nextError)
     }
 
     internalObservers.foreach { observer =>
       InternalObserver.onError(observer, nextError, transaction)
+    }
+
+    isSafeToRemoveObserver = true
+
+    maybePendingObserverRemovals.foreach { pendingObserverRemovals =>
+      pendingObserverRemovals.foreach(remove => remove())
+      pendingObserverRemovals.clear()
     }
   }
 
