@@ -174,26 +174,29 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
     )
   }
 
+  @deprecated("foldLeft was renamed to scanLeft", "0.15.0-RC1")
+  def foldLeft[B](initial: B)(fn: (B, A) => B): Signal[B] = scanLeft(initial)(fn)
+
+  @deprecated("foldLeftRecover was renamed to scanLeftRecover", "0.15.0-RC1")
+  def foldLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = scanLeftRecover(initial)(fn)
 
   // @TODO[API] Should we introduce some kind of FoldError() wrapper?
   /** A signal that emits the accumulated value every time that the parent stream emits.
     *
     * @param fn Note: guarded against exceptions
     */
-  def foldLeft[B](initial: B)(fn: (B, A) => B): Signal[B] = {
-    foldLeftRecover(
-      Success(initial)
-    )(
-      (currentValue, nextParentValue) => Try(fn(currentValue.get, nextParentValue.get))
-    )
+  def scanLeft[B](initial: B)(fn: (B, A) => B): Signal[B] = {
+    scanLeftRecover(Success(initial)) { (currentValue, nextParentValue) =>
+      Try(fn(currentValue.get, nextParentValue.get))
+    }
   }
 
   /** A signal that emits the accumulated value every time that the parent stream emits.
     *
     * @param fn Note: Must not throw!
     */
-  def foldLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
-    new FoldLeftSignal(parent = this, () => initial, fn)
+  def scanLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
+    new ScanLeftSignal(parent = this, () => initial, fn)
   }
 
   /** @param cacheInitialValue if false, signal's initial value will be re-evaluated on every

@@ -8,9 +8,9 @@ import com.raquo.airstream.state.Var
 
 import scala.collection.mutable
 
-class FoldLeftSignalSpec extends UnitSpec {
+class ScanLeftSignalSpec extends UnitSpec {
 
-  it("FoldSignal made with EventStream.foldLeft") {
+  it("ScanLeftSignal made with EventStream.scanLeft") {
 
     implicit val testOwner: TestableOwner = new TestableOwner
 
@@ -22,7 +22,7 @@ class FoldLeftSignalSpec extends UnitSpec {
     val bus = new EventBus[Int]
 
     val signal = bus.events
-      .foldLeft(initial = "numbers:"){ (acc, nextValue) => acc + " " + nextValue.toString }
+      .scanLeft(initial = "numbers:"){ (acc, nextValue) => acc + " " + nextValue.toString }
       .map(Calculation.log("signal", calculations))
 
     bus.writer.onNext(1)
@@ -91,7 +91,7 @@ class FoldLeftSignalSpec extends UnitSpec {
 
   }
 
-  it("FoldSignal made with Signal.foldLeft") {
+  it("ScanLeftSignal made with Signal.scanLeft") {
 
     implicit val testOwner: TestableOwner = new TestableOwner
 
@@ -103,7 +103,7 @@ class FoldLeftSignalSpec extends UnitSpec {
     val $var = Var(0)
 
     val signal = $var.signal
-      .foldLeft(makeInitial = initial => s"numbers: init=${initial}"){ (acc, nextValue) => acc + " " + nextValue.toString }
+      .scanLeft(makeInitial = initial => s"numbers: init=${initial}"){ (acc, nextValue) => acc + " " + nextValue.toString }
       .map(Calculation.log("signal", calculations))
 
     $var.writer.onNext(1)

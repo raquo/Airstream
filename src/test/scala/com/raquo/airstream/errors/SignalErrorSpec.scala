@@ -225,7 +225,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
 
     val bus = new EventBus[Int]
 
-    val signalUp = bus.events.startWith(-1).foldLeft { num =>
+    val signalUp = bus.events.startWith(-1).scanLeft { num =>
       if (num < 0) {
         throw err1
       } else num
@@ -287,7 +287,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
 
     val bus = new EventBus[Int]
 
-    val signalUp = bus.events.startWith(-1).foldLeftRecover(tryNum => tryNum.map { num =>
+    val signalUp = bus.events.startWith(-1).scanLeftRecover(tryNum => tryNum.map { num =>
       if (num < 0) {
         throw err1
       } else num

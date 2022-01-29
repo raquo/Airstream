@@ -8,7 +8,7 @@ import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.debug.{DebuggableSignal, Debugger, DebuggerSignal}
 import com.raquo.airstream.distinct.DistinctSignal
 import com.raquo.airstream.misc.generated._
-import com.raquo.airstream.misc.{ChangesEventStream, FoldLeftSignal, MapSignal}
+import com.raquo.airstream.misc.{ChangesEventStream, ScanLeftSignal, MapSignal}
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.split.{SplittableOneSignal, SplittableSignal}
 import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
@@ -71,28 +71,31 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
   //  new ChangesEventStream[A](parent = this, emitChangeOnRestart = true)
   //}
 
+  @deprecated("foldLeft was renamed to scanLeft", "0.15.0-RC1")
+  def foldLeft[B](makeInitial: A => B)(fn: (B, A) => B): Signal[B] = scanLeft(makeInitial)(fn)
+
+  @deprecated("foldLeftRecover was renamed to scanLeftRecover", "0.15.0-RC1")
+  def foldLeftRecover[B](makeInitial: Try[A] => Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = scanLeftRecover(makeInitial)(fn)
+
   /** A signal that emits the accumulated value every time that the parent signal emits.
     *
     * @param makeInitial Note: guarded against exceptions
     * @param fn Note: guarded against exceptions
     */
-  def foldLeft[B](makeInitial: A => B)(fn: (B, A) => B): Signal[B] = {
-    foldLeftRecover(
-      parentInitial => parentInitial.map(makeInitial)
-    )(
-      (currentValue, nextParentValue) => Try(fn(currentValue.get, nextParentValue.get))
-    )
+  def scanLeft[B](makeInitial: A => B)(fn: (B, A) => B): Signal[B] = {
+    scanLeftRecover(parentInitial => parentInitial.map(makeInitial)) { (currentValue, nextParentValue) =>
+      Try(fn(currentValue.get, nextParentValue.get))
+    }
   }
 
-  // @TODO[Naming]
   /** A signal that emits the accumulated value every time that the parent signal emits.
     *
     * @param makeInitial currentParentValue => initialValue   Note: must not throw
     * @param fn (currentValue, nextParentValue) => nextValue
     * @return
     */
-  def foldLeftRecover[B](makeInitial: Try[A] => Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
-    new FoldLeftSignal(
+  def scanLeftRecover[B](makeInitial: Try[A] => Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
+    new ScanLeftSignal(
       parent = this,
       makeInitialValue = () => makeInitial(tryNow()),
       fn
