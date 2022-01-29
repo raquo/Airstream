@@ -27,17 +27,17 @@ class FoldLeftSignalSpec extends UnitSpec {
 
     bus.writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     val sub = signal.addObserver(signalObserver)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal", "numbers:")
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("signal-obs", "numbers:")
     )
 
@@ -48,10 +48,10 @@ class FoldLeftSignalSpec extends UnitSpec {
 
     bus.writer.onNext(2)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal", "numbers: 2")
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("signal-obs", "numbers: 2")
     )
 
@@ -65,10 +65,10 @@ class FoldLeftSignalSpec extends UnitSpec {
 
     signal.addObserver(signalObserver)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal", "numbers: 2")
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("signal-obs", "numbers: 2")
     )
 
@@ -79,10 +79,10 @@ class FoldLeftSignalSpec extends UnitSpec {
 
     bus.writer.onNext(4)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal", "numbers: 2 4")
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("signal-obs", "numbers: 2 4")
     )
 
@@ -108,17 +108,17 @@ class FoldLeftSignalSpec extends UnitSpec {
 
     $var.writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     val sub1 = signal.addObserver(signalObserver)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal", "numbers: init=1")
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("signal-obs", "numbers: init=1")
     )
 
@@ -129,10 +129,10 @@ class FoldLeftSignalSpec extends UnitSpec {
 
     $var.writer.onNext(2)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal", "numbers: init=1 2")
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("signal-obs", "numbers: init=1 2")
     )
 
@@ -148,10 +148,10 @@ class FoldLeftSignalSpec extends UnitSpec {
     val sub2 = signal.addObserver(signalObserver)
 
     // Re-synced to upstream
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal", "numbers: init=1 2 3")
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("signal-obs", "numbers: init=1 2 3")
     )
 
@@ -162,10 +162,10 @@ class FoldLeftSignalSpec extends UnitSpec {
 
     $var.writer.onNext(4)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal", "numbers: init=1 2 3 4")
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("signal-obs", "numbers: init=1 2 3 4")
     )
 
@@ -181,10 +181,10 @@ class FoldLeftSignalSpec extends UnitSpec {
     signal.addObserver(signalObserver)
 
     // Re-synced to upstream without emitting an extraneous `4`
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal", "numbers: init=1 2 3 4")
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("signal-obs", "numbers: init=1 2 3 4")
     )
 

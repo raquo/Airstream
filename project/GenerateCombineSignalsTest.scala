@@ -45,7 +45,7 @@ case class GenerateCombineSignalsTest(
       line()
       line("// --")
       line()
-      line("effects.toList shouldBe empty")
+      line("effects.toList.shouldBeEmpty")
       line()
       line("// --")
       line()
@@ -53,7 +53,7 @@ case class GenerateCombineSignalsTest(
       line()
       line("// --")
       line()
-      enter("effects.toList should ===(List(")
+      enter("effects.toList shouldBe (List(")
       line(s"(${(1 to n).map(i => s"T${i}(1)").mkString(", ")})")
       leave("))")
       line()
@@ -65,7 +65,7 @@ case class GenerateCombineSignalsTest(
       for (i <- 1 to n) {
         line(s"var${i}.update(_.inc)")
       }
-      enter("effects.toList should ===(")
+      enter("effects.toList shouldBe (")
       enter("List(")
       for (i <- 1 to n) {
         line(s"(${(1 to n).map(j => s"T${j}(1 + iteration${if (j <= i) " + 1" else ""})").mkString(", ")})${if (i < n) "," else ""}")

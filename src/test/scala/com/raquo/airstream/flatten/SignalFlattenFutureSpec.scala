@@ -42,11 +42,11 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
 
       delay {
         promise0.success(-100)
-        effects shouldEqual mutable.Buffer(Effect("obs", -200))
+        effects shouldBe mutable.Buffer(Effect("obs", -200))
         clearLogs()
 
       }.flatMap { _ =>
-        effects shouldEqual mutable.Buffer(Effect("obs", -100))
+        effects shouldBe mutable.Buffer(Effect("obs", -100))
         clearLogs()
 
         futureBus.writer.onNext(promise1.future)
@@ -57,7 +57,7 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
         promise1.success(100)
 
         // Since this is a Signal, and the futures were emitted prior to being resolved, we get their defined initial values
-        effects shouldEqual mutable.Buffer(
+        effects shouldBe mutable.Buffer(
           Effect("obs", -200),
           Effect("obs", -200)
         )
@@ -66,7 +66,7 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
       }.flatMap { _ =>
         delay {
           // Since the signal is only listening to the latest emitted future, we only get 200 here
-          effects shouldEqual mutable.Buffer(Effect("obs", 200))
+          effects shouldBe mutable.Buffer(Effect("obs", 200))
           clearLogs()
         }
       }
@@ -98,11 +98,11 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
 
       signal.addObserver(obs)
 
-      effects shouldEqual mutable.Buffer(Effect("obs", -200))
+      effects shouldBe mutable.Buffer(Effect("obs", -200))
       clearLogs()
 
       delay {
-        effects shouldEqual mutable.Buffer(Effect("obs", -100))
+        effects shouldBe mutable.Buffer(Effect("obs", -100))
         clearLogs()
 
         futureBus.writer.onNext(promise1.future)
@@ -112,14 +112,14 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
         promise1.success(100)
 
         // Emitting futures' initial values since they weren't resolved at the time of propagation
-        effects shouldEqual mutable.Buffer(
+        effects shouldBe mutable.Buffer(
           Effect("obs", -200),
           Effect("obs", -200)
         )
         effects.clear()
 
       }.flatMap { _ =>
-        effects shouldEqual mutable.Buffer(Effect("obs", 200))
+        effects shouldBe mutable.Buffer(Effect("obs", 200))
         clearLogs()
       }
     }
@@ -151,11 +151,11 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
         val signal = futureBus.events.startWith(promise0.future).flatMap(Signal.fromFuture(_, initial = -200))
         signal.addObserver(obs)
 
-        effects shouldEqual mutable.Buffer(Effect("obs", -200))
+        effects shouldBe mutable.Buffer(Effect("obs", -200))
         clearLogs()
 
       }.flatMap { _ =>
-        effects shouldEqual mutable.Buffer(Effect("obs", -100))
+        effects shouldBe mutable.Buffer(Effect("obs", -100))
         clearLogs()
 
         futureBus.writer.onNext(promise1.future)
@@ -165,7 +165,7 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
         promise1.success(100)
 
         // Emitting futures' initial values since they weren't resolved at the time of propagation
-        effects shouldEqual mutable.Buffer(
+        effects shouldBe mutable.Buffer(
           Effect("obs", -200),
           Effect("obs", -200)
         )
@@ -173,7 +173,7 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
 
       }.flatMap { _ =>
         delay {
-          effects shouldEqual mutable.Buffer(Effect("obs", 200))
+          effects shouldBe mutable.Buffer(Effect("obs", 200))
           clearLogs()
         }
       }

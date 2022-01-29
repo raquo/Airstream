@@ -25,44 +25,44 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec {
 
     val sub1 = stream.addObserver(obs1)
 
-    effects shouldEqual mutable.Buffer(Effect("obs1", 0))
+    effects shouldBe mutable.Buffer(Effect("obs1", 0))
     effects.clear()
 
     for {
       _ <- delay(2) { }
       _ <- delay(testInterval) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 1))
+        effects shouldBe mutable.Buffer(Effect("obs1", 1))
         effects.clear()
       }
       _ <- delay(testInterval) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 2))
+        effects shouldBe mutable.Buffer(Effect("obs1", 2))
         effects.clear()
       }
       _ <- delay(testInterval) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 3))
+        effects shouldBe mutable.Buffer(Effect("obs1", 3))
         effects.clear()
       }
       _ <- delay {
         stream.resetTo(1)
-        effects shouldEqual mutable.Buffer(Effect("obs1", 1))
+        effects shouldBe mutable.Buffer(Effect("obs1", 1))
         effects.clear()
       }
       _ <- delay(testInterval) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 2))
+        effects shouldBe mutable.Buffer(Effect("obs1", 2))
         effects.clear()
       }
       _ = sub1.kill()
       _ <- delay(testInterval + testInterval) {
-        effects shouldEqual mutable.Buffer()
+        effects shouldBe mutable.Buffer()
       }
       sub2 = stream.addObserver(obs1)
       _ = {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 0))
+        effects shouldBe mutable.Buffer(Effect("obs1", 0))
         effects.clear()
       }
       _ <- delay(2) { }
       _ <- delay(testInterval) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 1))
+        effects shouldBe mutable.Buffer(Effect("obs1", 1))
         effects.clear()
       }
       _ = sub2.kill()
@@ -82,42 +82,42 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec {
 
     val sub1 = stream.addObserver(obs1)
 
-    effects shouldEqual mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     for {
       _ <- delay(2) { }
       _ <- delay(15) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 1))
+        effects shouldBe mutable.Buffer(Effect("obs1", 1))
         effects.clear()
       }
       _ <- delay(15) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 2))
+        effects shouldBe mutable.Buffer(Effect("obs1", 2))
         effects.clear()
       }
       _ <- delay(15) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 3))
+        effects shouldBe mutable.Buffer(Effect("obs1", 3))
         effects.clear()
       }
       _ <- delay {
         source.resetTo(1)
-        effects shouldEqual mutable.Buffer(Effect("obs1", 1))
+        effects shouldBe mutable.Buffer(Effect("obs1", 1))
         effects.clear()
       }
       _ <- delay(15) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 2))
+        effects shouldBe mutable.Buffer(Effect("obs1", 2))
         effects.clear()
       }
       _ = sub1.kill()
       _ <- delay(20) {
-        effects shouldEqual mutable.Buffer()
+        effects shouldBe mutable.Buffer()
       }
       _ = stream.addObserver(obs1)
       _ = {
-        effects shouldEqual mutable.Buffer()
+        effects shouldBe mutable.Buffer()
       }
       _ <- delay(5) { }
       _ <- delay(15) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 1))
+        effects shouldBe mutable.Buffer(Effect("obs1", 1))
         effects.clear()
       }
 
@@ -136,44 +136,44 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec {
 
     val sub1 = stream.addObserver(obs1)
 
-    effects shouldEqual mutable.Buffer(Effect("obs1", 0))
+    effects shouldBe mutable.Buffer(Effect("obs1", 0))
     effects.clear()
 
     for {
       _ <- delay(2) { }
       _ <- delay(15) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 1))
+        effects shouldBe mutable.Buffer(Effect("obs1", 1))
         effects.clear()
       }
       _ <- delay(15) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 2))
+        effects shouldBe mutable.Buffer(Effect("obs1", 2))
         effects.clear()
       }
       _ <- delay(15) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 3))
+        effects shouldBe mutable.Buffer(Effect("obs1", 3))
         effects.clear()
       }
       _ <- delay {
         stream.resetTo(1)
-        effects shouldEqual mutable.Buffer(Effect("obs1", 1))
+        effects shouldBe mutable.Buffer(Effect("obs1", 1))
         effects.clear()
       }
       _ <- delay(15) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 2))
+        effects shouldBe mutable.Buffer(Effect("obs1", 2))
         effects.clear()
       }
       _ = sub1.kill()
       _ <- delay(20) {
-        effects shouldEqual mutable.Buffer()
+        effects shouldBe mutable.Buffer()
       }
       _ = stream.addObserver(obs1)
       _ = {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 3))
+        effects shouldBe mutable.Buffer(Effect("obs1", 3))
         effects.clear()
       }
       _ <- delay(2) { }
       _ <- delay(15) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 4))
+        effects shouldBe mutable.Buffer(Effect("obs1", 4))
         effects.clear()
       }
 
@@ -193,43 +193,43 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec {
 
     val sub1 = stream.addObserver(obs1)
 
-    effects shouldEqual mutable.Buffer()
+    effects shouldBe mutable.Buffer()
     effects.clear()
 
     for {
       _ <- delay(5) { }
       _ <- delay(50) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 1))
+        effects shouldBe mutable.Buffer(Effect("obs1", 1))
         effects.clear()
       }
       _ <- delay(50) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 2))
+        effects shouldBe mutable.Buffer(Effect("obs1", 2))
         effects.clear()
       }
       _ <- delay(50) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 3))
+        effects shouldBe mutable.Buffer(Effect("obs1", 3))
         effects.clear()
       }
       _ <- delay {
         source.resetTo(1)
-        effects shouldEqual mutable.Buffer(Effect("obs1", 1))
+        effects shouldBe mutable.Buffer(Effect("obs1", 1))
         effects.clear()
       }
       _ <- delay(50) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 2))
+        effects shouldBe mutable.Buffer(Effect("obs1", 2))
         effects.clear()
       }
       _ = sub1.kill()
       _ <- delay(55) {
-        effects shouldEqual mutable.Buffer()
+        effects shouldBe mutable.Buffer()
       }
       _ = stream.addObserver(obs1)
       _ = {
-        effects shouldEqual mutable.Buffer()
+        effects shouldBe mutable.Buffer()
       }
       _ <- delay(5) { }
       _ <- delay(50) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 4))
+        effects shouldBe mutable.Buffer(Effect("obs1", 4))
         effects.clear()
       }
 
@@ -260,63 +260,63 @@ class PeriodicEventStreamSpec extends AsyncUnitSpec {
 
     val sub1 = stream.addObserver(obs1)
 
-    effects shouldEqual mutable.Buffer(Effect("obs1", 0))
+    effects shouldBe mutable.Buffer(Effect("obs1", 0))
     effects.clear()
 
     for {
       _ <- delay(5) { }
       _ <- delay(15) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 1))
+        effects shouldBe mutable.Buffer(Effect("obs1", 1))
         effects.clear()
       }
       _ <- delay(15) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 2))
+        effects shouldBe mutable.Buffer(Effect("obs1", 2))
         effects.clear()
       }
       _ <- delay(30) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 3))
+        effects shouldBe mutable.Buffer(Effect("obs1", 3))
         effects.clear()
       }
       _ <- delay(30) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 4))
+        effects shouldBe mutable.Buffer(Effect("obs1", 4))
         effects.clear()
       }
       _ <- delay(30) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 5))
+        effects shouldBe mutable.Buffer(Effect("obs1", 5))
         effects.clear()
       }
       _ <- delay(30) {
-        effects shouldEqual mutable.Buffer()
+        effects shouldBe mutable.Buffer()
       }
       _ = sub1.kill()
       _ = stream.addObserver(obs1)
       _ <- delay(5) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 0))
+        effects shouldBe mutable.Buffer(Effect("obs1", 0))
         effects.clear()
       }
       _ <- delay(15) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 1))
+        effects shouldBe mutable.Buffer(Effect("obs1", 1))
         effects.clear()
       }
       _ <- delay {
         stream.resetTo(3)
-        effects shouldEqual mutable.Buffer(Effect("obs1", 3))
+        effects shouldBe mutable.Buffer(Effect("obs1", 3))
         effects.clear()
       }
       _ <- delay(5) { }
       _ <- delay(15) {
-        effects shouldEqual mutable.Buffer() // Make sure interval is updated
+        effects shouldBe mutable.Buffer() // Make sure interval is updated
       }
       _ <- delay(30 - 15) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 4))
+        effects shouldBe mutable.Buffer(Effect("obs1", 4))
         effects.clear()
       }
       _ <- delay(30) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 5))
+        effects shouldBe mutable.Buffer(Effect("obs1", 5))
         effects.clear()
       }
       _ <- delay(30) {
-        effects shouldEqual mutable.Buffer()
+        effects shouldBe mutable.Buffer()
       }
 
     } yield done

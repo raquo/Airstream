@@ -33,17 +33,17 @@ class SampleCombineEventStream2Spec extends UnitSpec {
 
     // --
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     val subCombined = combinedStream.addObserver(combinedObserver)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal", 0)
     )
-    effects shouldEqual mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     calculations.clear()
 
@@ -51,11 +51,11 @@ class SampleCombineEventStream2Spec extends UnitSpec {
 
     bus1.writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("stream", 1),
       Calculation("combined", 1)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("combined", 1)
     )
 
@@ -66,10 +66,10 @@ class SampleCombineEventStream2Spec extends UnitSpec {
 
     bus2.writer.onNext(100)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal", 100)
     )
-    effects shouldEqual mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     calculations.clear()
 
@@ -77,11 +77,11 @@ class SampleCombineEventStream2Spec extends UnitSpec {
 
     bus1.writer.onNext(2)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("stream", 2),
       Calculation("combined", 102)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("combined", 102)
     )
 
@@ -93,10 +93,10 @@ class SampleCombineEventStream2Spec extends UnitSpec {
     subCombined.kill()
     sampledSignal.addObserver(signalObserver)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal", 100)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("signal", 100)
     )
 
@@ -107,10 +107,10 @@ class SampleCombineEventStream2Spec extends UnitSpec {
 
     bus2.writer.onNext(200)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal", 200)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("signal", 200)
     )
 
@@ -121,18 +121,18 @@ class SampleCombineEventStream2Spec extends UnitSpec {
 
     combinedStream.addObserver(combinedObserver)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     bus1.writer.onNext(3)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("stream", 3),
       Calculation("combined", 203)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("combined", 203)
     )
 

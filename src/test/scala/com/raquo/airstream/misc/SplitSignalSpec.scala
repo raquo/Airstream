@@ -47,7 +47,7 @@ class SplitSignalSpec extends UnitSpec {
       effects += Effect("result", result.toString)
     }(owner)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List()")
     )
 
@@ -57,7 +57,7 @@ class SplitSignalSpec extends UnitSpec {
 
     bus.writer.onNext(Foo("a", 1) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child", "a-1"),
       Effect("update-child", "a-1"),
       Effect("result", "List(Bar(a))")
@@ -69,7 +69,7 @@ class SplitSignalSpec extends UnitSpec {
 
     bus.writer.onNext(Foo("a", 2) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(a))"),
       Effect("update-child", "a-2")
     )
@@ -80,7 +80,7 @@ class SplitSignalSpec extends UnitSpec {
 
     bus.writer.onNext(Foo("a", 3) :: Foo("b", 1) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child", "b-1"),
       Effect("update-child", "b-1"),
       Effect("result", "List(Bar(a), Bar(b))"),
@@ -93,7 +93,7 @@ class SplitSignalSpec extends UnitSpec {
 
     bus.writer.onNext(Foo("b", 1) :: Foo("a", 3) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(b), Bar(a))")
     )
 
@@ -103,7 +103,7 @@ class SplitSignalSpec extends UnitSpec {
 
     bus.writer.onNext(Foo("b", 2) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(b))"),
       Effect("update-child", "b-2")
     )
@@ -114,7 +114,7 @@ class SplitSignalSpec extends UnitSpec {
 
     bus.writer.onNext(Foo("b", 2) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(b))") // output is a stream, not signal
     )
 
@@ -144,7 +144,7 @@ class SplitSignalSpec extends UnitSpec {
       effects += Effect("result", result.toString)
     }(owner)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child", "initial-1"),
       Effect("update-child", "initial-1"),
       Effect("result", "List(Bar(initial))")
@@ -156,7 +156,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("a", 1) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child", "a-1"),
       Effect("update-child", "a-1"),
       Effect("result", "List(Bar(a))")
@@ -168,7 +168,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("a", 2) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(a))"),
       Effect("update-child", "a-2")
     )
@@ -179,7 +179,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("a", 3) :: Foo("b", 1) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child", "b-1"),
       Effect("update-child", "b-1"),
       Effect("result", "List(Bar(a), Bar(b))"),
@@ -192,7 +192,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("b", 1) :: Foo("a", 3) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(b), Bar(a))")
     )
 
@@ -202,7 +202,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("b", 2) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(b))"),
       Effect("update-child", "b-2")
     )
@@ -213,7 +213,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("b", 2) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(b))")
     )
 
@@ -242,13 +242,13 @@ class SplitSignalSpec extends UnitSpec {
       effects += Effect("result", result.toString)
     }(owner)
 
-    effects shouldEqual mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     bus.writer.onNext(Foo("a", 1))
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child", "a-1"),
       Effect("update-child", "a-1"),
       Effect("result", "Bar(a)")
@@ -260,7 +260,7 @@ class SplitSignalSpec extends UnitSpec {
 
     bus.writer.onNext(Foo("a", 2))
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "Bar(a)"),
       Effect("update-child", "a-2")
     )
@@ -271,7 +271,7 @@ class SplitSignalSpec extends UnitSpec {
 
     bus.writer.onNext(Foo("b", 1))
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child", "b-1"),
       Effect("update-child", "b-1"),
       Effect("result", "Bar(b)")
@@ -283,7 +283,7 @@ class SplitSignalSpec extends UnitSpec {
 
     bus.writer.onNext(Foo("b", 2))
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "Bar(b)"),
       Effect("update-child", "b-2")
     )
@@ -314,7 +314,7 @@ class SplitSignalSpec extends UnitSpec {
       effects += Effect("result", result.toString)
     }(owner)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child-initial", "initial-1"),
       Effect("update-child-initial", "initial-1"),
       Effect("result", "Bar(initial)")
@@ -326,7 +326,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("a", 1))
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child-a", "a-1"),
       Effect("update-child-a", "a-1"),
       Effect("result", "Bar(a)"),
@@ -338,7 +338,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("a", 2))
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "Bar(a)"), // this is a stream, not a signal, so it still emits this
       Effect("update-child-a", "a-2")
     )
@@ -349,7 +349,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("b", 1))
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child-b", "b-1"),
       Effect("update-child-b", "b-1"),
       Effect("result", "Bar(b)")
@@ -361,7 +361,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("b", 2))
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "Bar(b)"),
       Effect("update-child-b", "b-2")
     )
@@ -396,7 +396,7 @@ class SplitSignalSpec extends UnitSpec {
       effects += Effect("result", result.toString)
     }(owner)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child-initial", "initial-1"),
       Effect("update-child-initial", "initial-1"),
       Effect("result", "List(Bar(initial))")
@@ -408,7 +408,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("a", 1) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child-a", "a-1"),
       Effect("update-child-a", "a-1"),
       Effect("result", "List(Bar(a))")
@@ -420,7 +420,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("a", 2) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(a))"),
       Effect("update-child-a", "a-2")
     )
@@ -431,7 +431,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("a", 3) :: Foo("b", 1) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child-b", "b-1"),
       Effect("update-child-b", "b-1"),
       Effect("result", "List(Bar(a), Bar(b))"),
@@ -444,7 +444,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("b", 1) :: Foo("a", 3) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(b), Bar(a))"),
       Effect("update-child-a", "a-3"),
       Effect("update-child-b", "b-1")
@@ -456,7 +456,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("b", 1) :: Foo("a", 4) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(b), Bar(a))"),
       Effect("update-child-a", "a-4"),
       Effect("update-child-b", "b-1")
@@ -468,7 +468,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("b", 2) :: Foo("a", 4) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(b), Bar(a))"),
       Effect("update-child-a", "a-4"),
       Effect("update-child-b", "b-2")
@@ -480,7 +480,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("b", 3) :: Foo("a", 5) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(b), Bar(a))"),
       Effect("update-child-a", "a-5"),
       Effect("update-child-b", "b-3")
@@ -492,7 +492,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("b", 4) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(b))"),
       Effect("update-child-b", "b-4")
     )
@@ -503,7 +503,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("b", 4) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(b))"),
       Effect("update-child-b", "b-4")
     )
@@ -549,7 +549,7 @@ class SplitSignalSpec extends UnitSpec {
       }(owner)
     )
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child-initial", "initial-1"),
       Effect("update-child-initial", "initial-1"),
       Effect("result", "List(Bar(initial))")
@@ -561,7 +561,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("b", 1) :: Foo("a", 3) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child-b", "b-1"),
       Effect("update-child-b", "b-1"),
       Effect("init-child-a", "a-3"),
@@ -576,14 +576,14 @@ class SplitSignalSpec extends UnitSpec {
     outerDynamicOwner.deactivate()
     innerDynamicOwner.deactivate()
 
-    effects shouldEqual mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     outerDynamicOwner.activate()
     innerDynamicOwner.activate()
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       // #Note `initial` is here because our code created an inner subscription for `initial`
       //  and kept it alive even after the element was removed. This inner signal itself will
       //  not receive any updates until "initial" key is added to the inputs again (actually
@@ -602,7 +602,7 @@ class SplitSignalSpec extends UnitSpec {
     myVar.writer.onNext(Foo("b", 2) :: Foo("a", 3) :: Nil)
 
     // This assertion makes sure that `resetOnStop` is set correctly in `drop(1, resetOnStop = false)`
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(b), Bar(a))"),
       Effect("update-child-b", "b-2"),
       Effect("update-child-a", "a-3"),
@@ -614,13 +614,13 @@ class SplitSignalSpec extends UnitSpec {
 
     outerDynamicOwner.deactivate()
 
-    effects shouldEqual mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     outerDynamicOwner.activate()
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(b), Bar(a))")
     )
 
@@ -630,7 +630,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("a", 4) :: Foo("b", 3) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(a), Bar(b))"),
       Effect("update-child-b", "b-3"),
       Effect("update-child-a", "a-4"),
@@ -685,7 +685,7 @@ class SplitSignalSpec extends UnitSpec {
       }(owner)
     )
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child-initial", "initial-1"),
       Effect("result", "List(Bar(initial))")
     )
@@ -696,7 +696,7 @@ class SplitSignalSpec extends UnitSpec {
 
     innerDynamicOwner.activate()
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("update-child-initial", "initial-1"),
       Effect("new-trx-update-child-initial", "initial-1"),
     )
@@ -707,7 +707,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("b", 1) :: Foo("a", 3) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child-b", "b-1"),
       Effect("update-child-b", "b-1"),
       Effect("init-child-a", "a-3"),
@@ -752,14 +752,14 @@ class SplitSignalSpec extends UnitSpec {
       }(owner)
     )
 
-    effects shouldEqual mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     outerDynamicOwner.activate()
     innerDynamicOwner.activate()
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child-initial", "initial-1"),
       Effect("result", "List(Bar(initial))"),
       Effect("update-child-initial", "initial-1")
@@ -771,7 +771,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("b", 1) :: Foo("a", 3) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child-b", "b-1"),
       Effect("update-child-b", "b-1"),
       Effect("init-child-a", "a-3"),
@@ -814,14 +814,14 @@ class SplitSignalSpec extends UnitSpec {
       }(owner)
     )
 
-    effects shouldEqual mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     dynamicOwner.activate()
     //innerDynamicOwner.activate()
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child-initial", "initial-1"),
       Effect("result", "List(Element(initial, fooSignal))"),
       Effect("update-child-initial", "initial-1")
@@ -833,7 +833,7 @@ class SplitSignalSpec extends UnitSpec {
 
     myVar.writer.onNext(Foo("b", 1) :: Foo("a", 3) :: Nil)
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("init-child-b", "b-1"),
       Effect("init-child-a", "a-3"),
       Effect("result", "List(Element(b, fooSignal), Element(a, fooSignal))"),

@@ -24,7 +24,7 @@ class CombineSeqEventStreamSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
@@ -32,7 +32,7 @@ class CombineSeqEventStreamSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
@@ -43,16 +43,16 @@ class CombineSeqEventStreamSpec extends UnitSpec {
         buses(streamToEmitFrom).writer.onNext(iteration)
         if (iteration == 1) {
           if (streamToEmitFrom == numStreams-1) {
-            effects.toList should ===(List(
+            effects.toList shouldBe List(
               Effect("combined",
                 buses.indices.map( _ => iteration)
               )
-            ))
+            )
           } else {
-            effects.toList shouldBe empty
+            effects.toList.shouldBeEmpty
           }
         } else {
-          effects.toList should ===(List(
+          effects.toList shouldBe (List(
             Effect("combined",
               buses.indices.map { index =>
                 if (index > streamToEmitFrom) {

@@ -14,21 +14,21 @@ class OwnerSpec extends UnitSpec {
     val ts1 = new TestableSubscription(owner)
     val ts2 = new TestableSubscription(owner)
 
-    owner._testSubscriptions shouldEqual List(ts1.subscription, ts2.subscription)
+    owner._testSubscriptions shouldBe List(ts1.subscription, ts2.subscription)
     ts1.killCount shouldBe 0
     ts2.killCount shouldBe 0
 
     owner.killSubscriptions()
 
     // Killing possessions calls kill on each of them exactly once, and then clears the list of possessions
-    owner._testSubscriptions shouldEqual Nil
+    owner._testSubscriptions shouldBe Nil
     ts1.killCount shouldBe 1
     ts2.killCount shouldBe 1
 
     val ts3 = new TestableSubscription(owner)
 
     // Owner still functions as normal even after the killing spree
-    owner._testSubscriptions shouldEqual List(ts3.subscription)
+    owner._testSubscriptions shouldBe List(ts3.subscription)
     ts1.killCount shouldBe 1
     ts2.killCount shouldBe 1
     ts3.killCount shouldBe 0

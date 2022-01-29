@@ -1,7 +1,7 @@
 package com.raquo.airstream
 
 import org.scalatest.funspec.AsyncFunSpec
-import org.scalatest.matchers.should.Matchers
+
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.scalajs.js
 import scala.util.Try

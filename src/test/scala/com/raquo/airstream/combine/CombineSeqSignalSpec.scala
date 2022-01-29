@@ -22,7 +22,7 @@ class CombineSeqSignalSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
@@ -30,7 +30,7 @@ class CombineSeqSignalSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldEqual List(
+    effects.toList shouldBe List(
       Effect("combined", (1 to 10)),
     )
 
@@ -40,7 +40,7 @@ class CombineSeqSignalSpec extends UnitSpec {
       for (signalToUpdate <- vars.indices) {
         effects.clear()
         vars(signalToUpdate).update(_ + 1)
-        effects.toList should ===(List(
+        effects.toList shouldBe (List(
           Effect("combined",
             vars.indices.map { index =>
               if (index > signalToUpdate) {

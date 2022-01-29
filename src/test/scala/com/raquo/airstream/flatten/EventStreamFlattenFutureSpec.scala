@@ -48,42 +48,42 @@ class EventStreamFlattenFutureSpec extends AsyncUnitSpec {
       promise2.success(200)
       promise1.success(100)
 
-      effects shouldEqual mutable.Buffer()
+      effects shouldBe mutable.Buffer()
 
     }.flatMap { _ =>
-      effects shouldEqual mutable.Buffer(Effect("obs", 200))
+      effects shouldBe mutable.Buffer(Effect("obs", 200))
       clearLogs()
 
       promise4.success(400)
 
-      effects shouldEqual mutable.Buffer()
+      effects shouldBe mutable.Buffer()
 
     }.flatMap { _ =>
-      effects shouldEqual mutable.Buffer()
+      effects shouldBe mutable.Buffer()
 
       futureBus.writer.onNext(promise3.future)
       futureBus.writer.onNext(promise4.future) // already resolved
 
-      effects shouldEqual mutable.Buffer()
+      effects shouldBe mutable.Buffer()
 
     }.flatMap { _ =>
       delay {
-        effects shouldEqual mutable.Buffer(Effect("obs", 400))
+        effects shouldBe mutable.Buffer(Effect("obs", 400))
         clearLogs()
 
         promise3.success(300)
 
-        effects shouldEqual mutable.Buffer()
+        effects shouldBe mutable.Buffer()
       }
     }.flatMap { _ =>
       futureBus.writer.onNext(promise5.future)
       promise5.success(500)
 
-      effects shouldEqual mutable.Buffer()
+      effects shouldBe mutable.Buffer()
 
     }.flatMap { _ =>
       delay {
-        effects shouldEqual mutable.Buffer(Effect("obs", 500))
+        effects shouldBe mutable.Buffer(Effect("obs", 500))
         clearLogs()
       }
     }

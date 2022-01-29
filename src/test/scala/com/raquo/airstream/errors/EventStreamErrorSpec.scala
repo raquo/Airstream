@@ -53,13 +53,13 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
       { case err => errorEffects += Effect("sub-err", err) }
     ))
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("stream", 2)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("sub", 2)
     )
-    errorEffects shouldEqual mutable.Buffer(
+    errorEffects shouldBe mutable.Buffer(
       Effect("sub-err", err1)
     )
   }
@@ -75,16 +75,16 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     stream.addObserver(Observer(effects += Effect("sub", _)))
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer()
 
     bus1.writer.onError(err1)
     bus2.writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer(
       Effect("unhandled", CombinedError(List(Some(err1), None))),
     )
 
@@ -93,13 +93,13 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     bus1.writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("stream", 101)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("sub", 101)
     )
-    errorEffects shouldEqual mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer()
   }
 
   it("event bus propagates errors to its stream and observer") {
@@ -114,9 +114,9 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     bus.writer.onError(err1)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer(
       Effect("unhandled", err1)
     )
 
@@ -132,9 +132,9 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     bus.writer.onError(err2)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer(Effect("unhandled", err2), Effect("sub2-err", err2))
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer(Effect("unhandled", err2), Effect("sub2-err", err2))
 
     errorEffects.clear()
 
@@ -143,9 +143,9 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     bus.writer.onNext(100)
 
-    calculations shouldEqual mutable.Buffer(Calculation("stream1", 100))
-    effects shouldEqual mutable.Buffer(Effect("sub1", 100), Effect("sub2", 100))
-    errorEffects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer(Calculation("stream1", 100))
+    effects shouldBe mutable.Buffer(Effect("sub1", 100), Effect("sub2", 100))
+    errorEffects shouldBe mutable.Buffer()
   }
 
   it("stream propagates errors to child streams and signals") {
@@ -161,24 +161,24 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
     signal1.addObserver(Observer(effects += Effect("sub1Signal1", _)))
     signal2.addObserver(Observer(effects += Effect("sub1Signal2", _)))
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("signal1", -1),
       Calculation("signal2", -1)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("sub1Signal1", -1),
       Effect("sub1Signal2", -1)
     )
-    errorEffects shouldEqual mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer()
 
     calculations.clear()
     effects.clear()
 
     bus.writer.onError(err1)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer(
       // Two errors because we have two observers failing to handle them
       Effect("unhandled", err1),
       Effect("unhandled", err1)
@@ -198,9 +198,9 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
       { case err => errorEffects += Effect("sub2Signal2-err", err) }
     ))
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer(
       Effect("sub2Signal1-err", err1),
       Effect("sub2Signal2-err", err1)
     )
@@ -209,9 +209,9 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     bus.writer.onError(err2)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer(
       Effect("unhandled", err2),
       Effect("sub2Signal1-err", err2),
       Effect("unhandled", err2),
@@ -225,18 +225,18 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     bus.writer.onNext(100)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("stream1", 100),
       Calculation("signal1", 100),
       Calculation("signal2", 100)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("sub1Signal1", 100),
       Effect("sub2Signal1", 100),
       Effect("sub1Signal2", 100),
       Effect("sub2Signal2", 100)
     )
-    errorEffects shouldEqual mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer()
   }
 
   it("stream recovers from errors") {
@@ -262,11 +262,11 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     bus.writer.onError(err1)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("downStream", 1)
     )
-    effects shouldEqual mutable.Buffer(Effect("sub", 1))
-    errorEffects shouldEqual mutable.Buffer()
+    effects shouldBe mutable.Buffer(Effect("sub", 1))
+    errorEffects shouldBe mutable.Buffer()
 
     calculations.clear()
     effects.clear()
@@ -276,18 +276,18 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     bus.writer.onError(err2)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer()
 
 
     // Should fail to recover from err3 with a wrapped error
 
     bus.writer.onError(err3)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer(
       Effect("sub-err", ErrorHandlingError(error = errH, cause = err3))
     )
   }
@@ -301,9 +301,9 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
       { case err => errorEffects += Effect("sub-err", err) }
     ))
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer(
       Effect("sub-err", err1)
     )
 
@@ -315,9 +315,9 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
       { case err => errorEffects += Effect("sub2-err", err) }
     ))
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer(
       Effect("sub2-err", err1)
     )
   }
@@ -332,9 +332,9 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
       { case err if err.getMessage == err2.getMessage => errorEffects += Effect("sub-err", err) }
     ))
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
-    errorEffects shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    errorEffects shouldBe mutable.Buffer(
       Effect("unhandled", err1)
     )
   }

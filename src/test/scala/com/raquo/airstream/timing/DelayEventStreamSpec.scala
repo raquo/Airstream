@@ -29,17 +29,17 @@ class DelayEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
     val sub = stream.addObserver(obs1)
 
     delay {
-      effects shouldEqual mutable.Buffer()
+      effects shouldBe mutable.Buffer()
 
       // --
 
       bus.writer.onNext(1)
 
-      effects shouldEqual mutable.Buffer()
+      effects shouldBe mutable.Buffer()
 
     }.flatMap[Unit] { _ =>
       delay(30) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 1))
+        effects shouldBe mutable.Buffer(Effect("obs1", 1))
         effects.clear()
 
         bus.writer.onNext(2)
@@ -50,7 +50,7 @@ class DelayEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
       }
     }.flatMap[Unit] { _ =>
       delay(30) {
-        effects shouldEqual mutable.Buffer(Effect("obs1", 2), Effect("obs1", 3))
+        effects shouldBe mutable.Buffer(Effect("obs1", 2), Effect("obs1", 3))
         effects.clear()
 
         bus.writer.onNext(4)
@@ -66,7 +66,7 @@ class DelayEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
       }
     }.flatMap { _ =>
       delay(40) { // a bit extra margin for the last check just to be sure that we caught any events
-        effects shouldEqual mutable.Buffer(Effect("obs1", 6))
+        effects shouldBe mutable.Buffer(Effect("obs1", 6))
         effects.clear()
         assert(true)
       }

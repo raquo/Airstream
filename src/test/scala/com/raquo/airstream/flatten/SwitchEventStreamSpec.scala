@@ -36,32 +36,32 @@ class SwitchEventStreamSpec extends UnitSpec {
 
     val subFlatten = flattenStream.addObserver(flattenObserver)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     sourceBuses.foreach(_.writer.onNext(-1))
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     metaBus.writer.onNext(sourceStreams(0))
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     sourceBuses(0).writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("source-0", 1),
       Calculation("flattened", 1)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("flattened-obs", 1)
     )
 
@@ -72,18 +72,18 @@ class SwitchEventStreamSpec extends UnitSpec {
 
     metaBus.writer.onNext(sourceStreams(1))
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     sourceBuses(1).writer.onNext(2)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("source-1", 2),
       Calculation("flattened", 2)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("flattened-obs", 2)
     )
 
@@ -99,17 +99,17 @@ class SwitchEventStreamSpec extends UnitSpec {
     sourceStreams(2).addObserver(sourceStream2Observer)
     subFlatten.kill()
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     sourceBuses(2).writer.onNext(3)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("source-2", 3)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("source-2-obs", 3)
     )
 
@@ -120,18 +120,18 @@ class SwitchEventStreamSpec extends UnitSpec {
 
     flattenStream.addObserver(flattenObserver) // re-activate flattened stream
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     // flatten stream does not run because it forgot the stream
     sourceBuses(2).writer.onNext(4)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("source-2", 4)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("source-2-obs", 4)
     )
 
@@ -163,18 +163,18 @@ class SwitchEventStreamSpec extends UnitSpec {
 
     val subFlatten1 = flattenStream.addObserver(flattenObserver)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     sourceBuses(0).writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("source-0", 1),
       Calculation("flattened", 1)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("flattened-obs", 1)
     )
 
@@ -185,18 +185,18 @@ class SwitchEventStreamSpec extends UnitSpec {
 
     metaVar.writer.onNext(sourceStreams(1))
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     sourceBuses(1).writer.onNext(2)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("source-1", 2),
       Calculation("flattened", 2)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("flattened-obs", 2)
     )
 
@@ -212,17 +212,17 @@ class SwitchEventStreamSpec extends UnitSpec {
     val sourceSub2 = sourceStreams(2).addObserver(sourceStream2Observer)
     subFlatten1.kill()
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     sourceBuses(2).writer.onNext(3)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("source-2", 3)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("source-2-obs", 3)
     )
 
@@ -233,18 +233,18 @@ class SwitchEventStreamSpec extends UnitSpec {
 
     val subFlatten2 = flattenStream.addObserver(flattenObserver) // re-activate flattened stream
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // -- re-subscribing to the same stream keeps memory of last stream
 
     sourceBuses(2).writer.onNext(4)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("source-2", 4),
       Calculation("flattened", 4)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("source-2-obs", 4),
       Effect("flattened-obs", 4)
     )
@@ -264,19 +264,19 @@ class SwitchEventStreamSpec extends UnitSpec {
 
     flattenStream.addObserver(flattenObserver) // re-activate flattened stream
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     sourceBuses(1).writer.onNext(7)
     sourceBuses(3).writer.onNext(8)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("source-3", 8),
       Calculation("flattened", 8)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("flattened-obs", 8)
     )
 

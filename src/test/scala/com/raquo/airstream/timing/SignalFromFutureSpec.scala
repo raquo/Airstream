@@ -43,23 +43,23 @@ class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     val promise = makePromise()
     val signal = makeSignal(promise)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     signal.addObserver(obs1)
-    calculations shouldEqual mutable.Buffer(Calculation("signal", None))
-    effects shouldEqual mutable.Buffer(Effect("obs1", None))
+    calculations shouldBe mutable.Buffer(Calculation("signal", None))
+    effects shouldBe mutable.Buffer(Effect("obs1", None))
     clearLogs()
 
     delay {
       promise.success(100)
-      calculations shouldEqual mutable.Buffer()
-      effects shouldEqual mutable.Buffer()
+      calculations shouldBe mutable.Buffer()
+      effects shouldBe mutable.Buffer()
 
     }.flatMap { _ =>
       delay {
-        calculations shouldEqual mutable.Buffer(Calculation("signal", Some(100)))
-        effects shouldEqual mutable.Buffer(Effect("obs1", Some(100)))
+        calculations shouldBe mutable.Buffer(Calculation("signal", Some(100)))
+        effects shouldBe mutable.Buffer(Effect("obs1", Some(100)))
         clearLogs()
       }
     }
@@ -72,13 +72,13 @@ class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     promise.success(100)
     signal.addObserver(obs1)
 
-    calculations shouldEqual mutable.Buffer(Calculation("signal", None))
-    effects shouldEqual mutable.Buffer(Effect("obs1", None))
+    calculations shouldBe mutable.Buffer(Calculation("signal", None))
+    effects shouldBe mutable.Buffer(Effect("obs1", None))
     clearLogs()
 
     delay {
-      calculations shouldEqual mutable.Buffer(Calculation("signal", Some(100)))
-      effects shouldEqual mutable.Buffer(Effect("obs1", Some(100)))
+      calculations shouldBe mutable.Buffer(Calculation("signal", Some(100)))
+      effects shouldBe mutable.Buffer(Effect("obs1", Some(100)))
       clearLogs()
     }
   }
@@ -90,29 +90,29 @@ class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     promise.success(100)
 
     delay {
-      calculations shouldEqual mutable.Buffer()
-      effects shouldEqual mutable.Buffer()
+      calculations shouldBe mutable.Buffer()
+      effects shouldBe mutable.Buffer()
       signal.addObserver(obs1)
 
-      calculations shouldEqual mutable.Buffer(Calculation("signal", None))
-      effects shouldEqual mutable.Buffer(Effect("obs1", None))
+      calculations shouldBe mutable.Buffer(Calculation("signal", None))
+      effects shouldBe mutable.Buffer(Effect("obs1", None))
       clearLogs()
 
     }.flatMap { _ =>
       delay {
-        calculations shouldEqual mutable.Buffer(Calculation("signal", Some(100)))
-        effects shouldEqual mutable.Buffer(Effect("obs1", Some(100)))
+        calculations shouldBe mutable.Buffer(Calculation("signal", Some(100)))
+        effects shouldBe mutable.Buffer(Effect("obs1", Some(100)))
         clearLogs()
 
         signal.addObserver(obs2)
 
-        effects shouldEqual mutable.Buffer(Effect("obs2", Some(100)))
+        effects shouldBe mutable.Buffer(Effect("obs2", Some(100)))
         clearLogs()
 
       }.flatMap { _ =>
         delay {
-          calculations shouldEqual mutable.Buffer()
-          effects shouldEqual mutable.Buffer()
+          calculations shouldBe mutable.Buffer()
+          effects shouldBe mutable.Buffer()
         }
       }
     }

@@ -31,12 +31,12 @@ class GlitchSpec extends UnitSpec {
 
     bus.writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("tuples", (100, 10))
     )
     calculations.clear()
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("tuples", (100, 10))
     )
     effects.clear()
@@ -45,12 +45,12 @@ class GlitchSpec extends UnitSpec {
 
     bus.writer.onNext(2)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("tuples", (200, 20))
     )
     calculations.clear()
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("tuples", (200, 20))
     )
     effects.clear()
@@ -59,12 +59,12 @@ class GlitchSpec extends UnitSpec {
 
     bus.writer.onNext(3)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("tuples", (300, 30))
     )
     calculations.clear()
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("tuples", (300, 30))
     )
     effects.clear()
@@ -86,19 +86,19 @@ class GlitchSpec extends UnitSpec {
 
     tuples.foreach(effects += Effect("tuples", _))
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // ---
 
     bus.writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("tuples", (10, 100))
     )
     calculations.clear()
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("tuples", (10, 100))
     )
     effects.clear()
@@ -107,12 +107,12 @@ class GlitchSpec extends UnitSpec {
 
     bus.writer.onNext(2)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("tuples", (20, 200))
     )
     calculations.clear()
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("tuples", (20, 200))
     )
     effects.clear()
@@ -121,12 +121,12 @@ class GlitchSpec extends UnitSpec {
 
     bus.writer.onNext(3)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("tuples", (30, 300))
     )
     calculations.clear()
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("tuples", (30, 300))
     )
     effects.clear()
@@ -161,14 +161,14 @@ class GlitchSpec extends UnitSpec {
 
     bus.writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("numbers", 10),
       Calculation("numbers", 100),
       Calculation("numbers", 1000)
     )
     calculations.clear()
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("numbers", 10),
       Effect("numbers", 100),
       Effect("numbers", 1000)
@@ -180,12 +180,12 @@ class GlitchSpec extends UnitSpec {
     // Firing an event on an unrelated bus should behave normally
     unrelatedBus.writer.onNext(-1)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("numbers", -1)
     )
     calculations.clear()
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("numbers", -1)
     )
     effects.clear()
@@ -194,14 +194,14 @@ class GlitchSpec extends UnitSpec {
 
     bus.writer.onNext(2)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("numbers", 20),
       Calculation("numbers", 200),
       Calculation("numbers", 2000)
     )
     calculations.clear()
 
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("numbers", 20),
       Effect("numbers", 200),
       Effect("numbers", 2000)
@@ -240,20 +240,20 @@ class GlitchSpec extends UnitSpec {
     // First event does not propagate because streamTupleAB lacks the second input
     busB.writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // ---
 
     busA.writer.onNext(100)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("C", 101),
       Calculation("D", 102),
       Calculation("E", 201),
       Calculation("X", 303)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("X", 303)
     )
     calculations.clear()
@@ -263,13 +263,13 @@ class GlitchSpec extends UnitSpec {
 
     busA.writer.onNext(200)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("C", 201),
       Calculation("E", 401), // @TODO[Integrity] This order is acceptable, but why is E evaluated before D?
       Calculation("D", 202),
       Calculation("X", 603)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("X", 603)
     )
     calculations.clear()
@@ -324,14 +324,14 @@ class GlitchSpec extends UnitSpec {
 
     busA.writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("A", 1),
       Calculation("B", 2),
       Calculation("A", 20),
       Calculation("B", 21),
       Calculation("A", 210)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("D", 231),
       Effect("D", 212)
     )

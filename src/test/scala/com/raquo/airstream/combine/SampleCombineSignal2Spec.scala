@@ -33,19 +33,19 @@ class SampleCombineSignal2Spec extends UnitSpec {
 
     // --
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     val subCombined = combinedSignal.addObserver(combinedObserver)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("sampling", 100),
       Calculation("sampled", 10),
       Calculation("combined", 110),
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("combined", 110),
     )
 
@@ -56,11 +56,11 @@ class SampleCombineSignal2Spec extends UnitSpec {
 
     samplingVar.writer.onNext(200)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("sampling", 200),
       Calculation("combined", 210)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("combined", 210)
     )
 
@@ -71,10 +71,10 @@ class SampleCombineSignal2Spec extends UnitSpec {
 
     sampledVar.writer.onNext(20)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("sampled", 20)
     )
-    effects shouldEqual mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     calculations.clear()
 
@@ -82,11 +82,11 @@ class SampleCombineSignal2Spec extends UnitSpec {
 
     samplingVar.writer.onNext(300)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("sampling", 300),
       Calculation("combined", 320)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("combined", 320)
     )
 
@@ -98,10 +98,10 @@ class SampleCombineSignal2Spec extends UnitSpec {
     subCombined.kill()
     sampledSignal.addObserver(sampledObserver)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("sampled", 20)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("sampled", 20)
     )
 
@@ -112,10 +112,10 @@ class SampleCombineSignal2Spec extends UnitSpec {
 
     sampledVar.writer.onNext(30)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("sampled", 30)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("sampled", 30)
     )
 
@@ -126,11 +126,11 @@ class SampleCombineSignal2Spec extends UnitSpec {
 
     combinedSignal.addObserver(combinedObserver)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("sampling", 300),
       Calculation("combined", 330)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("combined", 330)
     )
 
@@ -141,11 +141,11 @@ class SampleCombineSignal2Spec extends UnitSpec {
 
     samplingVar.writer.onNext(400)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("sampling", 400),
       Calculation("combined", 430)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("combined", 430)
     )
 

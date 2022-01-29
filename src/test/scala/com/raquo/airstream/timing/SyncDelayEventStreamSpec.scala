@@ -35,12 +35,12 @@ class SyncDelayEventStreamSpec extends UnitSpec {
       var2 -> 200
     )
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("stream1", 2),
       Calculation("stream2", 200),
       Calculation("stream1-synced", 2)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("stream2-obs", 200),
       Effect("stream1-synced-obs", 2)
     )
@@ -55,12 +55,12 @@ class SyncDelayEventStreamSpec extends UnitSpec {
       var2 -> 300
     )
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("stream1", 3),
       Calculation("stream2", 300),
       Calculation("stream1-synced", 3)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("stream2-obs", 300),
       Effect("stream1-synced-obs", 3)
     )
@@ -74,11 +74,11 @@ class SyncDelayEventStreamSpec extends UnitSpec {
 
     var1.set(4)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("stream1", 4),
       Calculation("stream1-synced", 4)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("stream1-synced-obs", 4)
     )
 
@@ -89,10 +89,10 @@ class SyncDelayEventStreamSpec extends UnitSpec {
 
     var2.set(400)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("stream2", 400)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("stream2-obs", 400)
     )
 

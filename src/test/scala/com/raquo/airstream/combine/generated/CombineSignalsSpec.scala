@@ -36,7 +36,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
@@ -44,7 +44,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList should ===(List(
+    effects.toList shouldBe (List(
       (T1(1), T2(1))
     ))
 
@@ -54,7 +54,7 @@ class CombineSignalsSpec extends UnitSpec {
       effects.clear()
       var1.update(_.inc)
       var2.update(_.inc)
-      effects.toList should ===(
+      effects.toList shouldBe (
         List(
           (T1(1 + iteration + 1), T2(1 + iteration)),
           (T1(1 + iteration + 1), T2(1 + iteration + 1))
@@ -81,7 +81,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
@@ -89,7 +89,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList should ===(List(
+    effects.toList shouldBe (List(
       (T1(1), T2(1), T3(1))
     ))
 
@@ -100,7 +100,7 @@ class CombineSignalsSpec extends UnitSpec {
       var1.update(_.inc)
       var2.update(_.inc)
       var3.update(_.inc)
-      effects.toList should ===(
+      effects.toList shouldBe (
         List(
           (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration)),
           (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration)),
@@ -129,7 +129,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
@@ -137,7 +137,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList should ===(List(
+    effects.toList shouldBe (List(
       (T1(1), T2(1), T3(1), T4(1))
     ))
 
@@ -149,7 +149,7 @@ class CombineSignalsSpec extends UnitSpec {
       var2.update(_.inc)
       var3.update(_.inc)
       var4.update(_.inc)
-      effects.toList should ===(
+      effects.toList shouldBe (
         List(
           (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration)),
           (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration)),
@@ -180,7 +180,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
@@ -188,7 +188,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList should ===(List(
+    effects.toList shouldBe (List(
       (T1(1), T2(1), T3(1), T4(1), T5(1))
     ))
 
@@ -201,7 +201,7 @@ class CombineSignalsSpec extends UnitSpec {
       var3.update(_.inc)
       var4.update(_.inc)
       var5.update(_.inc)
-      effects.toList should ===(
+      effects.toList shouldBe (
         List(
           (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration)),
           (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration)),
@@ -234,7 +234,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
@@ -242,7 +242,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList should ===(List(
+    effects.toList shouldBe (List(
       (T1(1), T2(1), T3(1), T4(1), T5(1), T6(1))
     ))
 
@@ -256,7 +256,7 @@ class CombineSignalsSpec extends UnitSpec {
       var4.update(_.inc)
       var5.update(_.inc)
       var6.update(_.inc)
-      effects.toList should ===(
+      effects.toList shouldBe (
         List(
           (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration)),
           (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration)),
@@ -291,7 +291,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
@@ -299,7 +299,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList should ===(List(
+    effects.toList shouldBe (List(
       (T1(1), T2(1), T3(1), T4(1), T5(1), T6(1), T7(1))
     ))
 
@@ -314,7 +314,7 @@ class CombineSignalsSpec extends UnitSpec {
       var5.update(_.inc)
       var6.update(_.inc)
       var7.update(_.inc)
-      effects.toList should ===(
+      effects.toList shouldBe (
         List(
           (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration)),
           (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration)),
@@ -351,7 +351,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
@@ -359,7 +359,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList should ===(List(
+    effects.toList shouldBe (List(
       (T1(1), T2(1), T3(1), T4(1), T5(1), T6(1), T7(1), T8(1))
     ))
 
@@ -375,7 +375,7 @@ class CombineSignalsSpec extends UnitSpec {
       var6.update(_.inc)
       var7.update(_.inc)
       var8.update(_.inc)
-      effects.toList should ===(
+      effects.toList shouldBe (
         List(
           (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration)),
           (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration)),
@@ -414,7 +414,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
@@ -422,7 +422,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList should ===(List(
+    effects.toList shouldBe (List(
       (T1(1), T2(1), T3(1), T4(1), T5(1), T6(1), T7(1), T8(1), T9(1))
     ))
 
@@ -439,7 +439,7 @@ class CombineSignalsSpec extends UnitSpec {
       var7.update(_.inc)
       var8.update(_.inc)
       var9.update(_.inc)
-      effects.toList should ===(
+      effects.toList shouldBe (
         List(
           (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration)),
           (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration)),

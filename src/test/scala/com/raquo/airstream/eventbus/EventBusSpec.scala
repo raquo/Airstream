@@ -22,17 +22,17 @@ class EventBusSpec extends UnitSpec {
     val subscription0 = bus.events.foreach(newValue => effects += Effect("obs0", newValue))
 
     // new observer should not receive any previous events
-    effects shouldEqual mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     bus.writer.onNext(2)
 
-    effects shouldEqual mutable.Buffer(Effect("obs0", 2))
+    effects shouldBe mutable.Buffer(Effect("obs0", 2))
     effects.clear()
 
     bus.emit(3)
     bus.emit(4)
 
-    effects shouldEqual mutable.Buffer(Effect("obs0", 3), Effect("obs0", 4))
+    effects shouldBe mutable.Buffer(Effect("obs0", 3), Effect("obs0", 4))
     effects.clear()
 
     subscription0.kill()
@@ -46,14 +46,14 @@ class EventBusSpec extends UnitSpec {
 
     bus.writer.onNext(5)
 
-    effects shouldEqual mutable.Buffer(Effect("obs1", 5), Effect("obs2", 5), Effect("obs3", 5))
+    effects shouldBe mutable.Buffer(Effect("obs1", 5), Effect("obs2", 5), Effect("obs3", 5))
     effects.clear()
 
     sub2.kill()
 
     bus.writer.onNext(6)
 
-    effects shouldEqual mutable.Buffer(Effect("obs1", 6), Effect("obs3", 6))
+    effects shouldBe mutable.Buffer(Effect("obs1", 6), Effect("obs3", 6))
     effects.clear()
 
     sub1.kill()
@@ -61,14 +61,14 @@ class EventBusSpec extends UnitSpec {
     bus.writer.onNext(7)
     bus.writer.onNext(8)
 
-    effects shouldEqual mutable.Buffer(Effect("obs3", 7), Effect("obs3", 8))
+    effects shouldBe mutable.Buffer(Effect("obs3", 7), Effect("obs3", 8))
     effects.clear()
 
     subscription3.kill()
 
     bus.writer.onNext(9)
 
-    effects shouldEqual mutable.Buffer()
+    effects shouldBe mutable.Buffer()
   }
 
   it("writer.addSource/removeSource fires observers") {
@@ -90,7 +90,7 @@ class EventBusSpec extends UnitSpec {
 
     bus1.writer.onNext(1)
 
-    effects shouldEqual mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // ---
 
@@ -98,7 +98,7 @@ class EventBusSpec extends UnitSpec {
     bus1.writer.onNext(2)
     bus2.writer.onNext(2)
 
-    effects shouldEqual mutable.Buffer(Effect("obs0", 20))
+    effects shouldBe mutable.Buffer(Effect("obs0", 20))
     effects.clear()
 
     // ---
@@ -107,7 +107,7 @@ class EventBusSpec extends UnitSpec {
     bus1.writer.onNext(3)
     bus2.writer.onNext(3)
 
-    effects shouldEqual mutable.Buffer(Effect("obs0", 30), Effect("obs0", 300))
+    effects shouldBe mutable.Buffer(Effect("obs0", 30), Effect("obs0", 300))
     effects.clear()
 
     // ---
@@ -117,7 +117,7 @@ class EventBusSpec extends UnitSpec {
     bus1.writer.onNext(4)
     bus2.writer.onNext(4)
 
-    effects shouldEqual mutable.Buffer(Effect("obs0", 400))
+    effects shouldBe mutable.Buffer(Effect("obs0", 400))
     effects.clear()
 
     // --
@@ -127,7 +127,7 @@ class EventBusSpec extends UnitSpec {
     bus1.writer.onNext(5)
     bus2.writer.onNext(5)
 
-    effects shouldEqual mutable.Buffer()
+    effects shouldBe mutable.Buffer()
   }
 
   it("disallow duplicate event buses in EventBus.emit and EventBus.emitTry") {

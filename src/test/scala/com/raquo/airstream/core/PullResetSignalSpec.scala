@@ -330,7 +330,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     bus2.writer.onNext(T2(0))
 
-    effects.toList shouldEqual List(
+    effects.toList shouldBe List(
       (T1(0), T2(0))
     )
     effects.clear()
@@ -339,7 +339,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     bus2.writer.onNext(T2(1))
 
-    effects.toList shouldEqual List(
+    effects.toList shouldBe List(
       (T1(0), T2(1))
     )
     effects.clear()
@@ -348,7 +348,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     bus1.writer.onNext(T1(10))
 
-    effects.toList shouldEqual List(
+    effects.toList shouldBe List(
       (T1(10), T2(1))
     )
     effects.clear()
@@ -359,19 +359,19 @@ class PullResetSignalSpec extends UnitSpec {
 
     bus2.writer.onNext(T2(2))
 
-    effects.toList shouldEqual Nil
+    effects.toList shouldBe Nil
 
     // --
 
     combinedStream.addObserver(observer)
 
-    effects.toList shouldEqual Nil
+    effects.toList shouldBe Nil
 
     // --
 
     bus1.writer.onNext(T1(20))
 
-    effects.toList shouldEqual List(
+    effects.toList shouldBe List(
       (T1(20), T2(1))
     )
     effects.clear()
@@ -380,7 +380,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     bus2.writer.onNext(T2(3))
 
-    effects.toList shouldEqual List(
+    effects.toList shouldBe List(
       (T1(20), T2(3))
     )
     effects.clear()
@@ -502,7 +502,7 @@ class PullResetSignalSpec extends UnitSpec {
     calculations.toList shouldBe List(
       Calculation("signal1", 10)
     )
-    effects.toList shouldEqual List(
+    effects.toList shouldBe List(
       (T1(10), T2(3))
     )
 

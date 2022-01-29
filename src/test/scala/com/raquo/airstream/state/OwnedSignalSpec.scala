@@ -27,41 +27,41 @@ class OwnedSignalSpec extends UnitSpec {
 
     bus.writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
 
     // --
 
     val signalViewer = signal.observe
 
-    calculations shouldEqual mutable.Buffer(Calculation("signal", -1))
+    calculations shouldBe mutable.Buffer(Calculation("signal", -1))
     calculations.clear()
 
     // --
 
-    signalViewer.now() shouldEqual -1
-    signalViewer.tryNow() shouldEqual Success(-1)
+    signalViewer.now() shouldBe -1
+    signalViewer.tryNow() shouldBe Success(-1)
 
-    calculations shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
 
     // --
 
     bus.writer.onNext(2)
 
-    calculations shouldEqual mutable.Buffer(Calculation("bus", 2), Calculation("signal", 20))
+    calculations shouldBe mutable.Buffer(Calculation("bus", 2), Calculation("signal", 20))
     calculations.clear()
 
-    signalViewer.now() shouldEqual 20
+    signalViewer.now() shouldBe 20
 
-    calculations shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
 
     // --
 
     signalViewer.killOriginalSubscription()
     bus.writer.onNext(3)
 
-    signalViewer.now() shouldEqual 20
+    signalViewer.now() shouldBe 20
 
-    calculations shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
   }
 
 }

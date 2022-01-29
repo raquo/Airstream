@@ -32,18 +32,18 @@ class SwitchSignalSpec extends UnitSpec {
 
     val flattenSignal = $latestNumber.map(Calculation.log("flattened", calculations))
 
-    calculations shouldEqual mutable.Buffer()
-    effects shouldEqual mutable.Buffer()
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
 
     // --
 
     val subFlatten = flattenSignal.addObserver(flattenObserver)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("source-0", -1),
       Calculation("flattened", -1)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("flattened-obs", -1)
     )
 
@@ -54,11 +54,11 @@ class SwitchSignalSpec extends UnitSpec {
 
     sourceVars(0).writer.onNext(0)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("source-0", 0),
       Calculation("flattened", 0)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("flattened-obs", 0)
     )
 
@@ -69,11 +69,11 @@ class SwitchSignalSpec extends UnitSpec {
 
     metaVar.writer.onNext(sourceSignals(1))
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("source-1", -1),
       Calculation("flattened", -1)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("flattened-obs", -1)
     )
 
@@ -84,11 +84,11 @@ class SwitchSignalSpec extends UnitSpec {
 
     sourceVars(1).writer.onNext(1)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("source-1", 1),
       Calculation("flattened", 1)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("flattened-obs", 1)
     )
 
@@ -104,11 +104,11 @@ class SwitchSignalSpec extends UnitSpec {
     val source2Sub = sourceSignals(2).addObserver(source2Observer)
     subFlatten.kill()
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("source-2", -1),
       Calculation("flattened", -1)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("flattened-obs", -1),
       Effect("source-2-obs", -1)
     )
@@ -120,10 +120,10 @@ class SwitchSignalSpec extends UnitSpec {
 
     sourceVars(2).writer.onNext(2)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("source-2", 2)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("source-2-obs", 2)
     )
 
@@ -136,10 +136,10 @@ class SwitchSignalSpec extends UnitSpec {
 
     flattenSignal.addObserver(flattenObserver) // re-activate flattened signal
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("flattened", 2)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("flattened-obs", 2)
     )
 
@@ -150,11 +150,11 @@ class SwitchSignalSpec extends UnitSpec {
 
     sourceVars(2).writer.onNext(3)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("source-2", 3),
       Calculation("flattened", 3)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("source-2-obs", 3),
       Effect("flattened-obs", 3)
     )
@@ -168,11 +168,11 @@ class SwitchSignalSpec extends UnitSpec {
 
     sourceVars(2).writer.onNext(4)
 
-    calculations shouldEqual mutable.Buffer(
+    calculations shouldBe mutable.Buffer(
       Calculation("source-2", 4),
       Calculation("flattened", 4)
     )
-    effects shouldEqual mutable.Buffer(
+    effects shouldBe mutable.Buffer(
       Effect("flattened-obs", 4)
     )
 

@@ -36,19 +36,19 @@ class CombineEventStreamsSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
     val subscription = combinedStream.addObserver(observer)
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
     bus1.writer.onNext(T1(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus2.writer.onNext(T2(0))
-    effects.toList shouldEqual List(
+    effects.toList shouldBe List(
       (T1(0), T2(0))
     )
 
@@ -57,7 +57,7 @@ class CombineEventStreamsSpec extends UnitSpec {
       effects.clear()
       bus1.emit(T1(iteration))
       bus2.emit(T2(iteration))
-      effects.toList should ===(
+      effects.toList shouldBe (
         List(
           (T1(iteration), T2(iteration - 1)),
           (T1(iteration), T2(iteration))
@@ -84,22 +84,22 @@ class CombineEventStreamsSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
     val subscription = combinedStream.addObserver(observer)
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
     bus1.writer.onNext(T1(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus2.writer.onNext(T2(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus3.writer.onNext(T3(0))
-    effects.toList shouldEqual List(
+    effects.toList shouldBe List(
       (T1(0), T2(0), T3(0))
     )
 
@@ -109,7 +109,7 @@ class CombineEventStreamsSpec extends UnitSpec {
       bus1.emit(T1(iteration))
       bus2.emit(T2(iteration))
       bus3.emit(T3(iteration))
-      effects.toList should ===(
+      effects.toList shouldBe (
         List(
           (T1(iteration), T2(iteration - 1), T3(iteration - 1)),
           (T1(iteration), T2(iteration), T3(iteration - 1)),
@@ -138,25 +138,25 @@ class CombineEventStreamsSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
     val subscription = combinedStream.addObserver(observer)
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
     bus1.writer.onNext(T1(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus2.writer.onNext(T2(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus3.writer.onNext(T3(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus4.writer.onNext(T4(0))
-    effects.toList shouldEqual List(
+    effects.toList shouldBe List(
       (T1(0), T2(0), T3(0), T4(0))
     )
 
@@ -167,7 +167,7 @@ class CombineEventStreamsSpec extends UnitSpec {
       bus2.emit(T2(iteration))
       bus3.emit(T3(iteration))
       bus4.emit(T4(iteration))
-      effects.toList should ===(
+      effects.toList shouldBe (
         List(
           (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1)),
           (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1)),
@@ -198,28 +198,28 @@ class CombineEventStreamsSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
     val subscription = combinedStream.addObserver(observer)
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
     bus1.writer.onNext(T1(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus2.writer.onNext(T2(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus3.writer.onNext(T3(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus4.writer.onNext(T4(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus5.writer.onNext(T5(0))
-    effects.toList shouldEqual List(
+    effects.toList shouldBe List(
       (T1(0), T2(0), T3(0), T4(0), T5(0))
     )
 
@@ -231,7 +231,7 @@ class CombineEventStreamsSpec extends UnitSpec {
       bus3.emit(T3(iteration))
       bus4.emit(T4(iteration))
       bus5.emit(T5(iteration))
-      effects.toList should ===(
+      effects.toList shouldBe (
         List(
           (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1)),
           (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1)),
@@ -264,31 +264,31 @@ class CombineEventStreamsSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
     val subscription = combinedStream.addObserver(observer)
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
     bus1.writer.onNext(T1(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus2.writer.onNext(T2(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus3.writer.onNext(T3(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus4.writer.onNext(T4(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus5.writer.onNext(T5(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus6.writer.onNext(T6(0))
-    effects.toList shouldEqual List(
+    effects.toList shouldBe List(
       (T1(0), T2(0), T3(0), T4(0), T5(0), T6(0))
     )
 
@@ -301,7 +301,7 @@ class CombineEventStreamsSpec extends UnitSpec {
       bus4.emit(T4(iteration))
       bus5.emit(T5(iteration))
       bus6.emit(T6(iteration))
-      effects.toList should ===(
+      effects.toList shouldBe (
         List(
           (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1)),
           (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1)),
@@ -336,34 +336,34 @@ class CombineEventStreamsSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
     val subscription = combinedStream.addObserver(observer)
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
     bus1.writer.onNext(T1(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus2.writer.onNext(T2(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus3.writer.onNext(T3(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus4.writer.onNext(T4(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus5.writer.onNext(T5(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus6.writer.onNext(T6(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus7.writer.onNext(T7(0))
-    effects.toList shouldEqual List(
+    effects.toList shouldBe List(
       (T1(0), T2(0), T3(0), T4(0), T5(0), T6(0), T7(0))
     )
 
@@ -377,7 +377,7 @@ class CombineEventStreamsSpec extends UnitSpec {
       bus5.emit(T5(iteration))
       bus6.emit(T6(iteration))
       bus7.emit(T7(iteration))
-      effects.toList should ===(
+      effects.toList shouldBe (
         List(
           (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1)),
           (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1)),
@@ -414,37 +414,37 @@ class CombineEventStreamsSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
     val subscription = combinedStream.addObserver(observer)
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
     bus1.writer.onNext(T1(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus2.writer.onNext(T2(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus3.writer.onNext(T3(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus4.writer.onNext(T4(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus5.writer.onNext(T5(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus6.writer.onNext(T6(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus7.writer.onNext(T7(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus8.writer.onNext(T8(0))
-    effects.toList shouldEqual List(
+    effects.toList shouldBe List(
       (T1(0), T2(0), T3(0), T4(0), T5(0), T6(0), T7(0), T8(0))
     )
 
@@ -459,7 +459,7 @@ class CombineEventStreamsSpec extends UnitSpec {
       bus6.emit(T6(iteration))
       bus7.emit(T7(iteration))
       bus8.emit(T8(iteration))
-      effects.toList should ===(
+      effects.toList shouldBe (
         List(
           (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
           (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
@@ -498,40 +498,40 @@ class CombineEventStreamsSpec extends UnitSpec {
 
     // --
 
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
     val subscription = combinedStream.addObserver(observer)
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     // --
 
     bus1.writer.onNext(T1(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus2.writer.onNext(T2(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus3.writer.onNext(T3(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus4.writer.onNext(T4(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus5.writer.onNext(T5(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus6.writer.onNext(T6(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus7.writer.onNext(T7(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus8.writer.onNext(T8(0))
-    effects.toList shouldBe empty
+    effects.toList.shouldBeEmpty
 
     bus9.writer.onNext(T9(0))
-    effects.toList shouldEqual List(
+    effects.toList shouldBe List(
       (T1(0), T2(0), T3(0), T4(0), T5(0), T6(0), T7(0), T8(0), T9(0))
     )
 
@@ -547,7 +547,7 @@ class CombineEventStreamsSpec extends UnitSpec {
       bus7.emit(T7(iteration))
       bus8.emit(T8(iteration))
       bus9.emit(T9(iteration))
-      effects.toList should ===(
+      effects.toList shouldBe (
         List(
           (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
           (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
