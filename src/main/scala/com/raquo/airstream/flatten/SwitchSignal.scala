@@ -9,11 +9,6 @@ import scala.util.{Success, Try}
 /** This flattens a Signal[ Signal[A] ] into a Signal[A]
   *
   * When this signal is started, its current value tracks the current value of the last signal emitted by `parent`.
-  *
-  * This signal follows standard signal mechanics:
-  * - It adds an internal observer to the signal that it's currently tracking while it's tracking it.
-  * - It does not update when it is stopped, even if the signal being tracked is not stopped (e.g. if it has other observers).
-  * - So if you want a consistent value out of this signal, keep it observed.
   */
 class SwitchSignal[A](
   override protected[this] val parent: Signal[Signal[A]]

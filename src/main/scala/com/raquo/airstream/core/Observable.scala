@@ -2,7 +2,7 @@ package com.raquo.airstream.core
 
 import com.raquo.airstream.debug.DebuggableObservable
 import com.raquo.airstream.flatten.FlattenStrategy
-import com.raquo.airstream.flatten.FlattenStrategy.{SwitchSignalStrategy, SwitchStreamStrategy}
+import com.raquo.airstream.flatten.FlattenStrategy.{SwitchSignalStrategy, SwitchSignalStreamStrategy, SwitchStreamStrategy}
 
 // @TODO[Scala3] Put this trait together with BaseObservable in the same file, and make BaseObservable sealed.
 
@@ -15,6 +15,8 @@ trait Observable[+A] extends BaseObservable[Observable, A] {}
 object Observable {
 
   implicit val switchStreamStrategy: FlattenStrategy[Observable, EventStream, EventStream] = SwitchStreamStrategy
+
+  implicit val switchSignalStreamStrategy: FlattenStrategy[EventStream, Signal, EventStream] = SwitchSignalStreamStrategy
 
   implicit val switchSignalStrategy: FlattenStrategy[Signal, Signal, Signal] = SwitchSignalStrategy
 
