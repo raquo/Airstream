@@ -364,6 +364,14 @@ object EventStream {
     (bus.events, bus.writer)
   }
 
+  /** Emit () with a delay (`ms` milliseconds after stream is started) */
+  @inline def after(ms: Int): EventStream[Unit] = after(ms, ())
+
+  /** Emit `event` with a delay (`ms` milliseconds after stream is started) */
+  def after[A](ms: Int, event: A, emitOnce: Boolean = false): EventStream[A] = {
+    EventStream.fromValue(event, emitOnce).delay(ms)
+  }
+
   def periodic(
     intervalMs: Int,
     resetOnStop: Boolean = false
