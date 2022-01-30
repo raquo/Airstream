@@ -336,19 +336,19 @@ object EventStream {
   }
 
   /** Create a stream and a callback that, when fired, makes that stream emit. */
-  def withCallback[A]: (EventStream[A], A => Unit) = {
+  def fromCallback[A]: (EventStream[A], A => Unit) = {
     val bus = new EventBus[A]
     (bus.events, bus.writer.onNext)
   }
 
   /** Create a stream and a JS callback that, when fired, makes that stream emit. */
-  def withJsCallback[A]: (EventStream[A], js.Function1[A, Unit]) = {
+  def fromJsCallback[A]: (EventStream[A], js.Function1[A, Unit]) = {
     val bus = new EventBus[A]
     (bus.events, bus.writer.onNext)
   }
 
   /** Create a stream and an observer that, when receiving an event or an error, makes that stream emit. */
-  def withObserver[A]: (EventStream[A], Observer[A]) = {
+  def fromObserver[A]: (EventStream[A], Observer[A]) = {
     val bus = new EventBus[A]
     (bus.events, bus.writer)
   }

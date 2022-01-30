@@ -21,7 +21,7 @@ class ThrottleEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
   }
 
   it("throttling with leading = true") {
-    val (source, emit) = EventStream.withCallback[Int]
+    val (source, emit) = EventStream.fromCallback[Int]
     val throttled = source.throttle(100, leading = true)
 
     throttled.addObserver(obs1)
@@ -98,7 +98,7 @@ class ThrottleEventStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
   }
 
   it("throttling with leading = false") {
-    val (source, emit) = EventStream.withCallback[Int]
+    val (source, emit) = EventStream.fromCallback[Int]
     val throttled = source.throttle(100, leading = false)
 
     throttled.addObserver(obs1)
