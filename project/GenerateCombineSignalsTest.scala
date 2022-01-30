@@ -45,7 +45,7 @@ case class GenerateCombineSignalsTest(
       line()
       line("// --")
       line()
-      line("effects.toList.shouldBeEmpty")
+      line("effects.shouldBeEmpty")
       line()
       line("// --")
       line()

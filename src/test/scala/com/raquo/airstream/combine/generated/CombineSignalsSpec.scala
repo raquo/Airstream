@@ -36,7 +36,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 
@@ -81,7 +81,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 
@@ -129,7 +129,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 
@@ -180,7 +180,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 
@@ -234,7 +234,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 
@@ -291,7 +291,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 
@@ -351,7 +351,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 
@@ -414,7 +414,7 @@ class CombineSignalsSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 

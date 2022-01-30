@@ -24,7 +24,7 @@ class CombineSeqEventStreamSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 
@@ -32,7 +32,7 @@ class CombineSeqEventStreamSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 
@@ -49,7 +49,7 @@ class CombineSeqEventStreamSpec extends UnitSpec {
               )
             )
           } else {
-            effects.toList.shouldBeEmpty
+            effects.shouldBeEmpty
           }
         } else {
           effects.toList shouldBe (List(

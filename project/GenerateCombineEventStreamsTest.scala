@@ -45,11 +45,11 @@ case class GenerateCombineEventStreamsTest(
       line()
       line("// --")
       line()
-      line("effects.toList.shouldBeEmpty")
+      line("effects.shouldBeEmpty")
       line()
       line("// --")
       line("val subscription = combinedStream.addObserver(observer)")
-      line("effects.toList.shouldBeEmpty")
+      line("effects.shouldBeEmpty")
       line()
       line("// --")
       line()
@@ -57,7 +57,7 @@ case class GenerateCombineEventStreamsTest(
       for (i <- 1 to n) {
         line(s"bus${i}.writer.onNext(T${i}(0))")
         if (i < n) {
-          line("effects.toList.shouldBeEmpty")
+          line("effects.shouldBeEmpty")
         } else {
           enter("effects.toList shouldBe List(")
           line(s"(${(1 to n).map(i => s"T${i}(0)").mkString(", ")})")
@@ -73,12 +73,10 @@ case class GenerateCombineEventStreamsTest(
       for (i <- 1 to n) {
         line(s"bus${i}.emit(T${i}(iteration))")
       }
-      enter("effects.toList shouldBe (")
-      enter("List(")
+      enter("effects.toList shouldBe List(")
       for (i <- 1 to n) {
         line(s"(${(1 to n).map(j => s"T${j}(iteration${if (j <= i) "" else " - 1"})").mkString(", ")})${if (i < n) "," else ""}")
       }
-      leave(")")
       leave(")")
       leave("}")
       line()

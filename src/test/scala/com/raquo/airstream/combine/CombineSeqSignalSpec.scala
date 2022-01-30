@@ -22,7 +22,7 @@ class CombineSeqSignalSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 

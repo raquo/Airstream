@@ -36,16 +36,16 @@ class CombineEventStreamsSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
     val subscription = combinedStream.addObserver(observer)
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 
     bus1.writer.onNext(T1(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus2.writer.onNext(T2(0))
     effects.toList shouldBe List(
@@ -57,11 +57,9 @@ class CombineEventStreamsSpec extends UnitSpec {
       effects.clear()
       bus1.emit(T1(iteration))
       bus2.emit(T2(iteration))
-      effects.toList shouldBe (
-        List(
-          (T1(iteration), T2(iteration - 1)),
-          (T1(iteration), T2(iteration))
-        )
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1)),
+        (T1(iteration), T2(iteration))
       )
     }
 
@@ -84,19 +82,19 @@ class CombineEventStreamsSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
     val subscription = combinedStream.addObserver(observer)
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 
     bus1.writer.onNext(T1(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus2.writer.onNext(T2(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus3.writer.onNext(T3(0))
     effects.toList shouldBe List(
@@ -109,12 +107,10 @@ class CombineEventStreamsSpec extends UnitSpec {
       bus1.emit(T1(iteration))
       bus2.emit(T2(iteration))
       bus3.emit(T3(iteration))
-      effects.toList shouldBe (
-        List(
-          (T1(iteration), T2(iteration - 1), T3(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration))
-        )
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration))
       )
     }
 
@@ -138,22 +134,22 @@ class CombineEventStreamsSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
     val subscription = combinedStream.addObserver(observer)
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 
     bus1.writer.onNext(T1(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus2.writer.onNext(T2(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus3.writer.onNext(T3(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus4.writer.onNext(T4(0))
     effects.toList shouldBe List(
@@ -167,13 +163,11 @@ class CombineEventStreamsSpec extends UnitSpec {
       bus2.emit(T2(iteration))
       bus3.emit(T3(iteration))
       bus4.emit(T4(iteration))
-      effects.toList shouldBe (
-        List(
-          (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration))
-        )
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration))
       )
     }
 
@@ -198,25 +192,25 @@ class CombineEventStreamsSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
     val subscription = combinedStream.addObserver(observer)
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 
     bus1.writer.onNext(T1(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus2.writer.onNext(T2(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus3.writer.onNext(T3(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus4.writer.onNext(T4(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus5.writer.onNext(T5(0))
     effects.toList shouldBe List(
@@ -231,14 +225,12 @@ class CombineEventStreamsSpec extends UnitSpec {
       bus3.emit(T3(iteration))
       bus4.emit(T4(iteration))
       bus5.emit(T5(iteration))
-      effects.toList shouldBe (
-        List(
-          (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration))
-        )
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration))
       )
     }
 
@@ -264,28 +256,28 @@ class CombineEventStreamsSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
     val subscription = combinedStream.addObserver(observer)
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 
     bus1.writer.onNext(T1(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus2.writer.onNext(T2(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus3.writer.onNext(T3(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus4.writer.onNext(T4(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus5.writer.onNext(T5(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus6.writer.onNext(T6(0))
     effects.toList shouldBe List(
@@ -301,15 +293,13 @@ class CombineEventStreamsSpec extends UnitSpec {
       bus4.emit(T4(iteration))
       bus5.emit(T5(iteration))
       bus6.emit(T6(iteration))
-      effects.toList shouldBe (
-        List(
-          (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration))
-        )
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration))
       )
     }
 
@@ -336,31 +326,31 @@ class CombineEventStreamsSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
     val subscription = combinedStream.addObserver(observer)
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 
     bus1.writer.onNext(T1(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus2.writer.onNext(T2(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus3.writer.onNext(T3(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus4.writer.onNext(T4(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus5.writer.onNext(T5(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus6.writer.onNext(T6(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus7.writer.onNext(T7(0))
     effects.toList shouldBe List(
@@ -377,16 +367,14 @@ class CombineEventStreamsSpec extends UnitSpec {
       bus5.emit(T5(iteration))
       bus6.emit(T6(iteration))
       bus7.emit(T7(iteration))
-      effects.toList shouldBe (
-        List(
-          (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration))
-        )
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration))
       )
     }
 
@@ -414,34 +402,34 @@ class CombineEventStreamsSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
     val subscription = combinedStream.addObserver(observer)
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 
     bus1.writer.onNext(T1(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus2.writer.onNext(T2(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus3.writer.onNext(T3(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus4.writer.onNext(T4(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus5.writer.onNext(T5(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus6.writer.onNext(T6(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus7.writer.onNext(T7(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus8.writer.onNext(T8(0))
     effects.toList shouldBe List(
@@ -459,17 +447,15 @@ class CombineEventStreamsSpec extends UnitSpec {
       bus6.emit(T6(iteration))
       bus7.emit(T7(iteration))
       bus8.emit(T8(iteration))
-      effects.toList shouldBe (
-        List(
-          (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration))
-        )
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration))
       )
     }
 
@@ -498,37 +484,37 @@ class CombineEventStreamsSpec extends UnitSpec {
 
     // --
 
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
     val subscription = combinedStream.addObserver(observer)
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     // --
 
     bus1.writer.onNext(T1(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus2.writer.onNext(T2(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus3.writer.onNext(T3(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus4.writer.onNext(T4(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus5.writer.onNext(T5(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus6.writer.onNext(T6(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus7.writer.onNext(T7(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus8.writer.onNext(T8(0))
-    effects.toList.shouldBeEmpty
+    effects.shouldBeEmpty
 
     bus9.writer.onNext(T9(0))
     effects.toList shouldBe List(
@@ -547,18 +533,16 @@ class CombineEventStreamsSpec extends UnitSpec {
       bus7.emit(T7(iteration))
       bus8.emit(T8(iteration))
       bus9.emit(T9(iteration))
-      effects.toList shouldBe (
-        List(
-          (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1), T9(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration - 1)),
-          (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration))
-        )
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1), T9(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration))
       )
     }
 
