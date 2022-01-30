@@ -2,7 +2,7 @@ package com.raquo.airstream.core
 
 import com.raquo.airstream.combine.generated._
 import com.raquo.airstream.combine.{CombineEventStreamN, MergeEventStream}
-import com.raquo.airstream.core.Source.EventSource
+import com.raquo.airstream.core.Source.{EventSource, SignalSource}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.debug.{DebuggableEventStream, Debugger, DebuggerEventStream}
@@ -31,6 +31,17 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
   }
 
   def filterNot(predicate: A => Boolean): EventStream[A] = filter(!predicate(_))
+
+  /** `stream.filterWith(otherSignal, when = false)` is essentially like
+    * `stream.filter(_ => otherSignal.now() == false)` (but it compiles)
+    */
+  def filterWith(source: SignalSource[Boolean], when: Boolean = true): EventStream[A] = {
+    // This implementation is equivalent to `withCurrentValueOf(passesSource).collect { ... }`
+    new SampleCombineEventStream2(
+      this, source, (ev: A, passes: Boolean) => (ev, passes)
+    )
+      .collect { case (ev, sourceValue) if sourceValue == when => ev }
+  }
 
   /** Apply `pf` to event and emit the resulting value, or emit nothing if `pf` is not defined for that event.
     *
