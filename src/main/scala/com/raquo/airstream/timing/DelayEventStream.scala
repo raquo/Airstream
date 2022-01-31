@@ -2,6 +2,7 @@ package com.raquo.airstream.timing
 
 import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentEventStream}
 import com.raquo.airstream.core.{EventStream, Transaction}
+import com.raquo.ew.JsArray
 
 import scala.scalajs.js
 import scala.scalajs.js.timers.SetTimeoutHandle
@@ -14,7 +15,7 @@ class DelayEventStream[A](
   /** Async stream, so reset rank */
   override protected val topoRank: Int = 1
 
-  private val timerHandles: js.Array[SetTimeoutHandle] = js.Array()
+  private val timerHandles: JsArray[SetTimeoutHandle] = JsArray()
 
   override protected def onNext(nextValue: A, transaction: Transaction): Unit = {
     var timerHandle: SetTimeoutHandle = null
@@ -38,7 +39,7 @@ class DelayEventStream[A](
   }
 
   override protected[this] def onStop(): Unit = {
-    timerHandles.foreach(js.timers.clearTimeout)
+    timerHandles.forEach(js.timers.clearTimeout)
     timerHandles.length = 0 // Clear array
     super.onStop()
   }

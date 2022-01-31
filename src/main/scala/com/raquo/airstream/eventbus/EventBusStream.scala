@@ -2,12 +2,11 @@ package com.raquo.airstream.eventbus
 
 import com.raquo.airstream.common.InternalNextErrorObserver
 import com.raquo.airstream.core.{EventStream, Protected, Transaction, WritableEventStream}
-
-import scala.scalajs.js
+import com.raquo.ew.JsArray
 
 class EventBusStream[A] private[eventbus] () extends WritableEventStream[A] with InternalNextErrorObserver[A] {
 
-  private[eventbus] val sourceStreams: js.Array[EventStream[A]] = js.Array()
+  private val sourceStreams: JsArray[EventStream[A]] = JsArray()
 
   /** Made more public to allow usage from WriteBus */
   override protected[eventbus] def isStarted: Boolean = super.isStarted
@@ -60,17 +59,17 @@ class EventBusStream[A] private[eventbus] () extends WritableEventStream[A] with
   }
 
   override protected def onWillStart(): Unit = {
-    sourceStreams.foreach(Protected.maybeWillStart)
+    sourceStreams.forEach(Protected.maybeWillStart)
   }
 
   override protected[this] def onStart(): Unit = {
-    sourceStreams.foreach(_.addInternalObserver(this, shouldCallMaybeWillStart = false))
+    sourceStreams.forEach(_.addInternalObserver(this, shouldCallMaybeWillStart = false))
     super.onStart()
   }
 
   override protected[this] def onStop(): Unit = {
     // dom.console.log("EventBusStream STOPPED!", this.toString)
-    sourceStreams.foreach(_.removeInternalObserver(observer = this))
+    sourceStreams.forEach(_.removeInternalObserver(observer = this))
     super.onStop()
   }
 }

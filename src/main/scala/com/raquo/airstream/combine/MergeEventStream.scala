@@ -3,8 +3,7 @@ package com.raquo.airstream.combine
 import com.raquo.airstream.common.{InternalParentObserver, MultiParentEventStream, Observation}
 import com.raquo.airstream.core.{EventStream, Observable, Protected, SyncObservable, Transaction, WritableEventStream}
 import com.raquo.airstream.util.JsPriorityQueue
-
-import scala.scalajs.js
+import com.raquo.ew.JsArray
 
 /** Stream that emit events from all of its parents.
   *
@@ -23,7 +22,7 @@ class MergeEventStream[A](
     new JsPriorityQueue(observation => Protected.topoRank(observation.observable))
   }
 
-  private[this] val parentObservers: js.Array[InternalParentObserver[A]] = js.Array()
+  private[this] val parentObservers: JsArray[InternalParentObserver[A]] = JsArray()
 
   parents.foreach(parent => parentObservers.push(makeInternalObserver(parent)))
 
@@ -50,12 +49,12 @@ class MergeEventStream[A](
   }
 
   override protected[this] def onStart(): Unit = {
-    parentObservers.foreach(_.addToParent(shouldCallMaybeWillStart = false))
+    parentObservers.forEach(_.addToParent(shouldCallMaybeWillStart = false))
     super.onStart()
   }
 
   override protected[this] def onStop(): Unit = {
-    parentObservers.foreach(_.removeFromParent())
+    parentObservers.forEach(_.removeFromParent())
     super.onStop()
   }
 

@@ -1,10 +1,10 @@
 package com.raquo.airstream.util
 
-import scala.scalajs.js
+import com.raquo.ew.JsArray
 
 class JsPriorityQueue[A](getRank: A => Int) {
 
-  private[this] val queue: js.Array[A] = js.Array()
+  private[this] val queue: JsArray[A] = JsArray()
 
   def enqueue(item: A): Unit = {
     val itemRank = getRank(item)
@@ -24,7 +24,7 @@ class JsPriorityQueue[A](getRank: A => Int) {
 
   /** Note: throws exception if there are no items in the queue */
   @inline def dequeue(): A = {
-    // We do this dance because js.Array.shift returns `js.undefined` if array is empty
+    // We do this dance because JsArray.shift returns `js.undefined` if array is empty
     if (nonEmpty) {
       queue.shift()
     } else {
@@ -40,5 +40,5 @@ class JsPriorityQueue[A](getRank: A => Int) {
 
   @inline def nonEmpty: Boolean = !isEmpty
 
-  def debugQueue: List[A] = queue.toList
+  def debugQueue: List[A] = queue.asScalaJsArray.toList
 }

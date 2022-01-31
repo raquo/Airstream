@@ -2,8 +2,8 @@ package com.raquo.airstream.flatten
 
 import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentEventStream}
 import com.raquo.airstream.core.{EventStream, InternalObserver, Observable, Protected, Signal, Transaction}
+import com.raquo.ew.JsArray
 
-import scala.scalajs.js
 import scala.util.{Failure, Success}
 
 /** This is essentially a dynamic version of `EventStream.merge`.
@@ -17,7 +17,7 @@ class ConcurrentEventStream[A](
   override protected[this] val parent: Observable[EventStream[A]]
 ) extends SingleParentEventStream[EventStream[A], A] with InternalNextErrorObserver[EventStream[A]] {
 
-  private val accumulatedStreams: js.Array[EventStream[A]] = js.Array()
+  private val accumulatedStreams: JsArray[EventStream[A]] = JsArray()
 
   private val internalEventObserver: InternalObserver[A] = InternalObserver[A](
     onNext = (nextEvent, _) => new Transaction(fireValue(nextEvent, _)),
@@ -28,7 +28,7 @@ class ConcurrentEventStream[A](
 
   override protected def onWillStart(): Unit = {
     super.onWillStart()
-    accumulatedStreams.foreach(Protected.maybeWillStart)
+    accumulatedStreams.forEach(Protected.maybeWillStart)
     parent match {
       case signal: Signal[EventStream[A @unchecked] @unchecked] =>
         signal.tryNow() match {
@@ -43,7 +43,7 @@ class ConcurrentEventStream[A](
 
   override protected[this] def onStart(): Unit = {
     super.onStart()
-    accumulatedStreams.foreach(_.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false))
+    accumulatedStreams.forEach(_.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false))
     parent match {
       case signal: Signal[EventStream[A @unchecked] @unchecked] =>
         signal.tryNow() match {
@@ -58,7 +58,7 @@ class ConcurrentEventStream[A](
   }
 
   override protected[this] def onStop(): Unit = {
-    accumulatedStreams.foreach(_.removeInternalObserver(internalEventObserver))
+    accumulatedStreams.forEach(_.removeInternalObserver(internalEventObserver))
     super.onStop()
   }
 
@@ -71,7 +71,7 @@ class ConcurrentEventStream[A](
   }
 
   private def maybeAddStream(stream: EventStream[A], addInternalObserver: Boolean): Unit = {
-    if (!accumulatedStreams.contains(stream)) {
+    if (accumulatedStreams.indexOf(stream) == -1) {
       accumulatedStreams.push(stream)
       if (addInternalObserver) {
         stream.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = true)

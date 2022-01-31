@@ -1,15 +1,14 @@
 package com.raquo.airstream.core
 
-import com.raquo.airstream.util.{GlobalCounter, JsPriorityQueue}
-
-import scala.scalajs.js
+import com.raquo.airstream.util.JsPriorityQueue
+import com.raquo.ew.JsMap
 
 // @TODO[Naming] Should probably be renamed to something like "Propagation"
 /** @param code Note: Must not throw! */
 class Transaction(private[Transaction] var code: Transaction => Any) {
 
   // @TODO this is not used except for debug logging. Remove eventually
-  val id: Int = Transaction.nextId()
+  //val id: Int = Transaction.nextId()
 
   //println(s"  - create trx $id")
 
@@ -32,14 +31,14 @@ class Transaction(private[Transaction] var code: Transaction => Any) {
   }
 }
 
-object Transaction extends GlobalCounter { // @nc[remove]
+object Transaction { // extends GlobalCounter {
 
   private object pendingTransactions {
 
     /** first transaction is the top of the stack, currently running */
     private var stack: List[Transaction] = Nil
 
-    private val children: js.Map[Transaction, List[Transaction]] = js.Map.empty
+    private val children: JsMap[Transaction, List[Transaction]] = new JsMap()
 
     def add(newTransaction: Transaction): Unit = {
       // 1. Regarding calling `run`:
@@ -75,9 +74,11 @@ object Transaction extends GlobalCounter { // @nc[remove]
       transaction.code = throwDeadTrxError  // stop holding up `trx` contents in memory
 
       peekStack().fold {
-        if (children.nonEmpty) {
+        if (children.size > 0) {
           //println(s"Stack is empty but children remain: ${children.map(t => (t._1.id, t._2.map(_.id)))}")
-          throw new Exception(s"Transaction queue error: Stack cleared, but a total of ${children.foldLeft(0)((acc, t) => acc + t._2.size)} children for ${children.size} transactions remain. This is a bug in Airstream.")
+          var numChildren = 0
+          children.forEach((transactions, _) => numChildren += transactions.size)
+          throw new Exception(s"Transaction queue error: Stack cleared, but a total of ${numChildren} children for ${children.size} transactions remain. This is a bug in Airstream.")
         }
       }{ nextTransaction =>
         run(nextTransaction)
@@ -110,7 +111,7 @@ object Transaction extends GlobalCounter { // @nc[remove]
     }
 
     private def childrenFor(transaction: Transaction): List[Transaction] = {
-      children.getOrElse(transaction, Nil)
+      children.get(transaction).getOrElse(Nil)
     }
 
     private def pushToStack(transaction: Transaction): Unit = {
@@ -131,7 +132,7 @@ object Transaction extends GlobalCounter { // @nc[remove]
     private def enqueueChild(parent: Transaction, newChild: Transaction): Unit = {
       //println(s"enqueueChild parent = ${parent.id} newChild = ${newChild.id}")
       val newChildren = childrenFor(parent) :+ newChild
-      children.update(parent, newChildren)
+      children.set(parent, newChildren)
     }
 
     private def dequeueChild(parent: Transaction): Option[Transaction] = {
@@ -142,10 +143,10 @@ object Transaction extends GlobalCounter { // @nc[remove]
         //println(s"- found some children, first: ${nextChild.id}")
         val updatedChildren = parentChildren.tail
         if (updatedChildren.nonEmpty) {
-          children.update(parent, updatedChildren)
+          children.set(parent, updatedChildren)
           //println("- removed child, some remaining")
         } else {
-          children -= parent
+          children.delete(parent)
           //println("- no children left for this parent, removed parent.")
         }
         Some(nextChild)
@@ -155,7 +156,7 @@ object Transaction extends GlobalCounter { // @nc[remove]
       }
     }
 
-    private[core] def isClearState: Boolean = stack.isEmpty && children.isEmpty
+    private[core] def isClearState: Boolean = stack.isEmpty && children.size == 0
   }
 
   private[core] def isClearState: Boolean = pendingTransactions.isClearState

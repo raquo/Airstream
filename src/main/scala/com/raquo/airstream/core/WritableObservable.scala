@@ -1,8 +1,8 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.ownership.{Owner, Subscription}
+import com.raquo.ew.JsArray
 
-import scala.scalajs.js
 import scala.util.Try
 
 trait WritableObservable[A] extends Observable[A] {
@@ -46,10 +46,10 @@ trait WritableObservable[A] extends Observable[A] {
   /** Note: Observer can be added more than once to an Observable.
     * If so, it will observe each event as many times as it was added.
     */
-  protected val externalObservers: ObserverList[Observer[A]] = new ObserverList(js.Array())
+  protected val externalObservers: ObserverList[Observer[A]] = new ObserverList(JsArray())
 
   /** Note: This is enforced to be a Set outside of the type system #performance */
-  protected val internalObservers: ObserverList[InternalObserver[A]] = new ObserverList(js.Array())
+  protected val internalObservers: ObserverList[InternalObserver[A]] = new ObserverList(JsArray())
 
   override def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription = {
     //println(s"$this >> maybeWillStart")

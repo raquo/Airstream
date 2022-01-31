@@ -1,8 +1,8 @@
 package com.raquo.airstream.core
 
-import scala.scalajs.js
+import com.raquo.ew.JsArray
 
-class ObserverList[Obs](private val observers: js.Array[Obs]) extends AnyVal {
+class ObserverList[Obs](private val observers: JsArray[Obs]) extends AnyVal {
 
   @inline def length: Int = observers.length
 

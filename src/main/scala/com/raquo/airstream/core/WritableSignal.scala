@@ -57,8 +57,8 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
     isSafeToRemoveObserver = true
 
     maybePendingObserverRemovals.foreach { pendingObserverRemovals =>
-      pendingObserverRemovals.foreach(remove => remove())
-      pendingObserverRemovals.clear()
+      pendingObserverRemovals.forEach(remove => remove())
+      pendingObserverRemovals.length = 0
     }
 
     // This will only ever happen for special Signals that maintain their current value even without observers.

@@ -3,6 +3,7 @@ package com.raquo.airstream.core
 import com.raquo.airstream.debug.Debugger
 import com.raquo.airstream.flatten.FlattenStrategy
 import com.raquo.airstream.ownership.{Owner, Subscription}
+import com.raquo.ew.JsArray
 
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
@@ -229,11 +230,11 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
   /** Observer removals scheduled to run as soon as this observable's event propagation finishes.
     * Only put calls to `removeInternalObserverNow` and `removeExternalObserverNow` here, no custom logic.
     */
-  protected var maybePendingObserverRemovals: js.UndefOr[js.Array[() => Unit]] = js.undefined
+  protected var maybePendingObserverRemovals: js.UndefOr[JsArray[() => Unit]] = js.undefined
 
-  protected def getOrCreatePendingObserverRemovals: js.Array[() => Unit] = {
+  protected def getOrCreatePendingObserverRemovals: JsArray[() => Unit] = {
     maybePendingObserverRemovals.getOrElse {
-      val newArray = js.Array[() => Unit]()
+      val newArray = JsArray[() => Unit]()
       maybePendingObserverRemovals = js.defined(newArray)
       newArray
     }

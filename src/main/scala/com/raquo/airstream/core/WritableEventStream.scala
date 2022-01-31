@@ -46,8 +46,8 @@ trait WritableEventStream[A] extends EventStream[A] with WritableObservable[A] {
     isSafeToRemoveObserver = true
 
     maybePendingObserverRemovals.foreach { pendingObserverRemovals =>
-      pendingObserverRemovals.foreach(remove => remove())
-      pendingObserverRemovals.clear()
+      pendingObserverRemovals.forEach(remove => remove())
+      pendingObserverRemovals.length = 0
     }
   }
 

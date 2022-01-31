@@ -1,9 +1,8 @@
 package com.raquo.airstream.ownership
 
-import com.raquo.airstream.JsArray
+import com.raquo.ew.JsArray
 
 import scala.annotation.unused
-import scala.scalajs.js
 
 /** Owner decides when to kill its subscriptions.
   * - Ownership is defined at creation of the [[Subscription]]
@@ -21,12 +20,10 @@ import scala.scalajs.js
 trait Owner {
 
   /** Note: This is enforced to be a sorted set outside the type system. #performance */
-  protected[this] val subscriptions: js.Array[Subscription] = js.Array()
-  //protected[this] val subscriptions: js.Set[Subscription] = js.Set()
+  protected[this] val subscriptions: JsArray[Subscription] = JsArray()
 
   protected[this] def killSubscriptions(): Unit = {
-    subscriptions.asInstanceOf[JsArray[Subscription]].forEach(_.onKilledByOwner())
-    //subscriptions.clear()
+    subscriptions.forEach(_.onKilledByOwner())
     subscriptions.length = 0
   }
 
@@ -40,10 +37,7 @@ trait Owner {
   protected[this] def onOwned(@unused subscription: Subscription): Unit = ()
 
   private[ownership] def onKilledExternally(subscription: Subscription): Unit = {
-    //if (!subscriptions.remove(subscription)) {
-    //  throw new Exception("Can not remove Subscription from Owner: subscription not found.")
-    //}
-    val index = subscriptions.asInstanceOf[JsArray[Subscription]].indexOf(subscription)
+    val index = subscriptions.indexOf(subscription)
     if (index != -1) {
       subscriptions.splice(index, deleteCount = 1)
     } else {
@@ -52,7 +46,6 @@ trait Owner {
   }
 
   private[ownership] def own(subscription: Subscription): Unit = {
-    //subscriptions.add(subscription)
     subscriptions.push(subscription)
     onOwned(subscription)
   }

@@ -1,8 +1,6 @@
 package com.raquo.airstream.ownership
 
-import com.raquo.airstream.JsArray
-
-import scala.scalajs.js
+import com.raquo.ew.JsArray
 
 // @Warning[Fragile]
 //  - We track a list of subscriptions and when activating / deactivating we run user code on each subscription
@@ -29,7 +27,7 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
 
   private var isSafeToRemoveSubscription = true
 
-  private val pendingSubscriptionRemovals = js.Array[DynamicSubscription]()
+  private val pendingSubscriptionRemovals: JsArray[DynamicSubscription] = JsArray()
 
   private var _maybeCurrentOwner: Option[Owner] = None
 

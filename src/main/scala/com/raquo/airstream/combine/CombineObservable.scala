@@ -3,9 +3,9 @@ package com.raquo.airstream.combine
 import com.raquo.airstream.common.InternalParentObserver
 import com.raquo.airstream.core.AirstreamError.CombinedError
 import com.raquo.airstream.core.{SyncObservable, Transaction, WritableObservable}
+import com.raquo.ew.JsArray
 import org.scalajs.dom
 
-import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
 trait CombineObservable[A] extends SyncObservable[A] { this: WritableObservable[A] =>
@@ -16,7 +16,7 @@ trait CombineObservable[A] extends SyncObservable[A] { this: WritableObservable[
   protected[this] def combinedValue: Try[A]
 
   /** Parent observers are not immediately active. onStart/onStop regulates that. */
-  protected[this] val parentObservers: js.Array[InternalParentObserver[_]] = js.Array()
+  protected[this] val parentObservers: JsArray[InternalParentObserver[_]] = JsArray()
 
   // @TODO[Elegance] Not a fan of how inputsReady couples this to its subclasses
   /** Check whether inputs (parent observables' values) are all available to be combined. */
@@ -45,12 +45,12 @@ trait CombineObservable[A] extends SyncObservable[A] { this: WritableObservable[
   }
 
   override protected[this] def onStart(): Unit = {
-    parentObservers.foreach(_.addToParent(shouldCallMaybeWillStart = false))
+    parentObservers.forEach(_.addToParent(shouldCallMaybeWillStart = false))
     super.onStart()
   }
 
   override protected[this] def onStop(): Unit = {
-    parentObservers.foreach(_.removeFromParent())
+    parentObservers.forEach(_.removeFromParent())
     super.onStop()
   }
 

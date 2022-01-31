@@ -12,6 +12,8 @@ object Versions {
 
   // Only used in test:
 
+  val Ew = "0.1.0-SNAPSHOT"
+
   val ScalaTest = "3.2.10"
 
   val JsDom = "16.4.0"

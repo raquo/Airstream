@@ -1,5 +1,7 @@
 package com.raquo.airstream.split
 
+import com.raquo.ew.JsArray
+
 import scala.collection.immutable
 import scala.scalajs.js
 
@@ -41,7 +43,14 @@ object Splittable extends LowPrioritySplittableImplicits {
     override def empty[A]: Option[A] = None
   }
 
-  implicit object JsArraySplittable extends Splittable[js.Array] {
+  implicit object JsArraySplittable extends Splittable[JsArray] {
+
+    override def map[A, B](inputs: JsArray[A], project: A => B): JsArray[B] = inputs.map(project)
+
+    override def empty[A]: JsArray[A] = JsArray()
+  }
+
+  implicit object ScalaJsArraySplittable extends Splittable[js.Array] {
 
     override def map[A, B](inputs: js.Array[A], project: A => B): js.Array[B] = inputs.map(project)
 
