@@ -39,7 +39,7 @@ class DelayEventStream[A](
   }
 
   override protected[this] def onStop(): Unit = {
-    timerHandles.forEach(js.timers.clearTimeout)
+    timerHandles.forEach(js.timers.clearTimeout(_))
     timerHandles.length = 0 // Clear array
     super.onStop()
   }

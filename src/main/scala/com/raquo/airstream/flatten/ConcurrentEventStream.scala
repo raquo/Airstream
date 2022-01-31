@@ -28,7 +28,7 @@ class ConcurrentEventStream[A](
 
   override protected def onWillStart(): Unit = {
     super.onWillStart()
-    accumulatedStreams.forEach(Protected.maybeWillStart)
+    accumulatedStreams.forEach(Protected.maybeWillStart(_))
     parent match {
       case signal: Signal[EventStream[A @unchecked] @unchecked] =>
         signal.tryNow() match {

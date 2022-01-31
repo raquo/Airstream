@@ -59,7 +59,7 @@ class EventBusStream[A] private[eventbus] () extends WritableEventStream[A] with
   }
 
   override protected def onWillStart(): Unit = {
-    sourceStreams.forEach(Protected.maybeWillStart)
+    sourceStreams.forEach(Protected.maybeWillStart(_))
   }
 
   override protected[this] def onStart(): Unit = {
