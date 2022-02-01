@@ -179,7 +179,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     * while the propagation is running. This would mean that some graphs would not propagate fully, which would
     * break very basic expectations of end users.
     *
-    * UPDATE: In 0.15.0 we made the observable removal delay more fine grained – previously we would wait until
+    * UPDATE: In 15.0.0 we made the observable removal delay more fine grained – previously we would wait until
     * the whole transaction completed before removing observers, now we only wait until this observable's
     * iteration is done. This helped us fix https://github.com/raquo/Airstream/issues/95
     *

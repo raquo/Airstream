@@ -80,7 +80,7 @@ val generateTupleCombinatorsTo = 9
 
 Compile / sourceGenerators += Def.task {
   Seq.concat(
-    GenerateCombineEventStreams(
+    GenerateCombineStreams(
       (Compile / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
@@ -90,7 +90,7 @@ Compile / sourceGenerators += Def.task {
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
-    GenerateSampleCombineEventStreams(
+    GenerateSampleCombineStreams(
       (Compile / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
@@ -100,7 +100,7 @@ Compile / sourceGenerators += Def.task {
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
-    GenerateTupleEventStreams(
+    GenerateTupleStreams(
       (Compile / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
@@ -110,7 +110,7 @@ Compile / sourceGenerators += Def.task {
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
-    GenerateCombinableEventStream(
+    GenerateCombinableStream(
       (Compile / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
@@ -120,7 +120,7 @@ Compile / sourceGenerators += Def.task {
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
-    GenerateStaticEventStreamCombineOps(
+    GenerateStaticStreamCombineOps(
       (Compile / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
@@ -140,7 +140,7 @@ Test / sourceGenerators += Def.task {
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
-    GenerateCombineEventStreamsTest(
+    GenerateCombineStreamsTest(
       (Test / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo

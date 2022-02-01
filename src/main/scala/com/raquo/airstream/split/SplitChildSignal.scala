@@ -2,7 +2,7 @@ package com.raquo.airstream.split
 
 import com.raquo.airstream.common.{InternalTryObserver, SingleParentSignal}
 import com.raquo.airstream.core.{Protected, Transaction}
-import com.raquo.airstream.timing.SyncDelayEventStream
+import com.raquo.airstream.timing.SyncDelayStream
 
 import scala.util.{Success, Try}
 
@@ -17,7 +17,7 @@ import scala.util.{Success, Try}
   * it happens during the transaction in which this signal was initialized.
   */
 private[airstream] class SplitChildSignal[M[_], A](
-  override protected[this] val parent: SyncDelayEventStream[M[A]],
+  override protected[this] val parent: SyncDelayStream[M[A]],
   initial: A,
   getMemoizedValue: () => Option[A]
 ) extends SingleParentSignal[M[A], A] with InternalTryObserver[M[A]] {

@@ -10,17 +10,17 @@ trait FlattenStrategy[-Outer[+_] <: Observable[_], -Inner[_], +Output[+_] <: Obs
 
 object FlattenStrategy {
 
-  /** See docs for [[SwitchEventStream]] */
+  /** See docs for [[SwitchStream]] */
   object SwitchStreamStrategy extends FlattenStrategy[Observable, EventStream, EventStream] {
     override def flatten[A](parent: Observable[EventStream[A]]): EventStream[A] = {
-      new SwitchEventStream[EventStream[A], A](parent = parent, makeStream = identity)
+      new SwitchStream[EventStream[A], A](parent = parent, makeStream = identity)
     }
   }
 
-  /** See docs for [[ConcurrentEventStream]] */
+  /** See docs for [[ConcurrentStream]] */
   object ConcurrentStreamStrategy extends FlattenStrategy[Observable, EventStream, EventStream] {
     override def flatten[A](parent: Observable[EventStream[A]]): EventStream[A] = {
-      new ConcurrentEventStream[A](parent = parent)
+      new ConcurrentStream[A](parent = parent)
     }
   }
 

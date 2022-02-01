@@ -1,6 +1,6 @@
 package com.raquo.airstream.custom
 
-import com.raquo.airstream.core.{EventStream, Transaction, WritableEventStream}
+import com.raquo.airstream.core.{EventStream, Transaction, WritableStream}
 import com.raquo.airstream.custom.CustomSource._
 
 /** Use this to easily create a custom signal from an external source
@@ -9,7 +9,7 @@ import com.raquo.airstream.custom.CustomSource._
   */
 class CustomStreamSource[A] private (
   makeConfig: (FireValue[A], FireError, GetStartIndex, GetIsStarted) => CustomSource.Config,
-) extends WritableEventStream[A] with CustomSource[A] {
+) extends WritableStream[A] with CustomSource[A] {
 
   override protected[this] val config: Config = makeConfig(
     value => {

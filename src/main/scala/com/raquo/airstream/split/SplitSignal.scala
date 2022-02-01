@@ -2,7 +2,7 @@ package com.raquo.airstream.split
 
 import com.raquo.airstream.common.{InternalTryObserver, SingleParentSignal}
 import com.raquo.airstream.core.{Protected, Signal, Transaction}
-import com.raquo.airstream.timing.SyncDelayEventStream
+import com.raquo.airstream.timing.SyncDelayStream
 
 import scala.collection.mutable
 import scala.util.Try
@@ -48,7 +48,7 @@ class SplitSignal[M[_], Input, Output, Key](
     )
   }
 
-  private[this] val sharedDelayedParent = new SyncDelayEventStream(parent, this)
+  private[this] val sharedDelayedParent = new SyncDelayStream(parent, this)
 
   private[this] def memoizedProject(nextInputs: M[Input]): M[Output] = {
     // Any keys not in this set by the end of this function will be removed from `memoized` map

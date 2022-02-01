@@ -67,7 +67,7 @@ class SwitchSignal[A](
 
       } else {
         // We want to re-emit the signal's current value even if switching to the same signal to be consistent
-        // with signals not having a built-in `==` check (since 0.15.0)
+        // with signals not having a built-in `==` check (since 15.0.0)
         //println(s"> init trx from SwitchSignal.onTry (same signal)")
         new Transaction(fireTry(nextSignalTry.flatMap(_.tryNow()), _)) // #Note[onStart,trx,loop]
       }
@@ -100,7 +100,7 @@ class SwitchSignal[A](
           //    Conversely, any events scheduled in point (3) above will run AFTER `trx` is done.
           //    This is as desired. It lets SwitchSignal emit the next signal's initial value before
           //    emitting subsequent updates to it that might have been triggered by starting it.
-          //    Prior to Airstream 0.15.0 the next signal's initial value would have been missed in such cases.
+          //    Prior to Airstream 15.0.0 the next signal's initial value would have been missed in such cases.
 
           nextSignalTry.foreach(Protected.maybeWillStart)
 

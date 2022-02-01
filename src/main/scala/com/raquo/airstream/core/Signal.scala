@@ -8,7 +8,7 @@ import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.debug.{DebuggableSignal, Debugger, DebuggerSignal}
 import com.raquo.airstream.distinct.DistinctSignal
 import com.raquo.airstream.misc.generated._
-import com.raquo.airstream.misc.{ChangesEventStream, ScanLeftSignal, MapSignal}
+import com.raquo.airstream.misc.{ChangesStream, ScanLeftSignal, MapSignal}
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.split.{SplittableOneSignal, SplittableSignal}
 import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
@@ -64,17 +64,17 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
 
   // #TODO[API] Make this into a lazy val? Are they encoded efficiently in JS?
   def changes: EventStream[A] = {
-    new ChangesEventStream[A](parent = this/*, emitChangeOnRestart = false*/)
+    new ChangesStream[A](parent = this/*, emitChangeOnRestart = false*/)
   }
 
   //def changesEmitChangeOnRestart: EventStream[A] = {
   //  new ChangesEventStream[A](parent = this, emitChangeOnRestart = true)
   //}
 
-  @deprecated("foldLeft was renamed to scanLeft", "0.15.0-RC1")
+  @deprecated("foldLeft was renamed to scanLeft", "15.0.0-RC1")
   def foldLeft[B](makeInitial: A => B)(fn: (B, A) => B): Signal[B] = scanLeft(makeInitial)(fn)
 
-  @deprecated("foldLeftRecover was renamed to scanLeftRecover", "0.15.0-RC1")
+  @deprecated("foldLeftRecover was renamed to scanLeftRecover", "15.0.0-RC1")
   def foldLeftRecover[B](makeInitial: Try[A] => Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = scanLeftRecover(makeInitial)(fn)
 
   /** A signal that emits the accumulated value every time that the parent signal emits.

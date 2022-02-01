@@ -9,7 +9,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class SyntaxSpec extends UnitSpec {
 
-  it("CombinableEventStream & TupleEventStream") {
+  it("CombinableStream & TupleStream") {
 
     val bus = new EventBus[Int]
     val bus1 = new EventBus[Int]

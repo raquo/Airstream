@@ -1,6 +1,6 @@
 package com.raquo.airstream.flatten
 
-import com.raquo.airstream.common.{InternalTryObserver, SingleParentEventStream}
+import com.raquo.airstream.common.{InternalTryObserver, SingleParentStream}
 import com.raquo.airstream.core.{EventStream, InternalObserver, Protected, Signal, Transaction}
 
 import scala.scalajs.js
@@ -13,7 +13,7 @@ import scala.util.{Success, Try}
   */
 class SwitchSignalStream[A](
   override protected[this] val parent: EventStream[Signal[A]]
-) extends SingleParentEventStream[Signal[A], A] with InternalTryObserver[Signal[A]] {
+) extends SingleParentStream[Signal[A], A] with InternalTryObserver[Signal[A]] {
 
   override protected val topoRank: Int = 1
 
@@ -42,7 +42,7 @@ class SwitchSignalStream[A](
 
     if (isSameSignal) {
       // We want to re-emit the signal's current value even if switching to the same signal to be consistent
-      // with signals not having a built-in `==` check (since 0.15.0)
+      // with signals not having a built-in `==` check (since 15.0.0)
       //println(s"> init trx from SwitchSignalStream.onTry (same signal)")
       new Transaction(fireTry(nextSignalTry.flatMap(_.tryNow()), _)) // #Note[onStart,trx,loop]
 
