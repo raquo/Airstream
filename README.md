@@ -21,7 +21,7 @@ Airstream has a very generic design, but is primarily intended to serve as a rea
 I created Airstream because I found existing solutions were not suitable for building reactive UI components. My original need for Airstream was to replace the previous reactive layer of [Laminar](https://laminar.dev), but I'll be happy to see it used by other reactive UI libraries as well. Another piece of Laminar you can reuse is [Scala DOM Types](https://github.com/raquo/scala-dom-types).
 
 ```
-"com.raquo" %%% "airstream" % "0.14.5"  // Requires Scala.js >= 1.9.0
+"com.raquo" %%% "airstream" % "<version>"  // Requires Scala.js >= 1.7.1
 ```
 
 
@@ -715,7 +715,7 @@ Warning: dom.XmlHttpRequest is an ugly, imperative JS construct. We set event ca
 
 Airstream has no official websockets integration yet.
 
-For several users' implementations, search the [Laminar gitter room](https://gitter.im/Laminar_/Lobby), and the issues in this repo.
+For several users' implementations, search the old [Laminar gitter room](https://gitter.im/Laminar_/Lobby), and the issues in this repo.
 
 
 #### DOM Events

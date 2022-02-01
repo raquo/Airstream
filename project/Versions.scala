@@ -12,7 +12,7 @@ object Versions {
 
   // Only used in test:
 
-  val Ew = "0.1.0-SNAPSHOT"
+  val Ew = "0.1.0"
 
   val ScalaTest = "3.2.10"
 
