@@ -40,5 +40,5 @@ class JsPriorityQueue[A](getRank: A => Int) {
 
   @inline def nonEmpty: Boolean = !isEmpty
 
-  def debugQueue: List[A] = queue.asScalaJsArray.toList
+  def debugQueue: List[A] = queue.asScalaJs.toList
 }

@@ -37,6 +37,8 @@ trait Owner {
   protected[this] def onOwned(@unused subscription: Subscription): Unit = ()
 
   private[ownership] def onKilledExternally(subscription: Subscription): Unit = {
+    // @TODO[Perf] this indexOf takes up ~3.6% of CPU time when filtering a large list of child elements in Laminar.
+    //  We could probably get rid of it by caching the subscription's index on creation, although that would be fragile.
     val index = subscriptions.indexOf(subscription)
     if (index != -1) {
       subscriptions.splice(index, deleteCount = 1)

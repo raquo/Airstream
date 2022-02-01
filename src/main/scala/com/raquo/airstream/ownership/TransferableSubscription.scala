@@ -73,7 +73,7 @@ class TransferableSubscription(
         maybeSubscription = None
       }
 
-      val newPilotSubscription = DynamicSubscription(
+      val newPilotSubscription = DynamicSubscription.unsafe(
         nextOwner,
         activate = parentOwner => {
           // If transfer is in progress, this activate method will be called immediately

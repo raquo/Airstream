@@ -15,6 +15,10 @@ import com.raquo.airstream.eventbus.WriteBus
   *
   * Note that the dynamic subscription is NOT activated automatically upon creation.
   *
+  * The subscription created by `activate` must not be killed externally,
+  * otherwise DynamicSubscription will throw when it tries to kill it and
+  * it's already killed.
+  *
   * @param activate - Note: Must not throw!
   * @param prepend  - If true, dynamic owner will prepend subscription to the list instead of appending.
   *                   This affects activation and deactivation order of subscriptions.
@@ -55,9 +59,13 @@ object DynamicSubscription {
   /** Use this when your activate() code requires cleanup on deactivation.
     * Specify that cleanup code inside the resulting Subscription.
     *
-    * @param activate Note: Must not throw!
+    * Marked as "unsafe" because you must not kill() the subscription
+    * created by `activate`, it must be managed by this DynamicSubscription
+    * only.
+    *
+    * @param activate Note: Must not throw! Must not kill resulting subscription!
     */
-  def apply(
+  def unsafe(
     dynamicOwner: DynamicOwner,
     activate: Owner => Subscription,
     prepend: Boolean = false
@@ -93,7 +101,7 @@ object DynamicSubscription {
     observable: Observable[A],
     sink: Sink[A]
   ): DynamicSubscription = {
-    DynamicSubscription(dynamicOwner, owner => observable.addObserver(sink.toObserver)(owner))
+    DynamicSubscription.unsafe(dynamicOwner, owner => observable.addObserver(sink.toObserver)(owner))
   }
 
   def subscribeFn[A](
@@ -101,7 +109,7 @@ object DynamicSubscription {
     observable: Observable[A],
     onNext: A => Unit
   ): DynamicSubscription = {
-    DynamicSubscription(dynamicOwner, owner => observable.foreach(onNext)(owner))
+    DynamicSubscription.unsafe(dynamicOwner, owner => observable.foreach(onNext)(owner))
   }
 
   def subscribeBus[A](
@@ -109,6 +117,6 @@ object DynamicSubscription {
     eventStream: EventStream[A],
     writeBus: WriteBus[A]
   ): DynamicSubscription = {
-    DynamicSubscription(dynamicOwner, owner => writeBus.addSource(eventStream)(owner))
+    DynamicSubscription.unsafe(dynamicOwner, owner => writeBus.addSource(eventStream)(owner))
   }
 }
