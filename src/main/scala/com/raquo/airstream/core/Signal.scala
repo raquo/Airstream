@@ -63,6 +63,10 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
   }
 
   // #TODO[API] Make this into a lazy val? Are they encoded efficiently in JS?
+  /** A stream of all values in this signal, excluding the initial value.
+    * When re-starting the signal, this stream does NOT re-emit the signal's
+    * current value.
+    */
   def changes: EventStream[A] = {
     new ChangesStream[A](parent = this/*, emitChangeOnRestart = false*/)
   }
