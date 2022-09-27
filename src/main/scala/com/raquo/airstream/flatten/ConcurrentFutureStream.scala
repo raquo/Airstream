@@ -3,7 +3,7 @@ package com.raquo.airstream.flatten
 import com.raquo.airstream.common.{ InternalNextErrorObserver, SingleParentObservable }
 import com.raquo.airstream.core.{ Observable, Transaction, WritableEventStream }
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue // #TODO #nc remove this in 15.0.0
 import scala.concurrent.Future
 
 /** This stream emits the values that the parent observables' emitted futures resolve with,

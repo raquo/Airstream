@@ -2,7 +2,7 @@ package com.raquo.airstream.timing
 
 import com.raquo.airstream.core.{ Transaction, WritableEventStream }
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue // #TODO #nc remove this in 15.0.0
 import scala.concurrent.Future
 
 /** This stream emits a value that the future resolves with.

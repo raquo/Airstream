@@ -1,7 +1,7 @@
 package com.raquo.airstream.core
 
 import scala.scalajs.js
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
 

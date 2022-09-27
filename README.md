@@ -4,7 +4,7 @@
 [![Join the chat at https://gitter.im/Laminar_/Lobby](https://badges.gitter.im/Laminar_/Lobby.svg)](https://gitter.im/Laminar_/Lobby)
 ![Maven Central](https://img.shields.io/maven-central/v/com.raquo/airstream_sjs1_2.13.svg)
 
-Airstream is a small state propagation and streaming library. Primary differences from other solutions:
+Airstream is a small state propagation and streaming library for Scala.js. Primary differences from other solutions:
 
 - **Mandatory [ownership](#ownership) of leaky resources** – it is impossible to create a subscription without specifying when it shall be destroyed. This helps prevent memory leaks and unexpected behaviour.
 

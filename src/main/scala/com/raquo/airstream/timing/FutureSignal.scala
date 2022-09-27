@@ -3,7 +3,7 @@ package com.raquo.airstream.timing
 import com.raquo.airstream.core.{ Transaction, WritableSignal }
 import com.raquo.airstream.state.StrictSignal
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue // #TODO #nc remove this in 15.0.0
 import scala.concurrent.Future
 import scala.util.{ Success, Try }
 
