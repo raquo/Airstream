@@ -8,7 +8,9 @@ object Versions {
 
   val ScalaJsDom = "2.0.0"
 
-  val Tuplez = "0.3.6"
+  val Tuplez = "0.3.7"
+
+  // Only used in test:
 
   val ScalaTest = "3.2.10"
 
