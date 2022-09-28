@@ -6,7 +6,8 @@ class SplittableStream[M[_], Input](val stream: EventStream[M[Input]]) extends A
 
   def split[Output, Key](
     key: Input => Key,
-    distinctCompose: Signal[Input] => Signal[Input] = _.distinct
+    distinctCompose: Signal[Input] => Signal[Input] = _.distinct,
+    duplicateKeys: DuplicateKeysConfig = DuplicateKeysConfig.default
   )(
     project: (Key, Input, Signal[Input]) => Output
   )(implicit
@@ -17,7 +18,8 @@ class SplittableStream[M[_], Input](val stream: EventStream[M[Input]]) extends A
       key,
       distinctCompose,
       project,
-      splittable
+      splittable,
+      duplicateKeys
     )
   }
 }

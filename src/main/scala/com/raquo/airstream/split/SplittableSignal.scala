@@ -6,7 +6,8 @@ class SplittableSignal[M[_], Input](val signal: Signal[M[Input]]) extends AnyVal
 
   def split[Output, Key](
     key: Input => Key,
-    distinctCompose: Signal[Input] => Signal[Input] = _.distinct
+    distinctCompose: Signal[Input] => Signal[Input] = _.distinct,
+    duplicateKeys: DuplicateKeysConfig = DuplicateKeysConfig.default
   )(
     project: (Key, Input, Signal[Input]) => Output
   )(implicit
@@ -14,10 +15,11 @@ class SplittableSignal[M[_], Input](val signal: Signal[M[Input]]) extends AnyVal
   ): Signal[M[Output]] = {
     new SplitSignal[M, Input, Output, Key](
       parent = signal,
-      key = key,
-      distinctCompose = distinctCompose,
-      project = project,
-      splittable
+      key,
+      distinctCompose,
+      project,
+      splittable,
+      duplicateKeys
     )
   }
 }

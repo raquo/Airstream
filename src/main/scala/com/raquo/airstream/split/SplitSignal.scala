@@ -3,8 +3,10 @@ package com.raquo.airstream.split
 import com.raquo.airstream.common.{InternalTryObserver, SingleParentSignal}
 import com.raquo.airstream.core.{Protected, Signal, Transaction}
 import com.raquo.airstream.timing.SyncDelayStream
+import org.scalajs.dom
 
 import scala.collection.mutable
+import scala.scalajs.js
 import scala.util.Try
 
 // @TODO[Performance] Should this be SplitSignal, or SplitEventStream?
@@ -32,7 +34,8 @@ class SplitSignal[M[_], Input, Output, Key](
   key: Input => Key,
   distinctCompose: Signal[Input] => Signal[Input],
   project: (Key, Input, Signal[Input]) => Output,
-  splittable: Splittable[M]
+  splittable: Splittable[M],
+  duplicateKeysConfig: DuplicateKeysConfig = DuplicateKeysConfig.default
 ) extends SingleParentSignal[M[Input], M[Output]] with InternalTryObserver[M[Input]] {
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
@@ -53,11 +56,20 @@ class SplitSignal[M[_], Input, Output, Key](
   private[this] def memoizedProject(nextInputs: M[Input]): M[Output] = {
     // Any keys not in this set by the end of this function will be removed from `memoized` map
     // This ensures that previously memoized values are forgotten once the source observables stops emitting their inputs
-    val nextKeysDict = mutable.HashSet.empty[Key] // HashSet has desirable performance tradeoffs
+    val nextKeys = mutable.HashSet.empty[Key] // HashSet has desirable performance tradeoffs
+
+    val duplicateKeys = if (duplicateKeysConfig.shouldWarn) js.Array[Key]() else null
 
     val nextOutputs = splittable.map(nextInputs, { (nextInput: Input) =>
       val memoizedKey = key(nextInput)
-      nextKeysDict += memoizedKey
+
+      if (duplicateKeysConfig.shouldWarn && nextKeys.contains(memoizedKey)) {
+        if (!duplicateKeys.contains(memoizedKey)) { // #Note: this uses scala == key comparison here, as desired
+          duplicateKeys.push(memoizedKey)
+        }
+      }
+
+      nextKeys += memoizedKey
 
       val cachedOutput = memoized.get(memoizedKey).map(_._2)
 
@@ -110,9 +122,13 @@ class SplitSignal[M[_], Input, Output, Key](
     })
 
     memoized.keys.foreach { memoizedKey =>
-      if (!nextKeysDict.contains(memoizedKey)) {
+      if (!nextKeys.contains(memoizedKey)) {
         memoized.remove(memoizedKey)
       }
+    }
+
+    if (duplicateKeysConfig.shouldWarn && duplicateKeys.nonEmpty) {
+      dom.console.error(s"Warning: Duplicate keys detected in {$parent}.split(): `${duplicateKeys.mkString("`, `")}`. This is a bug in your code. See comment in Airstream's DuplicateKeysConfig.scala.")
     }
 
     nextOutputs
