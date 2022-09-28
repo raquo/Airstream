@@ -5,7 +5,7 @@ import com.raquo.airstream.core.{EventStream, Observable, Signal}
 import com.raquo.airstream.eventbus.EventBus
 
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 class SyntaxSpec extends UnitSpec {
 
