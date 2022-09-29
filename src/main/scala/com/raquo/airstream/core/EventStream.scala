@@ -32,15 +32,13 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
 
   def filterNot(predicate: A => Boolean): EventStream[A] = filter(!predicate(_))
 
-  /** `stream.filterWith(otherSignal, when = false)` is essentially like
+  /** `stream.filterWith(otherSignal, passes = _ == false)` is essentially like
     * `stream.filter(_ => otherSignal.now() == false)` (but it compiles)
     */
-  def filterWith(source: SignalSource[Boolean], when: Boolean = true): EventStream[A] = {
-    // This implementation is equivalent to `withCurrentValueOf(passesSource).collect { ... }`
-    new SampleCombineStream2(
-      this, source, (ev: A, passes: Boolean) => (ev, passes)
-    )
-      .collect { case (ev, sourceValue) if sourceValue == when => ev }
+  def filterWith[B](source: SignalSource[B], passes: B => Boolean): EventStream[A] = {
+    this
+      .withCurrentValueOf(source)
+      .collect { case (ev, sourceValue) if passes(sourceValue) => ev }
   }
 
   /** Apply `pf` to event and emit the resulting value, or emit nothing if `pf` is not defined for that event.
