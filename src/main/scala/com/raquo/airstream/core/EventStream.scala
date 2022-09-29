@@ -183,6 +183,13 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
     )
   }
 
+  /** Returns a stream that emits events from this stream AND all off the `streams`, interleaved.
+    * Note: For other types of combination, see `combineWith`, `withCurrentValueOf`, `sample` etc.
+    */
+  def mergeWith[B >: A](streams: EventStream[B]*): EventStream[B] = {
+    EventStream.merge(streams: _*)
+  }
+
   @deprecated("foldLeft was renamed to scanLeft", "15.0.0-RC1")
   def foldLeft[B](initial: B)(fn: (B, A) => B): Signal[B] = scanLeft(initial)(fn)
 
@@ -387,6 +394,7 @@ object EventStream {
 
   @inline def combineSeq[A](streams: Seq[EventStream[A]]): EventStream[Seq[A]] = sequence(streams)
 
+  /** Returns a stream that emits events from all off the `streams`, interleaved. */
   def merge[A](streams: EventStream[A]*): EventStream[A] = {
     new MergeStream[A](streams)
   }
