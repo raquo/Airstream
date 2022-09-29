@@ -19,9 +19,11 @@ class Subscription (
   /** Make sure we only kill any given Subscription once. Just a sanity check against bad user logic,
     * e.g. calling .kill() manually when `owner` has already killed this subscription.
     */
-  private[this] final var isKilled = false
+  private[this] final var _isKilled = false
 
   owner.own(this)
+
+  def isKilled: Boolean = _isKilled
 
   def kill(): Unit = {
     safeCleanup()
@@ -34,9 +36,9 @@ class Subscription (
   }
 
   private[this] def safeCleanup(): Unit = {
-    if (!isKilled) {
+    if (!_isKilled) {
       cleanup()
-      isKilled = true
+      _isKilled = true
     } else {
       throw new Exception("Can not kill Subscription: it was already killed.")
     }
