@@ -10,6 +10,14 @@ trait Splittable[M[_]] {
 
   def map[A, B](inputs: M[A], project: A => B): M[B]
 
+  def zipWithIndex[A](inputs: M[A]): M[(A, Int)] = {
+    var ix = -1
+    map(inputs, (input: A) => {
+      ix += 1
+      (input, ix)
+    })
+  }
+
   def empty[A]: M[A]
 }
 

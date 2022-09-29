@@ -8,9 +8,9 @@ import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.debug.{DebuggableSignal, Debugger, DebuggerSignal}
 import com.raquo.airstream.distinct.DistinctSignal
 import com.raquo.airstream.misc.generated._
-import com.raquo.airstream.misc.{ChangesStream, ScanLeftSignal, MapSignal}
+import com.raquo.airstream.misc.{ChangesStream, MapSignal, ScanLeftSignal}
 import com.raquo.airstream.ownership.Owner
-import com.raquo.airstream.split.{SplittableOneSignal, SplittableSignal}
+import com.raquo.airstream.split.{SplittableOneSignal, SplittableOptionSignal, SplittableSignal}
 import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
 import com.raquo.airstream.timing.JsPromiseSignal
 
@@ -227,11 +227,14 @@ object Signal {
   /** Provides methods on Signal: combine, combineWith, withCurrentValueOf, sample */
   implicit def toCombinableSignal[A](signal: Signal[A]): CombinableSignal[A] = new CombinableSignal(signal)
 
-  /** Provides methods on Signal: split, splitIntoSignals */
+  /** Provides methods on Signal: split, splitByIndex */
   implicit def toSplittableSignal[M[_], Input](signal: Signal[M[Input]]): SplittableSignal[M, Input] = new SplittableSignal(signal)
 
-  /** Provides methods on Signal: splitOne, splitOneIntoSignals */
+  /** Provides methods on Signal: splitOne */
   implicit def toSplittableOneSignal[A](signal: Signal[A]): SplittableOneSignal[A] = new SplittableOneSignal[A](signal)
+
+  /** Provides methods on Signal: splitOption */
+  implicit def toSplittableOptionSignal[A](signal: Signal[Option[A]]): SplittableOptionSignal[A] = new SplittableOptionSignal[A](signal)
 
   /** Provides signal-specific debug* methods: debugSpyInitialEval, debugLogInitialEval, debugBreakInitialEval */
   implicit def toDebuggableSignal[A](signal: Signal[A]): DebuggableSignal[A] = new DebuggableSignal[A](signal)
