@@ -52,6 +52,8 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     */
   def mapToStrict[B](value: B): Self[B] = map(_ => value)
 
+  def mapToUnit: Self[Unit] = map(_ => ())
+
   /** @param compose Note: guarded against exceptions */
   @inline def flatMap[B, Inner[_], Output[+_] <: Observable[_]](compose: A => Inner[B])(
     implicit strategy: FlattenStrategy[Self, Inner, Output]

@@ -361,6 +361,12 @@ object EventStream {
     (bus.events, bus.writer.onNext)
   }
 
+  /** Create a stream of Unit, and a callback that, when fired, makes that stream emit. */
+  def fromCallbackUnit: (EventStream[Unit], () => Unit) = {
+    val bus = new EventBus[Unit]
+    (bus.events, () => bus.writer.onNext(()))
+  }
+
   /** Create a stream and a JS callback that, when fired, makes that stream emit. */
   def fromJsCallback[A]: (EventStream[A], js.Function1[A, Unit]) = {
     val bus = new EventBus[A]
