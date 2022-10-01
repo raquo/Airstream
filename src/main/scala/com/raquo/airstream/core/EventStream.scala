@@ -370,10 +370,10 @@ object EventStream {
   }
 
   /** Emit () with a delay (`ms` milliseconds after stream is started) */
-  @inline def after(ms: Int): EventStream[Unit] = after(ms, ())
+  @inline def delay(ms: Int): EventStream[Unit] = delay(ms, ())
 
   /** Emit `event` with a delay (`ms` milliseconds after stream is started) */
-  def after[A](ms: Int, event: A, emitOnce: Boolean = false): EventStream[A] = {
+  def delay[A](ms: Int, event: A, emitOnce: Boolean = false): EventStream[A] = {
     EventStream.fromValue(event, emitOnce).delay(ms)
   }
 
