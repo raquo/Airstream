@@ -38,4 +38,13 @@ object FlattenStrategy {
     }
   }
 
+  object SwitchSignalObservableStrategy extends FlattenStrategy[Observable, Signal, Observable] {
+    override def flatten[A](parent: Observable[Signal[A]]): Observable[A] = {
+      parent.matchStreamOrSignal(
+        ifStream = SwitchSignalStreamStrategy.flatten,
+        ifSignal = SwitchSignalStrategy.flatten
+      )
+    }
+  }
+
 }

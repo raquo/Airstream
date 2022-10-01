@@ -15,7 +15,6 @@ class Subscription (
   cleanup: () => Unit
 ) {
 
-  // @TODO[API] Perhaps we should let subclasses read this? If anyone cares, let me know.
   /** Make sure we only kill any given Subscription once. Just a sanity check against bad user logic,
     * e.g. calling .kill() manually when `owner` has already killed this subscription.
     */

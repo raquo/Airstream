@@ -95,28 +95,19 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
   def distinctTry(fn: (Try[A], Try[A]) => Boolean): Self[A]
 
   def toStreamIfSignal[B >: A](ifSignal: Signal[A] => EventStream[B]): EventStream[B] = {
-    this match {
-      case s: Signal[A @unchecked] => ifSignal(s)
-      case s: EventStream[A @unchecked] => s
-      case _ => throw new Exception("All Observables must extend EventStream or Signal")
-    }
+    matchStreamOrSignal(identity, ifSignal)
   }
 
   def toSignalIfStream[B >: A](ifStream: EventStream[A] => Signal[B]): Signal[B] = {
-    this match {
-      case s: EventStream[A @unchecked] => ifStream(s)
-      case s: Signal[A @unchecked] => s
-      case _ => throw new Exception("All Observables must extend EventStream or Signal")
-    }
+    matchStreamOrSignal(ifStream, identity)
   }
 
   /** Convert this observable to a signal of Option[A]. If it is a stream, set initial value to None. */
   def toWeakSignal: Signal[Option[A]] = {
-    map(Some(_)) match {
-      case s: EventStream[Option[A @unchecked] @unchecked] => s.toSignal(initial = None)
-      case s: Signal[Option[A @unchecked] @unchecked] => s
-      case _ => throw new Exception("All Observables must extend EventStream or Signal")
-    }
+    matchStreamOrSignal(
+      ifStream = _.map(Some(_)).toSignal(initial = None),
+      ifSignal = _.map(Some(_))
+    )
   }
 
   // @TODO[API] I don't like the Option[O] output type here very much. We should consider a sentinel error object instead (need to check performance). Or maybe add a recoverOrSkip method or something?
@@ -147,6 +138,17 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     * such as debugLog(), debugSpyEvents(), etc.
     */
   def debugWith(debugger: Debugger[A]): Self[A]
+
+  def matchStreamOrSignal[B](
+    ifStream: EventStream[A] => B,
+    ifSignal: Signal[A] => B
+  ): B = {
+    this match {
+      case stream: EventStream[A @unchecked] => ifStream(stream)
+      case signal: Signal[A @unchecked] => ifSignal(signal)
+      case _ => throw new Exception("All Observables must extend EventStream or Signal")
+    }
+  }
 
   /** Create an external observer from a function and subscribe it to this observable.
     *
