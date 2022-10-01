@@ -294,6 +294,10 @@ object EventStream {
     )
   }
 
+  def unit(emitOnce: Boolean = false): EventStream[Unit] = {
+    EventStream.fromValue((), emitOnce)
+  }
+
   /** @param emitOnce if true, the event will be emitted at most one time.
     *                 If false, the event will be emitted every time the stream is started. */
   def fromSeq[A](events: Seq[A], emitOnce: Boolean = false): EventStream[A] = {
