@@ -575,4 +575,60 @@ class SwitchStreamSpec extends UnitSpec {
     assert(calculations.isEmpty)
   }
 
+  it("map parent inside flatMap") {
+
+    // @see https://github.com/raquo/Airstream/issues/95
+
+    val effects = mutable.Buffer[Effect[String]]()
+
+    var smallI = -1
+    var bigI = -1
+
+    val owner = new TestableOwner
+
+    val intBus = new EventBus[Int]
+
+    val intStream = intBus.events
+
+    val brokenSignal =
+      intStream
+        .flatMap { num =>
+          if (num < 1000) {
+            smallI += 1
+            intStream.map("small: " + _).setDisplayName(s"small-$smallI") //.debugLogLifecycle()
+          } else {
+            bigI += 1
+            EventStream.fromValue("big").setDisplayName(s"inner-$bigI")
+          }
+        }
+
+    brokenSignal.foreach(Effect.log("output", effects))(owner)
+
+    def emit(v: Int): Unit = {
+      Effect.log("emit", effects)(v.toString)
+      intBus.emit(v)
+    }
+
+    // --
+
+    emit(884)
+    emit(887)
+    emit(1018)
+    emit(1141)
+    emit(1142)
+
+    effects shouldBe mutable.Buffer(
+      Effect("emit", "884"),
+      Effect("output", "small: 884"),
+      Effect("emit", "887"),
+      Effect("output", "small: 887"),
+      Effect("emit", "1018"),
+      Effect("output", "big"),
+      Effect("emit", "1141"),
+      Effect("output", "big"),
+      Effect("emit", "1142"),
+      Effect("output", "big")
+    )
+  }
+
 }

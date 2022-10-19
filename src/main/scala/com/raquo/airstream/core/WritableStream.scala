@@ -8,10 +8,11 @@ trait WritableStream[A] extends EventStream[A] with WritableObservable[A] {
 
   override protected[this] def fireValue(nextValue: A, transaction: Transaction): Unit = {
     //println(s"$this > FIRE > $nextValue")
-    // Note: Removal of observers is always done at the end of a transaction, so the iteration here is safe
 
     // === CAUTION ===
     // The following logic must match Signal's fireTry! It is separated here for performance.
+
+    isSafeToRemoveObserver = false
 
     externalObservers.foreach { observer =>
       try {
@@ -24,11 +25,17 @@ trait WritableStream[A] extends EventStream[A] with WritableObservable[A] {
     internalObservers.foreach { observer =>
       InternalObserver.onNext(observer, nextValue, transaction)
     }
+
+    isSafeToRemoveObserver = true
+
+    maybePendingObserverRemovals.foreach { pendingObserverRemovals =>
+      pendingObserverRemovals.forEach(remove => remove())
+      pendingObserverRemovals.length = 0
+    }
   }
 
   override protected[this] def fireError(nextError: Throwable, transaction: Transaction): Unit = {
     //println(s"$this > FIRE > $nextError")
-    // Note: Removal of observers is always done at the end of a transaction, so the iteration here is safe
 
     // === CAUTION ===
     // The following logic must match Signal's fireTry! It is separated here for performance.
