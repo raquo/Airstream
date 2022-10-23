@@ -1,7 +1,7 @@
 # Airstream
 
 [![Build Status](https://circleci.com/gh/raquo/Airstream.svg?style=svg)](https://circleci.com/gh/raquo/Airstream)
-[![Join the chat at https://gitter.im/Laminar_/Lobby](https://badges.gitter.im/Laminar_/Lobby.svg)](https://gitter.im/Laminar_/Lobby)
+[![Chat on https://discord.gg/JTrUxhq7sj](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://discord.gg/JTrUxhq7sj)
 ![Maven Central](https://img.shields.io/maven-central/v/com.raquo/airstream_sjs1_2.13.svg)
 
 Airstream is a small state propagation and streaming library for Scala.js. Primary differences from other solutions:
@@ -80,7 +80,7 @@ I created Airstream because I found existing solutions were not suitable for bui
 
 ## Community
 
-* [Gitter](https://gitter.im/Laminar_/Lobby) for chat and random questions (Airstream shares this room with [Laminar](https://laminar.dev))
+* [Discord](https://discord.gg/JTrUxhq7sj) for chat and random questions (Airstream shares this server with [Laminar](https://laminar.dev))
 * [Github issues](https://github.com/raquo/Airstream/issues) for bugs, feature requests, and more in-depth discussions
 
 
@@ -715,7 +715,7 @@ Warning: dom.XmlHttpRequest is an ugly, imperative JS construct. We set event ca
 
 Airstream has no official websockets integration yet.
 
-For several users' implementations, search Laminar gitter room, and the issues in this repo.
+For several users' implementations, search the [Laminar gitter room](https://gitter.im/Laminar_/Lobby), and the issues in this repo.
 
 
 #### DOM Events
@@ -1062,7 +1062,7 @@ Note: These operators are available on qualifying streams and signals by means o
 
 This operator is particularly hard to put into words, at least on my first try. You might want to read the `split signal into signals` test in `SplitEventStreamSpec.scala`
 
-And hey, don't be a stranger, remember we have [Gitter](https://gitter.im/Laminar_/Lobby) for chat.
+And hey, don't be a stranger, remember we have [Discord](https://discord.gg/JTrUxhq7sj) for chat.
 
 ##### Example 1: Latest Version of Foo by Id
 
