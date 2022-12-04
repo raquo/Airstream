@@ -21,23 +21,23 @@ case class GenerateTupleStreams(
     line("// These mapN and filterN helpers are implicitly available on streams of tuples")
     line()
     for (n <- from to to) {
-      enter(s"class TupleStream${n}[${tupleType(n)}](val stream: EventStream[(${tupleType(n)})]) extends AnyVal {")
-      line()
-      enter(s"def mapN[Out](project: (${tupleType(n)}) => Out): EventStream[Out] = {")
-      enter(s"new MapStream[(${tupleType(n)}), Out](")
-      line("parent = stream,")
-      line(s"project = v => project(${tupleType(n, "v._")}),")
-      line(s"recover = None")
-      leave(")")
-      leave("}")
-      line()
-      enter(s"def filterN(passes: (${tupleType(n)}) => Boolean): EventStream[(${tupleType(n)})] = {")
-      enter(s"new FilterStream[(${tupleType(n)})](")
-      line("parent = stream,")
-      line(s"passes = v => passes(${tupleType(n, "v._")})")
-      leave(")")
-      leave("}")
-      leave("}")
+      enter(s"class TupleStream${n}[${tupleType(n)}](val stream: EventStream[(${tupleType(n)})]) extends AnyVal {", "}") {
+        line()
+        enter(s"def mapN[Out](project: (${tupleType(n)}) => Out): EventStream[Out] = {", "}") {
+          enter(s"new MapStream[(${tupleType(n)}), Out](", ")") {
+            line("parent = stream,")
+            line(s"project = v => project(${tupleType(n, "v._")}),")
+            line(s"recover = None")
+          }
+        }
+        line()
+        enter(s"def filterN(passes: (${tupleType(n)}) => Boolean): EventStream[(${tupleType(n)})] = {", "}") {
+          enter(s"new FilterStream[(${tupleType(n)})](", ")") {
+            line("parent = stream,")
+            line(s"passes = v => passes(${tupleType(n, "v._")})")
+          }
+        }
+      }
       line()
       line("// --")
       line()

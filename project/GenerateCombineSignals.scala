@@ -22,20 +22,20 @@ case class GenerateCombineSignals(
     line()
     for (n <- from to to) {
       line("/** @param combinator Must not throw! */")
-      enter(s"class CombineSignal${n}[${tupleType(n)}, Out](")
-      for (i <- 1 to n) {
-        line(s"parent${i}: SignalSource[T${i}],")
+      enter(s"class CombineSignal${n}[${tupleType(n)}, Out](") {
+        for (i <- 1 to n) {
+          line(s"parent${i}: SignalSource[T${i}],")
+        }
+        line(s"combinator: (${tupleType(n)}) => Out")
       }
-      line(s"combinator: (${tupleType(n)}) => Out")
-      leave()
-      enter(s") extends CombineSignalN[Any, Out](")
-      line("parents = " + tupleTypeRaw(n, "parent", ".toObservable").mkString(" :: ") + " :: Nil,")
-      enter("combinator = seq => combinator(")
-      for (i <- 1 to n) {
-        line(s"seq(${i - 1}).asInstanceOf[T${i}],")
+      enter(s") extends CombineSignalN[Any, Out](", ")") {
+        line("parents = " + tupleType(n, prefix = "parent", suffix = ".toObservable", separator = " :: ") + " :: Nil,")
+        enter("combinator = seq => combinator(", ")") {
+          for (i <- 1 to n) {
+            line(s"seq(${i - 1}).asInstanceOf[T${i}],")
+          }
+        }
       }
-      leave(")")
-      leave(")")
       line()
     }
     line()

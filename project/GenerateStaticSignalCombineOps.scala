@@ -21,31 +21,31 @@ case class GenerateStaticSignalCombineOps(
     line("// These combine and combineWith methods are available on the Signal companion object")
     line("// For instance methods of the same name, see CombinableSignal.scala")
     line()
-    enter(s"object StaticSignalCombineOps {")
-    line()
-    for (n <- from to to) {
-      enter(s"def combine[${tupleType(n)}](")
-      line((1 to n).map(i => s"s${i}: SignalSource[T${i}]").mkString(", "))
-      leave()
-      enter(s"): Signal[(${tupleType(n)})] = {")
-      line(s"combineWithFn(${tupleType(n, "s")})(Tuple${n}.apply[${tupleType(n)}])")
-      leave("}")
+    enter(s"object StaticSignalCombineOps {", "}") {
       line()
-      line("/** @param combinator Must not throw! */")
-      enter(s"def combineWithFn[${tupleType(n)}, Out](")
-      line((1 to n).map(i => s"s${i}: SignalSource[T${i}]").mkString(", "))
-      leave()
-      enter(")(")
-      line(s"combinator: (${tupleType(n)}) => Out")
-      leave()
-      enter(s"): Signal[Out] = {")
-      line(s"new CombineSignal${n}(${tupleType(n, "s")}, combinator)")
-      leave("}")
-      line()
-      line("// --")
-      line()
+      for (n <- from to to) {
+        enter(s"def combine[${tupleType(n)}](") {
+          line((1 to n).map(i => s"s${i}: SignalSource[T${i}]").mkString(", "))
+        }
+        enter(s"): Signal[(${tupleType(n)})] = {", "}") {
+          line(s"combineWithFn(${tupleType(n, "s")})(Tuple${n}.apply[${tupleType(n)}])")
+        }
+        line()
+        line("/** @param combinator Must not throw! */")
+        enter(s"def combineWithFn[${tupleType(n)}, Out](") {
+          line((1 to n).map(i => s"s${i}: SignalSource[T${i}]").mkString(", "))
+        }
+        enter(")(") {
+          line(s"combinator: (${tupleType(n)}) => Out")
+        }
+        enter(s"): Signal[Out] = {", "}") {
+          line(s"new CombineSignal${n}(${tupleType(n, "s")}, combinator)")
+        }
+        line()
+        line("// --")
+        line()
+      }
     }
-    leave("}")
   }
 
 }

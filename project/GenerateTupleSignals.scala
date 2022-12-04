@@ -21,16 +21,16 @@ case class GenerateTupleSignals(
     line("// These mapN helpers are implicitly available on signals of tuples")
     line()
     for (n <- from to to) {
-      enter(s"class TupleSignal${n}[${tupleType(n)}](val signal: Signal[(${tupleType(n)})]) extends AnyVal {")
-      line()
-      enter(s"def mapN[Out](project: (${tupleType(n)}) => Out): Signal[Out] = {")
-      enter(s"new MapSignal[(${tupleType(n)}), Out](")
-      line("parent = signal,")
-      line(s"project = v => project(${tupleType(n, "v._")}),")
-      line(s"recover = None")
-      leave(")")
-      leave("}")
-      leave("}")
+      enter(s"class TupleSignal${n}[${tupleType(n)}](val signal: Signal[(${tupleType(n)})]) extends AnyVal {", "}") {
+        line()
+        enter(s"def mapN[Out](project: (${tupleType(n)}) => Out): Signal[Out] = {", "}") {
+          enter(s"new MapSignal[(${tupleType(n)}), Out](", ")") {
+            line("parent = signal,")
+            line(s"project = v => project(${tupleType(n, "v._")}),")
+            line(s"recover = None")
+          }
+        }
+      }
       line()
       line("// --")
       line()

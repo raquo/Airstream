@@ -22,46 +22,46 @@ case class GenerateCombinableStream(
     line("// These combine / combineWith / withCurrentValueOf / sample methods are implicitly available on all streams")
     line("// For combine / combineWith methods on the EventStream companion object, see StaticStreamCombineOps.scala")
     line()
-    enter(s"class CombinableStream[A](val stream: EventStream[A]) extends AnyVal {")
-    line()
-    for (n <- (from - 1) until to) {
-      enter(s"def combineWith[${tupleType(n)}](")
-      line((1 to n).map(i => s"s${i}: EventSource[T${i}]").mkString(", "))
-      leave()
-      enter(s")(implicit c: Composition[A, (${tupleType(n)})]): EventStream[c.Composed] = {")
-      line(s"combineWithFn(${tupleType(n, "s")})((a, ${tupleType(n, "v")}) => c.compose(a, (${tupleType(n, "v")})))")
-      leave("}")
+    enter(s"class CombinableStream[A](val stream: EventStream[A]) extends AnyVal {", "}") {
       line()
-      line("/** @param combinator Must not throw! */")
-      enter(s"def combineWithFn[${tupleType(n)}, Out](")
-      line((1 to n).map(i => s"s${i}: EventSource[T${i}]").mkString(", "))
-      leave()
-      enter(")(")
-      line(s"combinator: (A, ${tupleType(n)}) => Out")
-      leave()
-      enter(s"): EventStream[Out] = {")
-      line(s"new CombineStream${n + 1}(stream, ${tupleType(n, "s")}, combinator)")
-      leave("}")
-      line()
-      enter(s"def withCurrentValueOf[${tupleType(n)}](")
-      line((1 to n).map(i => s"s${i}: SignalSource[T${i}]").mkString(", "))
-      leave()
-      enter(s")(implicit c: Composition[A, (${tupleType(n)})]): EventStream[c.Composed] = {")
-      line(s"val combinator = (a: A, ${(1 to n).map(i => s"v${i}: T${i}").mkString(", ")}) => c.compose(a, (${tupleType(n, "v")}))")
-      line(s"new SampleCombineStream${n + 1}(stream, ${tupleType(n, "s")}, combinator)")
-      leave("}")
-      line()
-      enter(s"def sample[${tupleType(n)}](")
-      line((1 to n).map(i => s"s${i}: SignalSource[T${i}]").mkString(", "))
-      leave()
-      enter(s"): EventStream[(${tupleType(n)})] = {")
-      line(s"new SampleCombineStream${n + 1}[A, ${tupleType(n)}, (${tupleType(n)})](stream, ${tupleType(n, "s")}, (_, ${tupleType(n, "v")}) => (${tupleType(n, "v")}))")
-      leave("}")
-      line()
-      line("// --")
-      line()
+      for (n <- (from - 1) until to) {
+        enter(s"def combineWith[${tupleType(n)}](") {
+          line((1 to n).map(i => s"s${i}: EventSource[T${i}]").mkString(", "))
+        }
+        enter(s")(implicit c: Composition[A, (${tupleType(n)})]): EventStream[c.Composed] = {", "}") {
+          line(s"combineWithFn(${tupleType(n, "s")})((a, ${tupleType(n, "v")}) => c.compose(a, (${tupleType(n, "v")})))")
+        }
+        line()
+        line("/** @param combinator Must not throw! */")
+        enter(s"def combineWithFn[${tupleType(n)}, Out](") {
+          line((1 to n).map(i => s"s${i}: EventSource[T${i}]").mkString(", "))
+        }
+        enter(")(") {
+          line(s"combinator: (A, ${tupleType(n)}) => Out")
+        }
+        enter(s"): EventStream[Out] = {", "}") {
+          line(s"new CombineStream${n + 1}(stream, ${tupleType(n, "s")}, combinator)")
+        }
+        line()
+        enter(s"def withCurrentValueOf[${tupleType(n)}](") {
+          line((1 to n).map(i => s"s${i}: SignalSource[T${i}]").mkString(", "))
+        }
+        enter(s")(implicit c: Composition[A, (${tupleType(n)})]): EventStream[c.Composed] = {", "}") {
+          line(s"val combinator = (a: A, ${(1 to n).map(i => s"v${i}: T${i}").mkString(", ")}) => c.compose(a, (${tupleType(n, "v")}))")
+          line(s"new SampleCombineStream${n + 1}(stream, ${tupleType(n, "s")}, combinator)")
+        }
+        line()
+        enter(s"def sample[${tupleType(n)}](") {
+          line((1 to n).map(i => s"s${i}: SignalSource[T${i}]").mkString(", "))
+        }
+        enter(s"): EventStream[(${tupleType(n)})] = {", "}") {
+          line(s"new SampleCombineStream${n + 1}[A, ${tupleType(n)}, (${tupleType(n)})](stream, ${tupleType(n, "s")}, (_, ${tupleType(n, "v")}) => (${tupleType(n, "v")}))")
+        }
+        line()
+        line("// --")
+        line()
+      }
     }
-    leave("}")
   }
 
 }
