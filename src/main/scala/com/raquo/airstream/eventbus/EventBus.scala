@@ -32,7 +32,7 @@ object EventBus {
 
   type EventBusTryTuple[A] = (EventBus[A], Try[A])
 
-  // @TODO[Integrity] Not sure how to implement these without .asInstanceOf
+  def apply[A]: EventBus[A] = new EventBus[A]
 
   /** Emit events into several EventBus-es at once (in the same transaction)
     * Example usage: emitTry(eventBus1 -> value1, eventBus2 -> value2)
