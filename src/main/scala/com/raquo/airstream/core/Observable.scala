@@ -14,12 +14,6 @@ trait Observable[+A] extends BaseObservable[Observable, A] {}
 
 object Observable extends ObservableLowPriorityImplicits {
 
-  implicit val switchStreamStrategy: FlattenStrategy[Observable, EventStream, EventStream] = SwitchStreamStrategy
-
-  implicit val switchSignalStreamStrategy: FlattenStrategy[EventStream, Signal, EventStream] = SwitchSignalStreamStrategy
-
-  implicit val switchSignalStrategy: FlattenStrategy[Signal, Signal, Signal] = SwitchSignalStrategy
-
   /** Provides debug* methods on Observable: debugSpy, debugLogEvents, debugBreakErrors, etc. */
   implicit def toDebuggableObservable[A](observable: Observable[A]): DebuggableObservable[Observable, A] = new DebuggableObservable[Observable, A](observable)
 
@@ -34,6 +28,12 @@ object Observable extends ObservableLowPriorityImplicits {
       strategy.flatten(parent)
     }
   }
+
+  implicit val switchStreamStrategy: FlattenStrategy[Observable, EventStream, EventStream] = SwitchStreamStrategy
+
+  implicit val switchSignalStreamStrategy: FlattenStrategy[EventStream, Signal, EventStream] = SwitchSignalStreamStrategy
+
+  implicit val switchSignalStrategy: FlattenStrategy[Signal, Signal, Signal] = SwitchSignalStrategy
 }
 
 trait ObservableLowPriorityImplicits {

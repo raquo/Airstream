@@ -7,6 +7,7 @@ import scala.util.Try
 /** A simple signal that has multiple parents. */
 trait MultiParentSignal[+I, O] extends WritableSignal[O] {
 
+  // #nc[perf] should this maybe be js.Array?
   protected[this] val parents: Seq[Observable[I]]
 
   override protected def onWillStart(): Unit = {

@@ -18,7 +18,7 @@ class SyncDelayStream[A] (
 
   private[this] var maybePendingValue: js.UndefOr[Try[A]] = js.undefined
 
-  override protected val topoRank: Int = Protected.maxTopoRank(parent :: after :: Nil) + 1
+  override protected val topoRank: Int = (Protected.topoRank(parent) max Protected.topoRank(after)) + 1
 
   override protected def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
     if (!transaction.pendingObservables.contains(this)) {

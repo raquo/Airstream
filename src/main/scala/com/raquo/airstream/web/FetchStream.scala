@@ -55,7 +55,7 @@ class FetchStream private[web] (
 
 }
 
-/** Note: dom.BodyInit is a union type that includes String
+/** Note: [[dom.BodyInit]] is a union type that includes String
   * and some other Javascript-specific data types.
   */
 object FetchStream extends FetchBuilder[dom.BodyInit, String](

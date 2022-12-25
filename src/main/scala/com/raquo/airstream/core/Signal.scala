@@ -156,7 +156,7 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
 
   /** Recalculate the signal's current value. Typically this asks the parent signal
     * for its current value, and does the math from there, according to the particular
-    * signal's logic (e.g. MapSignal would apply the `project` function.
+    * signal's logic (e.g. MapSignal would apply the `project` function).
     *
     * This method is used to calculate the signal's initial value, but also to
     * recalculate, this signal's value, to re-sync it with the parent, when this signal

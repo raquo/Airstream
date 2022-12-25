@@ -46,7 +46,7 @@ class AjaxStream(
 
   override protected val topoRank: Int = 1
 
-  private var pendingRequest: Option[dom.XMLHttpRequest] = None
+  private var maybePendingRequest: js.UndefOr[dom.XMLHttpRequest] = js.undefined
 
   /** This stream will emit at most one event per request regardless of the outcome.
     *
@@ -64,7 +64,7 @@ class AjaxStream(
   override protected[this] def onStart(): Unit = {
     val request = AjaxStream.initRequest(timeoutMs, withCredentials, responseType)
 
-    pendingRequest = Some(request)
+    maybePendingRequest = request
 
     // As far as I can tell, only one of onload / onerror / onabort / ontimeout events can fire for every request,
     // so the callbacks below are both mutually exhaustive and encompass all possible outcomes.
@@ -74,8 +74,8 @@ class AjaxStream(
     // but that pattern isn't supported on XMLHttpRequest by all browsers (e.g. IE11 doesn't work).
 
     request.onload = (_: dom.Event) => {
-      if (pendingRequest.contains(request)) {
-        pendingRequest = None
+      if (maybePendingRequest.contains(request)) {
+        maybePendingRequest = js.undefined
         val status = request.status
         if (isStatusCodeSuccess(status))
           new Transaction(fireValue(request, _))
@@ -85,8 +85,8 @@ class AjaxStream(
     }
 
     request.onerror = (_: dom.Event) => {
-      if (pendingRequest.contains(request)) {
-        pendingRequest = None
+      if (maybePendingRequest.contains(request)) {
+        maybePendingRequest = js.undefined
 
         // @TODO I can't figure out how to get a detailed error message in this case.
         //  - `ev` is not actually a dom.ErrorEvent, but a useless dom.ProgressEvent
@@ -97,15 +97,15 @@ class AjaxStream(
     }
 
     request.onabort = (_: js.Any) => {
-      if (pendingRequest.contains(request)) {
-        pendingRequest = None
+      if (maybePendingRequest.contains(request)) {
+        maybePendingRequest = js.undefined
         new Transaction(fireError(AjaxAbort(request), _))
       }
     }
 
     request.ontimeout = (_: dom.Event) => {
-      if (pendingRequest.contains(request)) {
-        pendingRequest = None
+      if (maybePendingRequest.contains(request)) {
+        maybePendingRequest = js.undefined
         new Transaction(fireError(AjaxTimeout(request), _))
       }
     }
@@ -114,7 +114,7 @@ class AjaxStream(
 
     if (progressObserver != Observer.empty) {
       request.onprogress = ev => {
-        if (pendingRequest.contains(request)) {
+        if (maybePendingRequest.contains(request)) {
           progressObserver.onNext((request, ev))
         }
       }
@@ -122,7 +122,7 @@ class AjaxStream(
 
     if (readyStateChangeObserver != Observer.empty) {
       request.onreadystatechange = (_: dom.Event) => {
-        if (pendingRequest.contains(request)) {
+        if (maybePendingRequest.contains(request)) {
           readyStateChangeObserver.onNext(request)
         }
       }
@@ -139,7 +139,7 @@ class AjaxStream(
   }
 
   override protected[this] def onStop(): Unit = {
-    pendingRequest = None
+    maybePendingRequest = js.undefined
     super.onStop()
   }
 }

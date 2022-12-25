@@ -36,6 +36,21 @@ class SyntaxSpec extends UnitSpec {
       ).mapN(Foo.apply)
       fooStream: EventStream[Foo]
     }
+
+    // --
+
+    locally {
+      val tuple4stream = bus.events.combineWith(bus1.events).combineWith(bus2.events, bus3.events)
+      tuple4stream: EventStream[(Int, Int, Boolean, String)]
+    }
+
+    locally {
+      val fooStream = bus.events.withCurrentValueOf(bus1.events.startWith(0)).withCurrentValueOf(
+        bus2.events.startWith(false),
+        bus3.events.startWith("")
+      ).mapN(Foo.apply)
+      fooStream: EventStream[Foo]
+    }
   }
 
   it("{EventStream$,Signal$}.{combine,combineWith)") {

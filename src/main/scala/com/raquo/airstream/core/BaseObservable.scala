@@ -112,11 +112,22 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     )
   }
 
+  def matchStreamOrSignal[B](
+    ifStream: EventStream[A] => B,
+    ifSignal: Signal[A] => B
+  ): B = {
+    this match {
+      case stream: EventStream[A@unchecked] => ifStream(stream)
+      case signal: Signal[A@unchecked] => ifSignal(signal)
+      case _ => throw new Exception("All Observables must extend EventStream or Signal")
+    }
+  }
+
   // @TODO[API] I don't like the Option[O] output type here very much. We should consider a sentinel error object instead (need to check performance). Or maybe add a recoverOrSkip method or something?
   /** @param pf Note: guarded against exceptions */
   def recover[B >: A](pf: PartialFunction[Throwable, Option[B]]): Self[B]
 
-  def recoverIgnoreErrors: Self[A] = recover[A]{ case _ => None }
+  def recoverIgnoreErrors: Self[A] = recover[A] { case _ => None }
 
   /** Convert this to an observable that emits Failure(err) instead of erroring */
   def recoverToTry: Self[Try[A]]
@@ -141,21 +152,10 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     */
   def debugWith(debugger: Debugger[A]): Self[A]
 
-  def matchStreamOrSignal[B](
-    ifStream: EventStream[A] => B,
-    ifSignal: Signal[A] => B
-  ): B = {
-    this match {
-      case stream: EventStream[A @unchecked] => ifStream(stream)
-      case signal: Signal[A @unchecked] => ifSignal(signal)
-      case _ => throw new Exception("All Observables must extend EventStream or Signal")
-    }
-  }
-
   /** Create an external observer from a function and subscribe it to this observable.
     *
     * Note: since you won't have a reference to the observer, you will need to call Subscription.kill() to unsubscribe
-    * */
+    */
   def foreach(onNext: A => Unit)(implicit owner: Owner): Subscription = {
     val observer = Observer(onNext)
     addObserver(observer)(owner)

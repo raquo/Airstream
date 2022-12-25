@@ -3,6 +3,7 @@ package com.raquo.airstream.combine
 import com.raquo.airstream.common.{InternalParentObserver, MultiParentStream}
 import com.raquo.airstream.core.{EventStream, Observable, Protected, Signal, Transaction}
 
+import scala.scalajs.js
 import scala.util.Try
 
 /** This stream emits the combined value when samplingStreams emits.
@@ -20,9 +21,9 @@ class SampleCombineStreamN[A, Out](
   combinator: Seq[A] => Out
 ) extends MultiParentStream[A, Out] with CombineObservable[Out] {
 
-  override protected val topoRank: Int = Protected.maxTopoRank(samplingStream +: sampledSignals) + 1
+  override protected val topoRank: Int = (Protected.topoRank(samplingStream) max Protected.maxTopoRank(sampledSignals)) + 1
 
-  private[this] var maybeLastSamplingValue: Option[Try[A]] = None
+  private[this] var maybeLastSamplingValue: js.UndefOr[Try[A]] = js.undefined
 
   override protected[this] def inputsReady: Boolean = maybeLastSamplingValue.nonEmpty
 
@@ -37,7 +38,7 @@ class SampleCombineStreamN[A, Out](
     InternalParentObserver.fromTry[A](
       samplingStream,
       (nextSamplingValue, transaction) => {
-        maybeLastSamplingValue = Some(nextSamplingValue)
+        maybeLastSamplingValue = nextSamplingValue
         onInputsReady(transaction)
       }
     )
@@ -53,7 +54,7 @@ class SampleCombineStreamN[A, Out](
 
   override private[airstream] def syncFire(transaction: Transaction): Unit = {
     super.syncFire(transaction)
-    maybeLastSamplingValue = None // Clean up memory, as we don't need this reference anymore
+    maybeLastSamplingValue = js.undefined // Clean up memory, as we don't need this reference anymore
   }
 
 }

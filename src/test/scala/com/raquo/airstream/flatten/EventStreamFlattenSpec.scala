@@ -346,7 +346,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     done
   }
 
-  it("ConcurrentEventStream (input=signal)") {
+  it("ConcurrentStream (input=signal)") {
     implicit val owner: Owner = new TestableOwner
 
     val calculations = mutable.Buffer[Calculation[Int]]()
