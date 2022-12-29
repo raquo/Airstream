@@ -44,7 +44,8 @@ class DebuggerSignal[A](
     debugOnStop()
   }
 
-  override protected def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
-    fireTry(nextValue, transaction)
+  override protected def onTry(nextParentValue: Try[A], transaction: Transaction): Unit = {
+    super.onTry(nextParentValue, transaction)
+    fireTry(nextParentValue, transaction)
   }
 }

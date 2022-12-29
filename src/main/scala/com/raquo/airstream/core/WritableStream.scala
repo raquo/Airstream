@@ -7,7 +7,7 @@ import scala.util.Try
 trait WritableStream[A] extends EventStream[A] with WritableObservable[A] {
 
   override protected[this] def fireValue(nextValue: A, transaction: Transaction): Unit = {
-    //println(s"$this > FIRE > $nextValue")
+    // println(s"$this > FIRE > $nextValue")
 
     // === CAUTION ===
     // The following logic must match Signal's fireTry! It is separated here for performance.

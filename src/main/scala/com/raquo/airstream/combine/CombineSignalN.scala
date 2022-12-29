@@ -5,7 +5,7 @@ import com.raquo.airstream.core.{Protected, Signal}
 
 import scala.util.Try
 
-/** @param combinator Must not throw! */
+/** @param combinator Must not throw! Must be pure. */
 class CombineSignalN[A, Out](
   override protected[this] val parents: Seq[Signal[A]],
   protected[this] val combinator: Seq[A] => Out

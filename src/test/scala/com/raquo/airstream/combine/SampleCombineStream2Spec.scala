@@ -93,14 +93,11 @@ class SampleCombineStream2Spec extends UnitSpec {
     subCombined.kill()
     sampledSignal.addObserver(signalObserver)
 
-    calculations shouldBe mutable.Buffer(
-      Calculation("signal", 100)
-    )
+    calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer(
       Effect("signal", 100)
     )
 
-    calculations.clear()
     effects.clear()
 
     // --

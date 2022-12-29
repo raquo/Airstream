@@ -1,6 +1,6 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.common.{InternalTryObserver, SingleParentSignal}
+import com.raquo.airstream.common.SingleParentSignal
 import com.raquo.airstream.core.{Protected, Signal, Transaction}
 import com.raquo.airstream.timing.SyncDelayStream
 import org.scalajs.dom
@@ -36,7 +36,7 @@ class SplitSignal[M[_], Input, Output, Key](
   project: (Key, Input, Signal[Input]) => Output,
   splittable: Splittable[M],
   duplicateKeysConfig: DuplicateKeysConfig = DuplicateKeysConfig.default
-) extends SingleParentSignal[M[Input], M[Output]] with InternalTryObserver[M[Input]] {
+) extends SingleParentSignal[M[Input], M[Output]] {
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
@@ -44,8 +44,9 @@ class SplitSignal[M[_], Input, Output, Key](
 
   private[this] val memoized: mutable.Map[Key, (Input, Output)] = mutable.Map.empty
 
-  override protected def onTry(nextValue: Try[M[Input]], transaction: Transaction): Unit = {
-    nextValue.fold(
+  override protected def onTry(nextParentValue: Try[M[Input]], transaction: Transaction): Unit = {
+    super.onTry(nextParentValue, transaction)
+    nextParentValue.fold(
       nextError => fireError(nextError, transaction),
       nextEvent => fireValue(memoizedProject(nextEvent), transaction)
     )

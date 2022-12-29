@@ -303,15 +303,13 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
 
     // --
 
-    signal1.addObserver(obs1)
-
-    signal2.addObserver(obs21)
-
-    signal2.addObserver(obs22)
+    val subs1 = List(
+      signal1.addObserver(obs1),
+      signal2.addObserver(obs21),
+      signal2.addObserver(obs22)
+    )
 
     assert(calculations.toList == List(
-      Calculation("var.signal-eval-from-parent", Success(3)),
-      Calculation("signal-1-eval-from-parent", Success(3)),
       Calculation("obs-1", Success(3)), // receive current value (initial value was already evaluated)
       Calculation("var.signal", Success(3)),
       Calculation("signal-1-start", Success(-1)),
@@ -335,6 +333,74 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
       Calculation("obs-1", Success(4)),
       Calculation("signal-2", Success(4)),
       Calculation("obs-21", Success(4)),
+      Calculation("obs-22", Success(4))
+    ))
+
+    calculations.clear()
+
+    // --
+
+    subs1.foreach(_.kill())
+
+    assert(calculations.toList == List(
+      Calculation("signal-1-stop", Success(-1)),
+      Calculation("signal-2-stop", Success(-(1))),
+    ))
+    calculations.clear()
+
+    // --
+
+    val subs2 = List(
+      signal1.addObserver(obs1),
+      signal2.addObserver(obs21),
+      signal2.addObserver(obs22)
+    )
+
+    assert(calculations.toList == List(
+      Calculation("obs-1", Success(4)),
+      Calculation("var.signal", Success(4)),
+      Calculation("signal-1-start", Success(-(1))),
+      Calculation("signal-1", Success(4)),
+      Calculation("obs-21", Success(4)),
+      Calculation("signal-2", Success(4)),
+      Calculation("signal-2-start", Success(-(1))),
+      Calculation("obs-22", Success(4))
+    ))
+
+    calculations.clear()
+
+    // --
+
+    subs2.foreach(_.kill())
+
+    assert(calculations.toList == List(
+      Calculation("signal-1-stop", Success(-1)),
+      Calculation("signal-2-stop", Success(-(1))),
+    ))
+
+    calculations.clear()
+
+    // --
+
+    v.set(4) // set some value (could even be the same!) while signals are unmounted
+
+    val subs3 = List(
+      signal1.addObserver(obs1),
+      signal2.addObserver(obs21),
+      signal2.addObserver(obs22)
+    )
+
+    assert(calculations.toList == List(
+      Calculation("var.signal-eval-from-parent", Success(4)),
+      Calculation("signal-1-eval-from-parent", Success(4)),
+      Calculation("obs-1", Success(4)),
+      Calculation("var.signal", Success(4)),
+      Calculation("signal-1-start", Success(-(1))),
+      Calculation("signal-1", Success(4)),
+      Calculation("signal-2-eval-from-parent", Success(4)),
+      Calculation("obs-21", Success(4)),
+      Calculation("signal-2", Success(4)),
+      Calculation("signal-2-start", Success(-(1))),
       Calculation("obs-22", Success(4))
     ))
 

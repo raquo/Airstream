@@ -31,7 +31,8 @@ private[airstream] class SplitChildSignal[M[_], A](
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
   override protected def currentValueFromParent(): Try[A] = {
-    // #Note See also SignalFromEventStream for similar logic
+    // #TODO[Sync] is this right, or is this right only in the context of Laminar usage of split?
+    // #Note See also SignalFromStream for similar logic
     // #Note This can be called from inside tryNow(), so make sure to avoid an infinite loop
     if (maybeLastSeenCurrentValue.nonEmpty && hasEmittedEvents) {
       tryNow()
@@ -40,7 +41,8 @@ private[airstream] class SplitChildSignal[M[_], A](
     }
   }
 
-  override protected def onTry(nextValue: Try[M[A]], transaction: Transaction): Unit = {
+  override protected def onTry(nextParentValue: Try[M[A]], transaction: Transaction): Unit = {
+    super.onTry(nextParentValue, transaction)
     getMemoizedValue().foreach { freshMemoizedInput =>
       // #Note I do think we want to compare both `None` and `Some` cases of maybeTransaction.
       //  I'm not sure if None is possible, but if it is, this is probably the right thing to do.

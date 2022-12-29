@@ -141,9 +141,7 @@ class SignalSpec extends UnitSpec {
 
     signal.addObserver(signalObserver2)
 
-    calculations shouldBe mutable.Buffer(
-      Calculation("map-signal", 40)
-    )
+    calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer(
       Effect("signal-obs-2", 40)
     )
@@ -280,14 +278,72 @@ class SignalSpec extends UnitSpec {
 
     // --
 
+    // The changes stream missed a signal update (detected using parent.lastUpdateId),
+    // so when it's restarted, it emits the parent's new current value.
+
     val subChanges2 = changes.addObserver(changesObserver)
 
-    calculations shouldBe mutable.Buffer()
-    effects shouldBe mutable.Buffer()
+    calculations shouldBe mutable.Buffer(
+      Calculation("changes", 40)
+    )
+    effects shouldBe mutable.Buffer(
+      Effect("changes-obs", 40)
+    )
+
+    calculations.clear()
+    effects.clear()
 
     // --
 
     subChanges2.kill()
+
+    bus.writer.onNext(4)
+
+    calculations shouldBe mutable.Buffer(
+      Calculation("bus", 4),
+      Calculation("map-signal", 40)
+    )
+    effects shouldBe mutable.Buffer(
+      Effect("signal-obs", 40)
+    )
+
+    calculations.clear()
+    effects.clear()
+
+    // --
+
+    // Same syncing behaviour, even when the signal emits the exact same value.
+    // This is because we KNOW that the signal emitted by looking at lastUpdateId,
+    // we don't approximate it with any kind of `nextValue == prevValue` checks.
+
+    val subChanges3 = changes.addObserver(changesObserver)
+
+    calculations shouldBe mutable.Buffer(
+      Calculation("changes", 40)
+    )
+    effects shouldBe mutable.Buffer(
+      Effect("changes-obs", 40)
+    )
+
+    calculations.clear()
+    effects.clear()
+
+    // --
+
+    subChanges3.kill()
+
+    // Meanwhile if we the parent signal does not emit any updates while the
+    // changes stream is stopped, the changes stream does not re-emit the
+    // parent's current value when re-starting.
+
+    val subChanges4 = changes.addObserver(changesObserver)
+
+    calculations.shouldBeEmpty
+    effects.shouldBeEmpty
+
+    // --
+
+    subChanges4.kill()
     subSignal.kill()
 
     bus.writer.onNext(5)

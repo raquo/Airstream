@@ -18,8 +18,8 @@ object DomEventStream {
     *              The event type depends on the event, i.e. eventKey. Look it up on MDN.
     *
     * @param eventTarget any DOM event target, e.g. element, document, or window
-    * @param eventKey DOM event name, e.g. "click", "input", "change"
-    * @param useCapture See section about "useCapture" in https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener
+    * @param eventKey    DOM event name, e.g. "click", "input", "change"
+    * @param useCapture  See section about "useCapture" in https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener
     *
     */
   def apply[Ev <: dom.Event](
@@ -27,14 +27,18 @@ object DomEventStream {
     eventKey: String,
     useCapture: Boolean = false
   ): EventStream[Ev] = {
-    CustomStreamSource[Ev]( (fireValue, _, _, _) => {
+    new CustomStreamSource[Ev](
+      (fireValue, _, _, _) => {
+        // Wrap scala.Function into js.Function only once,
+        // ensuring that the same function reference is passed to
+        // removeEventListener as was given to addEventListener.
+        val eventHandler: js.Function1[Ev, Unit] = fireValue
 
-      val eventHandler: js.Function1[Ev, Unit] = fireValue
-
-      CustomSource.Config(
-        onStart = () => eventTarget.addEventListener(eventKey, eventHandler, useCapture),
-        onStop = () => eventTarget.removeEventListener(eventKey, eventHandler, useCapture)
-      )
-    })
+        CustomSource.Config(
+          onStart = () => eventTarget.addEventListener(eventKey, eventHandler, useCapture),
+          onStop = () => eventTarget.removeEventListener(eventKey, eventHandler, useCapture)
+        )
+      }
+    )
   }
 }

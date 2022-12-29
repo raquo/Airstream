@@ -125,14 +125,16 @@ class SwitchStreamSpec extends UnitSpec {
 
     // --
 
-    // flatten stream does not run because it forgot the stream
+    // flatten stream remembers the stream it was following even after restart
     sourceBuses(2).writer.onNext(4)
 
     calculations shouldBe mutable.Buffer(
-      Calculation("source-2", 4)
+      Calculation("source-2", 4),
+      Calculation("flattened", 4)
     )
     effects shouldBe mutable.Buffer(
-      Effect("source-2-obs", 4)
+      Effect("source-2-obs", 4),
+      Effect("flattened-obs", 4)
     )
 
     calculations.clear()

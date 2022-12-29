@@ -190,10 +190,10 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
     EventStream.merge(streams: _*)
   }
 
-  @deprecated("foldLeft was renamed to scanLeft", "15.0.0-RC1")
+  @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")
   def foldLeft[B](initial: B)(fn: (B, A) => B): Signal[B] = scanLeft(initial)(fn)
 
-  @deprecated("foldLeftRecover was renamed to scanLeftRecover", "15.0.0-RC1")
+  @deprecated("foldLeftRecover was renamed to scanLeftRecover", "15.0.0-M1")
   def foldLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = scanLeftRecover(initial)(fn)
 
   // @TODO[API] Should we introduce some kind of FoldError() wrapper?
@@ -345,14 +345,15 @@ object EventStream {
     start: (FireValue[A], FireError, GetStartIndex, GetIsStarted) => Unit,
     stop: StartIndex => Unit
   ): EventStream[A] = {
-    CustomStreamSource[A] { (fireValue, fireError, getStartIndex, getIsStarted) =>
+    new CustomStreamSource[A](
+      (fireValue, fireError, getStartIndex, getIsStarted) =>
       CustomSource.Config(
         onStart = () => start(fireValue, fireError, getStartIndex, getIsStarted),
         onStop = () => stop(getStartIndex())
       ).when {
         () => shouldStart(getStartIndex())
       }
-    }
+    )
   }
 
   /** Create a stream and a callback that, when fired, makes that stream emit. */

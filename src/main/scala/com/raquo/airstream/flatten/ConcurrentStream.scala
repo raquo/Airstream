@@ -1,7 +1,7 @@
 package com.raquo.airstream.flatten
 
-import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentStream}
-import com.raquo.airstream.core.{EventStream, InternalObserver, Observable, Protected, Signal, Transaction}
+import com.raquo.airstream.common.InternalNextErrorObserver
+import com.raquo.airstream.core.{EventStream, InternalObserver, Observable, Protected, Signal, Transaction, WritableStream}
 import com.raquo.ew.JsArray
 
 import scala.util.{Failure, Success}
@@ -11,11 +11,11 @@ import scala.util.{Failure, Success}
   *   previously emitted by the input observable.
   * - If you restart the resulting stream, it will remember and resubscribe to all of the
   *   streams it previously listened to.
-  * - If the input observable emits the same stream more than once, that stream will only added once.
+  * - If the input observable emits the same stream more than once, that stream will only be added once.
   */
 class ConcurrentStream[A](
-  override protected[this] val parent: Observable[EventStream[A]]
-) extends SingleParentStream[EventStream[A], A] with InternalNextErrorObserver[EventStream[A]] {
+  parent: Observable[EventStream[A]]
+) extends WritableStream[A] with InternalNextErrorObserver[EventStream[A]] {
 
   private val accumulatedStreams: JsArray[EventStream[A]] = JsArray()
 
@@ -27,13 +27,13 @@ class ConcurrentStream[A](
   override protected val topoRank: Int = 1
 
   override protected def onWillStart(): Unit = {
-    super.onWillStart()
+    Protected.maybeWillStart(parent)
     accumulatedStreams.forEach(Protected.maybeWillStart(_))
     parent match {
       case signal: Signal[EventStream[A @unchecked] @unchecked] =>
         signal.tryNow() match {
           case Success(stream) =>
-            // We add internal observer later, in `onStart`. onWillStart should not start any observables.
+            // We add internal observer later, in `onStart`. onWillStart should not start any observables. // #nc[doc] this pattern
             maybeAddStream(stream, addInternalObserver = false)
           case _ => ()
         }
@@ -42,7 +42,7 @@ class ConcurrentStream[A](
   }
 
   override protected[this] def onStart(): Unit = {
-    super.onStart()
+    parent.addInternalObserver(this, shouldCallMaybeWillStart = false)
     accumulatedStreams.forEach(_.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false))
     parent match {
       case signal: Signal[EventStream[A @unchecked] @unchecked] =>
@@ -59,6 +59,7 @@ class ConcurrentStream[A](
 
   override protected[this] def onStop(): Unit = {
     accumulatedStreams.forEach(_.removeInternalObserver(internalEventObserver))
+    parent.removeInternalObserver(observer = this)
     super.onStop()
   }
 

@@ -5,6 +5,8 @@ import com.raquo.airstream.core.{Transaction, WritableStream}
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
+// #TODO[API] Since this has an initial value, should this be a signal perhaps?
+
 /** @param next (currentState => (nextState, nextIntervalMs)
   *             Note: guarded against exceptions.
   *             If `next` throws, stream will emit that error
@@ -42,8 +44,12 @@ class PeriodicStream[A](
 
   private def tick(): Unit = {
     new Transaction(trx => { // #Note[onStart,trx,async]
-      fireValue(currentValue, trx)
-      setNext()
+      if (isStarted) {
+        // This cycle should also be broken by clearTimeout() in onStop,
+        // but just in case of some weird timing I put isStarted check here.
+        fireValue(currentValue, trx)
+        setNext()
+      }
     })
   }
 

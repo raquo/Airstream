@@ -3,13 +3,14 @@ package com.raquo.airstream.core
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
+import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, Owner, Subscription}
 import com.raquo.airstream.state.Var
 
 import scala.collection.mutable
 
 class PullResetSignalSpec extends UnitSpec {
 
-  it("ChangesStream & startWith") {
+  it("signal.changes & startWith") {
 
     test(CACHE_INITIAL_VALUE = false/*, EMIT_CHANGE_ON_RESTART = true*/)
     //test(CACHE_INITIAL_VALUE = false, EMIT_CHANGE_ON_RESTART = false)
@@ -81,9 +82,7 @@ class PullResetSignalSpec extends UnitSpec {
         val downSub2 = downSignal.addObserver(downObs)
 
         if (CACHE_INITIAL_VALUE) {
-          calculations shouldBe mutable.Buffer(
-            Calculation("down", 0)
-          )
+          calculations shouldBe mutable.Buffer()
           effects shouldBe mutable.Buffer(
             Effect("down-obs", 0),
           )
@@ -139,9 +138,7 @@ class PullResetSignalSpec extends UnitSpec {
 
         val downSub3 = downSignal.addObserver(downObs)
 
-        calculations shouldBe mutable.Buffer(
-          Calculation("down", 2)
-        )
+        calculations shouldBe mutable.Buffer()
         effects shouldBe mutable.Buffer(
           Effect("down-obs", 2)
         )
@@ -186,12 +183,17 @@ class PullResetSignalSpec extends UnitSpec {
         //    Effect("down-obs", 3)
         //  )
         //} else {
-          // The signal re-starts with an old value because it can't pull a fresh value from the streams
+
           calculations shouldBe mutable.Buffer(
-            Calculation("down", 2)
+            Calculation("changes", 3),
+            Calculation("down", 3)
           )
+          // The signal re-starts with an old value because it can't pull a fresh value from the streams,
+          // but then the .changes stream pulls the new value from its parent, and propagates it down,
+          // but that only happens in a new transaction, so we have
           effects shouldBe mutable.Buffer(
             Effect("down-obs", 2),
+            Effect("down-obs", 3),
           )
         //}
 
@@ -202,14 +204,7 @@ class PullResetSignalSpec extends UnitSpec {
     }
   }
 
-  it("ChangesStream / StartWith potential glitch") {
-
-    // #Note originally this was intended to test emitChangeOnRestart parameter of .changes,
-    //  but i couldn't make that option glitch-free so we had to leave it out for now.
-    //  There's a long comment about this in ChangesStream
-
-    // #TODO Because of the above, I feel like this test is now pretty redundant...
-    //  Very similar to the "ChangesStream & startWith" test above
+  it("signal.changes / startWith potential glitch") {
 
     implicit val testOwner: TestableOwner = new TestableOwner
 
@@ -217,23 +212,23 @@ class PullResetSignalSpec extends UnitSpec {
 
     val $v = Var(1)
 
-    def $changes = $v
+    def $changes(name: String) = $v
       .signal.setDisplayName("VarSignal")
-      .changes.setDisplayName("VarSignal.changes")
+      .changes.setDisplayName("VarSignal.changes." + name)
 
-    val $isPositive = $changes.map { num =>
+    val $isPositive = $changes("IsPositive").map { num =>
       val isPositive = num > 0
       log += s"$num isPositive = $isPositive"
       isPositive
     }.setDisplayName("IsPositive")
 
-    val $isEven = $changes.map { num =>
+    val $isEven = $changes("IsEven").map { num =>
       val isEven = num % 2 == 0
       log += s"$num isEven = $isEven"
       isEven
     }.setDisplayName("IsEven")
 
-    val $combined = $changes.combineWithFn($isPositive, $isEven) { (num, isPositive, isEven) =>
+    val $combined = $changes("Combined").combineWithFn($isPositive, $isEven) { (num, isPositive, isEven) =>
       log += s"$num isPositive = $isPositive, isEven = $isEven"
       (isPositive, isEven)
     }.setDisplayName("Combined")
@@ -276,9 +271,20 @@ class PullResetSignalSpec extends UnitSpec {
 
     // --
 
+    // This part needs special logic to avoid glitches.
+    // In signal.changes, we use Transaction.onStart.pendingCallbacks to collect all sync-related events onStart,
+    // and fire them off all in one Transaction.
+    // We're only adding one observer here, but the case of multiple observers is actually more complicated,
+    // see the test below
+
     $combined.addObserver(Observer.empty)
 
-    log.toList shouldBe Nil
+    log.toList shouldBe List(
+      "-4 isEven = true",
+      "-4 isPositive = false",
+      "-4 isPositive = false, isEven = true"
+    )
+    log.clear()
 
     // --
 
@@ -290,6 +296,411 @@ class PullResetSignalSpec extends UnitSpec {
       "-6 isPositive = false, isEven = true"
     )
     log.clear()
+
+  }
+
+  it("signal.changes sync with multiple observers (Transaction.onStart.pendingCallbacks)") {
+
+    val log = mutable.Buffer[String]()
+
+    val v = Var(1)
+
+    // #Note: in this test the changes are shared, intentionally.
+    val changes = v
+      .signal.setDisplayName("VarSignal")
+      .changes.setDisplayName("VarSignal.changes")
+
+    val isPositive = changes.map { num =>
+      val isPositive = num > 0
+      log += s"$num isPositive = $isPositive"
+      isPositive
+    }.setDisplayName("IsPositive")
+
+    val isEven = changes.map { num =>
+      val isEven = num % 2 == 0
+      log += s"$num isEven = $isEven"
+      isEven
+    }.setDisplayName("IsEven")
+
+    val combined = changes.combineWithFn(isPositive, isEven) { (num, isPositive, isEven) =>
+      log += s"$num isPositive = $isPositive, isEven = $isEven"
+      (isPositive, isEven)
+    }.setDisplayName("Combined")
+
+    val owner = new TestableOwner
+
+    val subs1 = List(
+      isPositive.addObserver(Observer.empty)(owner),
+      isEven.addObserver(Observer.empty)(owner),
+      combined.addObserver(Observer.empty)(owner)
+    )
+
+    log.toList shouldBe Nil
+
+    // --
+
+    subs1.foreach(_.kill())
+
+    v.set(-2)
+
+    // #Warning This is a known glitch: of all the new observers, only the first one
+    //  manages to receive the sync event from `changes`. This is because the whole
+    //  onWillStart / onStart loop completes before the other observers are added,
+    //  and even though the event is emitted in a new Transaction, in this case, the
+    //  transaction payload is executed immediately without delay, because there is
+    //  no current transaction that we need to wait for.
+    //  - This glitch can be avoided by wrapping subs creation in `new Transaction`,
+    //    `DynamicSubscription`, or `Transaction.onStart.shared` – see the tests below
+
+    val subs2 = List(
+      isPositive.addObserver(Observer.empty)(owner),
+      isEven.addObserver(Observer.empty)(owner),
+      combined.addObserver(Observer.empty)(owner)
+    )
+
+    log.toList shouldBe List(
+      "-2 isPositive = false"
+    )
+    log.clear()
+
+    // --
+
+    subs2.foreach(_.kill())
+
+    v.set(5)
+
+    val subs3 = Transaction.onStart.shared {
+      List(
+        isPositive.addObserver(Observer.empty)(owner),
+        isEven.addObserver(Observer.empty)(owner),
+        combined.addObserver(Observer.empty)(owner)
+      )
+    }
+
+    log.toList shouldBe List(
+      "5 isPositive = true",
+      "5 isEven = false",
+      "5 isPositive = true, isEven = false"
+    )
+    log.clear()
+
+    // --
+
+    subs3.foreach(_.kill())
+
+    v.set(-8)
+
+    val dynOwner = new DynamicOwner(() => throw new Exception("Accessing dynamic owner after it is killed"))
+    DynamicSubscription.unsafe(
+      dynOwner,
+      activate = { o =>
+        isPositive.addObserver(Observer.empty)(o)
+        isEven.addObserver(Observer.empty)(o)
+        combined.addObserver(Observer.empty)(o)
+      }
+    )
+
+    // This uses nesting too, so it should have no glitches.
+    dynOwner.activate()
+
+    log.toList shouldBe List(
+      "-8 isPositive = false",
+      "-8 isEven = true",
+      "-8 isPositive = false, isEven = true"
+    )
+    log.clear()
+
+    // --
+
+    dynOwner.deactivate()
+
+    v.set(11)
+
+    // With `new Transaction`, these could be delayed if we're already
+    // inside a transaction (in the test, we aren't), and also we can't
+    // return the value from inside the transaction (due to the potential
+    // delay)
+    new Transaction(_ => {
+      isPositive.addObserver(Observer.empty)(owner)
+      isEven.addObserver(Observer.empty)(owner)
+      combined.addObserver(Observer.empty)(owner)
+    })
+
+    log.toList shouldBe List(
+      "11 isPositive = true",
+      "11 isEven = false",
+      "11 isPositive = true, isEven = false"
+    )
+    log.clear()
+  }
+
+  it("onStart shared transaction is resilient to exceptions") {
+
+    val accessAfterKillErrorMsg = "Accessing dynamic owner after it is killed"
+
+    val sharedBlockErrorMsg = "Shared block error"
+
+    val errorNumber = 42
+
+    val errorNumberMsg = s"Error$errorNumber"
+
+    val log = mutable.Buffer[String]()
+
+    val v = Var(-2)
+
+    // #Note: in this test the changes are shared, intentionally.
+    val changes = v
+      .signal.setDisplayName("VarSignal")
+      .changes.setDisplayName("VarSignal.changes")
+
+    val isPositive = changes.map { num =>
+      val isPositive = num > 0
+      log += s"$num isPositive = $isPositive"
+      isPositive
+    }.setDisplayName("IsPositive")
+
+    val isEven = changes.map { num =>
+      if (num == errorNumber) {
+        throw new Exception(errorNumberMsg)
+      }
+      val isEven = num % 2 == 0
+      log += s"$num isEven = $isEven"
+      isEven
+    }.setDisplayName("IsEven")
+
+    val combined = changes.combineWithFn(isPositive, isEven) { (num, isPositive, isEven) =>
+      log += s"$num isPositive = $isPositive, isEven = $isEven"
+      (isPositive, isEven)
+    }.setDisplayName("Combined")
+
+    val owner = new TestableOwner
+
+    val subs1 = List(
+      isPositive.addObserver(Observer.empty)(owner),
+      isEven.addObserver(Observer.empty)(owner),
+      combined.addObserver(Observer.empty)(owner)
+    )
+
+    log.toList shouldBe Nil
+
+    // --
+
+    subs1.foreach(_.kill())
+
+    v.set(5)
+
+    val subs2 = mutable.Buffer[Subscription]()
+
+    val caught1 = intercept[Exception] {
+      Transaction.onStart.shared {
+        subs2.append(isPositive.addObserver(Observer.empty)(owner))
+        subs2.append(isEven.addObserver(Observer.empty)(owner))
+        throw new Exception(sharedBlockErrorMsg)
+        // subs2.append(combined.addObserver(Observer.empty)(owner))
+      }
+    }
+    assert(caught1.getMessage == sharedBlockErrorMsg)
+
+    log.toList shouldBe List(
+      "5 isPositive = true",
+      "5 isEven = false"
+    )
+    log.clear()
+
+    // --
+
+    v.set(-6)
+
+    log.toList shouldBe List(
+      "-6 isPositive = false",
+      "-6 isEven = true"
+    )
+    log.clear()
+
+    // --
+
+    subs2.append(combined.addObserver(Observer.empty)(owner))
+
+    v.set(7)
+
+    log.toList shouldBe List(
+      "7 isPositive = true",
+      "7 isEven = false",
+      "7 isPositive = true, isEven = false"
+    )
+    log.clear()
+
+    // --
+
+    subs2.foreach(_.kill())
+
+    v.set(-8)
+
+    val dynOwner = new DynamicOwner(() => throw new Exception(accessAfterKillErrorMsg))
+
+    var tempOwner: Owner = null
+
+    DynamicSubscription.unsafe(
+      dynOwner,
+      activate = { o =>
+        tempOwner = o
+        isPositive.addObserver(Observer.empty)(o)
+        isEven.addObserver(Observer.empty)(o)
+        throw new Exception(sharedBlockErrorMsg)
+        // combined.addObserver(Observer.empty)(o)
+      }
+    )
+
+    val caught2 = intercept[Exception] {
+      dynOwner.activate()
+    }
+
+    log.toList shouldBe List(
+      "-8 isPositive = false",
+      "-8 isEven = true"
+    )
+    log.clear()
+
+    assert(caught2.getMessage == sharedBlockErrorMsg)
+
+    // --
+
+    v.set(9)
+
+    log.toList shouldBe List(
+      "9 isPositive = true",
+      "9 isEven = false"
+    )
+    log.clear()
+
+    // -- try to use expired owner
+
+    dynOwner.deactivate()
+
+    v.set(-10)
+
+    val caught3 = intercept[Exception] {
+      combined.addObserver(Observer.empty)(tempOwner)
+    }
+
+    assert(caught3.getMessage == accessAfterKillErrorMsg)
+
+    log.toList shouldBe Nil
+
+    // -- make sure stuff still works
+
+    val caught4 = intercept[Exception] {
+      dynOwner.activate()
+    }
+
+    assert(caught4.getMessage == sharedBlockErrorMsg)
+
+    // this is added too late, so it does not get the -10 event yet
+    combined.addObserver(Observer.empty)(tempOwner)
+
+    log.toList shouldBe List(
+      "-10 isPositive = false",
+      "-10 isEven = true"
+    )
+    log.clear()
+
+    // --
+
+    v.set(11)
+
+    log.toList shouldBe List(
+      "11 isPositive = true",
+      "11 isEven = false",
+      "11 isPositive = true, isEven = false"
+    )
+    log.clear()
+
+
+    // --
+
+    dynOwner.deactivate()
+
+    v.set(11)
+
+    val unhandledErrors = mutable.Buffer[String]()
+
+    val errorCallback = (err: Throwable) => {
+      unhandledErrors.append(err.getMessage)
+      ()
+    }
+
+    AirstreamError.registerUnhandledErrorCallback(errorCallback)
+    AirstreamError.unregisterUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
+
+    try {
+      new Transaction(_ => {
+        isPositive.addObserver(Observer.empty)(owner)
+        isEven.addObserver(Observer.empty)(owner)
+        throw new Exception(sharedBlockErrorMsg)
+        // combined.addObserver(Observer.empty)(owner)
+      })
+
+      log.toList shouldBe List(
+        "11 isPositive = true",
+        "11 isEven = false"
+      )
+      log.clear()
+
+      unhandledErrors.toList shouldBe List(
+        sharedBlockErrorMsg
+      )
+      unhandledErrors.clear()
+
+      // --
+
+      new Transaction(_ => {
+        combined.addObserver(Observer.empty)(owner)
+      })
+
+      v.set(-12)
+
+      log.toList shouldBe List(
+        "-12 isPositive = false",
+        "-12 isEven = true",
+        "-12 isPositive = false, isEven = true"
+      )
+      log.clear()
+
+      unhandledErrors.toList shouldBe Nil
+
+      // --
+
+      v.set(errorNumber)
+
+      log.toList shouldBe List(
+        "42 isPositive = true"
+      )
+      log.clear()
+
+      unhandledErrors.toList shouldBe List(
+        errorNumberMsg,
+        s"CombinedError: $errorNumberMsg"
+      )
+      unhandledErrors.clear()
+
+      // --
+
+      v.set(13)
+
+      log.toList shouldBe List(
+        "13 isPositive = true",
+        "13 isEven = false",
+        "13 isPositive = true, isEven = false"
+      )
+      log.clear()
+
+      unhandledErrors.toList shouldBe Nil
+
+    } finally {
+      AirstreamError.registerUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
+      AirstreamError.unregisterUnhandledErrorCallback(errorCallback)
+      assert(unhandledErrors.isEmpty)
+    }
 
   }
 
@@ -484,7 +895,7 @@ class PullResetSignalSpec extends UnitSpec {
     combinedSignal.addObserver(observer)
 
     calculations.toList shouldBe List(
-      Calculation("signal1", 1),
+      // Calculation("signal1", 1),
       Calculation("signal2", 3)
     )
     effects.toList shouldBe List(
@@ -655,9 +1066,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     outerBus.writer.onNext(1)
 
-    assert(calculations.toList == List(
-      Calculation("flat", "small-2")
-    ))
+    assert(calculations.toList == Nil)
 
     calculations.clear()
 
@@ -665,9 +1074,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     outerBus.writer.onNext(2)
 
-    assert(calculations.toList == List(
-      Calculation("flat", "small-2")
-    ))
+    assert(calculations.toList == Nil)
 
     calculations.clear()
 
@@ -687,9 +1094,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     outerBus.writer.onNext(11)
 
-    assert(calculations.toList == List(
-      Calculation("flat", "big-2")
-    ))
+    assert(calculations.toList == Nil)
 
     calculations.clear()
 
@@ -762,11 +1167,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     outerBus.writer.onNext(1)
 
-    assert(calculations.toList == List(
-      Calculation("flat", "small-bus-0")
-    ))
-
-    calculations.clear()
+    assert(calculations.toList == Nil)
 
     // --
 
@@ -782,11 +1183,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     outerBus.writer.onNext(2)
 
-    assert(calculations.toList == List(
-      Calculation("flat", "small-bus-1")
-    ))
-
-    calculations.clear()
+    assert(calculations.toList == Nil)
 
     // --
 
@@ -830,11 +1227,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     outerBus.writer.onNext(11)
 
-    assert(calculations.toList == List(
-      Calculation("flat", "big-bus-1")
-    ))
-
-    calculations.clear()
+    assert(calculations.toList == Nil)
 
     // --
 

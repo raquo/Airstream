@@ -8,12 +8,12 @@ trait SingleParentStream[I, O] extends WritableStream[O] with InternalObserver[I
   protected[this] val parent: Observable[I]
 
   override protected def onWillStart(): Unit = {
-    //println(s"${this} >>>> onWillStart")
+    // println(s"${this} >>>> onWillStart")
     Protected.maybeWillStart(parent)
   }
 
   override protected[this] def onStart(): Unit = {
-    //println(s"${this} >>>> onStart")
+    // println(s"${this} >>>> onStart")
     parent.addInternalObserver(this, shouldCallMaybeWillStart = false)
     super.onStart()
   }

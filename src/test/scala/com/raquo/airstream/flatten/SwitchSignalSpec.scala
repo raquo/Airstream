@@ -118,6 +118,24 @@ class SwitchSignalSpec extends UnitSpec {
 
     // --
 
+    // flattened signal does not redo any calculations because
+    // neither the current signal nor the parent signal emitted
+    // anything while the flattened signal was stopped.
+
+    val subFlatten2 = flattenSignal.addObserver(flattenObserver)
+
+    calculations.shouldBeEmpty
+    effects shouldBe mutable.Buffer(
+      Effect("flattened-obs", -1)
+    )
+
+    effects.clear()
+
+    subFlatten2.kill()
+
+
+    // --
+
     sourceVars(2).writer.onNext(2)
 
     calculations shouldBe mutable.Buffer(
@@ -132,7 +150,8 @@ class SwitchSignalSpec extends UnitSpec {
 
     // --
 
-    // flattened signal pulls current value from parent on restart
+    // flattened signal pulls current value from current signal on restart
+    // because current signal emitted while flatten signal was stopped
 
     flattenSignal.addObserver(flattenObserver) // re-activate flattened signal
 
@@ -237,11 +256,7 @@ class SwitchSignalSpec extends UnitSpec {
 
     outerBus.writer.onNext(1)
 
-    assert(calculations.toList == List(
-      Calculation("flat", "small-bus-0")
-    ))
-
-    calculations.clear()
+    assert(calculations.toList == Nil)
 
     // --
 
@@ -257,11 +272,7 @@ class SwitchSignalSpec extends UnitSpec {
 
     outerBus.writer.onNext(2)
 
-    assert(calculations.toList == List(
-      Calculation("flat", "small-bus-1")
-    ))
-
-    calculations.clear()
+    assert(calculations.toList == Nil)
 
     // --
 
@@ -305,11 +316,7 @@ class SwitchSignalSpec extends UnitSpec {
 
     outerBus.writer.onNext(11)
 
-    assert(calculations.toList == List(
-      Calculation("flat", "big-bus-1")
-    ))
-
-    calculations.clear()
+    assert(calculations.toList == Nil)
 
     // --
 

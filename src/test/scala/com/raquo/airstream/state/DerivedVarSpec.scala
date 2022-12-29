@@ -228,10 +228,14 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     // -- Can't update the same underlying var twice
 
-    assert(Try(Var.set(
+    Var.set(
       s -> 1,
       d -> 2
-    )).isFailure)
+    )
+    errorEffects shouldBe mutable.Buffer(
+      Effect("unhandled", VarError("Unable to Var.{set,setTry}: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None))
+    )
+    errorEffects.clear()
 
     // -- Restore normality
 

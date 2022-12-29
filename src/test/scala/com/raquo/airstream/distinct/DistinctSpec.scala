@@ -187,37 +187,77 @@ class DistinctSpec extends UnitSpec {
     calculations.clear()
     effects.clear()
 
-    // --
+    // -- don't pull new value if parent has not emitted new values
 
     sub1.kill()
 
-    signal.addObserver(obs)(testOwner)
+    val sub2 = signal.addObserver(obs)(testOwner)
 
-    calculations shouldBe mutable.Buffer(
-      Calculation("signal", 2)
-    )
+    calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer(
       Effect("obs", 2)
     )
     calculations.clear()
     effects.clear()
-    
+
     // --
-    
+
+    sub2.kill()
+
     $var.writer.onNext(2)
 
+    calculations.shouldBeEmpty
+    effects.shouldBeEmpty
+
+    // -- don't emit new value if parent has emitted and its new value is isSame(lastParentValue)
+
+    val sub3 = signal.addObserver(obs)(testOwner)
+
     calculations shouldBe mutable.Buffer()
-    effects shouldBe mutable.Buffer()
-    
+    effects shouldBe mutable.Buffer(
+      Effect("obs", 2)
+    )
+    calculations.clear()
+    effects.clear()
+
     // --
+    
+    sub3.kill()
 
     $var.writer.onNext(3)
+
+    calculations.shouldBeEmpty
+    effects.shouldBeEmpty
+
+    // -- emit new value if parent has emitted and its new value is NOT isSame(lastParentValue)
+
+    val sub4 = signal.addObserver(obs)(testOwner)
 
     calculations shouldBe mutable.Buffer(
       Calculation("signal", 3)
     )
     effects shouldBe mutable.Buffer(
       Effect("obs", 3)
+    )
+    calculations.clear()
+    effects.clear()
+
+    // --
+
+    $var.writer.onNext(3)
+
+    calculations shouldBe mutable.Buffer()
+    effects shouldBe mutable.Buffer()
+    
+    // --
+
+    $var.writer.onNext(4)
+
+    calculations shouldBe mutable.Buffer(
+      Calculation("signal", 4)
+    )
+    effects shouldBe mutable.Buffer(
+      Effect("obs", 4)
     )
 
     calculations.clear()

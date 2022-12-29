@@ -33,7 +33,6 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
   /** Note: Use Protected.topoRank(observable) to read another observable's topoRank if needed */
   protected val topoRank: Int
 
-
   /** @param project Note: guarded against exceptions */
   def map[B](project: A => B): Self[B]
 
@@ -265,6 +264,8 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
       onWillStart()
     }
   }
+
+  // #nc make onStart / onStop non-abstract
 
   /** This method is fired when this observable starts working (listening for parent events and/or firing its own events),
     * that is, when it gets its first Observer (internal or external).

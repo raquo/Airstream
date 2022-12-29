@@ -1,5 +1,6 @@
 package com.raquo.airstream.ownership
 
+import com.raquo.airstream.core.Transaction
 import com.raquo.ew.JsArray
 
 // @Warning[Fragile]
@@ -49,31 +50,33 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
 
   def activate(): Unit = {
     if (!isActive) {
-      val newOwner = new OneTimeOwner(onAccessAfterKilled)
-      // @Note If activating a subscription adds another subscription, we must make sure to call onActivate on it.
-      //  - the loop below does not do this because it fetches array length only once, at the beginning.
-      //  - it is instead done by addSubscription by virtue of _maybeCurrentOwner being already defined at this point.
-      //  - this is rather fragile, so maybe we should use a different foreach implementation.
-      _maybeCurrentOwner = Some(newOwner)
-      isSafeToRemoveSubscription = false
-      numPrependedSubs = 0
-      var i = 0;
-      val originalNumSubs = subscriptions.length // avoid double-starting subs added during the loop. See the big comment above
-      //println("    - start iteration of " + this)
-      while (i < originalNumSubs) {
-        // Prepending a sub while iterating shifts array indices, so we account for that
-        //  - Use case for this: in Laminar controlled inputs logic, we create a prepend sub
-        //    inside another dynamic subscription's activate callback
-        val ix = i + numPrependedSubs
-        val sub = subscriptions(ix)
-        //println(s"    - activating ${sub} from iteration (ix = ${ix}, i = ${i}")
-        sub.onActivate(newOwner)
-        i += 1
+      Transaction.onStart.shared {
+        val newOwner = new OneTimeOwner(onAccessAfterKilled)
+        // @Note If activating a subscription adds another subscription, we must make sure to call onActivate on it.
+        //  - the loop below does not do this because it fetches array length only once, at the beginning.
+        //  - it is instead done by addSubscription by virtue of _maybeCurrentOwner being already defined at this point.
+        //  - this is rather fragile, so maybe we should use a different foreach implementation.
+        _maybeCurrentOwner = Some(newOwner)
+        isSafeToRemoveSubscription = false
+        numPrependedSubs = 0
+        var i = 0;
+        val originalNumSubs = subscriptions.length // avoid double-starting subs added during the loop. See the big comment above
+        //println("    - start iteration of " + this)
+        while (i < originalNumSubs) {
+          // Prepending a sub while iterating shifts array indices, so we account for that
+          //  - Use case for this: in Laminar controlled inputs logic, we create a prepend sub
+          //    inside another dynamic subscription's activate callback
+          val ix = i + numPrependedSubs
+          val sub = subscriptions(ix)
+          //println(s"    - activating ${sub} from iteration (ix = ${ix}, i = ${i}")
+          sub.onActivate(newOwner)
+          i += 1
+        }
+        //println(s"    - stop iteration of $this. numPrependedSubs = $numPrependedSubs")
+        removePendingSubscriptionsNow()
+        isSafeToRemoveSubscription = true
+        numPrependedSubs = 0
       }
-      //println(s"    - stop iteration of $this. numPrependedSubs = $numPrependedSubs")
-      removePendingSubscriptionsNow()
-      isSafeToRemoveSubscription = true
-      numPrependedSubs = 0
     } else {
       throw new Exception(s"Can not activate $this: it is already active")
     }

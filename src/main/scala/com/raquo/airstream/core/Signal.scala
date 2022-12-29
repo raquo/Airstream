@@ -8,7 +8,7 @@ import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.debug.{DebuggableSignal, Debugger, DebuggerSignal}
 import com.raquo.airstream.distinct.DistinctSignal
 import com.raquo.airstream.misc.generated._
-import com.raquo.airstream.misc.{ChangesStream, MapSignal, ScanLeftSignal}
+import com.raquo.airstream.misc.{StreamFromSignal, MapSignal, ScanLeftSignal}
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.split.{SplittableOneSignal, SplittableOptionSignal, SplittableSignal}
 import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
@@ -22,6 +22,10 @@ import scala.util.{Failure, Try}
 
 /** Signal is an Observable with a current value. */
 trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with SignalSource[A] {
+
+  protected[this] var _lastUpdateId: Int = 0
+
+  protected[airstream] def lastUpdateId: Int = _lastUpdateId
 
   /** Get the signal's current value */
   protected[airstream] def tryNow(): Try[A]
@@ -45,9 +49,8 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
   /** @param operator Note: Must not throw! */
   def composeChanges[AA >: A](
     operator: EventStream[A] => EventStream[AA]
-    //emitChangeOnRestart: Boolean = false
   ): Signal[AA] = {
-    composeAll(changesOperator = operator, initialOperator = identity/*, emitChangeOnRestart*/)
+    composeAll(changesOperator = operator, initialOperator = identity)
   }
 
   /** @param changesOperator Note: Must not throw!
@@ -56,29 +59,23 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
   def composeAll[B](
     changesOperator: EventStream[A] => EventStream[B],
     initialOperator: Try[A] => Try[B]
-    //emitChangeOnRestart: Boolean = false
   ): Signal[B] = {
-    //val changesStream = if (emitChangeOnRestart) changesEmitChangeOnRestart else changes
     changesOperator(changes).toSignalWithTry(initialOperator(tryNow()))
   }
 
-  // #TODO[API] Make this into a lazy val? Are they encoded efficiently in JS?
   /** A stream of all values in this signal, excluding the initial value.
-    * When re-starting the signal, this stream does NOT re-emit the signal's
-    * current value.
+    *
+    * When re-starting this stream, it emits the signal's new
+    * current value if and only if something has caused the signal's value to
+    * be updated or re-evaluated while the changes stream was stopped. This way
+    * the changes stream stays in sync with the signal even after restarting.
     */
-  def changes: EventStream[A] = {
-    new ChangesStream[A](parent = this/*, emitChangeOnRestart = false*/)
-  }
+  def changes: EventStream[A] = new StreamFromSignal[A](parent = this, changesOnly = true)
 
-  //def changesEmitChangeOnRestart: EventStream[A] = {
-  //  new ChangesEventStream[A](parent = this, emitChangeOnRestart = true)
-  //}
-
-  @deprecated("foldLeft was renamed to scanLeft", "15.0.0-RC1")
+  @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")
   def foldLeft[B](makeInitial: A => B)(fn: (B, A) => B): Signal[B] = scanLeft(makeInitial)(fn)
 
-  @deprecated("foldLeftRecover was renamed to scanLeftRecover", "15.0.0-RC1")
+  @deprecated("foldLeftRecover was renamed to scanLeftRecover", "15.0.0-M1")
   def foldLeftRecover[B](makeInitial: Try[A] => Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = scanLeftRecover(makeInitial)(fn)
 
   /** A signal that emits the accumulated value every time that the parent signal emits.
@@ -201,16 +198,17 @@ object Signal {
     * @param stop MUST NOT THROW!
     */
   def fromCustomSource[A](
-    initial: => A,
+    initial: => Try[A],
     start: (SetCurrentValue[A], GetCurrentValue[A], GetStartIndex, GetIsStarted) => Unit,
     stop: StartIndex => Unit
   ): Signal[A] = {
-    CustomSignalSource[A](initial)( (setValue, getValue, getStartIndex, getIsStarted) => {
-      CustomSource.Config(
+    new CustomSignalSource[A](
+      getInitialValue = initial,
+      makeConfig = (setValue, getValue, getStartIndex, getIsStarted) => CustomSource.Config(
         onStart = () => start(setValue, getValue, getStartIndex, getIsStarted),
         onStop = () => stop(getStartIndex())
       )
-    })
+    )
   }
 
   def sequence[A](
@@ -256,4 +254,17 @@ object Signal {
   implicit def toTupleSignal8[T1, T2, T3, T4, T5, T6, T7, T8](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8)]): TupleSignal8[T1, T2, T3, T4, T5, T6, T7, T8] = new TupleSignal8(stream)
 
   implicit def toTupleSignal9[T1, T2, T3, T4, T5, T6, T7, T8, T9](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]): TupleSignal9[T1, T2, T3, T4, T5, T6, T7, T8, T9] = new TupleSignal9(stream)
+
+  private var lastUpdateId: Int = 0
+
+  def nextUpdateId(): Int = {
+    // Note: Int.MaxValue is lower than JS native Number.MAX_SAFE_INTEGER
+    if (lastUpdateId == Int.MaxValue) {
+      // start with 1 because 0 is a special value indicating "initial value".
+      lastUpdateId = 1
+    } else {
+      lastUpdateId += 1
+    }
+    lastUpdateId
+  }
 }

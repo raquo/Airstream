@@ -10,6 +10,48 @@ import scala.collection.mutable
 
 class EventStreamSpec extends UnitSpec {
 
+  it("EventStream.fromSeq emit on restart") {
+
+    implicit val owner: Owner = new TestableOwner
+
+    val range = 1 to 3
+    val stream = EventStream.fromSeq(range)
+
+    val effects = mutable.Buffer[Effect[_]]()
+    val sub1 = stream.foreach(newValue => effects += Effect("obs1", newValue))
+
+    effects.toList shouldBe range.map(i => Effect("obs1", i))
+    effects.clear()
+
+    sub1.kill()
+
+    val sub2 = stream.foreach(newValue => effects += Effect("obs2", newValue))
+
+    effects.toList shouldBe range.map(i => Effect("obs2", i))
+    effects.clear()
+  }
+
+  it("EventStream.fromSeq.startWith emit on restart") {
+
+    implicit val owner: Owner = new TestableOwner
+
+    val range = 1 to 3
+    val signal = EventStream.fromSeq(range).startWith(0)
+
+    val effects = mutable.Buffer[Effect[_]]()
+    val sub1 = signal.foreach(newValue => effects += Effect("obs1", newValue))
+
+    effects.toList shouldBe (0 +: range).map(i => Effect("obs1", i))
+    effects.clear()
+
+    sub1.kill()
+
+    val sub2 = signal.foreach(newValue => effects += Effect("obs2", newValue))
+
+    effects.toList shouldBe (3 +: range).map(i => Effect("obs2", i))
+    effects.clear()
+  }
+
   it("filter") {
 
     implicit val owner: Owner = new TestableOwner

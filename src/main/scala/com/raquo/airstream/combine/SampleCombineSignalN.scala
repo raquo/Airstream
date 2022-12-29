@@ -1,7 +1,7 @@
 package com.raquo.airstream.combine
 
 import com.raquo.airstream.common.{InternalParentObserver, MultiParentSignal}
-import com.raquo.airstream.core.{Observable, Protected, Signal}
+import com.raquo.airstream.core.{Protected, Signal}
 
 import scala.util.Try
 
@@ -12,7 +12,7 @@ import scala.util.Try
   *
   * Works similar to Rx's "withLatestFrom", except without glitches (see a diamond case test for this in GlitchSpec).
   *
-  * @param combinator Note: Must not throw.
+  * @param combinator Note: Must not throw! Must be pure.
   */
 class SampleCombineSignalN[A, Out](
   samplingSignal: Signal[A],
@@ -24,7 +24,7 @@ class SampleCombineSignalN[A, Out](
 
   override protected[this] def inputsReady: Boolean = true
 
-  override protected[this] val parents: Seq[Observable[A]] = samplingSignal +: sampledSignals
+  override protected[this] val parents: Seq[Signal[A]] = samplingSignal +: sampledSignals
 
   override protected[this] def combinedValue: Try[Out] = {
     val values = (samplingSignal +: sampledSignals).map(_.tryNow())

@@ -1,7 +1,7 @@
 package com.raquo.airstream.flatten
 
-import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentStream}
-import com.raquo.airstream.core.{EventStream, InternalObserver, Observable, Protected, Signal, Transaction}
+import com.raquo.airstream.common.InternalNextErrorObserver
+import com.raquo.airstream.core.{EventStream, InternalObserver, Observable, Protected, Signal, Transaction, WritableStream}
 
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
@@ -27,17 +27,17 @@ import scala.util.{Failure, Success, Try}
   * @param makeStream Note: Must not throw
   */
 class SwitchStream[I, O](
-  override protected[this] val parent: Observable[I],
+  parent: Observable[I],
   makeStream: I => EventStream[O]
-) extends SingleParentStream[I, O] with InternalNextErrorObserver[I] {
+) extends WritableStream[O] with InternalNextErrorObserver[I] {
 
   override protected val topoRank: Int = 1
 
   private[this] val parentIsSignal: Boolean = parent.isInstanceOf[Signal[_]]
 
-  private[this] var maybeCurrentEventStream: js.UndefOr[Try[EventStream[O]]] = js.undefined
+  private[this] var maybeCurrentEventStreamTry: js.UndefOr[Try[EventStream[O]]] = js.undefined
 
-  private[this] var maybeNextEventStream: js.UndefOr[Try[EventStream[O]]] = js.undefined
+  private[this] var maybeNextEventStreamTry: js.UndefOr[Try[EventStream[O]]] = js.undefined
 
   // @TODO[Elegance] Maybe we should abstract away this kind of internal observer
   private[this] val internalEventObserver: InternalObserver[O] = InternalObserver[O](
@@ -51,7 +51,7 @@ class SwitchStream[I, O](
   )
 
   override protected def onNext(nextValue: I, transaction: Transaction): Unit = {
-    switchToNextStream(nextStream = makeStream(nextValue), shouldCallMaybeWillStart = true)
+    switchToNextStream(nextStream = makeStream(nextValue), isStarting = false)
   }
 
   override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
@@ -59,56 +59,65 @@ class SwitchStream[I, O](
   }
 
   override protected def onWillStart(): Unit = {
-    super.onWillStart() // start parent
-
+    Protected.maybeWillStart(parent)
     if (parentIsSignal) {
       val parentSignal = parent.asInstanceOf[Signal[I @unchecked]]
-      val newStream = parentSignal.tryNow().map(makeStream)
-      newStream.foreach(Protected.maybeWillStart)
-      maybeNextEventStream = newStream
+      val newStreamTry = parentSignal.tryNow().map(makeStream)
+      newStreamTry.foreach(Protected.maybeWillStart)
+      maybeNextEventStreamTry = newStreamTry
     } else {
-      maybeCurrentEventStream.foreach(_.foreach(Protected.maybeWillStart))
+      maybeCurrentEventStreamTry.foreach(_.foreach(Protected.maybeWillStart))
     }
   }
 
   override protected[this] def onStart(): Unit = {
-    super.onStart()
+    parent.addInternalObserver(this, shouldCallMaybeWillStart = false)
 
-    maybeNextEventStream.foreach {
-      case Success(nextStream) =>
-        switchToNextStream(nextStream, shouldCallMaybeWillStart = false)
-      case Failure(nextError) =>
-        switchToNextError(nextError, transaction = None)
+    if (parentIsSignal) {
+      maybeNextEventStreamTry.foreach {
+        case Success(nextStream) =>
+          switchToNextStream(nextStream, isStarting = true)
+        case Failure(nextError) =>
+          switchToNextError(nextError, transaction = None)
+      }
+      maybeNextEventStreamTry = js.undefined
+    } else {
+      maybeCurrentEventStreamTry.foreach { _.foreach { currentStream =>
+        currentStream.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false)
+      }}
     }
-    maybeNextEventStream = js.undefined
+
+    super.onStart()
   }
 
   override protected[this] def onStop(): Unit = {
+    parent.removeInternalObserver(observer = this)
     removeInternalObserverFromCurrentEventStream()
-    maybeCurrentEventStream = js.undefined
     super.onStop()
   }
 
-  private def switchToNextStream(nextStream: EventStream[O], shouldCallMaybeWillStart: Boolean): Unit = {
-    val isSameStream = maybeCurrentEventStream.exists { currentStream =>
-      currentStream.isSuccess && (currentStream.get == nextStream)
+  private def switchToNextStream(nextStream: EventStream[O], isStarting: Boolean): Unit = {
+    val isSameStream = maybeCurrentEventStreamTry.exists { currentStream =>
+      currentStream.isSuccess && (currentStream.get eq nextStream)
     }
     if (!isSameStream) {
       removeInternalObserverFromCurrentEventStream()
-      maybeCurrentEventStream = Success(nextStream)
-      // If we're receiving events, this stream is started, so no need to check for that
-      nextStream.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = shouldCallMaybeWillStart)
+      maybeCurrentEventStreamTry = Success(nextStream)
+    }
+
+    if (!isSameStream || isStarting) {
+      nextStream.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = !isStarting)
     }
   }
 
   private def switchToNextError(nextError: Throwable, transaction: Option[Transaction]): Unit = {
     removeInternalObserverFromCurrentEventStream()
-    maybeCurrentEventStream = Failure(nextError)
+    maybeCurrentEventStreamTry = Failure(nextError)
     transaction.fold[Unit](new Transaction(fireError(nextError, _)))(fireError(nextError, _)) // #Note[onStart,trx,loop]
   }
 
   private def removeInternalObserverFromCurrentEventStream(): Unit = {
-    maybeCurrentEventStream.foreach { _.foreach { currentStream =>
+    maybeCurrentEventStreamTry.foreach { _.foreach { currentStream =>
       currentStream.removeInternalObserver(internalEventObserver)
     }}
   }

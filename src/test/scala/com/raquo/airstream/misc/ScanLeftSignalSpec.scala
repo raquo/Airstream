@@ -65,9 +65,7 @@ class ScanLeftSignalSpec extends UnitSpec {
 
     signal.addObserver(signalObserver)
 
-    calculations shouldBe mutable.Buffer(
-      Calculation("signal", "numbers: 2")
-    )
+    calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer(
       Effect("signal-obs", "numbers: 2")
     )
@@ -176,16 +174,31 @@ class ScanLeftSignalSpec extends UnitSpec {
 
     sub2.kill()
 
+    val sub3 = signal.addObserver(signalObserver)
+
+    // If $var does not emit while this signal is stopped, we don't need to re-sync with it.
+    calculations.shouldBeEmpty
+    effects shouldBe mutable.Buffer(
+      Effect("signal-obs", "numbers: init=1 2 3 4")
+    )
+
+    effects.clear()
+
+    // --
+
+    sub3.kill()
+
     $var.writer.onNext(4)
 
     signal.addObserver(signalObserver)
 
-    // Re-synced to upstream without emitting an extraneous `4`
+    // We detect that $var has emitted an event while this signal was stopped, and get $var's current value
+    // We don't care that 4 == 4, we KNOW that $var has emitted by looking at lastUpdateId internally.
     calculations shouldBe mutable.Buffer(
-      Calculation("signal", "numbers: init=1 2 3 4")
+      Calculation("signal", "numbers: init=1 2 3 4 4")
     )
     effects shouldBe mutable.Buffer(
-      Effect("signal-obs", "numbers: init=1 2 3 4")
+      Effect("signal-obs", "numbers: init=1 2 3 4 4")
     )
 
     calculations.clear()

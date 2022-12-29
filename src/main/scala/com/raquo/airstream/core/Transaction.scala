@@ -1,14 +1,13 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.util.JsPriorityQueue
-import com.raquo.ew.JsMap
+import com.raquo.ew.{JsArray, JsMap}
 
 // @TODO[Naming] Should probably be renamed to something like "Propagation"
 /** @param code Note: Must not throw! */
 class Transaction(private[Transaction] var code: Transaction => Any) {
 
-  // @TODO this is not used except for debug logging. Remove eventually
-  //val id: Int = Transaction.nextId()
+  // val id: Int = Transaction.nextId()
 
   //println(s"  - create trx $id")
 
@@ -31,9 +30,97 @@ class Transaction(private[Transaction] var code: Transaction => Any) {
   }
 }
 
-object Transaction { // extends GlobalCounter {
+object Transaction {
+
+  /** This object holds a queue of callbacks that should be executed
+    * when all observables finish starting. This lets `signal.changes`
+    * streams emit the updated signal's value when restarting, in such
+    * a way that the value propagates to all new observers instead of
+    * just the first new observer that triggered restart.
+    *
+    * For that to happen, you need to wrap the code that's adding several
+    * observers into `onStart.shared`. We do this in a couple places in
+    * Airstream, and in a couple places in Laminar, and this seems to cover
+    * most reasonable use cases. Users might need to wrap some of their code
+    * into `onStart.shared` manually if they manage subscriptions manually.
+    */
+  object onStart {
+
+    private var level: Int = 0
+
+    private val pendingCallbacks: JsArray[Transaction => Unit] = JsArray()
+
+    /* Put the code that (potentially) adds more than one observer inside.
+     * If that code causes `signal.changes` to restart (and emit the signal's
+     * updated value), this event will be delayed until the rest of your code
+     * in `shared` has finished executing. You can nest `shared` calls if
+     * needed, and Airstream will wait for the outermost `shared` block to
+     * finish running before executing all pendingCallbacks. Currently this
+     * logic is only used to fire those signal.changes events.
+     *
+     * To be more specific, once the outermost `shared` block finishes executing,
+     * a new transaction will be created, and inside of it, all pending callbacks
+     * will be executed. Aside from having the benefit of executing after all
+     * the desired observers have been added, this also has the benefit of sending
+     * out all of those events in the same transaction. This is done to eliminate
+     * glitches (Airstream can avoid FRP glitches only inside a single transaction),
+     * however this can introduce other glitch-like differences in behaviour
+     * compared to the normal flow of events, e.g. observables that could otherwise
+     * never possibly emit an event in the same transaction, might do so when
+     * they're both triggered by this mechanism at the same time. However, in
+     * practice this should hopefully be almost unnoticeable, as the conditions
+     * required to trigger this mechanism are rather specific, and the expected
+     * type of glitches are less likely to be disruptive than the usual ones.
+     *
+     * If you rely on standard Laminar features for automatic management of
+     * subscriptions, you shouldn't ever need to call this manually.
+     */
+    def shared[A](code: => A): A = {
+      level += 1
+      val result = try {
+        code
+      } finally {
+        level -= 1
+        if (level == 0) {
+          resolve()
+        }
+      }
+      result
+    }
+
+    /** Add a callback to execute once the new shared transaction gets executed.
+      *
+      * @param callback - Must not throw!
+      */
+    def add(callback: Transaction => Unit): Unit = {
+      pendingCallbacks.push(callback)
+    }
+
+    private def resolve(): Unit = {
+      if (pendingCallbacks.length > 0) {
+        new Transaction(trx => {
+          // #TODO[Integrity] What if calling callback(trx) calls onStart.add?
+          //  Is it ok to put it into the same list, or should it go into a new list,
+          //  to be executed in a separate transaction?
+          while (pendingCallbacks.length > 0) {
+            val callback = pendingCallbacks.pop()
+            try {
+              callback(trx)
+            } catch {
+              case err: Throwable =>
+                // #TODO[Integrity] I'm not 100% sure that this is what we need to do here.
+                AirstreamError.sendUnhandledError(err)
+            }
+          }
+        })
+      }
+    }
+  }
 
   private object pendingTransactions {
+
+    // #TODO[Performance] Make var stack into val JsArray (same for the list in children)   #nc
+    //  - #Warning: be very careful replacing immutable lists with mutable arrays - check access & usages thoroughly
 
     /** first transaction is the top of the stack, currently running */
     private var stack: List[Transaction] = Nil
@@ -110,6 +197,8 @@ object Transaction { // extends GlobalCounter {
       stack.headOption
     }
 
+    def isClearState: Boolean = stack.isEmpty && children.size == 0
+
     private def childrenFor(transaction: Transaction): List[Transaction] = {
       children.get(transaction).getOrElse(Nil)
     }
@@ -155,8 +244,6 @@ object Transaction { // extends GlobalCounter {
         None
       }
     }
-
-    private[core] def isClearState: Boolean = stack.isEmpty && children.size == 0
   }
 
   private[core] def isClearState: Boolean = pendingTransactions.isClearState
@@ -166,8 +253,13 @@ object Transaction { // extends GlobalCounter {
   private def run(transaction: Transaction): Unit = {
     //println(s"--start trx ${transaction.id}")
     try {
-      transaction.code(transaction) // @TODO[API] Shouldn't we guard against exceptions in `code` here? It can be provided by the user.
+      transaction.code(transaction)
       transaction.resolvePendingObservables()
+    } catch {
+      case err: Throwable =>
+        // #TODO[Integrity] I'm not 100% sure that this is what we want to do here,
+        //  but I think it's better than not handling the error at all.
+        AirstreamError.sendUnhandledError(err)
     } finally {
       // @TODO[API,Integrity]
       //  This block is executed regardless of whether an exception is thrown in `code` or not,
@@ -183,4 +275,14 @@ object Transaction { // extends GlobalCounter {
     throw new Exception(s"Attempted to run Transaction $trx after it was already executed.")
   }
 
+  // private var lastTransactionId: Int = 0
+  //
+  // private def nextId(): Int = {
+  //   if (lastTransactionId == Int.MaxValue) { // Note: This is lower than JS native Number.MAX_SAFE_INTEGER
+  //     lastTransactionId = 1
+  //   } else {
+  //     lastTransactionId += 1
+  //   }
+  //   lastTransactionId
+  // }
 }

@@ -52,15 +52,15 @@ trait WritableObservable[A] extends Observable[A] {
   protected val internalObservers: ObserverList[InternalObserver[A]] = new ObserverList(JsArray())
 
   override def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription = {
-    //println(s"$this >> maybeWillStart")
-    maybeWillStart()
-    //println(s"$this << maybeWillStart")
-    val subscription = addExternalObserver(observer, owner)
-    onAddedExternalObserver(observer)
-    //println(s"$this >> ao")
-    maybeStart()
-    //println(s"$this << ao")
-    subscription
+    // #nc[doc] - document this onstart.shared mechanism, both in code and in the real docs.
+    //  - also for extenders: this must be called by your observable also if it can get started without external observers downstream (basically, it shouldn't).
+    Transaction.onStart.shared {
+      maybeWillStart()
+      val subscription = addExternalObserver(observer, owner)
+      onAddedExternalObserver(observer)
+      maybeStart()
+      subscription
+    }
   }
 
   /** Subscribe an external observer to this observable */

@@ -46,7 +46,7 @@ class TransferableSubscription(
 
     // @Note this short-circuit is important. As explained in Laminar comments,
     //  when activating / deactivating owners, we have to iterate through their
-    //  subscriptions and run user code for each of them. That user code will
+    //  subscriptions and run user code for each of them. That user code
     //  might trigger other activations / deactivations, and those would be
     //  processed without delay, in this half-activated state where some
     //  subscription could be active but its owner not active, or the other way.

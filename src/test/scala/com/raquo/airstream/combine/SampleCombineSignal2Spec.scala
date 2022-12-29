@@ -98,9 +98,7 @@ class SampleCombineSignal2Spec extends UnitSpec {
     subCombined.kill()
     sampledSignal.addObserver(sampledObserver)
 
-    calculations shouldBe mutable.Buffer(
-      Calculation("sampled", 20)
-    )
+    calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer(
       Effect("sampled", 20)
     )
@@ -127,7 +125,6 @@ class SampleCombineSignal2Spec extends UnitSpec {
     combinedSignal.addObserver(combinedObserver)
 
     calculations shouldBe mutable.Buffer(
-      Calculation("sampling", 300),
       Calculation("combined", 330)
     )
     effects shouldBe mutable.Buffer(

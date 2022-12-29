@@ -1,6 +1,6 @@
 package com.raquo.airstream.misc
 
-import com.raquo.airstream.common.{InternalTryObserver, SingleParentSignal}
+import com.raquo.airstream.common.SingleParentSignal
 import com.raquo.airstream.core.AirstreamError.ErrorHandlingError
 import com.raquo.airstream.core.{Protected, Signal, Transaction}
 
@@ -22,11 +22,12 @@ class MapSignal[I, O](
   protected[this] val parent: Signal[I],
   protected[this] val project: I => O,
   protected[this] val recover: Option[PartialFunction[Throwable, Option[O]]]
-) extends SingleParentSignal[I, O] with InternalTryObserver[I] {
+) extends SingleParentSignal[I, O] {
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
   override protected def onTry(nextParentValue: Try[I], transaction: Transaction): Unit = {
+    super.onTry(nextParentValue, transaction)
     nextParentValue.fold(
       nextError => recover.fold(
         // if no `recover` specified, fire original error
