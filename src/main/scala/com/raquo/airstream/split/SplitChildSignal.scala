@@ -4,6 +4,7 @@ import com.raquo.airstream.common.{InternalTryObserver, SingleParentSignal}
 import com.raquo.airstream.core.{Protected, Transaction}
 import com.raquo.airstream.timing.SyncDelayStream
 
+import scala.scalajs.js
 import scala.util.{Success, Try}
 
 /** This signal MUST be sync delayed after the split signal to prevent it
@@ -24,7 +25,7 @@ private[airstream] class SplitChildSignal[M[_], A](
 
   private var hasEmittedEvents = false
 
-  private var maybeInitialTransaction: Option[Transaction] = Transaction.currentTransaction()
+  private var maybeInitialTransaction: js.UndefOr[Transaction] = Transaction.currentTransaction()
 
   private var droppedDuplicateEvent: Boolean = false
 
@@ -49,7 +50,7 @@ private[airstream] class SplitChildSignal[M[_], A](
       //  I think None might be possible when evaluating this signal's initial value when starting it
       if (!droppedDuplicateEvent && maybeInitialTransaction == Transaction.currentTransaction()) {
         //println(s">>>>> DROPPED EVENT ${freshMemoizedInput}, TRX IS ${maybeInitialTransaction}")
-        maybeInitialTransaction = None
+        maybeInitialTransaction = js.undefined
         droppedDuplicateEvent = true
       } else {
         hasEmittedEvents = true

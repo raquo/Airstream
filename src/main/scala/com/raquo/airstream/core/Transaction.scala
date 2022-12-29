@@ -3,6 +3,8 @@ package com.raquo.airstream.core
 import com.raquo.airstream.util.JsPriorityQueue
 import com.raquo.ew.{JsArray, JsMap}
 
+import scala.scalajs.js
+
 // @TODO[Naming] Should probably be renamed to something like "Propagation"
 /** @param code Note: Must not throw! */
 class Transaction(private[Transaction] var code: Transaction => Any) {
@@ -119,13 +121,10 @@ object Transaction {
 
   private object pendingTransactions {
 
-    // #TODO[Performance] Make var stack into val JsArray (same for the list in children)   #nc
-    //  - #Warning: be very careful replacing immutable lists with mutable arrays - check access & usages thoroughly
-
     /** first transaction is the top of the stack, currently running */
-    private var stack: List[Transaction] = Nil
+    private val stack: JsArray[Transaction] = JsArray()
 
-    private val children: JsMap[Transaction, List[Transaction]] = new JsMap()
+    private val children: JsMap[Transaction, JsArray[Transaction]] = new JsMap()
 
     def add(newTransaction: Transaction): Unit = {
       // 1. Regarding calling `run`:
@@ -164,7 +163,7 @@ object Transaction {
         if (children.size > 0) {
           //println(s"Stack is empty but children remain: ${children.map(t => (t._1.id, t._2.map(_.id)))}")
           var numChildren = 0
-          children.forEach((transactions, _) => numChildren += transactions.size)
+          children.forEach((transactions, _) => numChildren += transactions.length)
           throw new Exception(s"Transaction queue error: Stack cleared, but a total of ${numChildren} children for ${children.size} transactions remain. This is a bug in Airstream.")
         }
       }{ nextTransaction =>
@@ -193,62 +192,57 @@ object Transaction {
       }
     }
 
-    def peekStack(): Option[Transaction] = {
-      stack.headOption
+    def peekStack(): js.UndefOr[Transaction] = {
+      // in Javascript, this does not fail, but instead return `undefined` if array is empty.
+      stack(0)
     }
 
-    def isClearState: Boolean = stack.isEmpty && children.size == 0
+    def isClearState: Boolean = stack.length == 0 && children.size == 0
 
-    private def childrenFor(transaction: Transaction): List[Transaction] = {
-      children.get(transaction).getOrElse(Nil)
+    private def maybeChildrenFor(transaction: Transaction): js.UndefOr[JsArray[Transaction]] = {
+      children.get(transaction)
     }
 
     private def pushToStack(transaction: Transaction): Unit = {
-      //println(s"pushToStack ${transaction.id}")
-      stack = transaction :: stack
+      stack.unshift(transaction)
     }
 
-    private def popStack(): Option[Transaction] = {
-      //println(s"popStack")
-      val result = stack.headOption
-      if (result.nonEmpty) {
-        //println("- was nonEmpty")
-        stack = stack.tail
-      }
-      result
+    private def popStack(): js.UndefOr[Transaction] = {
+      // JsArray.shift returns `undefined` if array is empty
+      stack.shift()
     }
 
     private def enqueueChild(parent: Transaction, newChild: Transaction): Unit = {
       //println(s"enqueueChild parent = ${parent.id} newChild = ${newChild.id}")
-      val newChildren = childrenFor(parent) :+ newChild
-      children.set(parent, newChildren)
+      val maybeChildren = maybeChildrenFor(parent)
+      val noChildrenFound = maybeChildren.isEmpty
+      val newChildren = maybeChildren.getOrElse(JsArray())
+      newChildren.push(newChild)
+      if (noChildrenFound) {
+        children.set(parent, newChildren)
+      }
     }
 
-    private def dequeueChild(parent: Transaction): Option[Transaction] = {
+    private def dequeueChild(parent: Transaction): js.UndefOr[Transaction] = {
       //println(s"dequeueChild parent = ${parent.id}")
-      val parentChildren = childrenFor(parent)
-      if (parentChildren.nonEmpty) {
-        val nextChild = parentChildren.head
+      val maybeParentChildren = maybeChildrenFor(parent)
+      maybeParentChildren.filter(_.length > 0).map { parentChildren =>
+        val nextChild = parentChildren.shift()
         //println(s"- found some children, first: ${nextChild.id}")
-        val updatedChildren = parentChildren.tail
-        if (updatedChildren.nonEmpty) {
-          children.set(parent, updatedChildren)
-          //println("- removed child, some remaining")
-        } else {
+        if (parentChildren.length == 0) {
           children.delete(parent)
           //println("- no children left for this parent, removed parent.")
+        } else {
+          //println("- removed child, some remaining")
         }
-        Some(nextChild)
-      } else {
-        //println("- no children")
-        None
+        nextChild
       }
     }
   }
 
   private[core] def isClearState: Boolean = pendingTransactions.isClearState
 
-  private[airstream] def currentTransaction(): Option[Transaction] = pendingTransactions.peekStack()
+  private[airstream] def currentTransaction(): js.UndefOr[Transaction] = pendingTransactions.peekStack()
 
   private def run(transaction: Transaction): Unit = {
     //println(s"--start trx ${transaction.id}")
