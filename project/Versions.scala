@@ -10,7 +10,7 @@ object Versions {
 
   val Tuplez = "0.3.7"
 
-  val Ew = "0.1.1"
+  val Ew = "0.1.2-SNAPSHOT"
 
   // Used in test only:
 

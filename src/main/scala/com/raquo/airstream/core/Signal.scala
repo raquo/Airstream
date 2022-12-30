@@ -8,11 +8,12 @@ import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.debug.{DebuggableSignal, Debugger, DebuggerSignal}
 import com.raquo.airstream.distinct.DistinctSignal
 import com.raquo.airstream.misc.generated._
-import com.raquo.airstream.misc.{StreamFromSignal, MapSignal, ScanLeftSignal}
+import com.raquo.airstream.misc.{MapSignal, ScanLeftSignal, StreamFromSignal}
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.split.{SplittableOneSignal, SplittableOptionSignal, SplittableSignal}
 import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
 import com.raquo.airstream.timing.JsPromiseSignal
+import com.raquo.ew.JsArray
 
 import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
@@ -214,7 +215,7 @@ object Signal {
   def sequence[A](
     signals: Seq[Signal[A]]
   ): Signal[Seq[A]] = {
-    new CombineSignalN[A, Seq[A]](signals, identity)
+    new CombineSignalN[A, Seq[A]](JsArray(signals: _*), _.asScalaJs.toSeq)
   }
 
   @inline def combineSeq[A](signals: Seq[Signal[A]]): Signal[Seq[A]] = sequence(signals)

@@ -11,10 +11,17 @@ import com.raquo.ew.JsArray
   *
   * This feature exists only for EventStream-s because merging Signals
   * does not make sense, conceptually (what do you even do with their current values?).
+  *
+  * @param parentStreams Never update this array - this stream owns it.
   */
 class MergeStream[A](
-  override protected[this] val parents: Seq[EventStream[A]],
+  parentStreams: JsArray[EventStream[A]],
 ) extends WritableStream[A] with SyncObservable[A] with MultiParentStream[A, A] {
+
+  override protected[this] val parents: JsArray[Observable[A]] = {
+    // This cast is safe as long as we don't put signals into this array
+    parentStreams.asInstanceOf[JsArray[Observable[A]]]
+  }
 
   override protected val topoRank: Int = Protected.maxTopoRank(parents) + 1
 
@@ -24,7 +31,7 @@ class MergeStream[A](
 
   private[this] val parentObservers: JsArray[InternalParentObserver[A]] = JsArray()
 
-  parents.foreach(parent => parentObservers.push(makeInternalObserver(parent)))
+  parents.forEach(parent => parentObservers.push(makeInternalObserver(parent)))
 
   // @TODO document this, and document the topo parent order
   /** If this stream has already fired in a given transaction, the next firing will happen in a new transaction.

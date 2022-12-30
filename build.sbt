@@ -80,26 +80,6 @@ val generateTupleCombinatorsTo = 9
 
 Compile / sourceGenerators += Def.task {
   Seq.concat(
-    GenerateCombineStreams(
-      (Compile / sourceDirectory).value,
-      from = generateTupleCombinatorsFrom,
-      to = generateTupleCombinatorsTo
-    ).run,
-    GenerateCombineSignals(
-      (Compile / sourceDirectory).value,
-      from = generateTupleCombinatorsFrom,
-      to = generateTupleCombinatorsTo
-    ).run,
-    GenerateSampleCombineStreams(
-      (Compile / sourceDirectory).value,
-      from = generateTupleCombinatorsFrom,
-      to = generateTupleCombinatorsTo
-    ).run,
-    GenerateSampleCombineSignals(
-      (Compile / sourceDirectory).value,
-      from = generateTupleCombinatorsFrom,
-      to = generateTupleCombinatorsTo
-    ).run,
     GenerateTupleStreams(
       (Compile / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,

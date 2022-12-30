@@ -4,35 +4,32 @@ import com.raquo.airstream.core.{Protected, Signal, WritableSignal}
 import com.raquo.ew.JsArray
 
 /** A simple signal that has multiple parents. */
-trait MultiParentSignal[+I, O] extends WritableSignal[O] {
+trait MultiParentSignal[I, O] extends WritableSignal[O] {
 
-  // #nc[perf] should this maybe be js.Array?
-  protected[this] val parents: Seq[Signal[I]]
+  /** This array is read-only, never update it. */
+  protected[this] val parents: JsArray[Signal[I]]
 
-  protected[this] lazy val _parentLastUpdateIds: JsArray[Int] = JsArray(parents.map(Protected.lastUpdateId): _*) // #nc inefficient
+  protected[this] lazy val _parentLastUpdateIds: JsArray[Int] = parents.map(Protected.lastUpdateId(_))
 
   override protected def onWillStart(): Unit = {
-    // #nc redundant loop eh? ugly af
-    parents.foreach(Protected.maybeWillStart)
-    val shouldPullFromParent = updateParentLastTrxIds()
+    parents.forEach(Protected.maybeWillStart(_))
+    val shouldPullFromParent = updateParentLastUpdateIds()
     if (shouldPullFromParent) {
       updateCurrentValueFromParent()
     }
   }
 
   /** @return Whether parent has emitted since last time we checked */
-  protected[this] def updateParentLastTrxIds(): Boolean = {
-    var ix = 0
+  protected[this] def updateParentLastUpdateIds(): Boolean = {
     var parentHasUpdated = false
-    while (ix < parents.size) {
-      val newLastTrxId = Protected.lastUpdateId(parents(ix))
-      val lastSeenParentTrxId = _parentLastUpdateIds(ix)
-      if (newLastTrxId != lastSeenParentTrxId) {
-        _parentLastUpdateIds.update(ix, newLastTrxId)
+    parents.forEachWithIndex { (parent, ix) => {
+      val newLastUpdateId = Protected.lastUpdateId(parent)
+      val lastSeenParentUpdateId = _parentLastUpdateIds(ix)
+      if (newLastUpdateId != lastSeenParentUpdateId) {
+        _parentLastUpdateIds.update(ix, newLastUpdateId)
         parentHasUpdated = true
       }
-      ix += 1
-    }
+    }}
     parentHasUpdated
   }
 

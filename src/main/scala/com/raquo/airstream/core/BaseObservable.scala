@@ -265,8 +265,6 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     }
   }
 
-  // #nc make onStart / onStop non-abstract
-
   /** This method is fired when this observable starts working (listening for parent events and/or firing its own events),
     * that is, when it gets its first Observer (internal or external).
     *

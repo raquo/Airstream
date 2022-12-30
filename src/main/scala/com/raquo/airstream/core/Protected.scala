@@ -1,5 +1,7 @@
 package com.raquo.airstream.core
 
+import com.raquo.ew.JsArray
+
 import scala.annotation.{implicitNotFound, unused}
 import scala.util.Try
 
@@ -26,8 +28,37 @@ object Protected {
     BaseObservable.topoRank(observable)
   }
 
+  // Note: this implementation is not used in Airstream, and is provided
+  // only for third party developers who don't want to use JsArray.
   def maxTopoRank[O[+_] <: Observable[_]](observables: Iterable[BaseObservable[O, _]]): Int = {
     observables.foldLeft(0)((maxRank, parent) => Protected.topoRank(parent) max maxRank)
+  }
+
+  @inline def maxTopoRank[O <: Observable[_]](
+    observables: JsArray[O]
+  ): Int = {
+    maxTopoRank(minRank = 0, observables)
+  }
+
+  def maxTopoRank[O <: Observable[_]](
+    observable: Observable[_],
+    observables: JsArray[O]
+  ): Int = {
+    maxTopoRank(minRank = Protected.topoRank(observable), observables)
+  }
+
+  def maxTopoRank[O <: Observable[_]](
+    minRank: Int,
+    observables: JsArray[O]
+  ): Int = {
+    var maxRank = minRank
+    observables.forEach { observable =>
+      val rank = Protected.topoRank(observable)
+      if (rank > maxRank) {
+        maxRank = rank
+      }
+    }
+    maxRank
   }
 
   def lastUpdateId(signal: Signal[_])(implicit @unused ev: Protected): Int = signal.lastUpdateId

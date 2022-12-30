@@ -27,7 +27,7 @@ object Source {
     override def toObservable: Signal[A]
   }
 
-  // #TODO[API] Disable integrations, see if anyone complains. These conversions are unfortunately not smooth enough to be implicit.
+  // #TODO[API] Disabled integrations, let's see if anyone complains. These conversions are unfortunately not smooth enough to be implicit.
 
   //implicit def futureToEventSource[A](future: Future[A]): EventSource[A] = EventStream.fromFuture(future)
   //

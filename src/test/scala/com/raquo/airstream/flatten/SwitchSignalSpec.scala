@@ -375,11 +375,6 @@ class SwitchSignalSpec extends UnitSpec {
         .flatMap { num =>
           if (num < 1000) {
             smallI += 1
-            // #TODO[API]: if this `intSignal.map("small: " + _)` signal was cached / reused instead, it would
-            //  result in duplicate events, which is not great, but kind of expected, because SwitchSignal
-            //  ensures that it emits an event every time that the parent emits, for consistency. But since
-            //  the inner signal is also the parent signal, this results in event duplication.
-            //  - See the isSameSignal logic in SwitchSignal
             intSignal.map("small: " + _).setDisplayName(s"small-$smallI") //.debugLogLifecycle()
           } else {
             bigI += 1

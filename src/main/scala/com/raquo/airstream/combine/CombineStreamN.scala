@@ -1,43 +1,60 @@
 package com.raquo.airstream.combine
 
 import com.raquo.airstream.common.{InternalParentObserver, MultiParentStream}
-import com.raquo.airstream.core.{EventStream, Protected}
+import com.raquo.airstream.core.{EventStream, Observable, Protected}
+import com.raquo.ew.JsArray
 
+import scala.scalajs.js
 import scala.util.Try
 
-/** @param combinator Must not throw! */
+/**
+  * @param parentStreams Never update this array - this stream owns it.
+  * @param combinator Must not throw! Must be pure.
+  */
 class CombineStreamN[A, Out](
-  override protected[this] val parents: Seq[EventStream[A]],
-  combinator: Seq[A] => Out
+  parentStreams: JsArray[EventStream[A]],
+  combinator: JsArray[A] => Out
 ) extends MultiParentStream[A, Out] with CombineObservable[Out] {
 
   // @TODO[API] Maybe this should throw if parents.isEmpty
 
+  override protected[this] val parents: JsArray[Observable[A]] = {
+    // #Note this is safe as long as we don't put non-streams into this JsArray.
+    parentStreams.asInstanceOf[JsArray[Observable[A]]]
+  }
+
   override protected val topoRank: Int = Protected.maxTopoRank(parents) + 1
 
-  private[this] val maybeLastParentValues: Array[Option[Try[A]]] = Array.fill(parents.size)(None)
+  private[this] val maybeLastParentValues: JsArray[js.UndefOr[Try[A]]] = parents.map(_ => js.undefined)
 
   override protected[this] def inputsReady: Boolean = {
-    maybeLastParentValues.forall(_.nonEmpty)
+    var allReady: Boolean = true
+    maybeLastParentValues.forEach { lastValue =>
+      if (lastValue.isEmpty) {
+        allReady = false
+      }
+    }
+    allReady
   }
 
   override protected[this] def combinedValue: Try[Out] = {
-    // @TODO[Scala3] When we don't need Scala 2.12, use ArraySeq.unsafeWrapArray(maybeLastParentValues) for perf?
-    CombineObservable.seqCombinator(maybeLastParentValues.toIndexedSeq.map(_.get), combinator)
+    // #Note don't call this unless you have first verified that
+    //  inputs are ready, otherwise this asInstanceOf will not be safe.
+    CombineObservable.jsArrayCombinator(maybeLastParentValues.asInstanceOf[JsArray[Try[A]]], combinator)
   }
 
-  parentObservers.push(
-    parents.zipWithIndex.map { case (parent, index) =>
+  parents.forEachWithIndex { (parent, ix) =>
+    parentObservers.push(
       InternalParentObserver.fromTry[A](
         parent,
         (nextParentValue, transaction) => {
-          maybeLastParentValues.update(index, Some(nextParentValue))
+          maybeLastParentValues.update(ix, nextParentValue)
           if (inputsReady) {
             onInputsReady(transaction)
           }
         }
       )
-    }: _*
-  )
+    )
+  }
 
 }

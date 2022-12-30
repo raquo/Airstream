@@ -66,20 +66,21 @@ object CombineObservable {
     }
   }
 
-  /** @param combinator MUST NOT THROW! */
-  def seqCombinator[A, B](trys: Seq[Try[A]], combinator: Seq[A] => B): Try[B] = {
-    // @TODO[Performance] typical combinator will access every value by index,
-    //  but `trys` could be a List or something with an O(N) cost for this.
-    //  However, I don't think initializing an Array in all cases will be
-    //  cheaper, because typical seq sizes are very small here (2-4)
-    if (trys.forall(_.isSuccess)) {
+  def jsArrayCombinator[A, B](trys: JsArray[Try[A]], combinator: JsArray[A] => B): Try[B] = {
+    var allSuccess: Boolean = true
+    trys.forEach { t =>
+      if (t.isFailure) {
+        allSuccess = false
+      }
+    }
+    if (allSuccess) {
       val values = trys.map(_.get)
       Success(combinator(values))
     } else {
       val errors = trys.map {
         case Failure(err) => Some(err)
         case _ => None
-      }
+      }.asScalaJs.toSeq
       Failure(CombinedError(errors))
     }
   }

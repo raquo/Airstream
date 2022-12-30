@@ -12,6 +12,7 @@ import com.raquo.airstream.misc._
 import com.raquo.airstream.misc.generated._
 import com.raquo.airstream.split.{SplittableOneStream, SplittableOptionStream, SplittableStream}
 import com.raquo.airstream.timing._
+import com.raquo.ew.JsArray
 
 import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
@@ -400,18 +401,18 @@ object EventStream {
   }
 
   def sequence[A](streams: Seq[EventStream[A]]): EventStream[Seq[A]] = {
-    new CombineStreamN[A, Seq[A]](streams, identity)
+    new CombineStreamN[A, Seq[A]](JsArray(streams: _*), _.asScalaJs.toSeq)
   }
 
   @inline def combineSeq[A](streams: Seq[EventStream[A]]): EventStream[Seq[A]] = sequence(streams)
 
   /** Returns a stream that emits events from all off the `streams`, interleaved. */
   def merge[A](streams: EventStream[A]*): EventStream[A] = {
-    new MergeStream[A](streams)
+    new MergeStream[A](JsArray(streams: _*))
   }
 
-  @inline def mergeSeq[A](streams: Seq[EventStream[A]]): EventStream[A] = {
-    merge(streams: _*) // @TODO[Performance] Does _* introduce any overhead in Scala.js?
+  def mergeSeq[A](streams: Seq[EventStream[A]]): EventStream[A] = {
+    new MergeStream[A](JsArray(streams: _*))
   }
 
   /** Provides methods on EventStream companion object: combine, combineWith */
