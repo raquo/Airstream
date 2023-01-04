@@ -195,7 +195,13 @@ class FetchOptions[In] private[web] (
     maybeAbortStream = source
   }
 
-  /** Abort the fetch request if FetchStream is stopped. (False by default) */
+  /** Abort the fetch request if FetchStream is stopped.
+    *
+    * By default, stopping the stream does not affect the underlying Fetch request,
+    * and toggling this setting does not really affect visible execution of the stream.
+    *
+    * Aborting on stop might yield a marginal efficiency gain in certain scenarios.
+    */
   def abortOnStop(): Unit = {
     getOrCreateAbortController()
     shouldAbortOnStop = true

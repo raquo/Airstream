@@ -233,7 +233,7 @@ class PullResetSignalSpec extends UnitSpec {
       (isPositive, isEven)
     }.setDisplayName("Combined")
 
-    val $result = $combined.startWith(0).setDisplayName("Result")
+    val $result = $combined.startWith((false, false)).setDisplayName("Result")
 
     val sub1 = $result.addObserver(Observer.empty)
 

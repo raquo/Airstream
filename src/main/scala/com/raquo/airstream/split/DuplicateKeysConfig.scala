@@ -27,11 +27,20 @@ package com.raquo.airstream.split
   *  the overhead of checking for duplicates. But not sure how bulletproof
   *  that logic would be.
   */
-class DuplicateKeysConfig(var shouldWarn: Boolean)
+class DuplicateKeysConfig(private var _shouldWarn: Boolean) {
+
+  def shouldWarn: Boolean = _shouldWarn
+
+  def forceSetShouldWarn(newValue: Boolean): Unit = {
+    _shouldWarn = newValue
+  }
+}
 
 object DuplicateKeysConfig {
 
-  val default: DuplicateKeysConfig = new DuplicateKeysConfig(shouldWarn = true)
+  val default: DuplicateKeysConfig = new DuplicateKeysConfig(_shouldWarn = true)
 
-  val noWarnings: DuplicateKeysConfig = new DuplicateKeysConfig(shouldWarn = false)
+  val warnings: DuplicateKeysConfig = new DuplicateKeysConfig(_shouldWarn = true)
+
+  val noWarnings: DuplicateKeysConfig = new DuplicateKeysConfig(_shouldWarn = false)
 }
