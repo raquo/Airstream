@@ -71,29 +71,20 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     */
   def distinctByKey(key: A => Any): Self[A] = distinctBy(key(_) == key(_))
 
-  /** Distinct events (but keep all errors) using a comparison function
-    *
-    * @param fn (prev, next) => isSame
-    */
-  def distinctBy(fn: (A, A) => Boolean): Self[A] = distinctTry {
-    case (Success(prev), Success(next)) => fn(prev, next)
+  /** Distinct events (but keep all errors) using a comparison function */
+  def distinctBy(isSame: (A, A) => Boolean): Self[A] = distinctTry {
+    case (Success(prev), Success(next)) => isSame(prev, next)
     case _ => false
   }
 
-  /** Distinct errors only (but keep all events) using a comparison function
-    *
-    * @param fn (prevErr, nextErr) => isSame
-    */
-  def distinctErrors(fn: (Throwable, Throwable) => Boolean): Self[A] = distinctTry {
-    case (Failure(prevErr), Failure(nextErr)) => fn(prevErr, nextErr)
+  /** Distinct errors only (but keep all events) using a comparison function */
+  def distinctErrors(isSame: (Throwable, Throwable) => Boolean): Self[A] = distinctTry {
+    case (Failure(prevErr), Failure(nextErr)) => isSame(prevErr, nextErr)
     case _ => false
   }
 
-  /** Distinct all values (both events and errors) using a comparison function
-    *
-    * @param fn (prev, next) => isSame
-    */
-  def distinctTry(fn: (Try[A], Try[A]) => Boolean): Self[A]
+  /** Distinct all values (both events and errors) using a comparison function */
+  def distinctTry(isSame: (Try[A], Try[A]) => Boolean): Self[A]
 
   def toStreamIfSignal[B >: A](ifSignal: Signal[A] => EventStream[B]): EventStream[B] = {
     matchStreamOrSignal(identity, ifSignal)

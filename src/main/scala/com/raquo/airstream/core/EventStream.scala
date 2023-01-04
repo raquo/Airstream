@@ -250,12 +250,9 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
     operator(this)
   }
 
-  /** Distinct all values (both events and errors) using a comparison function
-    *
-    * @param fn (prev, next) => isSame
-    */
-  override def distinctTry(fn: (Try[A], Try[A]) => Boolean): EventStream[A] = {
-    new DistinctStream[A](parent = this, fn, resetOnStop = false)
+  /** Distinct all values (both events and errors) using a comparison function */
+  override def distinctTry(isSame: (Try[A], Try[A]) => Boolean): EventStream[A] = {
+    new DistinctStream[A](parent = this, isSame, resetOnStop = false)
   }
 
   /** See docs for [[MapStream]]

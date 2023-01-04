@@ -104,12 +104,9 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
     )
   }
 
-  /** Distinct all values (both events and errors) using a comparison function
-    *
-    * @param fn (prev, next) => isSame
-    */
-  override def distinctTry(fn: (Try[A], Try[A]) => Boolean): Signal[A] = {
-    new DistinctSignal[A](parent = this, fn, resetOnStop = false)
+  /** Distinct all values (both events and errors) using a comparison function */
+  override def distinctTry(isSame: (Try[A], Try[A]) => Boolean): Signal[A] = {
+    new DistinctSignal[A](parent = this, isSame, resetOnStop = false)
   }
 
   /** @param pf Note: guarded against exceptions */
