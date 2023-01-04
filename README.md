@@ -1,8 +1,8 @@
 # Airstream
 
-[![Build Status](https://circleci.com/gh/raquo/Airstream.svg?style=svg)](https://circleci.com/gh/raquo/Airstream)
+[![Build status](https://github.com/raquo/Airstream/actions/workflows/test.yml/badge.svg)](https://github.com/raquo/Airstream/actions/workflows/test.yml)
 [![Chat on https://discord.gg/JTrUxhq7sj](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://discord.gg/JTrUxhq7sj)
-![Maven Central](https://img.shields.io/maven-central/v/com.raquo/airstream_sjs1_2.13.svg)
+[![Maven Central](https://img.shields.io/maven-central/v/com.raquo/airstream_sjs1_3.svg)](https://search.maven.org/artifact/com.raquo/airstream_sjs1_3)
 
 Airstream is a small state propagation and streaming library for Scala.js. Primary differences from other solutions:
 
@@ -10,9 +10,10 @@ Airstream is a small state propagation and streaming library for Scala.js. Prima
 
 - **No [FRP glitches](#frp-glitches)** – neither observables themselves nor their observers will ever see inconsistent state within a transaction, at no runtime cost.
 
-- **One integrated system for two core types of observables** – Event streams alone are not a good enough abstraction for anything other than events.
+- **One integrated system for two core types of observables**
   - EventStream for events (lazy, no current value)
   - Signal for state (lazy, has current value, only state-safe operators)
+  - Seamless interop between the two types
 
 - **Small size, simple implementation** – easy to understand, easy to create custom observables. Does not bloat your Scala.js bundle size.
 
@@ -21,7 +22,7 @@ Airstream has a very generic design, but is primarily intended to serve as a rea
 I created Airstream because I found existing solutions were not suitable for building reactive UI components. My original need for Airstream was to replace the previous reactive layer of [Laminar](https://laminar.dev), but I'll be happy to see it used by other reactive UI libraries as well. Another piece of Laminar you can reuse is [Scala DOM Types](https://github.com/raquo/scala-dom-types).
 
 ```
-"com.raquo" %%% "airstream" % "<version>"  // Requires Scala.js >= 1.7.1
+"com.raquo" %%% "airstream" % "<version>"  // Requires Scala.js 1.9.0+
 ```
 
 

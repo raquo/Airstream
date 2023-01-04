@@ -1,3 +1,6 @@
+// Lets me depend on Maven Central artifacts immediately without waiting
+resolvers ++= Resolver.sonatypeOssRepos("public")
+
 enablePlugins(ScalaJSPlugin)
 
 enablePlugins(ScalaJSBundlerPlugin)
@@ -61,6 +64,10 @@ scalacOptions += {
 )
 
 (installJsdom / version) := Versions.JsDom
+
+(webpack / version) := Versions.Webpack
+
+(startWebpackDevServer / version) := Versions.WebpackDevServer
 
 useYarn := true
 
