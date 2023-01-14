@@ -4,7 +4,7 @@ import com.raquo.airstream.core.AirstreamError.VarError
 import com.raquo.airstream.core.{AirstreamError, Transaction}
 import com.raquo.airstream.ownership.Owner
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /** DerivedVar has the same Var contract as SourceVar, but instead of maintaining its own state
   * it is essentially a lens on the underlying SourceVar.
@@ -16,7 +16,7 @@ import scala.util.Try
 class DerivedVar[A, B](
   parent: Var[A],
   zoomIn: A => B,
-  zoomOut: B => A,
+  zoomOut: (A, B) => A,
   owner: Owner
 ) extends Var[B] {
 
@@ -35,7 +35,15 @@ class DerivedVar[A, B](
 
   override private[state] def setCurrentValue(value: Try[B], transaction: Transaction): Unit = {
     if (_varSignal.isStarted) {
-      parent.setCurrentValue(value.map(zoomOut), transaction)
+      parent.tryNow() match {
+        case Success(parentValue) =>
+          // This can update the parent without causing an infinite loop because
+          // the parent updates this derived var's signal, it does not call
+          // setCurrentValue on this var directly.
+          parent.setCurrentValue(value.map(zoomOut(parentValue, _)), transaction)
+        case Failure(err) =>
+          AirstreamError.sendUnhandledError(VarError(s"Unable to zoom out of derived var when the parent var is failed.", cause = Some(err)))
+      }
     } else {
       // #Note We can't just throw here
       //  - The outcome of that would be unpredictable, see comment in Transaction.run

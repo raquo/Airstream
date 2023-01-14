@@ -617,24 +617,34 @@ Keep in mind that transaction scheduling is fully synchronous, we do not introdu
 
 ##### Derived Vars
 
-If you have a `Var[A]`, you can get zoomed / derived `Var[B]` by providing `A => B`, `B => A`, and an owner. The result is a `DerivedVar`, essentially a combination of `var.signal.map` and `writer.contramap` packaged in a Var, and so to simulate the strictness of Var, creating DerivedVar requires an owner.
+If you have a `Var[A]`, you can get zoomed / derived `Var[B]` by providing `A => B`, `(A, B) => A`, and an owner. The result is a `DerivedVar`, essentially a combination of `var.signal.map` and `writer.contramap` packaged in a Var, and so to simulate the strictness of Var, creating DerivedVar requires an owner.
 
 When you have a derived var, updates to it are propagated to the source var and vice versa, as long as derived var's signal has listeners. Don't try to set/update a derived Var's value when it has no listeners. The value will not be updated, and Airstream will emit an unhandled error.
 
 ```scala
+case class FormData(num: Int, str: String)
 val owner: Owner = ???
-val source = Var(1)
-val derived = source.zoom(_ + 100)(_ - 100)(owner)
+val source = Var(FormData(0, "a"))
+val derived = source.zoom(_.num)((f, n) => f.copy(num = n))(owner)
 
-source.set(2) // source.now() == 2, derived.now() == 102
+source.update(_.copy(num = 2))
+// source.now() == Form(2, "a")
+// derived.now() == 2
 
-derived.set(103) // source.now() == 3, derived.now() == 103
+derived.set(3)
+// source.now() == Form(3, "a")
+// derived.now() == 3
 
 owner.killSubscriptions()
 
-source.set(3) // derived var did not update: derived.now() == 102
+source.update(_.copy(num = 3))
+// derived var did not update:
+// derived.now() == 3
 
-derived.set(104) // neither var updated: source.now() == 3, derived.now() == 103
+derived.set(5)
+// neither var updated:
+// source.now() == Form(4, "a")
+// derived.now() == 3
 ```
 
 Note: DerivedVar starts out with a subscription owned by `owner`, that counts as a listener of course. However, just like `OwnedSignal` in general, if it obtains any other listeners, it will continue running even if the original owner kills its subscription.
