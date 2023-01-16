@@ -32,7 +32,7 @@ class SplittableStream[M[_], Input](val stream: EventStream[M[Input]]) extends A
     new SplitSignal[M, (Input, Int), Output, Int](
       parent = stream.map(splittable.zipWithIndex).startWith(splittable.empty),
       key = _._2, // Index
-      distinctCompose = _.distinctByKey(_._1),
+      distinctCompose = _.distinctBy(_._1),
       project = (index: Int, initialTuple, tupleSignal) => {
         project(index, initialTuple._1, tupleSignal.map(_._1))
       },

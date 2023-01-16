@@ -61,18 +61,18 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
   }
 
   /** Distinct events (but keep all errors) by == (equals) comparison */
-  def distinct: Self[A] = distinctBy(_ == _)
-
-  /** Distinct events (but keep all errors) by reference equality (eq) */
-  def distinctByRef(implicit ev: A <:< AnyRef): Self[A] = distinctBy(ev(_) eq ev(_))
+  def distinct: Self[A] = distinctByFn(_ == _)
 
   /** Distinct events (but keep all errors) by matching key
     * Note: `key(event)` might be evaluated more than once for each event
     */
-  def distinctByKey(key: A => Any): Self[A] = distinctBy(key(_) == key(_))
+  def distinctBy(key: A => Any): Self[A] = distinctByFn(key(_) == key(_))
+
+  /** Distinct events (but keep all errors) by reference equality (eq) */
+  def distinctByRef(implicit ev: A <:< AnyRef): Self[A] = distinctByFn(ev(_) eq ev(_))
 
   /** Distinct events (but keep all errors) using a comparison function */
-  def distinctBy(isSame: (A, A) => Boolean): Self[A] = distinctTry {
+  def distinctByFn(isSame: (A, A) => Boolean): Self[A] = distinctTry {
     case (Success(prev), Success(next)) => isSame(prev, next)
     case _ => false
   }
