@@ -71,8 +71,8 @@ class MergeStream[A](
       // @TODO[API] Actually, why are we checking for .contains here? We need to better define behaviour
       // @TODO Make a test case that would exercise this .contains check or lack thereof
       // @TODO I think this check is moot because we can't have an observable emitting more than once in a transaction. Or can we? I feel like we can't/ It should probably be part of the transaction contract.
-      if (!transaction.pendingObservables.contains(this)) {
-        transaction.pendingObservables.enqueue(this)
+      if (!transaction.containsPendingObservable(this)) {
+        transaction.enqueuePendingObservable(this)
       }
     })
   }

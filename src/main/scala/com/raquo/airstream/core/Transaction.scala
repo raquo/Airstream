@@ -17,19 +17,33 @@ class Transaction(private[Transaction] var code: Transaction => Any) {
     *
     * Corollary: An Observable that is dequeue-d from here does not synchronously depend on any other pending observables
     */
-  private[airstream] val pendingObservables: JsPriorityQueue[SyncObservable[_]] = {
-    new JsPriorityQueue(Protected.topoRank)
-  }
+  private[this] var maybePendingObservables: js.UndefOr[JsPriorityQueue[SyncObservable[_]]] = js.undefined
 
   Transaction.pendingTransactions.add(this)
 
   @inline private[Transaction] def resolvePendingObservables(): Unit = {
-    while (pendingObservables.nonEmpty) {
-      //dom.console.log("RANKS: ", pendingObservables.debugQueue.map(_.topoRank))
-      // Fire the first pending observable and remove it from the list
-      pendingObservables.dequeue().syncFire(this)
+    maybePendingObservables.foreach { pendingObservables =>
+      while (pendingObservables.nonEmpty) {
+        //dom.console.log("RANKS: ", pendingObservables.debugQueue.map(_.topoRank))
+        // Fire the first pending observable and remove it from the list
+        pendingObservables.dequeue().syncFire(this)
+      }
     }
   }
+
+  private[airstream] def containsPendingObservable(observable: SyncObservable[_]): Boolean = {
+    maybePendingObservables.map(_.contains(observable)).getOrElse(false)
+  }
+
+  private[airstream] def enqueuePendingObservable(observable: SyncObservable[_]): Unit = {
+    val queue = maybePendingObservables.getOrElse {
+      val newQueue = new JsPriorityQueue[SyncObservable[_]](Protected.topoRank)
+      maybePendingObservables = newQueue
+      newQueue
+    }
+    queue.enqueue(observable)
+  }
+
 }
 
 object Transaction {
@@ -136,6 +150,9 @@ object Transaction {
       //    If a transaction is currently running, add newTransaction to its children.
       //    They will run after the current transaction finishes.
       peekStack().fold {
+        // #TODO[Perf] This pushToStack is taking up 15% of cpu time on a trivial eventbus --> Observer.empty benchmark.
+        //  Should we try to optimize it? Since we run it immediately, perhaps we could simply set a flag instead of pushing it to the array?
+        //  Consider this later when I have moer comprehensive benchmarks.
         pushToStack(newTransaction)
         run(newTransaction)
       }{ currentTransaction =>

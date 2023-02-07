@@ -27,9 +27,9 @@ trait CombineObservable[A] extends SyncObservable[A] { this: WritableObservable[
     * evaluate maybeCombinedValue and call .fireTry()
     */
   protected[this] def onInputsReady(transaction: Transaction): Unit = {
-    if (!transaction.pendingObservables.contains(this)) {
+    if (!transaction.containsPendingObservable(this)) {
       // println(s"Marking CombineObs($id) as pending in TRX(${transaction.id})")
-      transaction.pendingObservables.enqueue(this)
+      transaction.enqueuePendingObservable(this)
     }
   }
 

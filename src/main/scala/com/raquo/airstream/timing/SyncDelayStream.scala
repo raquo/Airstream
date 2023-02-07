@@ -21,8 +21,8 @@ class SyncDelayStream[A] (
   override protected val topoRank: Int = (Protected.topoRank(parent) max Protected.topoRank(after)) + 1
 
   override protected def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
-    if (!transaction.pendingObservables.contains(this)) {
-      transaction.pendingObservables.enqueue(this)
+    if (!transaction.containsPendingObservable(this)) {
+      transaction.enqueuePendingObservable(this)
     }
     maybePendingValue = nextValue
   }
