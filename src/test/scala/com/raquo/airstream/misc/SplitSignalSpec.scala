@@ -25,17 +25,17 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
     override def toString: String = s"Element($id, fooSignal)"
   }
 
-  private val originalShouldWarnAboutDuplicateKeys = DuplicateKeysConfig.default.shouldWarn
+  private val originalDuplicateKeysConfig = DuplicateKeysConfig.default
 
   after {
-    DuplicateKeysConfig.default.forceSetShouldWarn(originalShouldWarnAboutDuplicateKeys)
+    DuplicateKeysConfig.setDefault(originalDuplicateKeysConfig)
   }
 
   def withOrWithoutDuplicateKeyWarnings(code: => Assertion): Assertion = {
     // This wrapper checks that behaviour is identical in both modes
-    DuplicateKeysConfig.default.forceSetShouldWarn(false)
+    DuplicateKeysConfig.setDefault(DuplicateKeysConfig.noWarnings)
     withClue("DuplicateKeysConfig.shouldWarn=false")(code)
-    DuplicateKeysConfig.default.forceSetShouldWarn(true)
+    DuplicateKeysConfig.setDefault(DuplicateKeysConfig.warnings)
     withClue("DuplicateKeysConfig.shouldWarn=true")(code)
   }
 
@@ -1130,7 +1130,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
 
     // --
 
-    DuplicateKeysConfig.default.forceSetShouldWarn(false)
+    DuplicateKeysConfig.setDefault(DuplicateKeysConfig.noWarnings)
 
     myVar.writer.onNext(Foo("c", 1) :: Foo("a", 1) :: Foo("b", 1) :: Foo("a", 2) :: Foo("b", 3) :: Nil)
 
@@ -1140,7 +1140,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
     //  I'm not sure how to do this without over-complicating things.
     //  The console warning is printed into the test output, we can at least see it there if / when we look
 
-    DuplicateKeysConfig.default.forceSetShouldWarn(true)
+    DuplicateKeysConfig.setDefault(DuplicateKeysConfig.warnings)
 
     myVar.writer.onNext(Foo("c", 1) :: Foo("a", 1) :: Foo("b", 1) :: Foo("a", 2) :: Foo("b", 3) :: Nil)
   }

@@ -31,12 +31,21 @@ class DuplicateKeysConfig(private var _shouldWarn: Boolean) {
 
   def shouldWarn: Boolean = _shouldWarn
 
-  def forceSetShouldWarn(newValue: Boolean): Unit = {
+  /** Only ever call this on `DuplicateKeysConfig.default`, if you want to change the default. */
+  private def setShouldWarn(newValue: Boolean): Unit = {
     _shouldWarn = newValue
   }
 }
 
 object DuplicateKeysConfig {
+
+  /** Note: If you want to set a default, do it immediately at
+    * application startup time to avoid the perils of global mutable vars.
+    */
+  def setDefault(newDefault: DuplicateKeysConfig): Unit = {
+    // Do not reuse the mutable reference, copy its properties
+    default.setShouldWarn(newDefault.shouldWarn)
+  }
 
   val default: DuplicateKeysConfig = new DuplicateKeysConfig(_shouldWarn = true)
 
