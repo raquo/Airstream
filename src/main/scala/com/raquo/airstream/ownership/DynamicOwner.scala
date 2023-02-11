@@ -148,6 +148,7 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
   }
 
   private[this] def removePendingSubscriptionsNow(): Unit = {
+    // #TODO[Performance] Can we do a for-loop and then clear the whole array at once? Would that be 100% equivalent?
     while (pendingSubscriptionRemovals.length > 0) {
       val subscriptionToRemove = pendingSubscriptionRemovals.shift()
       removeSubscriptionNow(subscriptionToRemove)

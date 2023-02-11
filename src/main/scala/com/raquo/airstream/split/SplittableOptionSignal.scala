@@ -20,9 +20,13 @@ class SplittableOptionSignal[Input](val signal: Signal[Option[Input]]) extends A
     project: (Input, Signal[Input]) => Output,
     ifEmpty: => Output
   ): Signal[Output] = {
+    // Note: We never have duplicate keys here, so we can use
+    // DuplicateKeysConfig.noWarnings to improve performance
     signal
       .distinctByFn((prev, next) => prev.isEmpty && next.isEmpty) // Ignore consecutive `None` events
-      .split(key = _ => ())((_, initial, signal) => project(initial, signal))
+      .split(key = _ => (), duplicateKeys = DuplicateKeysConfig.noWarnings) { (_, initial, signal) =>
+        project(initial, signal)
+      }
       .map(_.getOrElse(ifEmpty))
   }
 

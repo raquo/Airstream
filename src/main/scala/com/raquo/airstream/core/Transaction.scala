@@ -150,8 +150,8 @@ object Transaction {
       //    If a transaction is currently running, add newTransaction to its children.
       //    They will run after the current transaction finishes.
       peekStack().fold {
-        // #TODO[Perf] This pushToStack is taking up 15% of cpu time on a trivial eventbus --> Observer.empty benchmark.
-        //  Should we try to optimize it? Since we run it immediately, perhaps we could simply set a flag instead of pushing it to the array?
+        // #TODO[Performance] This pushToStack is taking up 15% of cpu time on a trivial eventbus --> Observer.empty benchmark.
+        //  Should we try to optimize it? Since we run the trx immediately, perhaps we could simply set a flag instead of pushing it to the array?
         //  Consider this later when I have moer comprehensive benchmarks.
         pushToStack(newTransaction)
         run(newTransaction)

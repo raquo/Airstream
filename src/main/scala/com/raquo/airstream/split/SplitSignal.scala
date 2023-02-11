@@ -9,11 +9,6 @@ import scala.collection.mutable
 import scala.scalajs.js
 import scala.util.Try
 
-// @TODO[Performance] Should this be SplitSignal, or SplitEventStream?
-//  - I feel like SplitEventStream might be more efficient
-//  - It could also be less problematic
-//  - Maybe it won't require Splittable to have `empty`, thus working nicer with `splitOne`?
-
 /** Broadly similar to `parent.map(_.map(project))`, but the `project` part
   * gets access to more data and is memoized by key.
   *
