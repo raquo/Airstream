@@ -48,26 +48,22 @@ class ThrottleStream[A](
 
     if (leading && lastEmittedEventMs.isEmpty) {
       // #Note lastEmittedEventMs is an approximation (compare to the `else` case), I hope that doesn't bite us
-      lastEmittedEventMs = js.defined(nowMs)
+      lastEmittedEventMs = nowMs
 
-      maybeFirstTimeoutHandle = js.defined(
-        js.timers.setTimeout(0) {
-          maybeFirstTimeoutHandle = js.undefined
-          //println(s"> init trx from leading ThrottleEventStream.onTry($nextValue)")
-          new Transaction(fireTry(nextValue, _))
-        }
-      )
+      maybeFirstTimeoutHandle = js.timers.setTimeout(0) {
+        maybeFirstTimeoutHandle = js.undefined
+        //println(s"> init trx from leading ThrottleEventStream.onTry($nextValue)")
+        new Transaction(fireTry(nextValue, _))
+      }
 
     } else {
       maybeLastTimeoutHandle.foreach(js.timers.clearTimeout)
 
-      maybeLastTimeoutHandle = js.defined(
-        js.timers.setTimeout(remainingMs.toDouble) {
-          lastEmittedEventMs = js.defined(js.Date.now()) // @TODO Should this fire now, or inside the transaction below?
-          //println(s"> init trx from ThrottleEventStream.onTry($nextValue)")
-          new Transaction(fireTry(nextValue, _))
-        }
-      )
+      maybeLastTimeoutHandle = js.timers.setTimeout(remainingMs.toDouble) {
+        lastEmittedEventMs = js.Date.now() // @TODO Should this fire now, or inside the transaction below?
+        //println(s"> init trx from ThrottleEventStream.onTry($nextValue)")
+        new Transaction(fireTry(nextValue, _))
+      }
     }
   }
 

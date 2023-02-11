@@ -11,7 +11,7 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
     if (!isInitial) {
       _lastUpdateId = Signal.nextUpdateId()
     }
-    maybeLastSeenCurrentValue = js.defined(newValue)
+    maybeLastSeenCurrentValue = newValue
   }
 
   /** Note: Initial value is only evaluated if/when needed (when there are observers) */

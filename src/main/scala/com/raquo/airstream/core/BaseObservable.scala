@@ -229,7 +229,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
   protected def getOrCreatePendingObserverRemovals: JsArray[() => Unit] = {
     maybePendingObserverRemovals.getOrElse {
       val newArray = JsArray[() => Unit]()
-      maybePendingObserverRemovals = js.defined(newArray)
+      maybePendingObserverRemovals = newArray
       newArray
     }
   }
