@@ -4,9 +4,9 @@ import com.raquo.airstream.core.Signal
 
 class SplittableOneSignal[Input](val signal: Signal[Input]) extends AnyVal {
 
+  /** This operator works like `split`, but with only one item, not a collection of items. */
   def splitOne[Output, Key](
-    key: Input => Key,
-    distinctCompose: Signal[Input] => Signal[Input] = _.distinct
+    key: Input => Key
   )(
     project: (Key, Input, Signal[Input]) => Output
   ): Signal[Output] = {
@@ -14,7 +14,13 @@ class SplittableOneSignal[Input](val signal: Signal[Input]) extends AnyVal {
     // Note: We never have duplicate keys here, so we can use
     // DuplicateKeysConfig.noWarnings to improve performance
     new SplittableSignal[Option, Input](signal.map(Some(_)))
-      .split(key, distinctCompose, DuplicateKeysConfig.noWarnings)(project)
+      .split(
+        key,
+        distinctCompose = identity,
+        DuplicateKeysConfig.noWarnings
+      )(
+        project
+      )
       .map(_.get)
   }
 }

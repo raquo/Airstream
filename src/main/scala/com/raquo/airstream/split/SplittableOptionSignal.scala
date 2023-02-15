@@ -24,9 +24,12 @@ class SplittableOptionSignal[Input](val signal: Signal[Option[Input]]) extends A
     // DuplicateKeysConfig.noWarnings to improve performance
     signal
       .distinctByFn((prev, next) => prev.isEmpty && next.isEmpty) // Ignore consecutive `None` events
-      .split(key = _ => (), duplicateKeys = DuplicateKeysConfig.noWarnings) { (_, initial, signal) =>
-        project(initial, signal)
-      }
+      .split(
+        key = _ => (),
+        duplicateKeys = DuplicateKeysConfig.noWarnings
+      )(
+        (_, initial, signal) => project(initial, signal)
+      )
       .map(_.getOrElse(ifEmpty))
   }
 
