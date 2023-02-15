@@ -1,6 +1,6 @@
 package com.raquo.airstream.ownership
 
-import com.raquo.airstream.core.{EventStream, Observable, Observer, Sink}
+import com.raquo.airstream.core.{EventStream, Observable, Observer, Sink, Transaction}
 import com.raquo.airstream.eventbus.WriteBus
 
 // @TODO[API] I could make the constructor public but it's less confusing if you use the companion object methods
@@ -43,7 +43,11 @@ class DynamicSubscription private (
 
   private[ownership] def onActivate(owner: Owner): Unit = {
     //println(s"    - activating $this")
-    maybeCurrentSubscription = activate(owner)
+    // I don't think Laminar itself needs onStart.shared here, this is for users' custom dynamic subscriptions.
+    // Honestly this might be overkill, but I think this is cheap, and diagnosing these kinds of bugs is expensive.
+    Transaction.onStart.shared {
+      maybeCurrentSubscription = activate(owner)
+    }
   }
 
   private[ownership] def onDeactivate(): Unit = {
