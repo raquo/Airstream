@@ -336,6 +336,19 @@ object EventStream {
 
   /** Easy helper for custom events. See [[CustomStreamSource]] for docs.
     *
+    * Provide `start` and `stop` callbacks that will be called when the stream
+    * is started and stopped. E.g. create some resource on start, clean it on stop.
+    *
+    * The arguments to `start` are functions. Call them to do things like emit an
+    * event, emit an error, or get some info:
+    *
+    * `getStartIndex` returns `1` the first time the signal is started, and is
+    * incremented every time it is started again after being stopped.
+    *
+    * `getIsStarted` is a function that you can call any time, including
+    * after some delay, to check if the signal is still started, e.g. if
+    * you don't want to update the signal's value if the signal is stopped.
+    *
     * @param stop MUST NOT THROW!
     */
   def fromCustomSource[A](

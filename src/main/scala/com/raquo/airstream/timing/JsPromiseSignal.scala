@@ -38,7 +38,7 @@ class JsPromiseSignal[A](promise: js.Promise[A]) extends WritableSignal[Option[A
   }
 
   private def onPromiseResolved(nextPromiseValue: Try[A]): Unit = {
-    // #nc doc this
+    // #nc doc this about onWillStart
     // #Note Normally onWillStart must not create transactions / emit values, but this is ok here
     //  because this callback is always called asynchronously, so any value will be emitted from here
     //  long after the onWillStart / onStart chain has finished.

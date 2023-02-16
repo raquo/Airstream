@@ -5,60 +5,10 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 
-/** Make requests using the Fetch API, the modern alternative to Ajax.
-  *
-  * @see https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
-  *
-  * Use get / post / apply / etc. methods on FetchStream companion object to make Fetch requests.
-  */
-class FetchStream private[web] (
-  url: String,
-  requestInit: dom.RequestInit,
-  maybeAbortController: js.UndefOr[dom.AbortController],
-  maybeAbortStream: js.UndefOr[EventStream[Any]],
-  shouldAbortOnStop: Boolean
-) extends WritableStream[js.Promise[dom.Response]] {
-
-  // #TODO How do we go about caching the response? We have a task about adding emitOnce to AjaxStream... something similar here?
-  //  - Perhaps we can decide this after finishing the semantic behaviour change?
-
-  // TODO[API] Not sure if FetchStream re-emitting abortStream errors is desired
-
-  // #Note:
-  //  - if maybeAbortController is defined, either maybeAbortStream or shouldAbortOnStop or both will be defined/true.
-  //  - if maybeAbortController is empty, both maybeAbortStream and shouldAbortOnStop are empty/false
-
-  override protected val topoRank: Int = 1
-
-  private val maybeAbortStreamObserver: js.UndefOr[InternalObserver[Any]] = {
-    maybeAbortStream.map { _ =>
-      InternalObserver[Any](
-        onNext = (_, _) => maybeAbortController.get.abort(),
-        onError = (err, _) => new Transaction(fireError(err, _))
-      )
-    }
-  }
-
-  override protected def onWillStart(): Unit = {
-    maybeAbortStream.foreach { abortStream =>
-      abortStream.addInternalObserver(maybeAbortStreamObserver.get, shouldCallMaybeWillStart = true)
-    }
-    val responsePromise = dom.Fetch.fetch(url, requestInit)
-    new Transaction(fireValue(responsePromise, _))
-  }
-
-  override protected def onStop(): Unit = {
-    if (shouldAbortOnStop) {
-      maybeAbortController.get.abort()
-    }
-  }
-
-}
-
 /** Note: [[dom.BodyInit]] is a union type that includes String
   * and some other Javascript-specific data types.
   */
-object FetchStream extends FetchBuilder[dom.BodyInit, String](
+object Fetch extends FetchBuilder[dom.BodyInit, String](
   encodeRequest = identity,
   decodeResponse = response => EventStream.fromJsPromise(response.text())
 ) {
@@ -119,16 +69,93 @@ class FetchBuilder[In, Out](
     url: String,
     setOptions: (FetchOptions[In] => Unit)*
   ): EventStream[Out] = {
-    val (request, maybeAbortController, maybeAbortStream, shouldAbortOnStop) = {
+    val (request, maybeAbortController, maybeAbortStream, shouldAbortOnStop, emitOnce) = {
       val options = new FetchOptions[In](encodeRequest)
       setOptions.foreach(setOption => setOption(options))
       options.request.method = method(dom.HttpMethod)
-      (options.request, options.maybeAbortController, options.maybeAbortStream, options.shouldAbortOnStop)
+      (
+        options.request,
+        options.maybeAbortController,
+        options.maybeAbortStream,
+        options.shouldAbortOnStop,
+        options.shouldEmitOnce
+      )
     }
+    // new FetchSignal(url, request, maybeAbortController, maybeAbortStream, shouldAbortOnStop).flatMap {
+    //   case None =>
+    //     Val(None)
+    //   case Some(promise) =>
+    //     Signal.fromJsPromise(promise).flatMap {
+    //       case None =>
+    //         Val(None)
+    //       case Some(response) =>
+    //         decodeResponse(response).startWithNone
+    //     }
+    // }
+    new FetchStream(url, request, maybeAbortController, maybeAbortStream, shouldAbortOnStop, emitOnce).flatMap { promise =>
+      EventStream.fromJsPromise(promise).flatMap(decodeResponse)
+    }
+  }
+}
 
-    val fetchStream = new FetchStream(url, request, maybeAbortController, maybeAbortStream, shouldAbortOnStop)
+/** Make requests using the Fetch API, the modern alternative to Ajax.
+  *
+  * @see https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+  *
+  * Use get / post / apply / etc. methods on FetchStream companion object to make Fetch requests.
+  */
+class FetchStream private[web] (
+  url: String,
+  requestInit: dom.RequestInit,
+  maybeAbortController: js.UndefOr[dom.AbortController],
+  maybeAbortStream: js.UndefOr[EventStream[Any]],
+  shouldAbortOnStop: Boolean,
+  emitOnce: Boolean
+) extends WritableStream[js.Promise[dom.Response]] {
 
-    fetchStream.flatMap(EventStream.fromJsPromise(_)).flatMap(decodeResponse)
+  // TODO[API] Not sure if this should be a stream or a signal
+  //  - If signal, the value would be cached. It's hard to cache stream value
+  //  - If stream, we can cancel (e.g. a large download) by stopping the stream
+  //  - The desired behaviour is kinda self-contradictory, and depends on user
+  //    preferences and even the specific use case. I think we need to solve this
+  //    with completion and keepAlive operators:
+  //    - https://github.com/raquo/Airstream/issues/23
+  //    - https://github.com/raquo/Airstream/issues/70
+
+  // TODO[API] Not sure if FetchStream re-emitting abortStream errors is desired
+
+  // #Note:
+  //  - if maybeAbortController is defined, either maybeAbortStream or shouldAbortOnStop or both will be defined/true.
+  //  - if maybeAbortController is empty, both maybeAbortStream and shouldAbortOnStop are empty/false
+
+  override protected val topoRank: Int = 1
+
+  private var hasEmittedEvents: Boolean = false
+
+  private val maybeAbortStreamObserver: js.UndefOr[InternalObserver[Any]] = {
+    maybeAbortStream.map { _ =>
+      InternalObserver[Any](
+        onNext = (_, _) => maybeAbortController.get.abort(),
+        onError = (err, _) => new Transaction(fireError(err, _))
+      )
+    }
+  }
+
+  override protected def onWillStart(): Unit = {
+    if (!(emitOnce && hasEmittedEvents)) {
+      maybeAbortStream.foreach { abortStream =>
+        abortStream.addInternalObserver(maybeAbortStreamObserver.get, shouldCallMaybeWillStart = true)
+      }
+      val responsePromise = dom.Fetch.fetch(url, requestInit)
+      new Transaction(fireValue(responsePromise, _))
+      hasEmittedEvents = true
+    }
+  }
+
+  override protected def onStop(): Unit = {
+    if (shouldAbortOnStop) {
+      maybeAbortController.get.abort()
+    }
   }
 }
 
@@ -145,6 +172,8 @@ class FetchOptions[In] private[web] (
   private[web] var maybeAbortStream: js.UndefOr[EventStream[Any]] = js.undefined
 
   private[web] var shouldAbortOnStop: Boolean = false
+
+  private[web] var shouldEmitOnce: Boolean = false
 
   private def getOrCreateAbortController(): dom.AbortController = {
     maybeAbortController.getOrElse {
@@ -205,6 +234,15 @@ class FetchOptions[In] private[web] (
   def abortOnStop(): Unit = {
     getOrCreateAbortController()
     shouldAbortOnStop = true
+  }
+
+  /** By default, the fetch stream initiates a new request every time it is started.
+    *
+    * Set `emitOnce(true)` to make it initiate a new request only once (the first time
+    * it's started).
+    */
+  def emitOnce(v: Boolean): Unit = {
+    shouldEmitOnce = v
   }
 
   def body(content: In): Unit = {

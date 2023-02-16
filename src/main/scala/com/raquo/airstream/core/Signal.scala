@@ -172,26 +172,71 @@ object Signal {
 
   def fromTry[A](value: Try[A]): Val[A] = Val.fromTry(value)
 
+  /** The signal will start with `None`, even if the future is already resolved.
+    * Once the future resolves (or after a minimal async delay if it's already resolved),
+    * the signal's value will be updated to the future's resolved value.
+    */
   def fromFuture[A](future: Future[A])(implicit ec: ExecutionContext): Signal[Option[A]] = {
     fromJsPromise(future.toJSPromise(ec))
   }
 
-  /** Note: If the future is already resolved by the time this signal is started,
-    * the provided initial value is not used, and the future's value is used as
-    * the initial (and only) value instead.
+  /** The signal will start with the provided `initial` value, even if the future is already resolved.
+    * Once the future resolves (or after a minimal async delay if it's already resolved),
+    * the signal's value will be updated to the future's resolved value.
     */
   def fromFuture[A](future: Future[A], initial: => A)(implicit ec: ExecutionContext): Signal[A] = {
-    fromJsPromise(future.toJSPromise(ec)).map {
+    fromJsPromise(future.toJSPromise(ec), initial)
+  }
+
+  /** The signal will start with `None`, even if the promise is already resolved.
+    * Once the promise resolves (or after a minimal async delay if it's already resolved),
+    * the signal's value will be updated to the promise's resolved value.
+    */
+  def fromJsPromise[A](promise: js.Promise[A]): Signal[Option[A]] = {
+    new JsPromiseSignal(promise)
+  }
+
+  /** The signal will start with the provided `initial` value, even if the promise is already resolved.
+    * Once the promise resolves (or after a minimal async delay if it's already resolved),
+    * the signal's value will be updated to the promise's resolved value.
+    */
+  def fromJsPromise[A](promise: js.Promise[A], initial: => A): Signal[A] = {
+    new JsPromiseSignal(promise).map {
       case None => initial
       case Some(value) => value
     }
   }
 
-  def fromJsPromise[A](promise: js.Promise[A]): Signal[Option[A]] = {
-    new JsPromiseSignal(promise)
-  }
+  // TODO[API] do we need this?
+  /** A stream from js.Promise that kind-of sort-of behaves like a signal:
+    * - It only every emits once, when the promise resolves.
+    * - If you miss that event because this stream got stopped before the
+    *   promise resolved, you will receive that event when you start this
+    *   stream again
+    * - However, if this stream was not stopped, new subscribers will not
+    *   receive the event. If you need such behaviour, use a proper signal
+    *   instead.
+    */
+  // def fromJsPromiseToStream[A](promise: js.Promise[A]): EventStream[A] = {
+  //   new JsPromiseSignal(promise).changes.map(_.get)
+  // }
+
+
 
   /** Easy helper for custom signals. See [[CustomSignalSource]] for docs.
+    *
+    * Provide `start` and `stop` callbacks that will be called when the signal
+    * is started and stopped. E.g. create some resource on start, clean it on stop.
+    *
+    * The arguments to `start` are functions. Call them to do things like update the
+    * signal's value, read its current value, or get some info:
+    *
+    * `getStartIndex` returns `1` the first time the signal is started, and is
+    * incremented every time it is started again after being stopped.
+    *
+    * `getIsStarted` is a function that you can call any time, including
+    * after some delay, to check if the signal is still started, e.g. if
+    * you don't want to update the signal's value if the signal is stopped.
     *
     * @param stop MUST NOT THROW!
     */
