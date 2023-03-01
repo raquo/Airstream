@@ -84,16 +84,16 @@ class WriteBus[A] extends Observer[A] {
 
 object WriteBus {
 
-  type BusTuple[A] = (WriteBus[A], A)
+  implicit class BusTuple[A](val tuple: (WriteBus[A], A)) extends AnyVal
 
-  type BusTryTuple[A] = (WriteBus[A], Try[A])
+  implicit class BusTryTuple[A](val tuple: (WriteBus[A], Try[A])) extends AnyVal
 
   /** Emit events into several WriteBus-es at once (in the same transaction)
     * Example usage: emitTry(writeBus1 -> value1, writeBus2 -> value2)
     */
-  def emit[A](values: BusTuple[A]*): Unit = {
+  def emit(values: BusTuple[_]*): Unit = {
     //println(s"> init trx from WriteBus.emit($values)")
-    if (hasDuplicateTupleKeys(values)) {
+    if (hasDuplicateTupleKeys(values.map(_.tuple))) {
       throw new Exception("Unable to {EventBus,WriteBus}.emit: the provided list of event buses has duplicates. You can't make an observable emit more than one event per transaction.")
     }
     new Transaction(trx => values.foreach(emitValue(_, trx)))
@@ -102,19 +102,19 @@ object WriteBus {
   /** Emit events into several WriteBus-es at once (in the same transaction)
     * Example usage: emitTry(writeBus1 -> Success(value1), writeBus2 -> Failure(error2))
     */
-  def emitTry[A](values: BusTryTuple[A]*): Unit = {
+  def emitTry(values: BusTryTuple[_]*): Unit = {
     //println(s"> init trx from WriteBus.emitTry($values)")
-    if (hasDuplicateTupleKeys(values)) {
+    if (hasDuplicateTupleKeys(values.map(_.tuple))) {
       throw new Exception("Unable to {EventBus,WriteBus}.emitTry: the provided list of event buses has duplicates. You can't make an observable emit more than one event per transaction.")
     }
     new Transaction(trx => values.foreach(emitTryValue(_, trx)))
   }
 
   @inline private def emitValue[A](tuple: BusTuple[A], transaction: Transaction): Unit = {
-    tuple._1.onNextWithSharedTransaction(tuple._2, transaction)
+    tuple.tuple._1.onNextWithSharedTransaction(tuple.tuple._2, transaction)
   }
 
   @inline private def emitTryValue[A](tuple: BusTryTuple[A], transaction: Transaction): Unit = {
-    tuple._1.onTryWithSharedTransaction(tuple._2, transaction)
+    tuple.tuple._1.onTryWithSharedTransaction(tuple.tuple._2, transaction)
   }
 }

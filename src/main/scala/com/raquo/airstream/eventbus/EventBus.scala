@@ -28,27 +28,33 @@ class EventBus[A] extends EventSource[A] with Sink[A] with Named {
 
 object EventBus {
 
-  type EventBusTuple[A] = (EventBus[A], A)
+  implicit class EventBusTuple[A](val tuple: (EventBus[A], A)) extends AnyVal
 
-  type EventBusTryTuple[A] = (EventBus[A], Try[A])
+  implicit class EventBusTryTuple[A](val tuple: (EventBus[A], Try[A])) extends AnyVal
 
   def apply[A](): EventBus[A] = new EventBus[A]
 
   /** Emit events into several EventBus-es at once (in the same transaction)
     * Example usage: emitTry(eventBus1 -> value1, eventBus2 -> value2)
     */
-  def emit[A](
-    values: EventBusTuple[A]*
+  def emit(
+    values: EventBusTuple[_]*
   ): Unit = {
-    WriteBus.emit(values.map(value => (value._1.writer, value._2)): _*)
+    WriteBus.emit(values.map(toWriterTuple(_)): _*)
   }
 
   /** Emit events into several WriteBus-es at once (in the same transaction)
     * Example usage: emitTry(eventBus1 -> Success(value1), eventBus2 -> Failure(error2))
     */
-  def emitTry[A](
-    values: EventBusTryTuple[A]*
+  def emitTry(
+    values: EventBusTryTuple[_]*
   ): Unit = {
-    WriteBus.emitTry(values.map(value => (value._1.writer, value._2)): _*)
+    WriteBus.emitTry(values.map(toWriterTryTuple(_)): _*)
   }
+
+  @inline private def toWriterTuple[A](t: EventBusTuple[A]): WriteBus.BusTuple[A] =
+    new WriteBus.BusTuple((t.tuple._1.writer, t.tuple._2))
+
+  @inline private def toWriterTryTuple[A](t: EventBusTryTuple[A]): WriteBus.BusTryTuple[A] =
+    new WriteBus.BusTryTuple((t.tuple._1.writer, t.tuple._2))
 }
