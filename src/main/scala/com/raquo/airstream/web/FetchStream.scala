@@ -8,7 +8,7 @@ import scala.scalajs.js
 /** Note: [[dom.BodyInit]] is a union type that includes String
   * and some other Javascript-specific data types.
   */
-object Fetch extends FetchBuilder[dom.BodyInit, String](
+object FetchStream extends FetchBuilder[dom.BodyInit, String](
   encodeRequest = identity,
   decodeResponse = response => EventStream.fromJsPromise(response.text())
 ) {
@@ -92,7 +92,14 @@ class FetchBuilder[In, Out](
     //         decodeResponse(response).startWithNone
     //     }
     // }
-    new FetchStream(url, request, maybeAbortController, maybeAbortStream, shouldAbortOnStop, emitOnce).flatMap { promise =>
+    new FetchStream(
+      url,
+      request,
+      maybeAbortController,
+      maybeAbortStream,
+      shouldAbortOnStop,
+      emitOnce
+    ).flatMap { promise =>
       EventStream.fromJsPromise(promise).flatMap(decodeResponse)
     }
   }
