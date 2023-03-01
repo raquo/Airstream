@@ -24,7 +24,7 @@ import scala.scalajs.js.|
   * onload, onerror, onabort, ontimeout, and if requested, also for onprogress and onreadystatechange.
   * Make sure you don't override Airstream's listeners, or this stream will not work properly.
   *
-  * @see [[dom.raw.XMLHttpRequest]] for a description of the parameters
+  * @see [[dom.XMLHttpRequest]] for a description of the parameters
   *
   * @param requestObserver          - called just before the request is sent
   * @param progressObserver         - called when progress is reported

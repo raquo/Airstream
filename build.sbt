@@ -53,9 +53,8 @@ scalacOptions += {
   }
 }
 
-// #TODO #nc re-enable deprecation warnings for 15.0.0 !!!!!!! Disabling for now to get around scala-js-dom's deprecation of dom.ext.Ajax
 (Compile / scalacOptions) ~= (_.filterNot(Set(
-  //"-deprecation",
+  "-deprecation",
   "-Xfatal-warnings"
 )))
 
