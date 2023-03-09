@@ -33,7 +33,9 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
 
   def filterNot(predicate: A => Boolean): EventStream[A] = filter(!predicate(_))
 
-  /** `stream.filterWith(otherSignal, passes = _ == false)` is essentially like
+  /** Filter stream events by a signal or var of boolean.
+    *
+    * `stream.filterWith(otherSignal, passes = _ == false)` is essentially like
     * `stream.filter(_ => otherSignal.now() == false)` (but it compiles)
     */
   def filterWith[B](source: SignalSource[B], passes: B => Boolean): EventStream[A] = {
@@ -42,13 +44,19 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
       .collect { case (ev, sourceValue) if passes(sourceValue) => ev }
   }
 
-  /** Apply `pf` to event and emit the resulting value, or emit nothing if `pf` is not defined for that event.
+  /** Filter stream events by a signal or var of boolean (passes when true). */
+  def filterWith(source: SignalSource[Boolean]): EventStream[A] = {
+    filterWith[Boolean](source, passes = _ == true)
+  }
+
+  /** Apply `pf` to each event and emit the resulting value,
+    * or emit nothing if `pf` is not defined for that event.
     *
     * @param pf Note: guarded against exceptions
     */
   def collect[B](pf: PartialFunction[A, B]): EventStream[B] = collectOpt(pf.lift)
 
-  /** Emit `x` if parent stream emits `Some(x)`, nothing otherwise */
+  /** Emit `x` if parent stream emits `Some(x)`, do nothing otherwise */
   def collectSome[B](implicit ev: A <:< Option[B]): EventStream[B] = collectOpt(ev(_))
 
   /** Apply `fn` to parent stream event, and emit resulting x if it returns Some(x)
@@ -200,6 +208,8 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
   // @TODO[API] Should we introduce some kind of FoldError() wrapper?
   /** A signal that emits the accumulated value every time that the parent stream emits.
     *
+    * See also: [[startWith]]
+    *
     * @param fn Note: guarded against exceptions
     */
   def scanLeft[B](initial: B)(fn: (B, A) => B): Signal[B] = {
@@ -216,7 +226,9 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
     new ScanLeftSignal(parent = this, () => initial, fn)
   }
 
-  /** @param cacheInitialValue if false, signal's initial value will be re-evaluated on every
+  /** Convert stream to signal, given an initial value
+    *
+    * @param cacheInitialValue if false, signal's initial value will be re-evaluated on every
     *                          restart (so long as the parent stream does not emit any values)
     */
   @inline def startWith[B >: A](initial: => B, cacheInitialValue: Boolean = false): Signal[B] = {
@@ -246,6 +258,7 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
     new SignalFromStream(this, initial, cacheInitialValue)
   }
 
+  /** Just a convenience helper. stream.compose(f) is equivalent to f(stream) */
   def compose[B](operator: EventStream[A] => EventStream[B]): EventStream[B] = {
     operator(this)
   }
@@ -269,7 +282,7 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
 
   override def recoverToTry: EventStream[Try[A]] = map(Try(_)).recover[Try[A]] { case err => Some(Failure(err)) }
 
-  /** See also [[debug]] convenience method in [[BaseObservable]] */
+  /** See also various debug methods in [[com.raquo.airstream.debug.DebuggableObservable]] */
   override def debugWith(debugger: Debugger[A]): EventStream[A] = {
     new DebuggerStream[A](this, debugger)
   }
