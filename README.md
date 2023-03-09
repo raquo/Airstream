@@ -68,6 +68,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Merge Glitch-By-Design](#merge-glitch-by-design)
     * [Scheduling of Transactions](#scheduling-of-transactions)
   * [Operators](#operators)
+    * [Distinction Operators](#distinction-operators)
     * [N-arity Operators](#n-arity-operators)
     * [Compose Changes](#compose-changes)
     * [Sync Delay](#sync-delay)
@@ -1032,6 +1033,22 @@ Airstream offers standard observables operators like `map` / `filter` / `collect
 Some of the more interesting / non-standard operators are documented below:
 
 
+#### Distinction Operators
+
+Both streams and signals have various `distinct*` operators to filter updates using `==` or other comparisons. These can be used to make your signals behave like they did prior to v15.0.0, or to achieve different, custom logic:
+
+```scala
+signal.distinct // performs `==` checks, similar to pre-15.0.0 behaviour
+signal.distinctBy(_.id) // performs `==` checks on a certain key
+signal.distinctByRef // performs reference equality checks
+signal.distinctByFn((prevValue, nextValue) => isSame) // custom checks
+signal.distinctErrors((prevErr, nextErr) => isSame) // filter errors in the error channel
+signal.distinctTry((prevTryValue, nextTryValue) => isSame) // one comparator for both event and error channels
+```
+
+The same operators are available on streams too.
+
+
 #### N-arity Operators
 
 Airstream offers several methods and operators that work on up to 9 observables or tuples up to Tuple9:
@@ -1204,6 +1221,16 @@ Same input and output types, but the behaviour is very different.
   * In contrast, with `split`, we would only call `renderFoo` whenever we would see a new Foo with a previously unseen id in `inputSignal`, and the `child <-- ...` modifier would take care of updating existing elements as new versions foo came in.
 
 * Second, renderFoo no longer has access to `initialFoo` and `fooSignal`. It does not know anymore if the foo it's rendering has changed over time, it can't listen for those changes, etc.
+
+##### `distinctCompose` parameter
+
+The [split](#splitting-observables) operator internally uses `==` checks to determine whether each record in the collection has "changed" or not. If not for these `==` checks, `split` would trigger a useless update for every record on every incoming event, instead of triggering only on the record that was actually affected by the event.
+
+To allow customization, the `split` operator has a second parameter called `distinctCompose` which indicates how exactly the values are to be distinct-ed, and defaults to `_.distinct`. You can override it to provide a custom distinctor function if desired:
+
+```scala
+children <-- nodesStream.split(_.id, _.distinctByFn(customComparator))(/*...*/)
+```
 
 ##### `splitByIndex`
 
