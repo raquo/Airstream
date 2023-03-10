@@ -75,6 +75,10 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Splitting Observables](#splitting-observables)
     * [Flattening Observables](#flattening-observables)
     * [Other Notable Operators](#other-notable-operators)
+  * [Operators vs Transactions](#operators-vs-transactions)
+    * [Flowy Operators](#flowy-operators)
+    * [Async Operators](#async-operators)
+    * [Loopy Operators](#loopy-operators)
   * [Debugging](#debugging)
   * [Error Handling](#error-handling)
 * [Limitations](#limitations)
@@ -213,7 +217,10 @@ Similarly, `myFoo` expression will _not_ be evaluated immediately as it is passe
 
 Note: until Airstream 15, Signal only fired an event when its next value was different from its current value. The comparison was made using Scala's `==` operator. If you see references to "signals' `==` checks" in past issues / discussions, this is what they're talking about. In the latest version, this built-in filter is eliminated, and you need to explicitly call `.distinct` to achieve such behaviour.
 
+
 #### Getting Signal's current value
+
+See relevant RFC: [signal.peekNow()](https://github.com/raquo/Laminar/issues/130)
 
 Signal's laziness means that its current value might get stale / inconsistent in the absence of observers. Airstream therefore does not allow you to access a Signal's current value _without proving that it has observers_. 
 
@@ -416,9 +423,11 @@ If you have an `Observable[Future[A]]`, you can flatten it into `Observable[A]` 
 
 A failed future results in an error (see [Error Handling](#error-handling)).
 
+
 #### `EventStream.fromJsPromise` and `Signal.fromJsPromise`
 
 Behave the same as `fromFuture` above, but accept `js.Promise` instead. Useful for integration with JS libraries and APIs.
+
 
 #### `EventStream.fromSeq`
 
@@ -890,6 +899,7 @@ Speaking of implicits, why don't we have EventBus extend both `EventStream[A]` a
 
 
 ### FRP Glitches
+
 
 #### Other Libraries
 
@@ -1374,7 +1384,93 @@ Like some other operators, these have an optional `resetOnStop` argument. Defaul
 
 
 
+### Operators vs Transactions
+
+This section is intended to help understand the practical aspects of [transactions](#transactions) and [FRP glitches](#frp-glitches). It assumes familiarity with those documentation sections, and seeks to improve their understanding.
+
+We say that some Airstream operators like `flatMap` fire events in a new transaction. This can cause FRP glitches in cases when, at a high level, using `flatMap` or similar transaction-creating methods was **unnecessary**. In contrast, when the usage of `flatMap` is truly **necessary** to achieve your desired behaviour, you will not see FRP glitches.
+
+Let's try to categorize the methods and operators that Airstream offers to get a more intuitive understanding of why that is.
+
+
+#### Flowy Operators
+
+First of all, remember that Airstream guarantees no FRP glitches within a Transaction, and places the following limits on what observables can do in a transaction:
+- No observable can emit more than once in a transaction.
+- An observable can only emit in a transaction synchronously, in response to its parent observable emitting in the same transaction
+
+**Basically, observables need to be expressible as `map` and/or `filter` to avoid the need for emitting events in a new transaction. We call such operators "flowy".**
+
+With such requirements, we can essentially forget about the concept of time within a transaction, and live in a beautiful world where all the observables are connected in a directed acyclic graph, and their updates propagate from the root(s) to the leaves of that graph.
+
+This is a very desirable feel, because it comes closest to imperative programming with plain values. Normally when working with observables we have to worry about glitches, delays, side effects, recursive updates, etc., but within a transaction, we have none of that.
+
+And so, we want to confine the propagation of each event to a single transaction, as much as possible. We do this by using **"flowy"** operators – these operators keep the flow going smoothly, and emit events in the same transaction as their input events, because they satisfy Airstream transaction guarantees:
+- They emit events only in response to parent observable emitting events
+- They emit at most one event per one input event
+
+The basic operators are all flowy: `map`, `filter`, `collect`, `take`, `drop`, etc.
+
+Even operators that convert streams to signals and back like `startWith` and `changes` are flowy, because aside from adding or removing the initial value, they are a mere `map(identity)` operator.
+
+In addition, in Airstream the operators that combine multiple observables are also flowy – `combineWith` / `withCurrentValueOf` / `sample` all have `map` + `filter` semantics, albeit relating to several input observables, and are implemented in a special way to remain flowy and avoid FRP glitches. Explanation of their exact mechanics is [here](https://github.com/raquo/Airstream#frp-glitches).
+
+If you think real hard, you can imagine the `split` and `distinct` operators as (rather complicated) versions of `map` + `filter`, and so they too are flowy operators.
+
+The same goes for the `delaySync` operator, because it reorders / prioritizes events within a transaction, without introducing an async delay, and it only emits as many events as it receives.
+
+As you see, you can get pretty far with just flowy operators – you can map, filter, combine, and split observables in all sorts of ways. All other operators emit their events in a new transaction, and now we will see why, for each category. 
+
+
+#### Async Operators
+
+Flowy operators are by definition synchronous, because there can be no async delay within a transaction. Thus, all operators that emit after an async delay are not flowy, and must emit their events in a new transaction.
+
+This includes `EventStream.periodic`, `delay`, `throttle`, `debounce`, `fromFuture`, `fromJsPromise`.
+
+Can these operators cause FRP glitches? The answer is the same – did you **need** the delay, either for business logic reasons, or for technical reasons (e.g. making a network request)? If yes, then you will see no glitches.
+
+However, if you add `.delay(0)` to `doubledNumbers` in the [diamond glitch example](https://github.com/raquo/Airstream#frp-glitches) for no good reason, you would get glitch-like behaviour. I say "no good reason" because if you actually had a reason to do that, then the "glitch" wouldn't be a glitch, but would be your desired behaviour. I know this seems a bit hand-wavy, but when you actually run into such cases it's extremely obvious.
+
+When we combine two observables into one (e.g. using `combineWith`), and we expect a given event in both parent observables to happen "at the same time", we also expect the combined observable to emit only one combined event as a result. When something else happens instead (e.g. the observable emits two events), we call it a glitch. But, if one of your parent observables is asynchronous, e.g. it's making a network request for each of its input events, you don't expect its output to happen at the same time as the other parent, and so even though you technically get the exact same behaviour with the combined observable emitting two events, it's a not a glitch, that's now your expected outcome, due to the asynchrony involved.
+
+So, FRP glitches are expectation-vs-reality mismatches in behaviour. When you use async operators, you don't have expectations of events happening "at the same time", so the concept of glitches that we're used to in synchronous operators is not applicable.
+
+
+#### Loopy Operators
+
+When we earlier called the `flatMap` operator "unnecessary", we implied that it is more powerful, or perhaps somehow more expensive, than "flowy" operators that don't need to create a new transaction for every event they emit. 
+
+And this is indeed the case. `flatMap` allows you to trivially violate the constraints of a transaction, for example you can emit more than one event per incoming event:
+
+```scala
+val intStream: EventStream[Int] = ???
+val flatIntStream: EventStream[Int] = intStream.flatMap { ev =>
+  EventStream.fromSeq(List(ev + 1, ev + 2))
+}
+```
+
+Or create a loop in the observable graph, i.e. a stream that depends on itself:
+
+```scala
+val intStream: EventStream[Int] = ???
+val flatIntStream: EventStream[Int] = intStream.flatMap { ev =>
+  flatIntStream.map(_ + 1)
+}
+```
+
+As we mentioned before, Airstream can only propagate events within a single transaction as long as we're walking down a direct acyclic graph of observables. "acyclic" means that such a graph must have no cycles in it, that is, no observable can depend on itself, whether directly or indirectly. Thus, `flatMap` can not possibly be a part of an acyclic graph, as it can depend on itself.
+
+Or, to be more precise, `flatMap` **can** be used without creating cycles / loops in the observable graph, but whether it is or isn't used that way in your program is **not knowable** in advance. Airstream calculates a static [topological rank](https://github.com/raquo/Airstream#topological-rank) for every observable at its creation time, and uses that to make `combineWith` and similar operators glitch-free. But the topological rank of a `flatMap` observable is not knowable at its creation time, because the observable it depends on can change dynamically based on what its parent observable emits.
+
+And so, every method and operator in Airstream that lets you feed events from an observable back into itself, has to emit its events in a new transaction. This includes the `flatMap` and `flatten` operators, but also every method used to update a Var or send an event into an EventBus, such as `Var.set`, `EventBus.emit`, etc.
+
+**Bottom line:** Avoid using loopy operators where they are not needed. Don't use `flatMap` if `combineWith` works just as well. Don't put state in a Var if you can just map over some signal to compute the same state.
+
+
+
 ### Debugging
+
 
 #### Debugging Observables
 
