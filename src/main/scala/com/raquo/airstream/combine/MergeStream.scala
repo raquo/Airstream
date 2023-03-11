@@ -5,6 +5,8 @@ import com.raquo.airstream.core.{EventStream, Observable, Protected, SyncObserva
 import com.raquo.airstream.util.JsPriorityQueue
 import com.raquo.ew.JsArray
 
+import scala.scalajs.js
+
 /** Stream that emit events from all of its parents.
   *
   * Note: this stream re-emits errors emitted by all of its parents
@@ -25,6 +27,8 @@ class MergeStream[A](
 
   override protected val topoRank: Int = Protected.maxTopoRank(parents) + 1
 
+  private[this] var lastFiredInTrx: js.UndefOr[Transaction] = js.undefined
+
   private[this] val pendingParentValues: JsPriorityQueue[Observation[A]] = {
     new JsPriorityQueue(observation => Protected.topoRank(observation.observable))
   }
@@ -33,25 +37,32 @@ class MergeStream[A](
 
   parents.forEach(parent => parentObservers.push(makeInternalObserver(parent)))
 
-  // @TODO document this, and document the topo parent order
-  /** If this stream has already fired in a given transaction, the next firing will happen in a new transaction.
+  /** If this stream has already fired in a given transaction,
+    * the next firing will happen in a new transaction.
     *
     * This is needed for a combination of two reasons:
     * 1) only one event can propagate in a transaction at the same time
     * 2) We do not want the merged stream to "swallow" events
     *
     * We made it this way because the user probably expects this behavior.
+    * MergeStreamSpec has an example showing how any other behaviour would
+    * produce unexpected results.
     */
   override private[airstream] def syncFire(transaction: Transaction): Unit = {
-    // @TODO[Integrity] I don't think we actually need this "check":
-    // At least one value is guaranteed to exist if this observable is pending
-    // pendingParentValues.dequeue().value.fold(fireError(_, transaction), fireValue(_, transaction))
-
     while (pendingParentValues.nonEmpty) {
-      pendingParentValues.dequeue().value.fold(
-        fireError(_, transaction),
-        fireValue(_, transaction)
-      )
+      val nextValue = pendingParentValues.dequeue().value
+      if (lastFiredInTrx.contains(transaction)) {
+        nextValue.fold(
+          nextError => new Transaction(fireError(nextError, _)),
+          nextEvent => new Transaction(fireValue(nextEvent, _))
+        )
+      } else {
+        lastFiredInTrx = transaction
+        nextValue.fold(
+          fireError(_, transaction),
+          fireValue(_, transaction)
+        )
+      }
     }
   }
 
@@ -62,6 +73,7 @@ class MergeStream[A](
 
   override protected[this] def onStop(): Unit = {
     parentObservers.forEach(_.removeFromParent())
+    lastFiredInTrx = js.undefined
     super.onStop()
   }
 

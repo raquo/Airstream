@@ -65,7 +65,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Other Libraries](#other-libraries)
     * [Topological Rank](#topological-rank)
     * [Transactions](#transactions)
-    * [Merge Glitch-By-Design](#merge-glitch-by-design)
+    * [Avoiding Glitches When Merging](#avoiding-glitches-when-merging)
     * [Scheduling of Transactions](#scheduling-of-transactions)
   * [Operators](#operators)
     * [Distinction Operators](#distinction-operators)
@@ -956,25 +956,26 @@ Loops and potentially-loopy constructs necessarily require a new transaction as 
 Lastly, keep in mind that emitting events inside Observer-s will necessarily happen in a new transaction as you will need to use EventBus / Var APIs that create new transactions. Observers are generally intended for side effects. Those effects might be emitting other events, but in that case we consider them independent events, not a continuation of the current transaction. Philosophically, Observers should not know what they're observing (and they can observe multiple things at a time).
 
 
-#### Merge Glitch-By-Design
+#### Avoiding Glitches When Merging
 
 Consider this:
 
 ```scala
 val numbers: EventStream[Int] = ???
-val tens: EventStream[Boolean] = numbers.map(_ * 10)
+val tens: EventStream[Int] = numbers.map(_ * 10)
 val hundreds: EventStream[Int] = tens.map(_ * 10)
-val multiples: EventStream[Int] = EventStream.merge(tens, hundreds)
+val multiples: EventStream[Int] = EventStream.merge(hundreds, tens)
 multiples.addObserver(multiplesObserver)(owner)
 ```
 
-Same deal – what do you expect `multiples` to emit when `numbers` emits 1? I admit, it's a loaded question because of how I named `multiples`. I expect it to emit 10, and then 100. 10 comes first not because magic, but because the stream `hundreds` _synchronously depends_ on `tens`. Or, more precisely, because its `topoRank` is higher. This behaviour is especially desirable when your events are effectively operations – you don't want the merged stream to swallow operations or to put them in the wrong order.
+What do you expect `multiples` to emit when `numbers` emits `1`? I expect it to emit `10`, and then `100`. Two important considerations here:
 
-TODO[API] Consider ordering synchronous events by the order their streams are given to merge instead of topoRank.
+1) On a high level, the order of output events is determined by the order of input events: `hundreds` emits `100` after `tens` emits `10`, so the merged stream does the same. On a technical level, the order of events emitted in the same transaction is determined by the parent observables' topological rank.
 
-In Airstream, MergeEventStream will not emit more than one event in the same Transaction, because a Transaction by its very definition is about propagating a single event (that it happens to sometimes be split into multiple branches e.g. `tens` and `hundreds` is irrelevant, it's still the same change propagating), whereas a merged stream is capable of creating new events out of thin air as shown here. So in this example `multiples` will emit 10 in the same transaction that `numbers` emitted 1 in, and it will then create a new transaction which will emit 100 when it gets its turn.
+2) The merged stream can, by design, emit multiple events per one origination event (the `1` event), as shown in our example above. This means that it can't always emit all of the events in the same incoming transaction, because any observable can only emit one event per transaction. At the same time, in cases when the merge stream depends only on mutually unrelated observables (that never emit in the same transaction), we don't want to force the merge stream to fire **all** of its events in a new transaction, as this could cause FRP glitches down the road. And so, the merge stream takes a compromise: in every transaction, it emits the first parent observable's event as-is, but if any other parent observable also emits in the same transaction (like `tens` and `hundreds` do in our example), the merge stream re-emits _that_ event in a new transaction. So, in our example, it would emit `10` in the same transaction as the original event, and then emit `100` in a new transaction.
 
-MergeEventStream uses the same pendingObservables mechanism as CombineObservable because both extend SyncObservable.
+Such handling of transactions might seem arbitrary, but it actually matches the semantics of merge streams. As a result, such a mechanism produces desired behaviour. Even though we're emitting some events in new transactions, which would normally increase the chance of FRP glitches downstream, we only do it when it's necessary (when the merge stream emits more than one event per one originating event), and so in practice we don't see glitches. In fact, any other behaviour is guaranteed to cause glitches (unexpected behaviour). This might sound handwavy, but there's actually a lot of real life experience and unit tests behind that principle. See [Operators vs Transactions](#operators-vs-transactions) for more on that.
+
 
 
 #### Scheduling of Transactions
@@ -1388,9 +1389,7 @@ Like some other operators, these have an optional `resetOnStop` argument. Defaul
 
 This section is intended to help understand the practical aspects of [transactions](#transactions) and [FRP glitches](#frp-glitches). It assumes familiarity with those documentation sections, and seeks to improve their understanding.
 
-We say that some Airstream operators like `flatMap` fire events in a new transaction. This can cause FRP glitches in cases when, at a high level, using `flatMap` or similar transaction-creating methods was **unnecessary**. In contrast, when the usage of `flatMap` is truly **necessary** to achieve your desired behaviour, you will not see FRP glitches.
-
-Let's try to categorize the methods and operators that Airstream offers to get a more intuitive understanding of why that is.
+We say that some Airstream operators like `flatMap` fire events in a new transaction. This can cause FRP glitches in cases when, at a high level, using `flatMap` or similar transaction-creating methods was **unnecessary**. In contrast, when the usage of `flatMap` is truly **necessary** to achieve your desired behaviour, you will not see FRP glitches. Let's try to categorize the methods and operators that Airstream offers, to get a more intuitive understanding of why that is.
 
 
 #### Flowy Operators
@@ -1466,6 +1465,19 @@ Or, to be more precise, `flatMap` **can** be used without creating cycles / loop
 And so, every method and operator in Airstream that lets you feed events from an observable back into itself, has to emit its events in a new transaction. This includes the `flatMap` and `flatten` operators, but also every method used to update a Var or send an event into an EventBus, such as `Var.set`, `EventBus.emit`, etc.
 
 **Bottom line:** Avoid using loopy operators where they are not needed. Don't use `flatMap` if `combineWith` works just as well. Don't put state in a Var if you can just map over some signal to compute the same state.
+
+
+#### Merge Streams Special Case
+
+`stream1.mergeWith(stream2)` can behave either as a flowy operator or a loopy operator depending on which streams are being merged.
+
+If both streams never emit in the same transaction, the merged stream behaves as a flowy operator, avoiding FRP glitches as flowy operators do. 
+
+However, if one of the parent streams synchronously depends on the other, e.g. if you do `stream1.mergeWith(stream1.map(_ * 10))`, you must expect one incoming event to produce two independent events with separate propagations because... how else could it possibly work in this case?
+
+And so, in such cases, when both of merged stream's parents emit in the same transaction, the merged stream emits the first event in the same transaction, but it emits the second even in a separate transaction, allowing it to propagate separately. This actually eliminates FRP glitches that could otherwise happen when using `mergeWith` with `combineWith`.
+
+See also: [Avoiding Glitches When Merging](#avoiding-glitches-when-merging)
 
 
 
@@ -1678,7 +1690,7 @@ Regardless of this seeming leniency, you should still handle all of your errors 
 
 Observables generally emit errors at the same time as they would have emitted a non-error value. For example, a `CombinedObservable` like `stream.combineWith(stream.map(foo))` will only emit a single value if `stream` emits a value (yes, Airstream deals with [FRP Glitches](#frp-glitches) for you). Similarly, it will only emit a single error if `stream` emits an error. However, that error will be wrapped in `CombinedError` because it needs to support the case when its parent observables simultaneously emit a different error.
 
-On the other hand, `MergeEventStream` does no such synchronization, it emits the errors similarly to how it emits non-error events – as they come, putting all but the first seen one in a new transaction.
+On the other hand, `MergeStream` does no such error combination, it emits the errors similarly to how it emits non-error events – as they come, putting all but the first seen one in a new transaction.
 
 `DelayEventStream` re-emits incoming errors with the same delay that it uses for normal values.
 
