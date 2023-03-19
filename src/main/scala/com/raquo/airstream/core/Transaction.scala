@@ -59,6 +59,8 @@ object Transaction {
     * Airstream, and in a couple places in Laminar, and this seems to cover
     * most reasonable use cases. Users might need to wrap some of their code
     * into `onStart.shared` manually if they manage subscriptions manually.
+    *
+    * See https://github.com/raquo/Airstream/#restarting-streams-that-depend-on-signals--signalchanges-
     */
   object onStart {
 
@@ -90,6 +92,8 @@ object Transaction {
      *
      * If you rely on standard Laminar features for automatic management of
      * subscriptions, you shouldn't ever need to call this manually.
+     *
+     * See https://github.com/raquo/Airstream/#restarting-streams-that-depend-on-signals--signalchanges-
      */
     def shared[A](code: => A): A = {
       level += 1

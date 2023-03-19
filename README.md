@@ -79,6 +79,13 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Flowy Operators](#flowy-operators)
     * [Async Operators](#async-operators)
     * [Loopy Operators](#loopy-operators)
+  * [Restarting Observables](#restarting-observables)
+    * [Signals Re-Syncing on Restart](#signals-re-syncing-on-restart)
+    * [Restarting Streams](#restarting-streams)
+    * [Restarting Streams That Depend on Signals (signal.changes)](#restarting-streams-that-depend-on-signals--signalchanges-)
+    * [Restarting Signals That Depend on Streams](#restarting-signals-that-depend-on-streams)
+    * [Stopping is Actually Pausing](#stopping-is-actually-pausing)
+    * [Signals That Keep Updating When Stopped](#signals-that-keep-updating-when-stopped)
   * [Debugging](#debugging)
   * [Error Handling](#error-handling)
 * [Limitations](#limitations)
@@ -164,6 +171,8 @@ Just like Observers can be added to streams, they can also be removed, e.g. with
 
 When the dust settles, streams that are now without observers (internal or external) will be stopped, and those that still have observers will otherwise be untouched, except they will stop referencing the now-stopped observables in their lists of internal observers.
 
+Very often, an observable is started, used for a while, then stopped, and is discarded afterwards, never to be used again. However, Airstream does support restarting previously stopped observables, and Laminar has good use cases for that. [Restarting Observables](#restarating-observabels) is an advanced topic that you can read about after you get a good understanding of other Airstream concepts like transactions.
+
 
 #### Memory Management Implications
 
@@ -215,7 +224,7 @@ Similarly, `myFoo` expression will _not_ be evaluated immediately as it is passe
 
 ---
 
-Note: until Airstream 15, Signal only fired an event when its next value was different from its current value. The comparison was made using Scala's `==` operator. If you see references to "signals' `==` checks" in past issues / discussions, this is what they're talking about. In the latest version, this built-in filter is eliminated, and you need to explicitly call `.distinct` to achieve such behaviour.
+Note: before Airstream 15, Signal only fired an event when its next value was different from its current value. The comparison was made using Scala's `==` operator. If you see references to "signals' `==` checks" in past issues / discussions, this is what they're talking about. In v15.0.0, this built-in auto-distinction filter is eliminated, and you need to explicitly use one of the [distinction operators](#distinction-operators) to achieve such behaviour.
 
 
 #### Getting Signal's current value
@@ -1475,9 +1484,97 @@ If both streams never emit in the same transaction, the merged stream behaves as
 
 However, if one of the parent streams synchronously depends on the other, e.g. if you do `stream1.mergeWith(stream1.map(_ * 10))`, you must expect one incoming event to produce two independent events with separate propagations because... how else could it possibly work in this case?
 
-And so, in such cases, when both of merged stream's parents emit in the same transaction, the merged stream emits the first event in the same transaction, but it emits the second even in a separate transaction, allowing it to propagate separately. This actually eliminates FRP glitches that could otherwise happen when using `mergeWith` with `combineWith`.
+And so, in such cases, when both of merged stream's parents emit in the same transaction, the merged stream emits the first event in the same transaction, but it emits the second event in a separate transaction, allowing it to propagate separately. This actually eliminates FRP glitches that could otherwise happen when using the `combineWith` operator on the output of `combineWith`.
 
 See also: [Avoiding Glitches When Merging](#avoiding-glitches-when-merging)
+
+
+
+### Restarting Observables
+
+This documentation section assumes a good understanding of all sections above, especially [Signals](#signal), [Laziness](#laziness) and [Transactions](#transactions).
+
+When an Airstream observable loses its last observer, it is stopped, and must detach itself from the rest of the observable graph, so that it can be garbage collected. Specifically, it must remove itself from the list of observers in its parent observable.
+
+Because of that, parent observables stopped observables are unable to receive updates from their parent observables, for example if `numSignal` continues to update while `fooSignal` is stopped (we assume that `numSignal` has other observers and is not stopped itself).
+
+```scala
+val numSignal: Signal[Int] = ???
+val fooSignal: Signal[Foo] = numSignal.map(Foo(_))
+```
+
+#### Signals Re-Syncing on Restart
+
+Now let's suppose that `fooSignal` is started again, after being stopped for a while: we add an observer to it, and `fooSignal` adds itself to `numSignal`'s observers, thus starting to receive its updates again. However, those updates have not come in yet (perhaps they only happen in response to user clicks), but as we already started the signal, we need to provide `fooSignal`'s current value to this new observer that we added, per Signal's contract. Unfortunately, `fooSignal`'s current value is actually stale, because it missed all of the updates in `numSignal` while `fooSignal` was stopped. To mitigate this inconsistency, when restarting, signals attempt to sync their value with the parent signal.
+
+In our case, when restarting, `fooSignal` will check whether its parent `numSignal` has emitted any updates while `fooSignal` was stopped, and if that is the case, then fooSignal will apply the `Foo(_)` function to update its current value to match `numSignal`'s latest value. All signals that have one parent signal do it this way (see `trait SingleParentSignal`).
+
+Different kinds of signals have slightly different re-syncing logic, but at the high level it is all the same – the signals recompute their own current value if the parent signal(s) have emitted any updates. This latter condition is very important, because you don't want to run the signal's computation more than once per incoming event. Not so much because of performance, but because Airstream guarantees shared execution, i.e. that an observable will only process any incoming event only once, regardless of whether it has 1 or 100 subscribers, and regardless of other factors. That way, users' computations and side effects get executed a predictable number of times, even if the users are not disciplined about separating side effects from pure computations. Forcing purity on users in a language that does not enforce purity goes against Airstream design goals. 
+
+
+#### Restarting Streams
+
+Unlike signals, streams do not have a "current value", so we generally can not sync a stream with its parent stream. For example, if `barStream` was stopped for a while, and then is started again, it will not emit any new events until `boolStream` emits a new event.
+
+This might sound like an unfortunate limitation, but it actually works just fine when you're using event streams for their intended purpose – to represent events. For example, if you're re-mounting a Laminar component, you probably don't want to suddenly receive a click event that happened a while ago. On the other hand, if you have compiled some **state** based on those click events, that state should already live in a Signal, and your component should be able to sync with it. For example:
+
+```scala
+val parentClickEvents: EventStream[dom.MouseEvent] = ???
+val state: Signal[State] = parentClickEvents.scanLeft((initialState, ev) => newState)
+```
+
+Now, if the `state` signal lives in your parent Laminar component, and is never stopped, any signals in your child component can re-sync with it when they _are_ stopped and then restarted (when the child component is unmounted and then re-mounted).
+
+
+#### Restarting Streams That Depend on Signals (signal.changes)
+
+Airstream offers both state-like and stream-like observables under one roof, and integrating them smoothly in one system is profoundly hard. Consider the case of `signal.changes` – this is a stream that emits all events that the signal emits, except for its initial value.
+
+What happens when `signal.changes` is stopped and then restarted, but `signal` itself is never stopped, continuing to emit new updates? On the surface, the answer is simple – `signal` keeps track of its current value, so when restarting the `signal.changes` stream, we just do the same thing as we do when restarting signals that depend on other signals – check if the parent `signal` has emitted while `signal.changes` was stopped, and if so, update the current value of `signal.changes`. That would be the desirable behaviour.
+
+However... `signal.changes` is a stream, not a signal, so it does not have a "current value" that can be updated, nor a mechanism by which a new observer could pull its updated value. As an event stream, the only thing `signal.changes` can do is emit the `signal`'s updated value as a new event, and under normal circumstances that's exactly what it would do, but restarting of a stream is not exactly a "normal circumstance", it is a special moment in its lifetime.
+
+Specifically, when a stream is getting started, we don't really have access to the current / ongoing transaction, and we don't know how far the transaction has already propagated, so I don't think `signal.changes` can safely emit the signal's updated value in the current transaction when `signal.changes` is restarting. That does not seem safe, although I haven't quite proved it definitively to myself if I'm being honest. There could be room for improvement here.
+
+The naive alternative then would be for `signal.changes` to emit the signal's updated value in a new transaction when `signal.changes` is being restarted. However, that is problematic: what if you add not one, but two observers to `signal.changes` at the same time? The first observer would trigger the restart of this stream, and would cause `signal.changes` to emit the new event in a new transaction, but then the second new observer would not receive that event, because it already missed it. This difference in behaviour is obviously undesirable, but that's not even the end of it.
+
+If instead of adding two observers to `signal.changes`, we add one observer to `signal.changes` and another one to `signal.map(foo).changes` at the same time (while they are both stopped), then those streams would emit the new event different transactions, which would never happen under normal circumstances. This could have caused an FRP glitch when restarting these streams like that if we `combineWith` them somewhere downstream.
+
+To avoid all this, we have a special mechanism that lets us batch simultaneous events in a new transaction when restarting observables. Currently, it's only used to restart `signal.changes`. Basically, to avoid this restarting glitch, you want to wrap all your simultaneous observer additions into `Transaction.onStart.shared { /* code here */ }`, so any `signal.changes` you restart within that block will all emit in the same transaction. This is also not a perfect match for "normal" Airstream behaviour, and could potentially cause the other kind of FRP glitch where an intermediary event that you do expect to happen is swallowed by the system instead. However, of the two evils I think this is a lesser one, because it's much less common for that to be a problem. Ideally I would like to find a more robust mechanism for this edge case, but currently I lack the time required to do the research.
+
+Airstream's `DynamicOwner` uses this `onStart.shared` mechanism when activating all of its subscriptions, and all Laminar's methods like `Tag.apply` and `amend` do the same when applying multiple modifiers at a time, so you really shouldn't ever need to use `onStart.shared` manually, unless you're an advanced user creating your own custom modifiers or ownership primitives.
+
+
+#### Restarting Signals That Depend on Streams
+
+As event streams have no concept of "current value" and don't remember their "last emitted event", a signal that depends on a stream can not sync its value with the parent stream when it's being restarted, it simply starts listening to the parent stream again, and the signal's current value remains (potentially) stale until the parent stream emits a new event.
+
+Of course, if you want signals like `stream.scanLeft(intial)((acc, ev) => ???)` to keep receiving events from `stream`, you need to prevent them from getting stopped. In Laminar, this is usually accomplished by either choosing a better owner for the signal (e.g. move it to the parent component that does not get unmounted), or by hiding the owner element with CSS (`display: none`) instead of unmounting it. 
+
+
+#### Stopping is Actually Pausing
+
+Starting with Airstream 15, Airstream's general paradigm is to "pause" the observables when they are stopped, and seamlessly "resume" them when they are restarted, instead of tearing them down on stop, and restarting them from scratch. That is, when an observable is stopped and then re-started, it now tries to retain its internal state. This applies to streams too. Even though they generally do not represent "state" (that's what signals are for), streams still have internal state that they manage. For example:
+
+* `stream.take(numEvents = 2)` internally remembers how many events it took from `stream`, so if `stream` emits 3 events, and then is stopped and re-started, the `take` stream will not emit any more events if `stream` continues to emit, because it already took `2` events. This can be overriden by passing `resetOnStop = true` to the `take` operator.
+
+* `stream1.combineWith(stream2)` internally remembers the last event(s) that it saw `stream1` and `stream2` emit even after it was stopped. That way, when the combined stream is restarted, it behaves as if it was never stopped (sort of), instead of behaving as if we were starting it for the first time (i.e. waiting for both `stream1` and `stream2` to emit).
+
+As we've established before, signals even sync their value with their parent signal when they're being restarted, following the same paradigm of pausing and unpausing.
+
+
+#### Signals That Keep Updating When Stopped
+
+Generally, signals do not update their current value while they are stopped because they get disconnected from the source of updates, but there are several exceptions to this:
+
+* **Signals that have never been started** – their initial value might not be determined yet, for example if you have `stream.toSignal(initial = foo)`, the `foo` initial value will not be evaluated until the signal is started. Until then, the signal's current value is unknown, and Airstream will not evaluate it until and unless the signal is started.
+
+* **Future / Promise signals** – the current value of `Signal.fromFuture(future)` and `Signal.fromJsPromise(promise)` mirrors the current value of the future / promise regardless of whether the signal is started.
+
+* **Var signals** – the current value of `Var.signal` mirrors the current value of the future / promise regardless of whether the signal is started.
+
+* **Custom signals** – signals made using `CustomSource` API or by extending the `WritableSignal` trait might behave in whatever way makes sense for them. Remember that if a signal is stopped, it has no observers, so instead of spending resources on keeping the signal's value up to date while it is stopped, you might want to update its value once when the signal is restarting, in its `onWillStart` method.
+
 
 
 
