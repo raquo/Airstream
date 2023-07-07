@@ -196,7 +196,8 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
     * Note: For other types of combination, see `combineWith`, `withCurrentValueOf`, `sample` etc.
     */
   def mergeWith[B >: A](streams: EventStream[B]*): EventStream[B] = {
-    EventStream.merge(streams: _*)
+    val allStreams = this +: streams
+    EventStream.merge(allStreams: _*)
   }
 
   @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")
