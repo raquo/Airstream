@@ -192,6 +192,7 @@ object AjaxStream {
     isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
     requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
     progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
+    uploadProgressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
     readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
   ): AjaxStream = {
     new AjaxStream(
@@ -205,6 +206,7 @@ object AjaxStream {
       isStatusCodeSuccess,
       requestObserver,
       progressObserver,
+      uploadProgressObserver,
       readyStateChangeObserver
     )
   }
