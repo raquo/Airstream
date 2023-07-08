@@ -154,7 +154,10 @@ class FetchStream private[web] (
         abortStream.addInternalObserver(maybeAbortStreamObserver.get, shouldCallMaybeWillStart = true)
       }
       val responsePromise = dom.Fetch.fetch(url, requestInit)
-      new Transaction(fireValue(responsePromise, _))
+      // #TODO[Integrity] Is it ok to emit asynchronously here? Maybe we should save `responsePromise` and emit it `onStart`?
+      js.timers.setTimeout(0) {
+        new Transaction(fireValue(responsePromise, _))
+      }
       hasEmittedEvents = true
     }
   }
