@@ -224,7 +224,7 @@ Similarly, `myFoo` expression will _not_ be evaluated immediately as it is passe
 
 ---
 
-Note: before Airstream 15, Signal only fired an event when its next value was different from its current value. The comparison was made using Scala's `==` operator. If you see references to "signals' `==` checks" in past issues / discussions, this is what they're talking about. In v15.0.0, this built-in auto-distinction filter is eliminated, and you need to explicitly use one of the [distinction operators](#distinction-operators) to achieve such behaviour.
+Note: before Airstream 15, Signal only fired an event when its next value was different from its current value. The comparison was made using Scala's `==` operator. If you see references to "signals' `==` checks" in past issues / discussions, this is what they're talking about. In v15.0.0, this built-in auto-distinction filter is eliminated (see [blog post](https://laminar.dev/blog/2023/03/22/laminar-v15.0.0#no-more-automatic--checks-in-signals)), and you need to explicitly use one of the [distinction operators](#distinction-operators) to achieve such behaviour.
 
 
 #### Getting Signal's current value
@@ -1055,7 +1055,7 @@ Some of the more interesting / non-standard operators are documented below:
 
 #### Distinction Operators
 
-Both streams and signals have various `distinct*` operators to filter updates using `==` or other comparisons. These can be used to make your signals behave like they did prior to v15.0.0, or to achieve different, custom logic:
+Both streams and signals have various `distinct*` operators to filter updates using `==` or other comparisons. These can be used to make your signals behave like they did prior to v15.0.0 (see [blog post](https://laminar.dev/blog/2023/03/22/laminar-v15.0.0#no-more-automatic--checks-in-signals)), or to achieve different, custom logic:
 
 ```scala
 signal.distinct // performs `==` checks, similar to pre-15.0.0 behaviour
