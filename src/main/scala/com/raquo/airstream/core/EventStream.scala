@@ -349,14 +349,11 @@ object EventStream {
     new JsPromiseStream[A](promise, emitOnce)
   }
 
-  def fromFlowPublisher[A](mkPublisher: => Flow.Publisher[A], emitOnce: Boolean = false): EventStream[A] = {
+  def fromFlowPublisher[A](publisher: Flow.Publisher[A], emitOnce: Boolean = false): EventStream[A] = {
     var subscription: Flow.Subscription = null
     fromCustomSource[A](
       shouldStart = startIndex => if (emitOnce) startIndex == 1 else true,
-      start = (fireEvent, fireError, _, _) => {
-        
-        val publisher = mkPublisher
-        
+      start = (fireEvent, fireError, _, _) => {        
         val subscriber = new Flow.Subscriber[A] {
           def onNext(a: A) = fireEvent(a)
           def onError(t: Throwable) = fireError(t)
