@@ -15,6 +15,7 @@ import com.raquo.airstream.status.{AsyncStatusObservable, Status}
 import com.raquo.airstream.timing._
 import com.raquo.ew.JsArray
 
+import java.util.concurrent.Flow
 import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 import scala.scalajs.js
@@ -386,6 +387,30 @@ object EventStream {
 
   def fromJsPromise[A](promise: js.Promise[A], emitOnce: Boolean = false): EventStream[A] = {
     new JsPromiseStream[A](promise, emitOnce)
+  }
+
+  def fromFlowPublisher[A](mkPublisher: => Flow.Publisher[A], emitOnce: Boolean = false): EventStream[A] = {
+    var subscription: Flow.Subscription = null
+    fromCustomSource[A](
+      shouldStart = startIndex => if (emitOnce) startIndex == 1 else true,
+      start = (fireEvent, fireError, _, _) => {
+        
+        val publisher = mkPublisher
+        
+        val subscriber = new Flow.Subscriber[A] {
+          def onNext(a: A) = fireEvent(a)
+          def onError(t: Throwable) = fireError(t)
+          def onComplete() = ()
+          def onSubscribe(s: Flow.Subscription) = {
+            s.request(Long.MaxValue)
+            subscription = s
+          }
+        }
+
+        publisher.subscribe(subscriber)
+      },
+      stop = _ => { subscription.cancel(); subscription = null }
+    )
   }
 
   /** Easy helper for custom events. See [[CustomStreamSource]] for docs.
