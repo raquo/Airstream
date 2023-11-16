@@ -409,7 +409,11 @@ object EventStream {
 
         publisher.subscribe(subscriber)
       },
-      stop = _ => { subscription.cancel(); subscription = null }
+      stop = _ => {
+      if (subscription ne null)
+        subscription.cancel()
+      subscription = null
+    }
     )
   }
 
