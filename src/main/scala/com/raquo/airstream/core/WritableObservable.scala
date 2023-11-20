@@ -52,15 +52,14 @@ trait WritableObservable[A] extends Observable[A] {
   protected val internalObservers: ObserverList[InternalObserver[A]] = new ObserverList(JsArray())
 
   override def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription = {
-    // #nc[doc] - document this onstart.shared mechanism, both in code and in the real docs.
-    //  - also for extenders: this must be called by your observable also if it can get started without external observers downstream (basically, it shouldn't).
-    Transaction.onStart.shared {
+    // println(s"// ${this} addObserver ${observer}")
+    Transaction.onStart.shared({
       maybeWillStart()
       val subscription = addExternalObserver(observer, owner)
       onAddedExternalObserver(observer)
       maybeStart()
       subscription
-    }
+    }, when = !isStarted)
   }
 
   /** Subscribe an external observer to this observable */
@@ -76,12 +75,14 @@ trait WritableObservable[A] extends Observable[A] {
     */
   override protected[airstream] def addInternalObserver(observer: InternalObserver[A], shouldCallMaybeWillStart: Boolean): Unit = {
     //println(s"$this > aio   shouldCallMaybeWillStart=$shouldCallMaybeWillStart")
-    if (!isStarted && shouldCallMaybeWillStart) {
-      maybeWillStart()
-    }
-    //println(s"$this < aio")
-    internalObservers.push(observer)
-    maybeStart()
+    Transaction.onStart.shared({
+      if (!isStarted && shouldCallMaybeWillStart) {
+        maybeWillStart()
+      }
+      //println(s"$this < aio")
+      internalObservers.push(observer)
+      maybeStart()
+    }, when = !isStarted)
   }
 
   /** Child observable should call parent.removeInternalObserver(childInternalObserver) when it is stopped.

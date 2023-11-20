@@ -33,7 +33,8 @@ class ConcurrentStream[A](
       case signal: Signal[EventStream[A @unchecked] @unchecked] =>
         signal.tryNow() match {
           case Success(stream) =>
-            // We add internal observer later, in `onStart`. onWillStart should not start any observables. // #nc[doc] this pattern
+            // We add internal observer later, in `onStart`. onWillStart should not start any observables.
+            // #TODO[Doc] Document this pattern ^^^.
             maybeAddStream(stream, addInternalObserver = false)
           case _ => ()
         }

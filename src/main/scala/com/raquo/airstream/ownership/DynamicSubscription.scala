@@ -43,8 +43,6 @@ class DynamicSubscription private (
 
   private[ownership] def onActivate(owner: Owner): Unit = {
     //println(s"    - activating $this")
-    // I don't think Laminar itself needs onStart.shared here, this is for users' custom dynamic subscriptions.
-    // Honestly this might be overkill, but I think this is cheap, and diagnosing these kinds of bugs is expensive.
     Transaction.onStart.shared {
       maybeCurrentSubscription = activate(owner)
     }

@@ -49,15 +49,18 @@ class MergeStream[A](
     * produce unexpected results.
     */
   override private[airstream] def syncFire(transaction: Transaction): Unit = {
+    //println(s"${this} syncFire in $transaction")
     while (pendingParentValues.nonEmpty) {
       val nextValue = pendingParentValues.dequeue().value
       if (lastFiredInTrx.contains(transaction)) {
+        //println("- syncFire in new trx")
         nextValue.fold(
           nextError => new Transaction(fireError(nextError, _)),
           nextEvent => new Transaction(fireValue(nextEvent, _))
         )
       } else {
         lastFiredInTrx = transaction
+        //println("- syncFire in same trx")
         nextValue.fold(
           fireError(_, transaction),
           fireValue(_, transaction)

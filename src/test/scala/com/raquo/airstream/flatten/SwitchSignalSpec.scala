@@ -209,30 +209,32 @@ class SwitchSignalSpec extends UnitSpec {
     // - fromSeq streams are used to ensure that onStart isn't called extraneously
     // - bus.events streams are used to ensure that onStop isn't called extraneously
 
-    val outerBus = new EventBus[Int]
+    val outerBus = new EventBus[Int].setDisplayName("outerBus")
 
-    val smallBus = new EventBus[String]
+    val smallBus = new EventBus[String].setDisplayName("smallBus")
 
-    val bigBus = new EventBus[String]
+    val bigBus = new EventBus[String].setDisplayName("bigBus")
 
     val smallSignal = EventStream.merge(
-      smallBus.events,
-      EventStream.fromSeq("small-1" :: "small-2" :: Nil, emitOnce = true)
-    ).startWith("small-0")
+      smallBus.events.setDisplayName("smallBus.events"),
+      EventStream.fromSeq("small-1" :: "small-2" :: Nil, emitOnce = true).setDisplayName("smallSeq")
+    ).setDisplayName("smallMerged").startWith("small-0").setDisplayName("smallSignal")
 
     val bigSignal = EventStream.merge(
-      bigBus.events,
-      EventStream.fromSeq("big-1" :: "big-2" :: Nil, emitOnce = true)
-    ).startWith("big-0")
+      bigBus.events.setDisplayName("bigBus.events"),
+      EventStream.fromSeq("big-1" :: "big-2" :: Nil, emitOnce = true).setDisplayName("bigSeq")
+    ).setDisplayName("bigMerged").startWith("big-0").setDisplayName("bigSignal")
 
-    val flatSignal = outerBus.events.startWith(0).flatMap {
+    val flatSignal = outerBus.events.setDisplayName("outerBus.events").startWith(0).setDisplayName("outerBus.signal").map {
       case i if i >= 10 => bigSignal
       case _ => smallSignal
-    }.map(Calculation.log("flat", calculations))
+    }.setDisplayName("outerBus.meta").flatten.setDisplayName("flatSignal").map(Calculation.log("flat", calculations))
 
     // --
 
-    flatSignal.addObserver(Observer.empty)
+    val emptyObs = Observer.empty.setDisplayName("emptyObs")
+
+    flatSignal.addObserver(emptyObs)
 
     assert(calculations.toList == List(
       Calculation("flat", "small-0"),

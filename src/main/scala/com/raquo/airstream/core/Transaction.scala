@@ -9,9 +9,11 @@ import scala.scalajs.js
 /** @param code Note: Must not throw! */
 class Transaction(private[Transaction] var code: Transaction => Any) {
 
-  // val id: Int = Transaction.nextId()
+  // val id = Transaction.nextId()
 
-  //println(s"  - create trx $id")
+  //println(s"--CREATE Trx@${id}")
+
+  //override def toString: String = s"Trx@${id}"
 
   /** Priority queue of pending observables: sorted by their topoRank.
     *
@@ -19,9 +21,18 @@ class Transaction(private[Transaction] var code: Transaction => Any) {
     */
   private[this] var maybePendingObservables: js.UndefOr[JsPriorityQueue[SyncObservable[_]]] = js.undefined
 
-  Transaction.pendingTransactions.add(this)
+  if (Transaction.onStart.isSharedStart) {
+    // This delays scheduling transactions until the end of
+    // the shared start transaction
+    //println(s">>> onStart.postStartTransactions.push($this)")
+    Transaction.onStart.postStartTransactions.push(this)
+  } else {
+    //println(s">>> Transaction.pendingTransactions.add($this)")
+    Transaction.pendingTransactions.add(this)
+  }
 
   @inline private[Transaction] def resolvePendingObservables(): Unit = {
+    //println(s"$this resolvePendingObservables (n=${maybePendingObservables.map(_.size).getOrElse(0)})")
     maybePendingObservables.foreach { pendingObservables =>
       while (pendingObservables.nonEmpty) {
         //dom.console.log("RANKS: ", pendingObservables.debugQueue.map(_.topoRank))
@@ -48,6 +59,16 @@ class Transaction(private[Transaction] var code: Transaction => Any) {
 
 object Transaction {
 
+  /** Create new transaction (typically used in internal observable code) */
+  def apply(code: Transaction => Unit): Unit = new Transaction(code)
+
+  /** Create new transaction (typically used in end user code).
+    *
+    * Warning: It is rare that you need to manually create transactions.
+    * Example of legitimate use case: [[https://github.com/raquo/Airstream/#var-transaction-delay Var transaction delay]]
+    */
+  def apply(code: => Unit): Unit = new Transaction(_ => code)
+
   /** This object holds a queue of callbacks that should be executed
     * when all observables finish starting. This lets `signal.changes`
     * streams emit the updated signal's value when restarting, in such
@@ -64,9 +85,18 @@ object Transaction {
     */
   object onStart {
 
-    private var level: Int = 0
+    private[Transaction] var isSharedStart: Boolean = false
 
     private val pendingCallbacks: JsArray[Transaction => Unit] = JsArray()
+
+    private[Transaction] val postStartTransactions: JsArray[Transaction] = JsArray()
+
+    private[Transaction] var isResolving = false
+
+    // #nc just add a default value to `when` param. Keeping this method for binary compat for now.
+    def shared[A](code: => A): A = {
+      shared(code, when = true)
+    }
 
     /* Put the code that (potentially) adds more than one observer inside.
      * If that code causes `signal.changes` to restart (and emit the signal's
@@ -95,17 +125,25 @@ object Transaction {
      *
      * See https://github.com/raquo/Airstream/#restarting-streams-that-depend-on-signals--signalchanges-
      */
-    def shared[A](code: => A): A = {
-      level += 1
-      val result = try {
+    def shared[A](code: => A, when: Boolean): A = {
+      if (isSharedStart || !when) {
+        // - We are already executing inside the `code` argument passed
+        //   to another onStart.shared block, so adding another try-catch
+        //   block is not necessary: that other block will take care of it.
+        // - Or, the caller explicitly doesn't want a shared block now (!when)
         code
-      } finally {
-        level -= 1
-        if (level == 0) {
+      } else {
+        //println("> START SHARED")
+        isSharedStart = true
+        val result = try {
+          code
+        } finally {
+          isSharedStart = false
           resolve()
         }
+        //println("< END SHARED")
+        result
       }
-      result
     }
 
     /** Add a callback to execute once the new shared transaction gets executed.
@@ -113,17 +151,31 @@ object Transaction {
       * @param callback - Must not throw!
       */
     def add(callback: Transaction => Unit): Unit = {
+      //println(s"// add callback ${callback.hashCode()}")
       pendingCallbacks.push(callback)
     }
 
     private def resolve(): Unit = {
-      if (pendingCallbacks.length > 0) {
-        new Transaction(trx => {
+      if (pendingCallbacks.length == 0) {
+        //println("- no pending callbacks")
+        if (postStartTransactions.length > 0) {
+          //println(s"> CREATE ALT RESOLVE TRX. Num trx-s = ${postStartTransactions.length}")
+          Transaction {
+            while (postStartTransactions.length > 0) {
+              pendingTransactions.add(postStartTransactions.shift())
+            }
+          }
+        }
+      } else {
+        //println(s"> CREATE RESOLVE TRX. Num callbacks = ${pendingCallbacks.length}")
+        Transaction { trx =>
           // #TODO[Integrity] What if calling callback(trx) calls onStart.add?
           //  Is it ok to put it into the same list, or should it go into a new list,
           //  to be executed in a separate transaction?
+          isResolving = true
           while (pendingCallbacks.length > 0) {
-            val callback = pendingCallbacks.pop()
+            val callback = pendingCallbacks.shift()
+            // println(s"// resolve callback ${callback.hashCode()}")
             try {
               callback(trx)
             } catch {
@@ -132,14 +184,29 @@ object Transaction {
                 AirstreamError.sendUnhandledError(err)
             }
           }
-        })
+          isResolving = false
+          // println("// resolved any callbacks")
+          // Any transactions created during the shared start
+          // that weren't converted to callbacks, will now be
+          // scheduled, and will be executed after this shared
+          // transaction finishes (they are marked as its
+          // children), in the same order as they were created.
+          // println(s"postStartTransactions.length = ${postStartTransactions.length}")
+          while (postStartTransactions.length > 0) {
+            val _trx = postStartTransactions.shift()
+            // println(s"- pendingTransactions.add(${t})")
+            pendingTransactions.add(_trx)
+          }
+        }
       }
     }
   }
 
   private object pendingTransactions {
 
-    /** first transaction is the top of the stack, currently running */
+    /** First transaction is the top of the stack, currently running.
+      * That transaction's parent transaction is the second item, and so on.
+      */
     private val stack: JsArray[Transaction] = JsArray()
 
     private val children: JsMap[Transaction, JsArray[Transaction]] = new JsMap()
@@ -159,7 +226,7 @@ object Transaction {
         //  Consider this later when I have moer comprehensive benchmarks.
         pushToStack(newTransaction)
         run(newTransaction)
-      }{ currentTransaction =>
+      } { currentTransaction =>
         enqueueChild(parent = currentTransaction, newChild = newTransaction)
       }
     }
@@ -178,7 +245,7 @@ object Transaction {
 
       putNextTransactionOnStack(doneTransaction = transaction)
 
-      transaction.code = throwDeadTrxError  // stop holding up `trx` contents in memory
+      transaction.code = throwDeadTrxError // stop holding up `trx` contents in memory
 
       peekStack().fold {
         if (children.size > 0) {
@@ -187,7 +254,7 @@ object Transaction {
           children.forEach((transactions, _) => numChildren += transactions.length)
           throw new Exception(s"Transaction queue error: Stack cleared, but a total of ${numChildren} children for ${children.size} transactions remain. This is a bug in Airstream.")
         }
-      }{ nextTransaction =>
+      } { nextTransaction =>
         run(nextTransaction)
       }
     }
@@ -204,11 +271,9 @@ object Transaction {
         peekStack().foreach { parentTransaction =>
           putNextTransactionOnStack(doneTransaction = parentTransaction)
         }
-      }{ nextChild =>
+      } { nextChild =>
         // Found a child transaction, so put it on the stack, so that it wil run next.
         // Once that child is all done, it will be popped from the stack, and we will
-        //
-        //
         pushToStack(nextChild)
       }
     }
@@ -263,10 +328,13 @@ object Transaction {
 
   private[core] def isClearState: Boolean = pendingTransactions.isClearState
 
+  //private var maybeCurrentTransaction: js.UndefOr[Transaction] = js.undefined
+
   private[airstream] def currentTransaction(): js.UndefOr[Transaction] = pendingTransactions.peekStack()
 
   private def run(transaction: Transaction): Unit = {
-    //println(s"--start trx ${transaction.id}")
+    //println(s"--START ${transaction}")
+    //maybeCurrentTransaction = transaction
     try {
       transaction.code(transaction)
       transaction.resolvePendingObservables()
@@ -278,11 +346,12 @@ object Transaction {
     } finally {
       // @TODO[API,Integrity]
       //  This block is executed regardless of whether an exception is thrown in `code` or not,
-      //  but it doesn't actually catch the exception, so `new Transaction(code)` actually throws
+      //  but it doesn't actually catch the exception, so `Transaction(code)` actually throws
       //  iff `code` throws AND the transaction was created while no other transaction is running
       //  This is not very predictable, so we should fix it.
-      //println(s"--end trx ${transaction.id}")
+      //println(s"--END ${transaction}")
       pendingTransactions.done(transaction)
+      //maybeCurrentTransaction = js.undefined
     }
   }
 

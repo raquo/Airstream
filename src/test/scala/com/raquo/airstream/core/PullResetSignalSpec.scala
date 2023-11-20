@@ -280,8 +280,8 @@ class PullResetSignalSpec extends UnitSpec {
     $combined.addObserver(Observer.empty)
 
     log.toList shouldBe List(
-      "-4 isEven = true",
       "-4 isPositive = false",
+      "-4 isEven = true",
       "-4 isPositive = false, isEven = true"
     )
     log.clear()
@@ -343,13 +343,13 @@ class PullResetSignalSpec extends UnitSpec {
 
     v.set(-2)
 
-    // #Warning This is a known glitch: of all the new observers, only the first one
-    //  manages to receive the sync event from `changes`. This is because the whole
-    //  onWillStart / onStart loop completes before the other observers are added,
-    //  and even though the event is emitted in a new Transaction, in this case, the
-    //  transaction payload is executed immediately without delay, because there is
+    // #Warning This is a known glitch with a known workaround: of all the new observers,
+    //  only the first one manages to receive the sync event from `changes`. This is
+    //  because the whole onWillStart / onStart loop completes before the other observers
+    //  are added, and even though the event is emitted in a Transaction, in this case,
+    //  the transaction payload is executed immediately without delay, because there is
     //  no current transaction that we need to wait for.
-    //  - This glitch can be avoided by wrapping subs creation in `new Transaction`,
+    //  - This glitch can be avoided by wrapping subs creation in `Transaction`,
     //    `DynamicSubscription`, or `Transaction.onStart.shared` – see the tests below
 
     val subs2 = List(

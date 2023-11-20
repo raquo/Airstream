@@ -28,7 +28,7 @@ class SwitchSignal[A](
 
   private[this] val internalEventObserver: InternalObserver[A] = InternalObserver.fromTry[A](
     onTry = (nextTry, _) => {
-      //println(s"> init trx from SwitchSignal.onValue($nextTry)")
+      //println(s"> init trx from $this SwitchSignal.onValue($nextTry)")
       innerSignalLastSeenUpdateId = Protected.lastUpdateId(currentSignalTry.get)
       new Transaction(fireTry(nextTry, _))
     }

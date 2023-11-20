@@ -431,7 +431,7 @@ class SwitchStreamSpec extends UnitSpec {
 
     implicit val owner: TestableOwner = new TestableOwner
 
-    val outerBus = new EventBus[Int]
+    val outerBus = new EventBus[Int].setDisplayName("outer-bus")
 
     val calculations = mutable.Buffer[Calculation[String]]()
 
@@ -439,28 +439,32 @@ class SwitchStreamSpec extends UnitSpec {
     // - fromSeq streams are used to ensure that onStart isn't called extraneously
     // - bus.events streams are used to ensure that onStop isn't called extraneously
 
-    val smallBus = new EventBus[String]
+    val smallBus = new EventBus[String].setDisplayName("small-bus")
 
     val smallStream = EventStream.merge(
-      smallBus.events,
-      EventStream.fromSeq("small-1" :: "small-2" :: Nil, emitOnce = true)
-    )
+      smallBus.events.setDisplayName("small-bus-events"),
+      EventStream.fromSeq("small-1" :: "small-2" :: Nil, emitOnce = true).setDisplayName("small-fromSeq")
+    ).setDisplayName("small-M")
 
-    val bigBus = new EventBus[String]
+    val bigBus = new EventBus[String].setDisplayName("big-bus")
 
     val bigStream = EventStream.merge(
-      bigBus.events,
-      EventStream.fromSeq("big-1" :: "big-2" :: Nil, emitOnce = true)
-    )
+      bigBus.events.setDisplayName("big-bus-events"),
+      EventStream.fromSeq("big-1" :: "big-2" :: Nil, emitOnce = true).setDisplayName("big-fromSeq")
+    ).setDisplayName("big-M")
 
-    val flatStream = outerBus.events.startWith(0).flatMap {
+    val flatStream = outerBus.events.setDisplayName("outer-bus-events").startWith(0).setDisplayName("outer-signal").map {
       case i if i >= 10 => bigStream
       case _ => smallStream
-    }.map(Calculation.log("flat", calculations))
+    }.setDisplayName("outer-meta")
+      .flatten.setDisplayName("outer-flat")
+      .map(Calculation.log("flat", calculations)).setDisplayName("outer-flat-map")
 
     // --
 
-    flatStream.addObserver(Observer.empty)
+    val emptyObserver = Observer.empty.setDisplayName("emptyObserver")
+
+    flatStream.addObserver(emptyObserver)
 
     assert(calculations.toList == List(
       Calculation("flat", "small-1"),

@@ -21,17 +21,49 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     val range = 0 to 3
     val stream = EventStream.fromSeq(range, emitOnce = true)
     val flatStream =
-      stream
+      stream.setDisplayName("SRC-FS")
         .map { v =>
-          EventStream.fromSeq(Seq(v * 3), emitOnce = true)
-        }
-        .flatten
+          EventStream.fromSeq(Seq(v * 3), emitOnce = true).setDisplayName(s"INT-FS-$v")
+        }.setDisplayName("META")
+        .flatten.setDisplayName("FLAT")
 
     val effects = mutable.Buffer[Effect[_]]()
-    val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
+    val obs0 = Observer[Int](newValue => effects += Effect("obs0", newValue)).setDisplayName("obs0")
+    val subscription0 = flatStream.addObserver(obs0)
 
     subscription0.kill()
     effects.toList shouldBe range.map(i => Effect("obs0", i * 3))
+  }
+
+  it("sync map-flatten without fromSeq") {
+
+    implicit val owner: Owner = new TestableOwner
+
+    val bus = new EventBus[Int]
+    val stream = bus.events
+    val flatStream =
+      stream
+        .map { v =>
+          EventStream.fromValue(v * 3, emitOnce = true).setDisplayName(s"S-${v}")
+        }
+        .setDisplayName("MO")
+        .flatten.setDisplayName("FS")
+
+    val effects = mutable.Buffer[Effect[_]]()
+    val obs = Observer[Int](v => effects += Effect("obs0", v)).setDisplayName("obs")
+    val subscription0 = flatStream.addObserver(obs)
+
+    bus.emit(0)
+    bus.emit(1)
+    bus.emit(2)
+
+    subscription0.kill()
+
+    effects.toList shouldBe List(
+      Effect("obs0", 0 * 3),
+      Effect("obs0", 1 * 3),
+      Effect("obs0", 2 * 3),
+    )
   }
 
   it("sync three-level map-flatten") {
