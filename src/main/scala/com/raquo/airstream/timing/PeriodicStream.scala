@@ -43,14 +43,14 @@ class PeriodicStream[A](
   }
 
   private def tick(): Unit = {
-    new Transaction(trx => { // #Note[onStart,trx,async]
+    Transaction { trx => // #Note[onStart,trx,async]
       if (isStarted) {
         // This cycle should also be broken by clearTimeout() in onStop,
         // but just in case of some weird timing I put isStarted check here.
         fireValue(currentValue, trx)
         setNext()
       }
-    })
+    }
   }
 
   private def setNext(): Unit = {
@@ -63,7 +63,7 @@ class PeriodicStream[A](
       case Success(None) =>
         resetTo(initial, tickNext = false)
       case Failure(err) =>
-        new Transaction(fireError(err, _)) // #Note[onStart,trx,async]
+        Transaction(fireError(err, _)) // #Note[onStart,trx,async]
     }
   }
 

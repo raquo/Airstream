@@ -35,7 +35,7 @@ class DebounceStream[A](
     maybeLastTimeoutHandle.foreach(js.timers.clearTimeout)
     maybeLastTimeoutHandle = js.timers.setTimeout(intervalMs.toDouble) {
       //println(s"> init trx from DebounceEventStream.onTry($nextValue)")
-      new Transaction(fireTry(nextValue, _))
+      Transaction(fireTry(nextValue, _))
     }
   }
 

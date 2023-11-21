@@ -41,7 +41,7 @@ class EventBusStream[A] private[eventbus] () extends WritableStream[A] with Inte
 
     //println(s"> init trx from EventBusStream(${nextValue})")
 
-    new Transaction(fireValue(nextValue, _))
+    Transaction(fireValue(nextValue, _))
   }
 
   /** Helper method to support batch emit using `WriteBus.emit` / `WriteBus.emitTry` */
@@ -55,7 +55,7 @@ class EventBusStream[A] private[eventbus] () extends WritableStream[A] with Inte
   }
 
   override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
-    new Transaction(fireError(nextError, _))
+    Transaction(fireError(nextError, _))
   }
 
   override protected def onWillStart(): Unit = {

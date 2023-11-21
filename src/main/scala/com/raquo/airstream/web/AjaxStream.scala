@@ -80,9 +80,9 @@ class AjaxStream(
         maybePendingRequest = js.undefined
         val status = request.status
         if (isStatusCodeSuccess(status))
-          new Transaction(fireValue(request, _))
+          Transaction(fireValue(request, _))
         else
-          new Transaction(fireError(AjaxStatusError(request, status, s"Ajax request failed: $status ${request.statusText}"), _))
+          Transaction(fireError(AjaxStatusError(request, status, s"Ajax request failed: $status ${request.statusText}"), _))
       }
     }
 
@@ -94,21 +94,21 @@ class AjaxStream(
         //  - `ev` is not actually a dom.ErrorEvent, but a useless dom.ProgressEvent
         //  - Reasons could be network, DNS, CORS, etc.
 
-        new Transaction(fireError(AjaxNetworkError(request, s"Ajax request failed: unknown network reason."), _))
+        Transaction(fireError(AjaxNetworkError(request, s"Ajax request failed: unknown network reason."), _))
       }
     }
 
     request.onabort = (_: js.Any) => {
       if (maybePendingRequest.contains(request)) {
         maybePendingRequest = js.undefined
-        new Transaction(fireError(AjaxAbort(request), _))
+        Transaction(fireError(AjaxAbort(request), _))
       }
     }
 
     request.ontimeout = (_: dom.Event) => {
       if (maybePendingRequest.contains(request)) {
         maybePendingRequest = js.undefined
-        new Transaction(fireError(AjaxTimeout(request), _))
+        Transaction(fireError(AjaxTimeout(request), _))
       }
     }
 

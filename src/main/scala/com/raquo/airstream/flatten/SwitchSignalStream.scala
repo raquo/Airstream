@@ -24,14 +24,14 @@ class SwitchSignalStream[A](
   private[this] val internalEventObserver: InternalObserver[A] = InternalObserver.fromTry[A](
     onTry = (nextTry, _) => {
       //println(s"> init trx from SwitchSignalStream.onValue($nextTry)")
-      new Transaction(trx => {
+      Transaction { trx =>
         if (isStarted) {
           fireTry(nextTry, trx)
           maybeCurrentSignalTry.foreach { _.foreach { currentSignal =>
             lastSeenSignalUpdateId = Protected.lastUpdateId(currentSignal)
           }}
         }
-      })
+      }
     }
   )
 
@@ -70,7 +70,7 @@ class SwitchSignalStream[A](
       lastSeenSignalUpdateId = -1
 
       //println(s"> init trx from SwitchSignalStream.onTry (new signal)")
-      new Transaction(trx => {
+      Transaction { trx =>
         if (isStarted) {
           // #Note: Timing is important here.
           // 1. Create the `trx` transaction, since we need that boundary when flattening
@@ -92,7 +92,7 @@ class SwitchSignalStream[A](
             nextSignal.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false)
           }
         }
-      })
+      }
     }
   }
 
@@ -103,12 +103,12 @@ class SwitchSignalStream[A](
       val newSignalLastUpdateId = Protected.lastUpdateId(currentSignal)
       if (newSignalLastUpdateId != lastSeenSignalUpdateId) {
         //println(s"> init trx from SwitchSignalStream.onTry (same signal)")
-        new Transaction(trx => {
+        Transaction { trx =>
           if (isStarted) {
             fireTry(currentSignal.tryNow(), trx) // #Note[onStart,trx,loop]
             lastSeenSignalUpdateId = newSignalLastUpdateId
           }
-        })
+        }
       }
       currentSignal.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false)
     })

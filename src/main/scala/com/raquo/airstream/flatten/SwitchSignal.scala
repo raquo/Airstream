@@ -30,7 +30,7 @@ class SwitchSignal[A](
     onTry = (nextTry, _) => {
       //println(s"> init trx from $this SwitchSignal.onValue($nextTry)")
       innerSignalLastSeenUpdateId = Protected.lastUpdateId(currentSignalTry.get)
-      new Transaction(fireTry(nextTry, _))
+      Transaction(fireTry(nextTry, _))
     }
   )
 
@@ -104,7 +104,7 @@ class SwitchSignal[A](
       // Update this signal's value with nextSignal's current value (or an error if we don't have nextSignal)
 
       //println(s"> init trx from SwitchSignal.onTry (new signal)")
-      new Transaction(trx => {
+      Transaction { trx =>
 
         // #Note: Timing is important here.
         // 1. Create the `trx` transaction, since we need that boundary when flattening
@@ -130,7 +130,7 @@ class SwitchSignal[A](
 
           nextSignalTry.foreach(_.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false))
         }
-      })
+      }
     }
   }
 

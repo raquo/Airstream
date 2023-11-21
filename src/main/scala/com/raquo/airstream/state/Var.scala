@@ -28,7 +28,7 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
 
   val writer: Observer[A] = Observer.fromTry { case nextTry => // Note: `case` syntax needed for Scala 2.12
     //println(s"> init trx from Var.writer(${nextTry})")
-    new Transaction(setCurrentValue(nextTry, _))
+    Transaction(setCurrentValue(nextTry, _))
   }
 
   /** Write values into a Var of Option[V] without manually wrapping in Some() */
@@ -47,21 +47,23 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
     * @param mod (currValue, nextInput) => nextValue
     */
   def updater[B](mod: (A, B) => A): Observer[B] = Observer.fromTry { case nextInputTry =>
-    new Transaction(trx => nextInputTry match {
-      case Success(nextInput) =>
-        tryNow() match {
-          case Success(currentValue) =>
-            val nextValue = Try(mod(currentValue, nextInput)) // this does catch exceptions in mod
-            setCurrentValue(nextValue, trx)
-          case Failure(err) =>
-            AirstreamError.sendUnhandledError(
-              VarError("Unable to update a failed Var. Consider Var#tryUpdater instead.", cause = Some(err))
-            )
-        }
+    Transaction { trx =>
+      nextInputTry match {
+        case Success(nextInput) =>
+          tryNow() match {
+            case Success(currentValue) =>
+              val nextValue = Try(mod(currentValue, nextInput)) // this does catch exceptions in mod
+              setCurrentValue(nextValue, trx)
+            case Failure(err) =>
+              AirstreamError.sendUnhandledError(
+                VarError("Unable to update a failed Var. Consider Var#tryUpdater instead.", cause = Some(err))
+              )
+          }
 
-      case Failure(err) =>
-        setCurrentValue(Failure[A](err), trx)
-    })
+        case Failure(err) =>
+          setCurrentValue(Failure[A](err), trx)
+      }
+    }
   }
 
   // @TODO[Scala3] When we don't need 2.12, remove 'case' from all PartialFunction instances that don't need it (e.g. Observer.fromTry)
@@ -70,13 +72,15 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
     *            Note: Must not throw!
     */
   def tryUpdater[B](mod: (Try[A], B) => Try[A]): Observer[B] = Observer.fromTry { case nextInputTry =>
-    new Transaction(trx => nextInputTry match {
-      case Success(nextInput) =>
-        val nextValue = mod(getCurrentValue, nextInput)
-        setCurrentValue(nextValue, trx)
-      case Failure(err) =>
-        setCurrentValue(Failure[A](err), trx)
-    })
+    Transaction { trx =>
+      nextInputTry match {
+        case Success(nextInput) =>
+          val nextValue = mod(getCurrentValue, nextInput)
+          setCurrentValue(nextValue, trx)
+        case Failure(err) =>
+          setCurrentValue(Failure[A](err), trx)
+      }
+    }
   }
 
   def zoom[B](in: A => B)(out: (A, B) => A)(implicit owner: Owner): Var[B] = {
@@ -94,7 +98,7 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
     * @param mod Note: guarded against exceptions
     */
   def update(mod: A => A): Unit = {
-    new Transaction(trx => {
+    Transaction { trx =>
       tryNow() match {
         case Success(currentValue) =>
           val nextValue = Try(mod(currentValue)) // this does catch exceptions in mod(currentValue)
@@ -104,17 +108,16 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
             VarError("Unable to update a failed Var. Consider Var#tryUpdate instead.", cause = Some(err))
           )
       }
-
-    })
+    }
   }
 
   /** @param mod Note: must not throw */
   def tryUpdate(mod: Try[A] => Try[A]): Unit = {
     //println(s"> init trx from Var.tryUpdate")
-    new Transaction(trx => {
+    Transaction { trx =>
       val nextValue = mod(getCurrentValue)
       setCurrentValue(nextValue, trx)
-    })
+    }
   }
 
   @inline def tryNow(): Try[A] = signal.tryNow()
@@ -162,12 +165,12 @@ object Var {
     */
   def setTry(values: VarTryTuple[_]*): Unit = {
     //println(s"> init trx from Var.set/setTry")
-    new Transaction(trx => {
+    Transaction { trx =>
       if (hasDuplicateVars(values.map(_.tuple))) {
         throw VarError("Unable to Var.{set,setTry}: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None)
       }
       values.foreach(setTryValue(_, trx))
-    })
+    }
   }
 
   /** Modify multiple Vars in the same Transaction
@@ -176,18 +179,18 @@ object Var {
     * Mod functions should be PURE.
     * - If a mod throws, the var will be set to a failed state.
     * - If you try to update a failed Var, `Var.update` will post an error to unhandled errors,
-    *   and none of the Vars will update.
+    * and none of the Vars will update.
     *
     * Reports an Airstream unhandled error:
-    *  1) if currentValue of any of the vars is a Failure.
-    *     This is atomic: an exception in any of the vars will prevent any of
-    *     the batched updates in this call from going through.
-    *  2) if input contains duplicate vars.
-    *     Airstream allows a maximum of one event per observable per transaction.
+    * 1) if currentValue of any of the vars is a Failure.
+    * This is atomic: an exception in any of the vars will prevent any of
+    * the batched updates in this call from going through.
+    * 2) if input contains duplicate vars.
+    * Airstream allows a maximum of one event per observable per transaction.
     */
   def update(mods: VarModTuple[_]*): Unit = {
     //println(s"> init trx from Var.update")
-    new Transaction(trx => {
+    Transaction { trx =>
       if (hasDuplicateVars(mods.map(_.tuple))) {
         throw VarError("Unable to Var.update: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None)
       }
@@ -195,12 +198,13 @@ object Var {
       val vars = mods.map(_.tuple._1)
       try {
         vars.foreach(_.now())
-      } catch { case err: Throwable =>
-        throw VarError("Unable to Var.update a failed Var. Consider Var.tryUpdate instead.", cause = Some(err))
+      } catch {
+        case err: Throwable =>
+          throw VarError("Unable to Var.update a failed Var. Consider Var.tryUpdate instead.", cause = Some(err))
       }
       val tryValues: Seq[VarTryTuple[_]] = tryMods.map(t => tryModToTryTuple(t))
       tryValues.foreach(setTryValue(_, trx))
-    })
+    }
   }
 
   /** Modify multiple Vars in the same Transaction
@@ -213,13 +217,13 @@ object Var {
     */
   def tryUpdate(mods: VarTryModTuple[_]*): Unit = {
     //println(s"> init trx from Var.tryUpdate")
-    new Transaction(trx => {
+    Transaction { trx =>
       if (hasDuplicateVars(mods.map(_.tuple))) {
         throw VarError("Unable to Var.tryUpdate: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None)
       }
       val tryValues: Seq[VarTryTuple[_]] = mods.map(t => tryModToTryTuple(t))
       tryValues.foreach(setTryValue(_, trx))
-    })
+    }
   }
 
   @inline private def toTryTuple[A](varTuple: VarTuple[A]): VarTryTuple[A] = {

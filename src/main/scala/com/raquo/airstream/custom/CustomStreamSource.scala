@@ -12,12 +12,8 @@ class CustomStreamSource[A] (
 ) extends WritableStream[A] with CustomSource[A] {
 
   override protected[this] val config: Config = makeConfig(
-    value => {
-      new Transaction(fireValue(value, _))
-    },
-    err => {
-      new Transaction(fireError(err, _))
-    },
+    value => Transaction(fireValue(value, _)),
+    err => Transaction(fireError(err, _)),
     () => startIndex,
     () => isStarted
   )

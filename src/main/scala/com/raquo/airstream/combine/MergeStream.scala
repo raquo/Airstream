@@ -55,8 +55,8 @@ class MergeStream[A](
       if (lastFiredInTrx.contains(transaction)) {
         //println("- syncFire in new trx")
         nextValue.fold(
-          nextError => new Transaction(fireError(nextError, _)),
-          nextEvent => new Transaction(fireValue(nextEvent, _))
+          nextError => Transaction(fireError(nextError, _)),
+          nextEvent => Transaction(fireValue(nextEvent, _))
         )
       } else {
         lastFiredInTrx = transaction

@@ -416,15 +416,15 @@ class PullResetSignalSpec extends UnitSpec {
 
     v.set(11)
 
-    // With `new Transaction`, these could be delayed if we're already
+    // With `Transaction { ... }`, these could be delayed if we're already
     // inside a transaction (in the test, we aren't), and also we can't
     // return the value from inside the transaction (due to the potential
     // delay)
-    new Transaction(_ => {
+    Transaction { _ =>
       isPositive.addObserver(Observer.empty)(owner)
       isEven.addObserver(Observer.empty)(owner)
       combined.addObserver(Observer.empty)(owner)
-    })
+    }
 
     log.toList shouldBe List(
       "11 isPositive = true",
@@ -633,12 +633,12 @@ class PullResetSignalSpec extends UnitSpec {
     AirstreamError.unregisterUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
 
     try {
-      new Transaction(_ => {
+      Transaction { _ =>
         isPositive.addObserver(Observer.empty)(owner)
         isEven.addObserver(Observer.empty)(owner)
         throw new Exception(sharedBlockErrorMsg)
         // combined.addObserver(Observer.empty)(owner)
-      })
+      }
 
       log.toList shouldBe List(
         "11 isPositive = true",
@@ -653,9 +653,9 @@ class PullResetSignalSpec extends UnitSpec {
 
       // --
 
-      new Transaction(_ => {
+      Transaction { _ =>
         combined.addObserver(Observer.empty)(owner)
-      })
+      }
 
       v.set(-12)
 

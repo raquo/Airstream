@@ -143,7 +143,7 @@ class FetchStream private[web] (
     maybeAbortStream.map { _ =>
       InternalObserver[Any](
         onNext = (_, _) => maybeAbortController.get.abort(),
-        onError = (err, _) => new Transaction(fireError(err, _))
+        onError = (err, _) => Transaction(fireError(err, _))
       )
     }
   }
@@ -156,7 +156,7 @@ class FetchStream private[web] (
       val responsePromise = dom.Fetch.fetch(url, requestInit)
       // #TODO[Integrity] Is it ok to emit asynchronously here? Maybe we should save `responsePromise` and emit it `onStart`?
       js.timers.setTimeout(0) {
-        new Transaction(fireValue(responsePromise, _))
+        Transaction(fireValue(responsePromise, _))
       }
       hasEmittedEvents = true
     }

@@ -31,7 +31,7 @@ trait CustomSource[A] extends WritableObservable[A] {
 
   override protected[this] def onStart(): Unit = {
     Try(config.onStart()).recover[Unit] {
-      case err: Throwable => new Transaction(fireError(err, _))
+      case err: Throwable => Transaction(fireError(err, _))
     }
     super.onStart()
   }

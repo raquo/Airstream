@@ -685,7 +685,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
           }(owner)
         )
         // #Note: Test that our dropping logic works does not break events scheduled after transaction boundary
-        new Transaction(_ => {
+        Transaction { _ =>
           DynamicSubscription.subscribeCallback(
             innerDynamicOwner,
             owner => fooSignal.foreach { foo =>
@@ -693,7 +693,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
               effects += Effect(s"new-trx-update-child-$key", foo.id + "-" + foo.version.toString)
             }(owner)
           )
-        })
+        }
         Bar(key)
       })
 

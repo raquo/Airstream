@@ -59,15 +59,14 @@ class Transaction(private[Transaction] var code: Transaction => Any) {
 
 object Transaction {
 
-  /** Create new transaction (typically used in internal observable code) */
-  def apply(code: Transaction => Unit): Unit = new Transaction(code)
-
-  /** Create new transaction (typically used in end user code).
+  /** Create new transaction.
     *
-    * Warning: It is rare that you need to manually create transactions.
+    * Typically used in internal observable code.
+    *
+    * Warning: It is rare that end users need to manually create transactions.
     * Example of legitimate use case: [[https://github.com/raquo/Airstream/#var-transaction-delay Var transaction delay]]
     */
-  def apply(code: => Unit): Unit = new Transaction(_ => code)
+  def apply(code: Transaction => Unit): Unit = new Transaction(code)
 
   /** This object holds a queue of callbacks that should be executed
     * when all observables finish starting. This lets `signal.changes`
@@ -158,7 +157,7 @@ object Transaction {
         //println("- no pending callbacks")
         if (postStartTransactions.length > 0) {
           //println(s"> CREATE ALT RESOLVE TRX. Num trx-s = ${postStartTransactions.length}")
-          Transaction {
+          Transaction { _ =>
             while (postStartTransactions.length > 0) {
               pendingTransactions.add(postStartTransactions.shift())
             }

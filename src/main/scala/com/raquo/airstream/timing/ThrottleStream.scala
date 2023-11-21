@@ -53,7 +53,7 @@ class ThrottleStream[A](
       maybeFirstTimeoutHandle = js.timers.setTimeout(0) {
         maybeFirstTimeoutHandle = js.undefined
         //println(s"> init trx from leading ThrottleEventStream.onTry($nextValue)")
-        new Transaction(fireTry(nextValue, _))
+        Transaction(fireTry(nextValue, _))
       }
 
     } else {
@@ -62,7 +62,7 @@ class ThrottleStream[A](
       maybeLastTimeoutHandle = js.timers.setTimeout(remainingMs.toDouble) {
         lastEmittedEventMs = js.Date.now() // @TODO Should this fire now, or inside the transaction below?
         //println(s"> init trx from ThrottleEventStream.onTry($nextValue)")
-        new Transaction(fireTry(nextValue, _))
+        Transaction(fireTry(nextValue, _))
       }
     }
   }

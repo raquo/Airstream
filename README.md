@@ -609,7 +609,7 @@ println(s"After set: ${myVar.now()}")
 myVar.update(_ + 1)
 println(s"After update: ${myVar.now()}")
 
-Transaction {
+Transaction { _ =>
   println(s"After trx: ${myVar.now()}")
 }
 

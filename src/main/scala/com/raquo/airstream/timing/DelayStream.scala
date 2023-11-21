@@ -22,7 +22,7 @@ class DelayStream[A](
     timerHandle = js.timers.setTimeout(delayMs.toDouble) {
       //println(s"> init trx from DelayEventStream.onNext($nextValue)")
       timerHandles.splice(timerHandles.indexOf(timerHandle), deleteCount = 1) // Remove handle
-      new Transaction(fireValue(nextValue, _))
+      Transaction(fireValue(nextValue, _))
       ()
     }
     timerHandles.push(timerHandle)
@@ -32,7 +32,7 @@ class DelayStream[A](
     var timerHandle: SetTimeoutHandle = null
     timerHandle = js.timers.setTimeout(delayMs.toDouble) {
       timerHandles.splice(timerHandles.indexOf(timerHandle), deleteCount = 1) // Remove handle
-      new Transaction(fireError(nextError, _))
+      Transaction(fireError(nextError, _))
       ()
     }
     timerHandles.push(timerHandle)

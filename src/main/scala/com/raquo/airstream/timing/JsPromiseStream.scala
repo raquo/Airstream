@@ -33,7 +33,7 @@ class JsPromiseStream[A](promise: js.Promise[A], emitOnce: Boolean) extends Writ
         (nextValue: A) => {
           isPending = false
           //println(s"> init trx from FutureEventStream.init($nextValue)")
-          new Transaction(fireValue(nextValue, _))
+          Transaction(fireValue(nextValue, _))
           (): Unit | js.Thenable[Unit]
         },
         js.defined { (rawException: Any) => {
@@ -43,7 +43,7 @@ class JsPromiseStream[A](promise: js.Promise[A], emitOnce: Boolean) extends Writ
             case _ => js.JavaScriptException(rawException)
           }
           //println(s"> init trx from JsPromiseEventStream.init($nextError)")
-          new Transaction(fireError(nextError, _))
+          Transaction(fireError(nextError, _))
           (): Unit | js.Thenable[Unit]
         }}
       )

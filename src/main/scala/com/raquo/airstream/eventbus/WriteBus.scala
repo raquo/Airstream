@@ -96,7 +96,7 @@ object WriteBus {
     if (hasDuplicateTupleKeys(values.map(_.tuple))) {
       throw new Exception("Unable to {EventBus,WriteBus}.emit: the provided list of event buses has duplicates. You can't make an observable emit more than one event per transaction.")
     }
-    new Transaction(trx => values.foreach(emitValue(_, trx)))
+    Transaction(trx => values.foreach(emitValue(_, trx)))
   }
 
   /** Emit events into several WriteBus-es at once (in the same transaction)
@@ -107,7 +107,7 @@ object WriteBus {
     if (hasDuplicateTupleKeys(values.map(_.tuple))) {
       throw new Exception("Unable to {EventBus,WriteBus}.emitTry: the provided list of event buses has duplicates. You can't make an observable emit more than one event per transaction.")
     }
-    new Transaction(trx => values.foreach(emitTryValue(_, trx)))
+    Transaction(trx => values.foreach(emitTryValue(_, trx)))
   }
 
   @inline private def emitValue[A](tuple: BusTuple[A], transaction: Transaction): Unit = {

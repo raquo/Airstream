@@ -77,9 +77,9 @@ class TransactionSpec extends UnitSpec {
 
       bus.events.foreach { num =>
         if (num % 2 == 0) {
-          new Transaction(_ => {
+          Transaction { _ =>
             throw new Exception("Random error in transaction")
-          })
+          }
         } else {
           log.update(_ :+ num)
         }

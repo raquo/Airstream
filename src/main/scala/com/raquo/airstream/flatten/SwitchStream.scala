@@ -43,10 +43,10 @@ class SwitchStream[I, O](
   private[this] val internalEventObserver: InternalObserver[O] = InternalObserver[O](
     onNext = (nextEvent, _) => {
       //println(s"> init trx from SwitchEventStream.onValue(${nextEvent})")
-      new Transaction(fireValue(nextEvent, _))
+      Transaction(fireValue(nextEvent, _))
     },
     onError = (nextError, _) => {
-      new Transaction(fireError(nextError, _))
+      Transaction(fireError(nextError, _))
     }
   )
 
@@ -113,7 +113,7 @@ class SwitchStream[I, O](
   private def switchToNextError(nextError: Throwable, transaction: Option[Transaction]): Unit = {
     removeInternalObserverFromCurrentEventStream()
     maybeCurrentEventStreamTry = Failure(nextError)
-    transaction.fold[Unit](new Transaction(fireError(nextError, _)))(fireError(nextError, _)) // #Note[onStart,trx,loop]
+    transaction.fold[Unit](Transaction(fireError(nextError, _)))(fireError(nextError, _)) // #Note[onStart,trx,loop]
   }
 
   private def removeInternalObserverFromCurrentEventStream(): Unit = {
