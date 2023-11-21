@@ -91,8 +91,6 @@ object Transaction {
 
     private[Transaction] val postStartTransactions: JsArray[Transaction] = JsArray()
 
-    private[Transaction] var isResolving = false
-
     // #nc just add a default value to `when` param. Keeping this method for binary compat for now.
     def shared[A](code: => A): A = {
       shared(code, when = true)
@@ -172,7 +170,6 @@ object Transaction {
           // #TODO[Integrity] What if calling callback(trx) calls onStart.add?
           //  Is it ok to put it into the same list, or should it go into a new list,
           //  to be executed in a separate transaction?
-          isResolving = true
           while (pendingCallbacks.length > 0) {
             val callback = pendingCallbacks.shift()
             // println(s"// resolve callback ${callback.hashCode()}")
@@ -184,7 +181,6 @@ object Transaction {
                 AirstreamError.sendUnhandledError(err)
             }
           }
-          isResolving = false
           // println("// resolved any callbacks")
           // Any transactions created during the shared start
           // that weren't converted to callbacks, will now be
