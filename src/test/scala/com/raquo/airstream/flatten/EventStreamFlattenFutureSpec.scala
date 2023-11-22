@@ -37,7 +37,7 @@ class EventStreamFlattenFutureSpec extends AsyncUnitSpec {
     val promise5 = makePromise()
 
     val futureBus = new EventBus[Future[Int]]()
-    val stream = futureBus.events.flatMap(EventStream.fromFuture(_))
+    val stream = futureBus.events.flatMapSwitch(EventStream.fromFuture(_))
 
     stream.addObserver(obs)
 

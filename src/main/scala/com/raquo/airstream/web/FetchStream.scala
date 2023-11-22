@@ -99,8 +99,8 @@ class FetchBuilder[In, Out](
       maybeAbortStream,
       shouldAbortOnStop,
       emitOnce
-    ).flatMap { promise =>
-      EventStream.fromJsPromise(promise).flatMap(decodeResponse)
+    ).flatMapSwitch { promise =>
+      EventStream.fromJsPromise(promise).flatMapSwitch(decodeResponse)
     }
   }
 }

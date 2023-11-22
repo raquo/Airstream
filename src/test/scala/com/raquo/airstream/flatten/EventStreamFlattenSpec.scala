@@ -1,16 +1,16 @@
 package com.raquo.airstream.flatten
 
-import com.raquo.airstream.AsyncUnitSpec
+import com.raquo.airstream.{AsyncUnitSpec, Matchers}
 import com.raquo.airstream.core.{EventStream, Observer}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
-import com.raquo.airstream.flatten.FlattenStrategy.ConcurrentStreamStrategy
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.state.Var
 
+import scala.annotation.nowarn
 import scala.collection.mutable
 
-class EventStreamFlattenSpec extends AsyncUnitSpec {
+class EventStreamFlattenSpec extends AsyncUnitSpec with Matchers {
 
   private val done = assert(true)
 
@@ -25,7 +25,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
         .map { v =>
           EventStream.fromSeq(Seq(v * 3), emitOnce = true).setDisplayName(s"INT-FS-$v")
         }.setDisplayName("META")
-        .flatten.setDisplayName("FLAT")
+        .flattenSwitch.setDisplayName("FLAT")
 
     val effects = mutable.Buffer[Effect[_]]()
     val obs0 = Observer[Int](newValue => effects += Effect("obs0", newValue)).setDisplayName("obs0")
@@ -47,7 +47,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
           EventStream.fromValue(v * 3, emitOnce = true).setDisplayName(s"S-${v}")
         }
         .setDisplayName("MO")
-        .flatten.setDisplayName("FS")
+        .flattenSwitch.setDisplayName("FS")
 
     val effects = mutable.Buffer[Effect[_]]()
     val obs = Observer[Int](v => effects += Effect("obs0", v)).setDisplayName("obs")
@@ -77,9 +77,9 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
         .map { v =>
           EventStream.fromSeq(Seq(v * 3), emitOnce = true).map { vv =>
             EventStream.fromSeq(Seq(vv * 7), emitOnce = true)
-          }.flatten
+          }.flattenSwitch
         }
-        .flatten
+        .flattenSwitch
 
     val effects = mutable.Buffer[Effect[_]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
@@ -114,7 +114,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
         .map { v =>
           delayedStream(range2, interval = 6, _ * v)
         }
-        .flatten
+        .flattenSwitch
 
     val effects = mutable.Buffer[Effect[_]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
@@ -146,9 +146,9 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
         .map { v =>
           delayedStream(range2, interval = 6, _ * v).map { vv =>
             EventStream.fromFuture(delay(1)(vv * 7))
-          }.flatten
+          }.flattenSwitch
         }
-        .flatten
+        .flattenSwitch
 
     val effects = mutable.Buffer[Effect[_]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
@@ -161,7 +161,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     }
   }
 
-  it("sync flatMap") {
+  it("sync flatMapSwitch") {
 
     implicit val owner: Owner = new TestableOwner
 
@@ -169,7 +169,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     val stream = EventStream.fromSeq(range, emitOnce = true)
     val flatStream =
       stream
-        .flatMap { v =>
+        .flatMapSwitch { v =>
           EventStream.fromSeq(Seq(v * 3), emitOnce = true)
         }
 
@@ -180,7 +180,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     effects.toList shouldBe range.map(i => Effect("obs0", i * 3))
   }
 
-  it("sync three-level flatMap") {
+  it("sync three-level flatMapSwitch") {
 
     implicit val owner: Owner = new TestableOwner
 
@@ -188,8 +188,8 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     val stream = EventStream.fromSeq(range, emitOnce = true)
     val flatStream =
       stream
-        .flatMap { v =>
-          EventStream.fromSeq(Seq(v * 3), emitOnce = true).flatMap { vv =>
+        .flatMapSwitch { v =>
+          EventStream.fromSeq(Seq(v * 3), emitOnce = true).flatMapSwitch { vv =>
             EventStream.fromSeq(Seq(vv * 7), emitOnce = true)
           }
         }
@@ -205,7 +205,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     * emitted by the inner delayedStream are processed. Just because the interval is set to 6ms
     * does not mean that this is what it will be. It's merely the lower bound.
     */
-  it("from-future flatMap") {
+  it("from-future flatMapSwitch") {
     implicit val owner: Owner = new TestableOwner
 
     val range1 = 1 to 3
@@ -214,7 +214,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
 
     val flatStream =
       stream
-        .flatMap { v =>
+        .flatMapSwitch { v =>
           delayedStream(range2, interval = 6, _ * v)
         }
 
@@ -236,7 +236,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     * emitted by the inner delayedStream are processed. Just because the interval is set to 6ms
     * does not mean that this is what it will be. It's merely the lower bound.
     */
-  it("three-level from-future flatMap") {
+  it("three-level from-future flatMapSwitch") {
     implicit val owner: Owner = new TestableOwner
 
     val range1 = 1 to 3
@@ -245,8 +245,8 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
 
     val flatStream =
       stream
-        .flatMap { v =>
-          delayedStream(range2, interval = 6, _ * v).flatMap { vv =>
+        .flatMapSwitch { v =>
+          delayedStream(range2, interval = 6, _ * v).flatMapSwitch { vv =>
             EventStream.fromFuture(delay(1)(vv * 7))
           }
         }
@@ -277,7 +277,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
 
     val mergeBus = new EventBus[EventStream[Int]]
 
-    val mergeStream = mergeBus.events.flatten(ConcurrentStreamStrategy).map(Calculation.log("merge", calculations))
+    val mergeStream = mergeBus.events.flattenMerge.map(Calculation.log("merge", calculations))
 
     val sub1 = mergeStream.addObserver(Observer.empty)
 
@@ -396,7 +396,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     val mergeSignal = streamVar
       .signal
       .distinct
-      .flatten(ConcurrentStreamStrategy)
+      .flattenMerge
       .map(Calculation.log("merge", calculations))
 
     val sub1 = mergeSignal.addObserver(Observer.empty)
@@ -501,4 +501,26 @@ class EventStreamFlattenSpec extends AsyncUnitSpec {
     done
   }
 
+  it("legacy flatMap and flatten methods") {
+
+    val bus = new EventBus[Int]
+
+    assertTypeError("bus.events.flatMap(_ => EventStream.fromValue(1))")
+
+    @nowarn("cat=deprecation")
+    def flatMapCompileCheck() = {
+      import com.raquo.airstream.flatten.FlattenStrategy.allowFlatMap
+      bus.events.flatMap(_ => EventStream.fromValue(1))
+    }
+
+    assertTypeError("bus.events.map(_ => EventStream.fromValue(1)).flatten")
+
+    @nowarn("cat=deprecation")
+    def flattenCompileCheck() = {
+      import com.raquo.airstream.flatten.FlattenStrategy.allowFlatten
+      bus.events.map(_ => EventStream.fromValue(1)).flatten
+    }
+
+    done
+  }
 }

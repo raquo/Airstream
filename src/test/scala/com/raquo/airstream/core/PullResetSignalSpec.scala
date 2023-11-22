@@ -1045,7 +1045,7 @@ class PullResetSignalSpec extends UnitSpec {
         case _ => smallSignal
       }
       .setDisplayName("MetaSignal")
-      .flatten
+      .flattenSwitch
       .setDisplayName("FlatSignal")
       .map(Calculation.log("flat", calculations))
       .setDisplayName("FlatSignal--LOG")
@@ -1136,7 +1136,7 @@ class PullResetSignalSpec extends UnitSpec {
       EventStream.fromSeq("big-1" :: "big-2" :: Nil, emitOnce = true).setDisplayName("BigSeqStream")
     ).setDisplayName("BigMergeStream").startWith("big-0").setDisplayName("BigSignal")
 
-    val flatSignal = outerBus.events.startWith(0).setDisplayName("OuterBus.startWith").flatMap {
+    val flatSignal = outerBus.events.startWith(0).setDisplayName("OuterBus.startWith").flatMapSwitch {
       case i if i >= 10 => bigSignal
       case _ => smallSignal
     }.setDisplayName("FlatSignal").map(Calculation.log("flat", calculations)).setDisplayName("FlatSignal--LOG")

@@ -26,7 +26,7 @@ class SwitchSignalSpec extends UnitSpec {
 
     val metaVar = Var(sourceSignals(0))
 
-    val $latestNumber = metaVar.signal.flatten // SwitchSignalStrategy is the default (provided implicitly)
+    val $latestNumber = metaVar.signal.flattenSwitch // SwitchSignalStrategy is the default (provided implicitly)
 
     val flattenObserver = Observer[Int](effects += Effect("flattened-obs", _))
 
@@ -228,7 +228,7 @@ class SwitchSignalSpec extends UnitSpec {
     val flatSignal = outerBus.events.setDisplayName("outerBus.events").startWith(0).setDisplayName("outerBus.signal").map {
       case i if i >= 10 => bigSignal
       case _ => smallSignal
-    }.setDisplayName("outerBus.meta").flatten.setDisplayName("flatSignal").map(Calculation.log("flat", calculations))
+    }.setDisplayName("outerBus.meta").flattenSwitch.setDisplayName("flatSignal").map(Calculation.log("flat", calculations))
 
     // --
 
@@ -374,7 +374,7 @@ class SwitchSignalSpec extends UnitSpec {
 
     val brokenSignal =
       intSignal
-        .flatMap { num =>
+        .flatMapSwitch { num =>
           if (num < 1000) {
             smallI += 1
             intSignal.map("small: " + _).setDisplayName(s"small-$smallI") //.debugLogLifecycle()

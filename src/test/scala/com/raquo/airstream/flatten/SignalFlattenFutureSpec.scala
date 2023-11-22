@@ -36,7 +36,7 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
       val futureBus = new EventBus[Future[Int]]()
       val signal = futureBus.events
         .startWith(promise0.future)
-        .flatMap(Signal.fromFuture(_, initial = -200))
+        .flatMapSwitch(Signal.fromFuture(_, initial = -200))
 
       signal.addObserver(obs)
 
@@ -93,7 +93,7 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
 
       val futureBus = new EventBus[Future[Int]]()
 
-      val signal = futureBus.events.startWith(promise0.future).flatMap(Signal.fromFuture(_, initial = -200))
+      val signal = futureBus.events.startWith(promise0.future).flatMapSwitch(Signal.fromFuture(_, initial = -200))
       promise0.success(-100)
 
       signal.addObserver(obs)
@@ -148,7 +148,7 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
       promise0.success(-100)
 
       delay {
-        val signal = futureBus.events.startWith(promise0.future).flatMap(Signal.fromFuture(_, initial = -200))
+        val signal = futureBus.events.startWith(promise0.future).flatMapSwitch(Signal.fromFuture(_, initial = -200))
         signal.addObserver(obs)
 
         effects shouldBe mutable.Buffer(Effect("obs", -200))

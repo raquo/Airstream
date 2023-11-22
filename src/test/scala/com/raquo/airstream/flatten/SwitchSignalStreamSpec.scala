@@ -27,7 +27,7 @@ class SwitchSignalStreamSpec extends UnitSpec {
 
     val metaBus = new EventBus[Signal[Int]]
 
-    val $latestNumber = metaBus.events.flatten // SwitchSignalStreamStrategy is the default (provided implicitly)
+    val $latestNumber = metaBus.events.flattenSwitch // SwitchSignalStreamStrategy is the default (provided implicitly)
 
     val flattenObserver = Observer[Int](effects += Effect("flattened-obs", _))
 
@@ -213,7 +213,7 @@ class SwitchSignalStreamSpec extends UnitSpec {
 
     val metaBus = new EventBus[Signal[Int]]
 
-    val $latestNumber = metaBus.events.flatten // SwitchSignalStreamStrategy is the default (provided implicitly)
+    val $latestNumber = metaBus.events.flattenSwitch // SwitchSignalStreamStrategy is the default (provided implicitly)
 
     val flattenObserver = Observer[Int](effects += Effect("flattened-obs", _))
 

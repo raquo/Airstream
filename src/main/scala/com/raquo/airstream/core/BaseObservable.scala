@@ -1,7 +1,7 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.debug.Debugger
-import com.raquo.airstream.flatten.FlattenStrategy
+import com.raquo.airstream.flatten.{AllowFlatMap, FlattenStrategy, MergingStrategy, SwitchingStrategy}
 import com.raquo.airstream.ownership.{Owner, Subscription}
 import com.raquo.ew.JsArray
 
@@ -53,11 +53,44 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
 
   def mapToUnit: Self[Unit] = map(_ => ())
 
-  /** @param compose Note: guarded against exceptions */
-  @inline def flatMap[B, Inner[_], Output[+_] <: Observable[_]](compose: A => Inner[B])(
-    implicit strategy: FlattenStrategy[Self, Inner, Output]
+  /** #WARNING: DO NOT USE THIS METHOD.
+    * See https://github.com/raquo/Airstream/#flattening-observables
+    */
+  @inline def flatMap[B, Inner[_], Output[+_] <: Observable[_]](
+    project: A => Inner[B]
+  )(
+    implicit strategy: SwitchingStrategy[Self, Inner, Output],
+    allowFlatMap: AllowFlatMap
   ): Output[B] = {
-    strategy.flatten(map(compose))
+    strategy.flatten(map(project))
+  }
+
+  /** Alias to flatMapSwitch(_ => s) */
+  @inline def flatMapTo[B, Inner[_], Output[+_] <: Observable[_]](s: Inner[B])(
+    implicit strategy: SwitchingStrategy[Self, Inner, Output]
+  ): Output[B] = {
+    strategy.flatten(map(_ => s))
+  }
+
+  /** @param project Note: guarded against exceptions */
+  @inline def flatMapSwitch[B, Inner[_], Output[+_] <: Observable[_]](project: A => Inner[B])(
+    implicit strategy: SwitchingStrategy[Self, Inner, Output]
+  ): Output[B] = {
+    strategy.flatten(map(project))
+  }
+
+  /** @param project Note: guarded against exceptions */
+  @inline def flatMapMerge[B, Inner[_], Output[+_] <: Observable[_]](project: A => Inner[B])(
+    implicit strategy: MergingStrategy[Self, Inner, Output]
+  ): Output[B] = {
+    strategy.flatten(map(project))
+  }
+
+  /** @param project Note: guarded against exceptions */
+  @inline def flatMapCustom[B, Inner[_], Output[+_] <: Observable[_]](project: A => Inner[B])(
+    strategy: FlattenStrategy[Self, Inner, Output]
+  ): Output[B] = {
+    strategy.flatten(map(project))
   }
 
   /** Distinct events (but keep all errors) by == (equals) comparison */

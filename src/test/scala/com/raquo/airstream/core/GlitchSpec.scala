@@ -426,7 +426,7 @@ class GlitchSpec extends UnitSpec {
     val stateVar = Var(State(Nil))
 
     var n = 0
-    val actions: EventStream[Action] = clickBus.events.flatMap { _ =>
+    val actions: EventStream[Action] = clickBus.events.flatMapSwitch { _ =>
       n += 2
       EventStream.merge(
         EventStream.fromValue(n - 2, emitOnce = true),

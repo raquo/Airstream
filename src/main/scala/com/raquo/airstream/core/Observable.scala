@@ -1,8 +1,8 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.debug.DebuggableObservable
-import com.raquo.airstream.flatten.FlattenStrategy
 import com.raquo.airstream.flatten.FlattenStrategy._
+import com.raquo.airstream.flatten.{AllowFlatten, FlattenStrategy, MergingStrategy, SwitchingStrategy}
 
 // @TODO[Scala3] Put this trait together with BaseObservable in the same file, and make BaseObservable sealed.
 
@@ -23,20 +23,41 @@ object Observable extends ObservableLowPriorityImplicits {
   ) extends AnyVal {
 
     @inline def flatten[Output[+_] <: Observable[_]](
-      implicit strategy: FlattenStrategy[Outer, Inner, Output]
+      implicit strategy: SwitchingStrategy[Outer, Inner, Output],
+      allowFlatMap: AllowFlatten
+    ): Output[A] = {
+      strategy.flatten(parent)
+    }
+
+    @inline def flattenSwitch[Output[+_] <: Observable[_]](
+      implicit strategy: SwitchingStrategy[Outer, Inner, Output]
+    ): Output[A] = {
+      strategy.flatten(parent)
+    }
+
+    @inline def flattenMerge[Output[+_] <: Observable[_]](
+      implicit strategy: MergingStrategy[Outer, Inner, Output]
+    ): Output[A] = {
+      strategy.flatten(parent)
+    }
+
+    @inline def flattenCustom[Output[+_] <: Observable[_]](
+      strategy: FlattenStrategy[Outer, Inner, Output]
     ): Output[A] = {
       strategy.flatten(parent)
     }
   }
 
-  implicit val switchStreamStrategy: FlattenStrategy[Observable, EventStream, EventStream] = SwitchStreamStrategy
+  implicit val switchStreamStrategy: SwitchingStrategy[Observable, EventStream, EventStream] = SwitchStreamStrategy
 
-  implicit val switchSignalStreamStrategy: FlattenStrategy[EventStream, Signal, EventStream] = SwitchSignalStreamStrategy
+  implicit val switchSignalStreamStrategy: SwitchingStrategy[EventStream, Signal, EventStream] = SwitchSignalStreamStrategy
 
-  implicit val switchSignalStrategy: FlattenStrategy[Signal, Signal, Signal] = SwitchSignalStrategy
+  implicit val switchSignalStrategy: SwitchingStrategy[Signal, Signal, Signal] = SwitchSignalStrategy
+
+  implicit val mergeStreamsStrategy: MergingStrategy[Observable, EventStream, EventStream] = ConcurrentStreamStrategy
 }
 
 trait ObservableLowPriorityImplicits {
 
-  implicit val switchSignalObservableStrategy: FlattenStrategy[Observable, Signal, Observable] = SwitchSignalObservableStrategy
+  implicit val switchSignalObservableStrategy: SwitchingStrategy[Observable, Signal, Observable] = SwitchSignalObservableStrategy
 }

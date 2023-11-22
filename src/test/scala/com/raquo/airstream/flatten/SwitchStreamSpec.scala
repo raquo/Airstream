@@ -27,7 +27,7 @@ class SwitchStreamSpec extends UnitSpec {
       case (bus, index) => bus.events.map(Calculation.log(s"source-$index", calculations))
     }
 
-    val $latestNumber = metaBus.events.flatten // SwitchStreamStrategy is the default (provided implicitly)
+    val $latestNumber = metaBus.events.flattenSwitch // SwitchStreamStrategy is the default (provided implicitly)
 
     val flattenObserver = Observer[Int](effects += Effect("flattened-obs", _))
 
@@ -156,7 +156,7 @@ class SwitchStreamSpec extends UnitSpec {
 
     val metaVar = Var[EventStream[Int]](sourceStreams(0))
 
-    val $latestNumber = metaVar.signal.flatten(SwitchStreamStrategy)
+    val $latestNumber = metaVar.signal.flattenSwitch(SwitchStreamStrategy)
 
     val flattenObserver = Observer[Int](effects += Effect("flattened-obs", _))
 
@@ -313,7 +313,7 @@ class SwitchStreamSpec extends UnitSpec {
       EventStream.fromSeq("big-1" :: "big-2" :: Nil, emitOnce = true)
     )
 
-    val flatStream = outerBus.events.flatMap {
+    val flatStream = outerBus.events.flatMapSwitch {
       case i if i >= 10 => bigStream
       case _ => smallStream
     }.map(Calculation.log("flat", calculations))
@@ -457,7 +457,7 @@ class SwitchStreamSpec extends UnitSpec {
       case i if i >= 10 => bigStream
       case _ => smallStream
     }.setDisplayName("outer-meta")
-      .flatten.setDisplayName("outer-flat")
+      .flattenSwitch.setDisplayName("outer-flat")
       .map(Calculation.log("flat", calculations)).setDisplayName("outer-flat-map")
 
     // --
@@ -598,7 +598,7 @@ class SwitchStreamSpec extends UnitSpec {
 
     val brokenSignal =
       intStream
-        .flatMap { num =>
+        .flatMapSwitch { num =>
           if (num < 1000) {
             smallI += 1
             intStream.map("small: " + _).setDisplayName(s"small-$smallI") //.debugLogLifecycle()
