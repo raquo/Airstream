@@ -53,7 +53,7 @@ class EventStreamSpec extends UnitSpec {
     effects.clear()
   }
 
-  it("EventStream.fromFlowPublisher") {
+  it("EventStream.fromPublisher") {
 
     class RangePublisher(r: Range) extends Flow.Publisher[Int] {
       def subscribe(subscriber: Flow.Subscriber[_ >: Int]): Unit = {
@@ -68,7 +68,7 @@ class EventStreamSpec extends UnitSpec {
     implicit val owner: Owner = new TestableOwner
 
     val range = 1 to 3
-    val stream = EventStream.fromFlowPublisher(new RangePublisher(range))
+    val stream = EventStream.fromPublisher(new RangePublisher(range))
 
     val effects = mutable.Buffer[Effect[_]]()
     val sub1 = stream.foreach(newValue => effects += Effect("obs1", newValue))

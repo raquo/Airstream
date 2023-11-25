@@ -389,7 +389,7 @@ object EventStream {
     new JsPromiseStream[A](promise, emitOnce)
   }
 
-  def fromFlowPublisher[A](publisher: Flow.Publisher[A], emitOnce: Boolean = false): EventStream[A] = {
+  def fromPublisher[A](publisher: Flow.Publisher[A], emitOnce: Boolean = false): EventStream[A] = {
     var subscription: Flow.Subscription = null
     fromCustomSource[A](
       shouldStart = startIndex => if (emitOnce) startIndex == 1 else true,
