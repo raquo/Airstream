@@ -98,13 +98,13 @@ class ScanLeftSignalSpec extends UnitSpec {
 
     val signalObserver = Observer[String](effects += Effect("signal-obs", _))
 
-    val $var = Var(0)
+    val _var = Var(0)
 
-    val signal = $var.signal
+    val signal = _var.signal
       .scanLeft(makeInitial = initial => s"numbers: init=${initial}"){ (acc, nextValue) => acc + " " + nextValue.toString }
       .map(Calculation.log("signal", calculations))
 
-    $var.writer.onNext(1)
+    _var.writer.onNext(1)
 
     calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer()
@@ -125,7 +125,7 @@ class ScanLeftSignalSpec extends UnitSpec {
 
     // --
 
-    $var.writer.onNext(2)
+    _var.writer.onNext(2)
 
     calculations shouldBe mutable.Buffer(
       Calculation("signal", "numbers: init=1 2")
@@ -141,7 +141,7 @@ class ScanLeftSignalSpec extends UnitSpec {
 
     sub1.kill()
 
-    $var.writer.onNext(3)
+    _var.writer.onNext(3)
 
     val sub2 = signal.addObserver(signalObserver)
 
@@ -158,7 +158,7 @@ class ScanLeftSignalSpec extends UnitSpec {
 
     // --
 
-    $var.writer.onNext(4)
+    _var.writer.onNext(4)
 
     calculations shouldBe mutable.Buffer(
       Calculation("signal", "numbers: init=1 2 3 4")
@@ -188,7 +188,7 @@ class ScanLeftSignalSpec extends UnitSpec {
 
     sub3.kill()
 
-    $var.writer.onNext(4)
+    _var.writer.onNext(4)
 
     signal.addObserver(signalObserver)
 

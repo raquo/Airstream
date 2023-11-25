@@ -133,8 +133,8 @@ class DistinctSpec extends UnitSpec {
       case Failure(err) => errorEffects += Effect("obs-err", err.getMessage)
     }
 
-    val $var = Var(0)
-    val signal = $var.signal
+    val _var = Var(0)
+    val signal = _var.signal
       .distinct
       .map(Calculation.log("signal", calculations))
 
@@ -154,7 +154,7 @@ class DistinctSpec extends UnitSpec {
 
     // --
 
-    $var.writer.onNext(1)
+    _var.writer.onNext(1)
 
     calculations shouldBe mutable.Buffer(
       Calculation("signal", 1)
@@ -168,14 +168,14 @@ class DistinctSpec extends UnitSpec {
 
     // --
 
-    $var.writer.onNext(1)
+    _var.writer.onNext(1)
 
     calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer()
 
     // --
 
-    $var.writer.onNext(2)
+    _var.writer.onNext(2)
 
     calculations shouldBe mutable.Buffer(
       Calculation("signal", 2)
@@ -204,7 +204,7 @@ class DistinctSpec extends UnitSpec {
 
     sub2.kill()
 
-    $var.writer.onNext(2)
+    _var.writer.onNext(2)
 
     calculations.shouldBeEmpty
     effects.shouldBeEmpty
@@ -224,7 +224,7 @@ class DistinctSpec extends UnitSpec {
     
     sub3.kill()
 
-    $var.writer.onNext(3)
+    _var.writer.onNext(3)
 
     calculations.shouldBeEmpty
     effects.shouldBeEmpty
@@ -244,14 +244,14 @@ class DistinctSpec extends UnitSpec {
 
     // --
 
-    $var.writer.onNext(3)
+    _var.writer.onNext(3)
 
     calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer()
     
     // --
 
-    $var.writer.onNext(4)
+    _var.writer.onNext(4)
 
     calculations shouldBe mutable.Buffer(
       Calculation("signal", 4)
@@ -267,7 +267,7 @@ class DistinctSpec extends UnitSpec {
 
     errorEffects shouldBe mutable.Buffer() // nothing failed yet
 
-    $var.writer.onError(err1)
+    _var.writer.onError(err1)
 
     calculations shouldBe mutable.Buffer()
 
@@ -281,7 +281,7 @@ class DistinctSpec extends UnitSpec {
 
     // -- errors are not distincted by the `distinct` method
 
-    $var.writer.onError(err1)
+    _var.writer.onError(err1)
 
     errorEffects shouldBe mutable.Buffer(
       Effect("obs-err", "err1")

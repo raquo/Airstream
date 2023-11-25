@@ -14,20 +14,20 @@ class TakeStreamSpec extends UnitSpec {
 
     val effects = mutable.Buffer[Effect[Int]]()
 
-    val $noreset = EventStream
+    val noresetS = EventStream
       .fromSeq(List(1, 2, 3, 4))
       .take(numEvents = 2, resetOnStop = false)
       .map(Effect.log("noreset", effects))
 
-    val $reset = EventStream
+    val resetS = EventStream
       .fromSeq(List(1, 2, 3, 4))
       .take(numEvents = 2, resetOnStop = true)
       .map(Effect.log("reset", effects))
 
     // --
 
-    val sub1 = $noreset.addObserver(Observer.empty)
-    val sub2 = $reset.addObserver(Observer.empty)
+    val sub1 = noresetS.addObserver(Observer.empty)
+    val sub2 = resetS.addObserver(Observer.empty)
 
     effects.toList shouldBe List(
       Effect("noreset", 1),
@@ -46,8 +46,8 @@ class TakeStreamSpec extends UnitSpec {
 
     // --
 
-    val sub3 = $noreset.addObserver(Observer.empty)
-    val sub4 = $reset.addObserver(Observer.empty)
+    val sub3 = noresetS.addObserver(Observer.empty)
+    val sub4 = resetS.addObserver(Observer.empty)
 
     effects.toList shouldBe List(
       Effect("reset", 1),
@@ -63,20 +63,20 @@ class TakeStreamSpec extends UnitSpec {
 
     val effects = mutable.Buffer[Effect[Int]]()
 
-    val $noreset = EventStream
+    val noresetS = EventStream
       .fromSeq(List(1, 2, 3, 4))
       .take(numEvents = 0, resetOnStop = false)
       .map(Effect.log("noreset", effects))
 
-    val $reset = EventStream
+    val resetS = EventStream
       .fromSeq(List(1, 2, 3, 4))
       .take(numEvents = 0, resetOnStop = true)
       .map(Effect.log("reset", effects))
 
     // --
 
-    val sub1 = $noreset.addObserver(Observer.empty)
-    val sub2 = $reset.addObserver(Observer.empty)
+    val sub1 = noresetS.addObserver(Observer.empty)
+    val sub2 = resetS.addObserver(Observer.empty)
 
     effects.toList shouldBe Nil
 
@@ -89,8 +89,8 @@ class TakeStreamSpec extends UnitSpec {
 
     // --
 
-    val sub3 = $noreset.addObserver(Observer.empty)
-    val sub4 = $reset.addObserver(Observer.empty)
+    val sub3 = noresetS.addObserver(Observer.empty)
+    val sub4 = resetS.addObserver(Observer.empty)
 
     effects.toList shouldBe Nil
     effects.clear()
@@ -103,20 +103,20 @@ class TakeStreamSpec extends UnitSpec {
 
     val effects = mutable.Buffer[Effect[Int]]()
 
-    val $noreset = EventStream
+    val noresetS = EventStream
       .fromSeq(List(1, 2, 3, 4, 0, 5))
       .takeWhile(_ <= 3, resetOnStop = false)
       .map(Effect.log("noreset", effects))
 
-    val $reset = EventStream
+    val resetS = EventStream
       .fromSeq(List(1, 2, 3, 4, 0, 5))
       .takeWhile(_ <= 3, resetOnStop = true)
       .map(Effect.log("reset", effects))
 
     // --
 
-    val sub1 = $noreset.addObserver(Observer.empty)
-    val sub2 = $reset.addObserver(Observer.empty)
+    val sub1 = noresetS.addObserver(Observer.empty)
+    val sub2 = resetS.addObserver(Observer.empty)
 
     effects.toList shouldBe List(
       Effect("noreset", 1),
@@ -137,8 +137,8 @@ class TakeStreamSpec extends UnitSpec {
 
     // --
 
-    val sub3 = $noreset.addObserver(Observer.empty)
-    val sub4 = $reset.addObserver(Observer.empty)
+    val sub3 = noresetS.addObserver(Observer.empty)
+    val sub4 = resetS.addObserver(Observer.empty)
 
     effects.toList shouldBe List(
       Effect("reset", 1),
@@ -155,20 +155,20 @@ class TakeStreamSpec extends UnitSpec {
 
     val effects = mutable.Buffer[Effect[Int]]()
 
-    val $noreset = EventStream
+    val noresetS = EventStream
       .fromSeq(List(1, 2, 3, 4, 0, 5))
       .takeUntil(_ >= 4, resetOnStop = false)
       .map(Effect.log("noreset", effects))
 
-    val $reset = EventStream
+    val resetS = EventStream
       .fromSeq(List(1, 2, 3, 4, 0, 5))
       .takeUntil(_ >= 4, resetOnStop = true)
       .map(Effect.log("reset", effects))
 
     // --
 
-    val sub1 = $noreset.addObserver(Observer.empty)
-    val sub2 = $reset.addObserver(Observer.empty)
+    val sub1 = noresetS.addObserver(Observer.empty)
+    val sub2 = resetS.addObserver(Observer.empty)
 
     effects.toList shouldBe List(
       Effect("noreset", 1),
@@ -189,8 +189,8 @@ class TakeStreamSpec extends UnitSpec {
 
     // --
 
-    val sub3 = $noreset.addObserver(Observer.empty)
-    val sub4 = $reset.addObserver(Observer.empty)
+    val sub3 = noresetS.addObserver(Observer.empty)
+    val sub4 = resetS.addObserver(Observer.empty)
 
     effects.toList shouldBe List(
       Effect("reset", 1),

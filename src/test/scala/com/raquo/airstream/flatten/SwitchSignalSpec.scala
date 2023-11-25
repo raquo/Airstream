@@ -26,11 +26,11 @@ class SwitchSignalSpec extends UnitSpec {
 
     val metaVar = Var(sourceSignals(0))
 
-    val $latestNumber = metaVar.signal.flattenSwitch // SwitchSignalStrategy is the default (provided implicitly)
+    val latestNumberS = metaVar.signal.flattenSwitch // SwitchSignalStrategy is the default (provided implicitly)
 
     val flattenObserver = Observer[Int](effects += Effect("flattened-obs", _))
 
-    val flattenSignal = $latestNumber.map(Calculation.log("flattened", calculations))
+    val flattenSignal = latestNumberS.map(Calculation.log("flattened", calculations))
 
     calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer()

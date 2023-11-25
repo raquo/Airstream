@@ -14,20 +14,20 @@ class DropStreamSpec extends UnitSpec {
 
     val effects = mutable.Buffer[Effect[Int]]()
 
-    val $noreset = EventStream
+    val noresetS = EventStream
       .fromSeq(List(1, 2, 3, 4))
       .drop(numEvents = 2, resetOnStop = false)
       .map(Effect.log("noreset", effects))
 
-    val $reset = EventStream
+    val resetS = EventStream
       .fromSeq(List(1, 2, 3, 4))
       .drop(numEvents = 2, resetOnStop = true)
       .map(Effect.log("reset", effects))
 
     // --
 
-    val sub1 = $noreset.addObserver(Observer.empty)
-    val sub2 = $reset.addObserver(Observer.empty)
+    val sub1 = noresetS.addObserver(Observer.empty)
+    val sub2 = resetS.addObserver(Observer.empty)
 
     effects.toList shouldBe List(
       Effect("noreset", 3),
@@ -46,8 +46,8 @@ class DropStreamSpec extends UnitSpec {
 
     // --
 
-    val sub3 = $noreset.addObserver(Observer.empty)
-    val sub4 = $reset.addObserver(Observer.empty)
+    val sub3 = noresetS.addObserver(Observer.empty)
+    val sub4 = resetS.addObserver(Observer.empty)
 
     effects.toList shouldBe List(
       Effect("noreset", 1),
@@ -67,20 +67,20 @@ class DropStreamSpec extends UnitSpec {
 
     val effects = mutable.Buffer[Effect[Int]]()
 
-    val $noreset = EventStream
+    val noresetS = EventStream
       .fromSeq(List(1, 2, 3, 4))
       .drop(numEvents = 0, resetOnStop = false)
       .map(Effect.log("noreset", effects))
 
-    val $reset = EventStream
+    val resetS = EventStream
       .fromSeq(List(1, 2, 3, 4))
       .drop(numEvents = 0, resetOnStop = true)
       .map(Effect.log("reset", effects))
 
     // --
 
-    val sub1 = $noreset.addObserver(Observer.empty)
-    val sub2 = $reset.addObserver(Observer.empty)
+    val sub1 = noresetS.addObserver(Observer.empty)
+    val sub2 = resetS.addObserver(Observer.empty)
 
     effects.toList shouldBe List(
       Effect("noreset", 1),
@@ -103,8 +103,8 @@ class DropStreamSpec extends UnitSpec {
 
     // --
 
-    val sub3 = $noreset.addObserver(Observer.empty)
-    val sub4 = $reset.addObserver(Observer.empty)
+    val sub3 = noresetS.addObserver(Observer.empty)
+    val sub4 = resetS.addObserver(Observer.empty)
 
     effects.toList shouldBe List(
       Effect("noreset", 1),
@@ -126,20 +126,20 @@ class DropStreamSpec extends UnitSpec {
 
     val effects = mutable.Buffer[Effect[Int]]()
 
-    val $noreset = EventStream
+    val noresetS = EventStream
       .fromSeq(List(1, 2, 3, 4, 0, 5))
       .dropWhile(_ <= 3, resetOnStop = false)
       .map(Effect.log("noreset", effects))
 
-    val $reset = EventStream
+    val resetS = EventStream
       .fromSeq(List(1, 2, 3, 4, 0, 5))
       .dropWhile(_ <= 3, resetOnStop = true)
       .map(Effect.log("reset", effects))
 
     // --
 
-    val sub1 = $noreset.addObserver(Observer.empty)
-    val sub2 = $reset.addObserver(Observer.empty)
+    val sub1 = noresetS.addObserver(Observer.empty)
+    val sub2 = resetS.addObserver(Observer.empty)
 
     effects.toList shouldBe List(
       Effect("noreset", 4),
@@ -160,8 +160,8 @@ class DropStreamSpec extends UnitSpec {
 
     // --
 
-    val sub3 = $noreset.addObserver(Observer.empty)
-    val sub4 = $reset.addObserver(Observer.empty)
+    val sub3 = noresetS.addObserver(Observer.empty)
+    val sub4 = resetS.addObserver(Observer.empty)
 
     effects.toList shouldBe List(
       Effect("noreset", 1),
@@ -184,20 +184,20 @@ class DropStreamSpec extends UnitSpec {
 
     val effects = mutable.Buffer[Effect[Int]]()
 
-    val $noreset = EventStream
+    val noresetS = EventStream
       .fromSeq(List(1, 2, 3, 4, 0, 5))
       .dropUntil(_ >= 4, resetOnStop = false)
       .map(Effect.log("noreset", effects))
 
-    val $reset = EventStream
+    val resetS = EventStream
       .fromSeq(List(1, 2, 3, 4, 0, 5))
       .dropUntil(_ >= 4, resetOnStop = true)
       .map(Effect.log("reset", effects))
 
     // --
 
-    val sub1 = $noreset.addObserver(Observer.empty)
-    val sub2 = $reset.addObserver(Observer.empty)
+    val sub1 = noresetS.addObserver(Observer.empty)
+    val sub2 = resetS.addObserver(Observer.empty)
 
     effects.toList shouldBe List(
       Effect("noreset", 4),
@@ -218,8 +218,8 @@ class DropStreamSpec extends UnitSpec {
 
     // --
 
-    val sub3 = $noreset.addObserver(Observer.empty)
-    val sub4 = $reset.addObserver(Observer.empty)
+    val sub3 = noresetS.addObserver(Observer.empty)
+    val sub4 = resetS.addObserver(Observer.empty)
 
     effects.toList shouldBe List(
       Effect("noreset", 1),

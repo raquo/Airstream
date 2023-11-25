@@ -27,11 +27,11 @@ class SwitchStreamSpec extends UnitSpec {
       case (bus, index) => bus.events.map(Calculation.log(s"source-$index", calculations))
     }
 
-    val $latestNumber = metaBus.events.flattenSwitch // SwitchStreamStrategy is the default (provided implicitly)
+    val latestNumberS = metaBus.events.flattenSwitch // SwitchStreamStrategy is the default (provided implicitly)
 
     val flattenObserver = Observer[Int](effects += Effect("flattened-obs", _))
 
-    val flattenStream = $latestNumber
+    val flattenStream = latestNumberS
       .map(Calculation.log("flattened", calculations))
 
     val subFlatten = flattenStream.addObserver(flattenObserver)
@@ -156,11 +156,11 @@ class SwitchStreamSpec extends UnitSpec {
 
     val metaVar = Var[EventStream[Int]](sourceStreams(0))
 
-    val $latestNumber = metaVar.signal.flattenSwitch(SwitchStreamStrategy)
+    val latestNumberS = metaVar.signal.flattenSwitch(SwitchStreamStrategy)
 
     val flattenObserver = Observer[Int](effects += Effect("flattened-obs", _))
 
-    val flattenStream = $latestNumber
+    val flattenStream = latestNumberS
       .map(Calculation.log("flattened", calculations))
 
     val subFlatten1 = flattenStream.addObserver(flattenObserver)

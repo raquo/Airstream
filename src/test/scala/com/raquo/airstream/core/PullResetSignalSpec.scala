@@ -28,9 +28,9 @@ class PullResetSignalSpec extends UnitSpec {
 
         var downInitial = 0
 
-        val $var = Var(1)
+        val _var = Var(1)
 
-        val upSignal = $var
+        val upSignal = _var
           .signal
           .setDisplayName("varSignal")
           .map(identity)
@@ -100,7 +100,7 @@ class PullResetSignalSpec extends UnitSpec {
 
         // --
 
-        $var.set(2)
+        _var.set(2)
 
         calculations shouldBe mutable.Buffer(
           Calculation("up", 2),
@@ -116,7 +116,7 @@ class PullResetSignalSpec extends UnitSpec {
 
         // -- again, because there is no _.distinct now
 
-        $var.set(2)
+        _var.set(2)
 
         calculations shouldBe mutable.Buffer(
           Calculation("up", 2),
@@ -150,7 +150,7 @@ class PullResetSignalSpec extends UnitSpec {
 
         downSub3.kill()
 
-        $var.set(3)
+        _var.set(3)
 
         calculations shouldBe mutable.Buffer(
           Calculation("up", 3)
@@ -210,38 +210,38 @@ class PullResetSignalSpec extends UnitSpec {
 
     val log = mutable.Buffer[String]()
 
-    val $v = Var(1)
+    val v = Var(1)
 
-    def $changes(name: String) = $v
+    def changes(name: String) = v
       .signal.setDisplayName("VarSignal")
       .changes.setDisplayName("VarSignal.changes." + name)
 
-    val $isPositive = $changes("IsPositive").map { num =>
+    val isPositiveS = changes("IsPositive").map { num =>
       val isPositive = num > 0
       log += s"$num isPositive = $isPositive"
       isPositive
     }.setDisplayName("IsPositive")
 
-    val $isEven = $changes("IsEven").map { num =>
+    val isEvenS = changes("IsEven").map { num =>
       val isEven = num % 2 == 0
       log += s"$num isEven = $isEven"
       isEven
     }.setDisplayName("IsEven")
 
-    val $combined = $changes("Combined").combineWithFn($isPositive, $isEven) { (num, isPositive, isEven) =>
+    val combinedS = changes("Combined").combineWithFn(isPositiveS, isEvenS) { (num, isPositive, isEven) =>
       log += s"$num isPositive = $isPositive, isEven = $isEven"
       (isPositive, isEven)
     }.setDisplayName("Combined")
 
-    val $result = $combined.startWith((false, false)).setDisplayName("Result")
+    val resultS = combinedS.startWith((false, false)).setDisplayName("Result")
 
-    val sub1 = $result.addObserver(Observer.empty)
+    val sub1 = resultS.addObserver(Observer.empty)
 
     log.toList shouldBe Nil
 
     // --
 
-    $v.set(2)
+    v.set(2)
 
     log.toList shouldBe List(
       "2 isPositive = true",
@@ -252,7 +252,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     // --
 
-    $v.set(3)
+    v.set(3)
 
     log.toList shouldBe List(
       "3 isPositive = true",
@@ -265,7 +265,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     sub1.kill()
 
-    $v.set(-4)
+    v.set(-4)
 
     log.toList shouldBe List()
 
@@ -277,7 +277,7 @@ class PullResetSignalSpec extends UnitSpec {
     // We're only adding one observer here, but the case of multiple observers is actually more complicated,
     // see the test below
 
-    $combined.addObserver(Observer.empty)
+    combinedS.addObserver(Observer.empty)
 
     log.toList shouldBe List(
       "-4 isPositive = false",
@@ -288,7 +288,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     // --
 
-    $v.set(-6)
+    v.set(-6)
 
     log.toList shouldBe List(
       "-6 isPositive = false",
@@ -808,10 +808,10 @@ class PullResetSignalSpec extends UnitSpec {
     val calculations = mutable.Buffer[Calculation[Int]]()
     val effects = mutable.Buffer[(T1, T2)]()
 
-    val $var1 = Var(T1(0))
-    val $var2 = Var(T2(0))
+    val var1 = Var(T1(0))
+    val var2 = Var(T2(0))
 
-    val combinedSignal = $var1
+    val combinedSignal = var1
       .signal
       .setDisplayName("var1.signal")
       .map { t =>
@@ -820,7 +820,7 @@ class PullResetSignalSpec extends UnitSpec {
       }
       .setDisplayName("var1.signal.map")
       .combineWith(
-        $var2
+        var2
           .signal
           .setDisplayName("var2.signal")
           .map { t =>
@@ -856,7 +856,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     // --
 
-    $var1.writer.onNext(T1(1))
+    var1.writer.onNext(T1(1))
 
     calculations.toList shouldBe List(
       Calculation("signal1", 1)
@@ -870,7 +870,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     // --
 
-    $var2.writer.onNext(T2(2))
+    var2.writer.onNext(T2(2))
 
     calculations.toList shouldBe List(
       Calculation("signal2", 2)
@@ -885,7 +885,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     sub1.kill()
 
-    $var2.writer.onNext(T2(3))
+    var2.writer.onNext(T2(3))
 
     calculations.toList shouldBe Nil
     effects.toList shouldBe Nil
@@ -908,7 +908,7 @@ class PullResetSignalSpec extends UnitSpec {
     // --
 
 
-    $var1.writer.onNext(T1(10))
+    var1.writer.onNext(T1(10))
 
     calculations.toList shouldBe List(
       Calculation("signal1", 10)
@@ -929,9 +929,9 @@ class PullResetSignalSpec extends UnitSpec {
     val effects = mutable.Buffer[Effect[Int]]()
     val calculations = mutable.Buffer[Calculation[Int]]()
 
-    val $var = Var(1)
+    val _var = Var(1)
 
-    val signal = $var
+    val signal = _var
       .signal
       .map(Calculation.log("signal", calculations))
 
@@ -972,7 +972,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     // --
 
-    $var.set(2)
+    _var.set(2)
 
     calculations shouldBe mutable.Buffer(
       Calculation("signal", 2),
@@ -990,7 +990,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     sub1_x10.kill()
 
-    $var.set(3)
+    _var.set(3)
 
     calculations shouldBe mutable.Buffer(
       Calculation("signal", 3)

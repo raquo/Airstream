@@ -767,14 +767,14 @@ If you want a stream that never fails, a stream that emits an event regardless o
 You can listen for `progress` or `readyStateChange` events by passing in the corresponding observers to `AjaxEventStream.get` et al, for example:
 
 ```scala
-val (progressObserver, $progress) = EventStream.withObserver[(dom.XMLHttpRequest, dom.ProgressEvent)]
+val (progressObserver, progressS) = EventStream.withObserver[(dom.XMLHttpRequest, dom.ProgressEvent)]
 
-val $request = AjaxEventStream.get(
+val requestS = AjaxEventStream.get(
   url = "/api/kittens",
   progressObserver = progressObserver
 )
 
-val $bytesLoaded = $progress.mapN((xhr, ev) => ev.loaded)
+val bytesLoadedS = progressS.mapN((xhr, ev) => ev.loaded)
 ```
 
 In a similar manner, you can pass a `requestObserver` that will be called with the newly created `dom.XMLHttpRequest` just before the request is sent. This way you can save the pending request into a Var and e.g. `abort()` it if needed.

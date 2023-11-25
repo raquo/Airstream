@@ -27,11 +27,11 @@ class SwitchSignalStreamSpec extends UnitSpec {
 
     val metaBus = new EventBus[Signal[Int]]
 
-    val $latestNumber = metaBus.events.flattenSwitch // SwitchSignalStreamStrategy is the default (provided implicitly)
+    val latestNumberS = metaBus.events.flattenSwitch // SwitchSignalStreamStrategy is the default (provided implicitly)
 
     val flattenObserver = Observer[Int](effects += Effect("flattened-obs", _))
 
-    val flattenStream = $latestNumber.map(Calculation.log("flattened", calculations))
+    val flattenStream = latestNumberS.map(Calculation.log("flattened", calculations))
 
     calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer()
@@ -213,11 +213,11 @@ class SwitchSignalStreamSpec extends UnitSpec {
 
     val metaBus = new EventBus[Signal[Int]]
 
-    val $latestNumber = metaBus.events.flattenSwitch // SwitchSignalStreamStrategy is the default (provided implicitly)
+    val latestNumberS = metaBus.events.flattenSwitch // SwitchSignalStreamStrategy is the default (provided implicitly)
 
     val flattenObserver = Observer[Int](effects += Effect("flattened-obs", _))
 
-    val flattenStream = $latestNumber.map(Calculation.log("flattened", calculations))
+    val flattenStream = latestNumberS.map(Calculation.log("flattened", calculations))
 
     calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer()
