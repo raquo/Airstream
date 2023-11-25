@@ -13,9 +13,8 @@ import scala.util.Try
   *
   * Works similar to Rx's "withLatestFrom", except without glitches (see a diamond case test for this in GlitchSpec).
   *
-  * @param sampledSignals - Never update this array - this signal owns it.
-  *
-  * @param combinator Note: Must not throw! Must be pure.
+  * @param sampledSignals Never update this array - this signal owns it.
+  * @param combinator     Note: Must not throw! Must be pure.
   */
 class SampleCombineSignalN[A, Out](
   samplingSignal: Signal[A],
@@ -27,38 +26,37 @@ class SampleCombineSignalN[A, Out](
 
   override protected[this] def inputsReady: Boolean = true
 
-  override protected[this] val parents: JsArray[Signal[A]] = combineWithArray(
-    samplingSignal,
-    sampledSignals
-  )
+  override protected[this] val parents: JsArray[Signal[A]] = {
+    val arr = JsArray(samplingSignal)
+    sampledSignals.forEach { sampledSignal =>
+      arr.push(sampledSignal)
+    }
+    arr
+  }
+
+  override protected[this] val parentObservers: JsArray[InternalParentObserver[_]] = {
+    val arr = JsArray[InternalParentObserver[_]](
+      InternalParentObserver.fromTry[A](samplingSignal, (_, trx) => {
+        onInputsReady(trx)
+      })
+    )
+    sampledSignals.forEach { sampledSignal =>
+      arr.push(
+        InternalParentObserver.fromTry[A](sampledSignal, (_, _) => {
+          // Do nothing, we just want to ensure that sampledSignal is started.
+        })
+      )
+    }
+    arr
+  }
 
   override protected[this] def combinedValue: Try[Out] = {
-    val values = combineWithArray(
-      samplingSignal.tryNow(),
-      sampledSignals.map(_.tryNow())
-    )
+    val values = JsArray(samplingSignal.tryNow())
+    sampledSignals.forEach { sampledSignal =>
+      values.push(sampledSignal.tryNow())
+    }
     CombineObservable.jsArrayCombinator(values, combinator)
   }
 
   override protected def currentValueFromParent(): Try[Out] = combinedValue
-
-  parentObservers.push(
-    InternalParentObserver.fromTry[A](samplingSignal, (_, transaction) => {
-      onInputsReady(transaction)
-    })
-  )
-
-  sampledSignals.forEach { sampledSignal =>
-    parentObservers.push(
-      InternalParentObserver.fromTry[A](sampledSignal, (_, _) => {
-        // Do nothing, we just want to ensure that sampledSignal is started.
-      })
-    )
-  }
-
-  private[this] def combineWithArray[V](sampling: V, sampled: JsArray[V]): JsArray[V] = {
-    val values = sampled.concat() // There's also JsArray.from, but it does not work in IE11
-    values.unshift(sampling)
-    values
-  }
 }

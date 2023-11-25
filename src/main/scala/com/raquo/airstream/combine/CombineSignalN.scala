@@ -19,6 +19,14 @@ class CombineSignalN[A, Out](
 
   override protected val topoRank: Int = Protected.maxTopoRank(0, parents) + 1
 
+  override protected[this] val parentObservers: JsArray[InternalParentObserver[_]] = {
+    parents.map { parent =>
+      InternalParentObserver.fromTry[A](parent, (_, trx) => {
+        onInputsReady(trx)
+      })
+    }
+  }
+
   override protected[this] def inputsReady: Boolean = true
 
   override protected[this] def combinedValue: Try[Out] = {
@@ -26,13 +34,4 @@ class CombineSignalN[A, Out](
   }
 
   override protected def currentValueFromParent(): Try[Out] = combinedValue
-
-  parents.forEach { parent =>
-    parentObservers.push(
-      InternalParentObserver.fromTry[A](parent, (_, transaction) => {
-        onInputsReady(transaction)
-      })
-    )
-  }
-
 }

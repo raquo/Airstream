@@ -27,6 +27,20 @@ class CombineStreamN[A, Out](
 
   private[this] val maybeLastParentValues: JsArray[js.UndefOr[Try[A]]] = parents.map(_ => js.undefined)
 
+  override protected[this] val parentObservers: JsArray[InternalParentObserver[_]] = {
+    parents.mapWithIndex { (parent, ix) =>
+      InternalParentObserver.fromTry[A](
+        parent,
+        (nextParentValue, trx) => {
+          maybeLastParentValues.update(ix, nextParentValue)
+          if (inputsReady) {
+            onInputsReady(trx)
+          }
+        }
+      )
+    }
+  }
+
   override protected[this] def inputsReady: Boolean = {
     var allReady: Boolean = true
     maybeLastParentValues.forEach { lastValue =>
@@ -42,19 +56,4 @@ class CombineStreamN[A, Out](
     //  inputs are ready, otherwise this asInstanceOf will not be safe.
     CombineObservable.jsArrayCombinator(maybeLastParentValues.asInstanceOf[JsArray[Try[A]]], combinator)
   }
-
-  parents.forEachWithIndex { (parent, ix) =>
-    parentObservers.push(
-      InternalParentObserver.fromTry[A](
-        parent,
-        (nextParentValue, transaction) => {
-          maybeLastParentValues.update(ix, nextParentValue)
-          if (inputsReady) {
-            onInputsReady(transaction)
-          }
-        }
-      )
-    )
-  }
-
 }

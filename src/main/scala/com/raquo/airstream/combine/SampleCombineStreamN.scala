@@ -29,45 +29,44 @@ class SampleCombineStreamN[A, Out](
 
   override protected[this] def inputsReady: Boolean = maybeLastSamplingValue.nonEmpty
 
-  override protected[this] val parents: JsArray[Observable[A]] = combineWithArray(
-    samplingStream,
-    sampledSignals
-  )
-
-  override protected[this] def combinedValue: Try[Out] = {
-    val values = combineWithArray(
-      maybeLastSamplingValue.get,
-      sampledSignals.map(_.tryNow())
-    )
-    CombineObservable.jsArrayCombinator(values, combinator)
+  override protected[this] val parents: JsArray[Observable[A]] = {
+    val arr = JsArray[Observable[A]](samplingStream)
+    sampledSignals.forEach { sampledSignal =>
+      arr.push(sampledSignal)
+    }
+    arr
   }
 
-  parentObservers.push(
-    InternalParentObserver.fromTry[A](
-      samplingStream,
-      (nextSamplingValue, transaction) => {
-        maybeLastSamplingValue = nextSamplingValue
-        onInputsReady(transaction)
-      }
+  override protected[this] val parentObservers: JsArray[InternalParentObserver[_]] = {
+    val arr = JsArray[InternalParentObserver[_]](
+      InternalParentObserver.fromTry[A](
+        samplingStream,
+        (nextSamplingValue, trx) => {
+          maybeLastSamplingValue = nextSamplingValue
+          onInputsReady(trx)
+        }
+      )
     )
-  )
+    sampledSignals.forEach { sampledSignal =>
+      arr.push(
+        InternalParentObserver.fromTry[A](sampledSignal, (_, _) => {
+          // Do nothing, we just want to ensure that sampledSignal is started.
+        })
+      )
+    }
+    arr
+  }
 
-  sampledSignals.forEach { sampledSignal =>
-    parentObservers.push(
-      InternalParentObserver.fromTry[A](sampledSignal, (_, _) => {
-        // Do nothing, we just want to ensure that sampledSignal is started.
-      })
-    )
+  override protected[this] def combinedValue: Try[Out] = {
+    val values = JsArray(maybeLastSamplingValue.get)
+    sampledSignals.forEach { sampledSignal =>
+      values.push(sampledSignal.tryNow())
+    }
+    CombineObservable.jsArrayCombinator(values, combinator)
   }
 
   override private[airstream] def syncFire(transaction: Transaction): Unit = {
     super.syncFire(transaction)
     maybeLastSamplingValue = js.undefined // Clean up memory, as we don't need this reference anymore
-  }
-
-  private[this] def combineWithArray[BaseV >: V, V](sampling: BaseV, sampled: JsArray[V]): JsArray[BaseV] = {
-    val values = sampled.concat[BaseV]() // There's also JsArray.from, but it does not work in IE11
-    values.unshift(sampling)
-    values
   }
 }
