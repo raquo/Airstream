@@ -911,4 +911,30 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     // @TODO[Test] Don't ignore, assert these properly
     errorEffects.clear()
   }
+
+  it("flip") {
+    val v = Var(true)
+
+    assertEquals(v.now(), true)
+
+    // --
+
+    v.flip()
+    assertEquals(v.now(), false)
+
+    // --
+
+    v.flip()
+    assertEquals(v.now(), true)
+
+    // --
+
+    v.flipWriter.onNext(())
+    assertEquals(v.now(), false)
+
+    // --
+
+    v.flipWriter.onNext(())
+    assertEquals(v.now(), true)
+  }
 }
