@@ -32,6 +32,12 @@ scalaVersion := Versions.Scala_2_13
 
 crossScalaVersions := Seq(Versions.Scala_2_12, Versions.Scala_2_13, Versions.Scala_3)
 
+scalacOptions ++= Seq(
+  "-feature",
+  "-language:higherKinds",
+  "-language:implicitConversions"
+)
+
 scalacOptions ~= { options: Seq[String] =>
   options.filterNot(Set(
     "-Ywarn-value-discard",
