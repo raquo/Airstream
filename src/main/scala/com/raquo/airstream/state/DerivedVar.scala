@@ -17,12 +17,13 @@ class DerivedVar[A, B](
   parent: Var[A],
   zoomIn: A => B,
   zoomOut: (A, B) => A,
-  owner: Owner
+  owner: Owner,
+  displayNameSuffix: String
 ) extends Var[B] {
 
   override private[state] def underlyingVar: SourceVar[_] = parent.underlyingVar
 
-  private[this] val _varSignal = new DerivedVarSignal(parent, zoomIn, owner)
+  private[this] val _varSignal = new DerivedVarSignal(parent, zoomIn, owner, displayName)
 
   // #Note this getCurrentValue implementation is different from SourceVar
   //  - SourceVar's getCurrentValue looks at an internal currentValue variable
@@ -54,4 +55,6 @@ class DerivedVar[A, B](
   }
 
   override val signal: StrictSignal[B] = _varSignal
+
+  override protected def defaultDisplayName: String = parent.displayName + displayNameSuffix
 }

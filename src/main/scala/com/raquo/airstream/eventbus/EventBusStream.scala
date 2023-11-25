@@ -4,7 +4,9 @@ import com.raquo.airstream.common.InternalNextErrorObserver
 import com.raquo.airstream.core.{EventStream, Protected, Transaction, WritableStream}
 import com.raquo.ew.JsArray
 
-class EventBusStream[A] private[eventbus] () extends WritableStream[A] with InternalNextErrorObserver[A] {
+class EventBusStream[A] private[eventbus] (
+  parentDisplayName: => String
+) extends WritableStream[A] with InternalNextErrorObserver[A] {
 
   private val sourceStreams: JsArray[EventStream[A]] = JsArray()
 
@@ -72,4 +74,6 @@ class EventBusStream[A] private[eventbus] () extends WritableStream[A] with Inte
     sourceStreams.forEach(_.removeInternalObserver(observer = this))
     super.onStop()
   }
+
+  override protected def defaultDisplayName: String = parentDisplayName + ".events"
 }

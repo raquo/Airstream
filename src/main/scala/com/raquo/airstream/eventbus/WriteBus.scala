@@ -6,12 +6,15 @@ import com.raquo.airstream.util.hasDuplicateTupleKeys
 
 import scala.util.Try
 
-class WriteBus[A] extends Observer[A] {
+class WriteBus[A](
+  parentDisplayName: => String,
+  displayNameSuffix: String = ".writer"
+) extends Observer[A] {
 
   /** Hidden here because the public interface of WriteBus is all about writing
     * rather than reading, but exposed in [[EventBus]]
     */
-  private[eventbus] val stream: EventBusStream[A] = new EventBusStream()
+  private[eventbus] val stream: EventBusStream[A] = new EventBusStream(displayName)
 
   /** Note: this source will be removed when the `owner` you provide says so.
     * To remove this source manually, call .kill() on the resulting Subscription.
@@ -24,19 +27,21 @@ class WriteBus[A] extends Observer[A] {
   }
 
   def contracomposeWriter[B](operator: EventStream[B] => EventStream[A])(implicit owner: Owner): WriteBus[B] = {
-    val mapBus = new WriteBus[B]
+    val mapBus = new WriteBus[B](displayName, ".contracomposeWriter")
     addSource(mapBus.stream.compose(operator))(owner)
     mapBus
   }
 
   /** Behaves similar to `contramap`, but gives you a WriteBus, not just an Observer */
   def contramapWriter[B](project: B => A)(implicit owner: Owner): WriteBus[B] = {
-    contracomposeWriter[B](_.map(project))(owner)
+    val mapBus = new WriteBus[B](displayName, ".contramapWriter")
+    addSource(mapBus.stream.map(project))(owner)
+    mapBus
   }
 
   /** Behaves similar to `filter`, but gives you a WriteBus, not just an Observer */
   def filterWriter(passes: A => Boolean)(implicit owner: Owner): WriteBus[A] = {
-    val filterBus = new WriteBus[A]
+    val filterBus = new WriteBus[A](displayName, ".filterWriter")
     addSource(filterBus.stream.filter(passes))(owner)
     filterBus
   }
@@ -80,6 +85,8 @@ class WriteBus[A] extends Observer[A] {
       onNextWithSharedTransaction(_, sharedTransaction)
     )
   }
+
+  override protected def defaultDisplayName: String = parentDisplayName + displayNameSuffix
 }
 
 object WriteBus {

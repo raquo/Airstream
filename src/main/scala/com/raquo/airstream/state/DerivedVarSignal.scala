@@ -7,7 +7,8 @@ import com.raquo.airstream.ownership.{Owner, Subscription}
 class DerivedVarSignal[A, B](
   parent: Var[A],
   zoomIn: A => B,
-  owner: Owner
+  owner: Owner,
+  parentDisplayName: => String
 ) extends MapSignal[A, B](
   parent.signal,
   project = zoomIn,
@@ -18,4 +19,6 @@ class DerivedVarSignal[A, B](
   override protected[state] def isStarted: Boolean = super.isStarted
 
   override protected[this] val subscription: Subscription = this.addObserver(Observer.empty)(owner)
+
+  override protected def defaultDisplayName: String = parentDisplayName + ".signal"
 }

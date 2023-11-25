@@ -833,4 +833,46 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
 
     calculations.clear()
   }
+
+  it("EventBus.events and Var.signal display names") {
+
+    val bus = new EventBus[Int]
+
+    assert(bus.displayName.startsWith("EventBus@"))
+    assertEquals(bus.events.displayName, bus.displayName + ".writer.events")
+
+    // --
+
+    bus.setDisplayName("bus")
+
+    assertEquals(bus.writer.displayName, "bus.writer")
+    assertEquals(bus.events.displayName, "bus.writer.events")
+    assertEquals(bus.writer.contramapWriter(identity[Int]).displayName, "bus.writer.contramapWriter")
+
+    // --
+
+    val _var = Var(1)
+    val _derived = _var.zoom(x => x)((acc, x) => x)
+
+    assert(_var.displayName.startsWith("SourceVar@"))
+    assertEquals(_var.signal.displayName, _var.displayName + ".signal")
+    assertEquals(_derived.displayName, _var.displayName + ".zoom")
+    assertEquals(_derived.signal.displayName, _derived.displayName + ".signal")
+
+    // --
+
+    _var.setDisplayName("var")
+
+    assertEquals(_var.displayName, "var")
+    assertEquals(_var.signal.displayName, "var.signal")
+    assertEquals(_derived.displayName, _var.displayName + ".zoom")
+    assertEquals(_derived.signal.displayName, _derived.displayName + ".signal")
+
+    // --
+
+    _derived.setDisplayName("zoomed")
+
+    assertEquals(_derived.displayName, "zoomed")
+    assertEquals(_derived.signal.displayName, _derived.displayName + ".signal")
+  }
 }

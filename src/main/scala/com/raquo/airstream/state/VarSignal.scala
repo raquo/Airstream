@@ -12,7 +12,8 @@ import scala.util.Try
   * (see StrictSignal).
   */
 private[state] class VarSignal[A] private[state](
-  initial: Try[A]
+  initial: Try[A],
+  parentDisplayName: => String
 ) extends WritableSignal[A] with StrictSignal[A] {
 
   /** SourceVar does not directly depend on other observables, so it breaks the graph. */
@@ -31,4 +32,6 @@ private[state] class VarSignal[A] private[state](
   override protected def currentValueFromParent(): Try[A] = tryNow() // noop
 
   override protected def onWillStart(): Unit = () // noop
+
+  override protected def defaultDisplayName: String = parentDisplayName + ".signal"
 }

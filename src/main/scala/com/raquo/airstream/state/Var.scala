@@ -84,7 +84,7 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
   }
 
   def zoom[B](in: A => B)(out: (A, B) => A)(implicit owner: Owner): Var[B] = {
-    new DerivedVar[A, B](this, in, out, owner)
+    new DerivedVar[A, B](this, in, out, owner, displayNameSuffix = ".zoom")
   }
 
   def setTry(tryValue: Try[A]): Unit = writer.onTry(tryValue)

@@ -13,7 +13,10 @@ class SourceVar[A] private[state](initial: Try[A]) extends Var[A] {
   private[this] var currentValue: Try[A] = initial
 
   /** VarSignal is a private type, do not expose it */
-  private[this] val _varSignal = new VarSignal[A](initial = currentValue)
+  private[this] val _varSignal = new VarSignal[A](
+    initial = currentValue,
+    parentDisplayName = displayName
+  )
 
   override private[state] def underlyingVar: SourceVar[_] = this
 

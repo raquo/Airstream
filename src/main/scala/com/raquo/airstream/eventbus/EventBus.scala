@@ -13,7 +13,7 @@ import scala.util.Try
   */
 class EventBus[A] extends EventSource[A] with Sink[A] with Named {
 
-  val writer: WriteBus[A] = new WriteBus[A]
+  val writer: WriteBus[A] = new WriteBus[A](parentDisplayName = displayName)
 
   val events: EventStream[A] = writer.stream
 
