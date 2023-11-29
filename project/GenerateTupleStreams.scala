@@ -7,11 +7,11 @@ case class GenerateTupleStreams(
   from: Int,
   to: Int
 ) extends SourceGenerator(
-  sourceDir / "scala" / "com" / "raquo" / "airstream" / "misc" / "generated" / s"TupleStreams.scala"
+  sourceDir / "scala" / "com" / "raquo" / "airstream" / "extensions" / s"TupleStreams.scala"
 ) {
 
   override def apply(): Unit = {
-    line("package com.raquo.airstream.misc.generated")
+    line("package com.raquo.airstream.extensions")
     line()
     line("import com.raquo.airstream.core.EventStream")
     line("import com.raquo.airstream.misc.{FilterStream, MapStream}")

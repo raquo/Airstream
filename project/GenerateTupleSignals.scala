@@ -7,11 +7,11 @@ case class GenerateTupleSignals(
   from: Int,
   to: Int
 ) extends SourceGenerator(
-  sourceDir / "scala" / "com" / "raquo" / "airstream" / "misc" / "generated" / s"TupleSignals.scala"
+  sourceDir / "scala" / "com" / "raquo" / "airstream" / "extensions" / s"TupleSignals.scala"
 ) {
 
   override def apply(): Unit = {
-    line("package com.raquo.airstream.misc.generated")
+    line("package com.raquo.airstream.extensions")
     line()
     line("import com.raquo.airstream.core.Signal")
     line("import com.raquo.airstream.misc.MapSignal")

@@ -1,4 +1,4 @@
-package com.raquo.airstream.misc.generated
+package com.raquo.airstream.extensions
 
 import com.raquo.airstream.core.Signal
 import com.raquo.airstream.misc.MapSignal
