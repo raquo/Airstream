@@ -90,11 +90,6 @@ object Transaction {
 
     private[Transaction] val postStartTransactions: JsArray[Transaction] = JsArray()
 
-    // #nc just add a default value to `when` param. Keeping this method for binary compat for now.
-    def shared[A](code: => A): A = {
-      shared(code, when = true)
-    }
-
     /* Put the code that (potentially) adds more than one observer inside.
      * If that code causes `signal.changes` to restart (and emit the signal's
      * updated value), this event will be delayed until the rest of your code
@@ -122,7 +117,7 @@ object Transaction {
      *
      * See https://github.com/raquo/Airstream/#restarting-streams-that-depend-on-signals--signalchanges-
      */
-    def shared[A](code: => A, when: Boolean): A = {
+    def shared[A](code: => A, when: Boolean = true): A = {
       if (isSharedStart || !when) {
         // - We are already executing inside the `code` argument passed
         //   to another onStart.shared block, so adding another try-catch
