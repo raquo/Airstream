@@ -120,11 +120,13 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
     }
   }
 
+  // #TODO[Scala 2.12] - once we ditch Scala 2.12 we can replace asInstanceOf with ev.flip(!ev(v))
   /** Update a boolean Var by flipping its value (true -> false, or false -> true) */
-  def invert()(implicit ev: A =:= Boolean): Unit = update(v => ev.flip(!ev(v)))
+  def invert()(implicit ev: A =:= Boolean): Unit = update(v => (!ev(v)).asInstanceOf[A])
 
+  // #TODO[Scala 2.12] - once we ditch Scala 2.12 we can replace asInstanceOf with ev.flip(!ev(v))
   /** Observer that writes !var.now(), for vars of booleans. */
-  def invertWriter(implicit ev: A =:= Boolean): Observer[Unit] = updater((curr, _) => ev.flip(!ev(curr)))
+  def invertWriter(implicit ev: A =:= Boolean): Observer[Unit] = updater((curr, _) => (!ev(curr)).asInstanceOf[A])
 
   @inline def tryNow(): Try[A] = signal.tryNow()
 

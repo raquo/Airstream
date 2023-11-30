@@ -116,14 +116,10 @@ class StatusObservableSpec extends UnitSpec {
       .signal
       .flatMapWithStatus(v => EventStream.fromSeq(v :: v + 1 :: Nil).map(_ * 10))
       .map { v =>
-        println(">>> tap >>> " + v)
         effects += Effect("tap", v)
         v
       }
       .setDisplayName("tap")
-      // .debugLogLifecycle()
-      // .debugLogEvalFromParent()
-      // .debugLog()
       .splitStatus(
         resolved = (init, signal) => {
           effects += Effect("resolved", init)
@@ -136,9 +132,6 @@ class StatusObservableSpec extends UnitSpec {
           init
         }
       )
-      .setDisplayName("split")
-      // .debugLogLifecycle()
-      // .debugLog()
       .foreach(v => effects += Effect("obs", v))(owner)
 
     locally {
