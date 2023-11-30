@@ -8,6 +8,7 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
   protected var maybeLastSeenCurrentValue: js.UndefOr[Try[A]] = js.undefined
 
   protected def setCurrentValue(newValue: Try[A], isInitial: Boolean = false): Unit = {
+    // println(s"${this} > setCurrentValue > ${newValue}, isInitial = ${isInitial}")
     if (!isInitial) {
       _lastUpdateId = Signal.nextUpdateId()
     }
@@ -16,6 +17,7 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
 
   /** Note: Initial value is only evaluated if/when needed (when there are observers) */
   override protected[airstream] def tryNow(): Try[A] = {
+    // println(s"${this} > tryNow (maybeLastSeenCurrentValue = ${maybeLastSeenCurrentValue})")
     maybeLastSeenCurrentValue.getOrElse {
       _lastUpdateId = Signal.nextUpdateId()
       val nextValue = currentValueFromParent()

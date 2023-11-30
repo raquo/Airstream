@@ -27,7 +27,7 @@ object FlatMapStatusObservable {
 
     inputS.matchStreamOrSignal(
       ifStream = _.mergeWith(outputS),
-      ifSignal = _.composeChanges(_.mergeWith(outputS).setDisplayName("mergedChanges")).setDisplayName("composedAll")
+      ifSignal = _.composeChanges(_.mergeWith(outputS))
     ).asInstanceOf[Self[Status[A, B]]] // #TODO[Integrity] How to type this properly?
   }
 

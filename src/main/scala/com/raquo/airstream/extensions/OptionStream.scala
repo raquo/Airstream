@@ -29,7 +29,7 @@ class OptionStream[A](val stream: EventStream[Option[A]]) extends AnyVal {
     project: (A, Signal[A]) => B,
     ifEmpty: => B
   ): Signal[B] = {
-    new OptionSignal(stream.startWith(None)).splitOption(project, ifEmpty)
+    new OptionSignal(stream.startWith(None, cacheInitialValue = true)).splitOption(project, ifEmpty)
   }
 
 }

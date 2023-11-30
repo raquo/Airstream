@@ -142,7 +142,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
   /** Convert this observable to a signal of Option[A]. If it is a stream, set initial value to None. */
   def toWeakSignal: Signal[Option[A]] = {
     matchStreamOrSignal(
-      ifStream = _.map(Some(_)).toSignal(initial = None),
+      ifStream = _.map(Some(_)).toSignal(initial = None, cacheInitialValue = true),
       ifSignal = _.map(Some(_))
     )
   }
@@ -156,15 +156,6 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
       case signal: Signal[A @unchecked] => ifSignal(signal)
       case _ => throw new Exception("All Observables must extend EventStream or Signal")
     }
-  }
-
-  // #TODO[API] Hiding this for now, I'm not convinced that it's all that useful,
-  //  the Self type inference is still very limited, does not chain well.
-  protected[raquo] def matchStreamOrSignalSelf[B](
-    ifStream: EventStream[A] => EventStream[B],
-    ifSignal: Signal[A] => Signal[B]
-  ): Self[B] = {
-    matchStreamOrSignal(ifStream, ifSignal).asInstanceOf[Self[B]]
   }
 
   // @TODO[API] I don't like the Option[O] output type here very much. We should consider a sentinel error object instead (need to check performance). Or maybe add a recoverOrSkip method or something?
@@ -294,15 +285,14 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     * BEFORE your custom logic. Then your logic will be able to make use of parent's
     * updated value.
     *
+    * Note: NEVER CALL onWillStart() DIRECTLY
+    *       Call maybeWillStart() instead, it keeps track of important internal state.
+    *
     * Note: THIS METHOD MUST NOT CREATE TRANSACTIONS OR FIRE ANY EVENTS! DO IT IN ONSTART IF NEEDED.
     */
   protected def onWillStart(): Unit
 
-  protected def maybeWillStart(): Unit = {
-    if (!isStarted) {
-      onWillStart()
-    }
-  }
+  protected def maybeWillStart(): Unit
 
   /** This method is fired when this observable starts working (listening for parent events and/or firing its own events),
     * that is, when it gets its first Observer (internal or external).

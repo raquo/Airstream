@@ -51,6 +51,10 @@ trait WritableObservable[A] extends Observable[A] {
   /** Note: This is enforced to be a Set outside of the type system #performance */
   protected val internalObservers: ObserverList[InternalObserver[A]] = new ObserverList(JsArray())
 
+  /** Set to true after onWillStart finishes, and until onStop finishes. It's set to false all other times.
+    * We need this to prevent onWillStart from running twice in weird cases (we have a test for that). */
+  protected var willStartDone: Boolean = false
+
   override def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription = {
     // println(s"// ${this} addObserver ${observer}")
     Transaction.onStart.shared({
@@ -102,6 +106,14 @@ trait WritableObservable[A] extends Observable[A] {
     }
   }
 
+  override protected def maybeWillStart(): Unit = {
+    // println(s"$this > maybeWillStart")
+    if (!willStartDone) {
+      onWillStart()
+      willStartDone = true
+    }
+  }
+
   private[this] def maybeStart(): Unit = {
     val isStarting = numAllObservers == 1
     if (isStarting) {
@@ -114,6 +126,7 @@ trait WritableObservable[A] extends Observable[A] {
     if (!isStarted) {
       // We've just removed last observer
       onStop()
+      willStartDone = false
     }
   }
 

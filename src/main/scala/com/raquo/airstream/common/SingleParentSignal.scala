@@ -17,13 +17,14 @@ trait SingleParentSignal[I, O] extends WritableSignal[O] with InternalTryObserve
     * - [[com.raquo.airstream.misc.SignalFromStream]] because parent can be stream, and it has cacheInitialValue logic
     */
   override protected def onWillStart(): Unit = {
+    // println(s"${this} > onWillStart")
     Protected.maybeWillStart(parent)
     if (parentIsSignal) {
       val newParentLastUpdateId = Protected.lastUpdateId(parent.asInstanceOf[Signal[_]])
       if (newParentLastUpdateId != _parentLastUpdateId) {
         updateCurrentValueFromParent()
+        _parentLastUpdateId = newParentLastUpdateId
       }
-      _parentLastUpdateId = newParentLastUpdateId
     }
   }
 
@@ -31,6 +32,7 @@ trait SingleParentSignal[I, O] extends WritableSignal[O] with InternalTryObserve
    *  - [[com.raquo.airstream.distinct.DistinctSignal]]
    */
   protected def updateCurrentValueFromParent(): Unit = {
+    // println(s"${this} > updateCurrentValueFromParent")
     val nextValue = currentValueFromParent()
     setCurrentValue(nextValue)
   }
@@ -42,6 +44,7 @@ trait SingleParentSignal[I, O] extends WritableSignal[O] with InternalTryObserve
   }
 
   override protected[this] def onStart(): Unit = {
+    // println(s"${this} > onStart")
     parent.addInternalObserver(this, shouldCallMaybeWillStart = false)
     super.onStart()
   }

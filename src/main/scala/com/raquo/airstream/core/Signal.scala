@@ -60,9 +60,10 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
     */
   def composeAll[B](
     changesOperator: EventStream[A] => EventStream[B],
-    initialOperator: Try[A] => Try[B]
+    initialOperator: Try[A] => Try[B],
+    cacheInitialValue: Boolean = false
   ): Signal[B] = {
-    changesOperator(changes).toSignalWithTry(initialOperator(tryNow()))
+    changesOperator(changes).toSignalWithTry(initialOperator(tryNow()), cacheInitialValue)
   }
 
   // #TODO[API] Why is .changes a def, and not a lazy val?

@@ -14,7 +14,7 @@ class SplittableStream[M[_], Input](val stream: EventStream[M[Input]]) extends A
     implicit splittable: Splittable[M]
   ): Signal[M[Output]] = {
     new SplitSignal[M, Input, Output, Key](
-      parent = stream.startWith(splittable.empty),
+      parent = stream.startWith(splittable.empty, cacheInitialValue = true),
       key,
       distinctCompose,
       project,
@@ -30,7 +30,7 @@ class SplittableStream[M[_], Input](val stream: EventStream[M[Input]]) extends A
     implicit splittable: Splittable[M]
   ): Signal[M[Output]] = {
     new SplitSignal[M, (Input, Int), Output, Int](
-      parent = stream.map(splittable.zipWithIndex).startWith(splittable.empty),
+      parent = stream.map(splittable.zipWithIndex).startWith(splittable.empty, cacheInitialValue = true),
       key = _._2, // Index
       distinctCompose = _.distinctBy(_._1),
       project = (index: Int, initialTuple, tupleSignal) => {

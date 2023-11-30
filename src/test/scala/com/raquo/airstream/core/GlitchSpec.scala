@@ -310,11 +310,8 @@ class GlitchSpec extends UnitSpec {
     busA.writer.addSource(streamB.map(_ * 10).map(Calculation.log("B x 10", calculations)))
     busB.writer.addSource(streamA.filter(_ <= 100).map(_ + 1))
 
-    val streamD = streamA.combineWith(streamB).mapN((x, y) => {
-      // println(x, y)
-      x + y
-    })
-      //.mapN(_ + _)
+    val streamD = streamA.combineWith(streamB)
+      .mapN(_ + _)
       .map(Calculation.log("D", calculations))
 
     streamB
@@ -446,5 +443,93 @@ class GlitchSpec extends UnitSpec {
     clickBus.writer.onNext(())
 
     stateVar.now() shouldBe State(List(0, 1))
+  }
+
+  it("Avoid redundant evaluation of signal's initial value in this weird case") {
+
+    // onWillStart evaluates the signal's initial value. This is an effect we care about,
+    // because it could be mutable or effectful, and also, because if the signal updates
+    // its initial value, this will have downstream effects (e.g. the tap effect in this test).
+    //
+    // Long story short, we had a bug where onWillStart could have been called more than
+    // once for a given observable before it finally starts. This was because maybeWillStart
+    // used to check (!isStarted) condition, which only becomes true AFTER onWillStart of the
+    // observable that triggered the willStart chain has finished. However, apparently it was
+    // possible for willStart to trigger addition of external observer (seee inner-signal),
+    // which would again call up the onWillStart chain on its parents, and if the two observables
+    // share parents, that means the same observables would have onWillStart executed on them
+    // again, which they don't expect.
+    //
+    // Well, or something like that. The fix was to replace !isStarted check with a new,
+    // special-purpose !willStartDone check.
+    //
+    // #TODO[API] There is a related potential issue here: stream.startWith(initial) and similar
+    //  signals are configured with (cacheInitialValue = false) by default, which means that
+    //  if the signal has never emitted any events, and it is being restarted, we would re-evaluate
+    //  its initial value (which is also its current value). I'm not sure what exactly I was thinking
+    //  when I made it work that way, kinda feels a bit weird. Maybe it's useful for mutable DOM APIs?
+    //  Anyway, removing that would have also fixed this issue, but that's not a proper fix, it's
+    //  a separate decision that we need to review at some point.
+
+    val owner: TestableOwner = new TestableOwner
+
+    val innerOwner: TestableOwner = new TestableOwner
+
+    val bus = new EventBus[Int]
+
+    val effects = mutable.Buffer[Effect[_]]()
+
+    val initial = 0
+
+    bus
+      .stream
+      .startWith({
+        effects += Effect("eval-init", initial)
+        initial
+      })
+      .map { v =>
+        effects += Effect("tap", v)
+        v
+      }
+      .splitOne(_ % 2 == 0)((isEven, _, signal) => {
+        effects += Effect("inner-init", isEven)
+        signal
+          .setDisplayName(s"inner-signal-$isEven")
+          .foreach(v => effects += Effect(s"inner-signal-$isEven", v))(innerOwner)
+        isEven
+      })
+      .foreach(v => effects += Effect("obs", v))(owner)
+
+    assertEquals(effects.toList, List(
+      Effect("eval-init", 0),
+      Effect("tap", 0),
+      Effect("inner-init", true),
+      Effect("inner-signal-true", 0),
+      Effect("obs", true)
+    ))
+    effects.clear()
+
+    // --
+
+    bus.emit(2)
+
+    assertEquals(effects.toList, List(
+      Effect("tap", 2),
+      Effect("obs", true),
+      Effect("inner-signal-true", 2)
+    ))
+    effects.clear()
+
+    // --
+
+    bus.emit(3)
+
+    assertEquals(effects.toList, List(
+      Effect("tap", 3),
+      Effect("inner-init", false),
+      Effect("inner-signal-false", 3),
+      Effect("obs", false)
+    ))
+    effects.clear()
   }
 }
