@@ -32,7 +32,7 @@ object AsyncStatusObservable {
 
     pendingS.matchStreamOrSignal(
       ifStream = _.mergeWith(outputS),
-      ifSignal = _.composeChanges(_.mergeWith(outputS))
+      ifSignal = _.changes(_.mergeWith(outputS))
     ).asInstanceOf[Self[Status[A, B]]] // #TODO[Integrity] How to type this properly?
   }
 

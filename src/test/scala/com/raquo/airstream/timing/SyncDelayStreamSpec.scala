@@ -117,28 +117,22 @@ class SyncDelayStreamSpec extends UnitSpec {
       .map(ev => ev)
       .map(Calculation.log("signal2", calculations))
 
-    val signal3 = signal2
-      .composeChanges { signal2Changes =>
-        signal2Changes
-          .delaySync(signal1.changes)
+    val signal3 = signal2.changes(
+        _.delaySync(signal1.changes)
           .map(Calculation.log("signal3-changes-source", calculations))
-      }
+      )
       .map(Calculation.log("signal3", calculations))
 
-    val signal4 = signal1
-      .composeChanges { signal1Changes =>
-        signal1Changes
-          .delaySync(signal3.changes)
+    val signal4 = signal1.changes(
+        _.delaySync(signal3.changes)
           .map(Calculation.log("signal4-changes-source", calculations))
-      }
+      )
       .map(Calculation.log("signal4", calculations))
 
-    val signal5 = signal2
-      .composeChanges { signal2Changes =>
-        signal2Changes
-          .delaySync(signal3.changes)
+    val signal5 = signal2.changes(
+        _.delaySync(signal3.changes)
           .map(Calculation.log("signal5-changes-source", calculations))
-      }
+      )
       .map(Calculation.log("signal5", calculations))
 
     // --

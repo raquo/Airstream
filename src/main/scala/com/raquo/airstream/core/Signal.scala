@@ -48,14 +48,22 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
     operator(this)
   }
 
-  /** @param operator Note: Must not throw! */
+  /** Modify the Signal's changes stream, e.g. signal.composeChanges(_.delay(ms = 100))
+    *
+    * Alias to changes(operator). See also: [[composeAll]]
+    *
+    * @param operator Note: Must not throw!
+    */
   def composeChanges[AA >: A](
     operator: EventStream[A] => EventStream[AA]
   ): Signal[AA] = {
     composeAll(changesOperator = operator, initialOperator = identity)
   }
 
-  /** @param changesOperator Note: Must not throw!
+  /** Modify both the Signal's changes stream, and its initial.
+    * Similar to composeChanges, but lets you output a type unrelated to A.
+    *
+    * @param changesOperator Note: Must not throw!
     * @param initialOperator Note: Must not throw!
     */
   def composeAll[B](
@@ -76,6 +84,16 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
     * the changes stream stays in sync with the signal even after restarting.
     */
   def changes: EventStream[A] = new StreamFromSignal[A](parent = this, changesOnly = true)
+
+  /** Modify the Signal's changes, e.g. signal.changes(_.delay(ms = 100))
+    *
+    * Alias to [[composeChanges]]. See also: [[composeAll]]
+    *
+    * @param compose Note: Must not throw!
+    */
+  @inline def changes[AA >: A](compose: EventStream[A] => EventStream[AA]): Signal[AA] = {
+    composeChanges(compose)
+  }
 
   @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")
   def foldLeft[B](makeInitial: A => B)(fn: (B, A) => B): Signal[B] = scanLeft(makeInitial)(fn)
