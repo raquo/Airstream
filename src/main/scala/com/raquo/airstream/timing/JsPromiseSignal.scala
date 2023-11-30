@@ -14,7 +14,7 @@ class JsPromiseSignal[A](promise: js.Promise[A]) extends WritableSignal[Option[A
   // #Note: It is not possible to synchronously get a Javascript promise's value,
   //  or even to check if it has been resolved, so we have to start this signal with None
   //  to avoid creating an infinite loop with our currentValueFromParent implementation.
-  setCurrentValue(Success(None), isInitial = true)
+  setCurrentValue(Success(None))
 
   // #Note: We can't pull data from JS Promise on demand, this async access below is the best we can do.
   override protected def currentValueFromParent(): Try[Option[A]] = tryNow() // noop
