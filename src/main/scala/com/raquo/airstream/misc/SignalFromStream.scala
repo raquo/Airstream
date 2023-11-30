@@ -19,7 +19,7 @@ class SignalFromStream[A](
   // #Note: this overrides the default implementation
   override protected def onWillStart(): Unit = {
     Protected.maybeWillStart(parent)
-    maybeCurrentValueFromParent.foreach(setCurrentValue(_))
+    maybeCurrentValueFromParent.foreach(setCurrentValue)
   }
 
   override protected def currentValueFromParent(): Try[A] = {
@@ -30,10 +30,12 @@ class SignalFromStream[A](
     // #Note See also SplitChildSignal and CustomSignalSource for similar logic
     // #Note This can be called from inside tryNow(), so make sure to avoid an infinite loop
     if (maybeLastSeenCurrentValue.isEmpty) {
-      // signal has no current value – first time this is called
+      // Signal has no current value – first time this is called
       pullInitialValue
     } else if (!hasEmittedEvents && !cacheInitialValue) {
-      // signal has current value, has not emitted yet, and we're pulling a fresh one
+      // Signal has current value, has not emitted yet, and we're pulling a fresh one
+      // Essentially, we keep its value in sync with the `pullInitialValue` expression
+      // on every restart. #TODO[API] Not sure if this is a good default, to be honest.
       pullInitialValue
     } else {
       js.undefined

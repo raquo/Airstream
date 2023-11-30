@@ -1,12 +1,26 @@
 package com.raquo.airstream.core
 
+import com.raquo.airstream.combine.MergeStream
+import com.raquo.airstream.custom.CustomSource
 import com.raquo.airstream.util.JsPriorityQueue
 import com.raquo.ew.{JsArray, JsMap}
 
 import scala.scalajs.js
 
-// @TODO[Naming] Should probably be renamed to something like "Propagation"
-/** @param code Note: Must not throw! */
+/** Transaction is a moment in time during which Airstream guarantees no FRP glitches.
+  *
+  * Some observables need to emit their events in new transactions. Roughly speaking:
+  * - All async observables (e.g. delay(100))
+  * - All observables that can create loops in the observable graph (e.g. flatMapSwitch)
+  * - All observables that get their events from outside of Airstream (e.g. custom sources)
+  *
+  * An observable can only emit once in a given transaction.
+  * - See [[MergeStream]] or [[CustomSource]] for examples of handling that.
+  *
+  * See the docs for more details.
+  *
+  * @param code Note: Must not throw!
+  */
 class Transaction(private[Transaction] var code: Transaction => Any) {
 
   // val id = Transaction.nextId()
