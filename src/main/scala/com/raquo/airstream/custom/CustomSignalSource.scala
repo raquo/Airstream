@@ -37,7 +37,7 @@ object CustomSignalSource {
     new CustomSignalSource[A](Success(initial), config)
   }
 
-  @deprecated("Use Signal.fromCustomSourceTry", "15.0.0-M1")
+  @deprecated("Use Signal.fromCustomSource", "15.0.0-M1")
   def fromTry[A](
     initial: => Try[A]
   )(

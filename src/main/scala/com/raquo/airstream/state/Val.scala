@@ -21,4 +21,6 @@ object Val {
   def apply[A](value: A): Val[A] = fromTry(Success(value))
 
   @inline def fromTry[A](value: Try[A]): Val[A] = new Val(value)
+
+  @inline def fromEither[A](value: Either[Throwable, A]): Val[A] = new Val(value.toTry)
 }

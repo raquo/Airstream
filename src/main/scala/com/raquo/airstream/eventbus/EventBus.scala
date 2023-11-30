@@ -17,6 +17,9 @@ class EventBus[A] extends EventSource[A] with Sink[A] with Named {
 
   val events: EventStream[A] = writer.stream
 
+  /** Alias to [[events]] */
+  val stream: EventStream[A] = events
+
   def emit(event: A): Unit = writer.onNext(event)
 
   def emitTry(event: Try[A]): Unit = writer.onTry(event)

@@ -7,11 +7,12 @@ import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.debug.{DebuggableSignal, Debugger, DebuggerSignal}
 import com.raquo.airstream.distinct.DistinctSignal
-import com.raquo.airstream.misc.generated._
+import com.raquo.airstream.extensions._
 import com.raquo.airstream.misc.{MapSignal, ScanLeftSignal, StreamFromSignal}
 import com.raquo.airstream.ownership.Owner
-import com.raquo.airstream.split.{SplittableOneSignal, SplittableOptionSignal, SplittableSignal}
+import com.raquo.airstream.split.{SplittableOneSignal, SplittableSignal}
 import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
+import com.raquo.airstream.status.Status
 import com.raquo.airstream.timing.JsPromiseSignal
 import com.raquo.ew.JsArray
 
@@ -64,6 +65,8 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
     changesOperator(changes).toSignalWithTry(initialOperator(tryNow()))
   }
 
+  // #TODO[API] Why is .changes a def, and not a lazy val?
+  //  See `signal.changes shouldNotBe signal.changes` in SignalSpec
   /** A stream of all values in this signal, excluding the initial value.
     *
     * When re-starting this stream, it emits the signal's new
@@ -118,7 +121,13 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
     )
   }
 
-  override def recoverToTry: Signal[Try[A]] = map(Try(_)).recover[Try[A]] { case err => Some(Failure(err)) }
+  override def recoverToTry: Signal[Try[A]] = {
+    map(Try(_)).recover[Try[A]] { case err => Some(Failure(err)) }
+  }
+
+  override def recoverToEither: Signal[Either[Throwable, A]] = {
+    map(Right(_)).recover { case err => Some(Left(err)) }
+  }
 
   /** See also debug methods in [[com.raquo.airstream.debug.DebuggableObservable]] */
   override def debugWith(debugger: Debugger[A]): Signal[A] = {
@@ -144,7 +153,7 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
     * changed.
     */
   override protected[this] def onStart(): Unit = {
-    //println(s"$this onStart")
+    // println(s"$this onStart")
     tryNow() // trigger setCurrentValue if we didn't initialize this before
     super.onStart()
   }
@@ -171,6 +180,8 @@ object Signal {
   def fromValue[A](value: A): Val[A] = Val(value)
 
   def fromTry[A](value: Try[A]): Val[A] = Val.fromTry(value)
+
+  def fromEither[A](value: Either[Throwable, A]): Val[A] = Val.fromEither(value)
 
   /** The signal will start with `None`, even if the future is already resolved.
     * Once the future resolves (or after a minimal async delay if it's already resolved),
@@ -274,8 +285,20 @@ object Signal {
   /** Provides methods on Signal: splitOne */
   implicit def toSplittableOneSignal[A](signal: Signal[A]): SplittableOneSignal[A] = new SplittableOneSignal[A](signal)
 
+  /** Provides methods on Signal: splitBoolean */
+  implicit def toBooleanSignal(signal: Signal[Boolean]): BooleanSignal = new BooleanSignal(signal)
+
   /** Provides methods on Signal: splitOption */
-  implicit def toSplittableOptionSignal[A](signal: Signal[Option[A]]): SplittableOptionSignal[A] = new SplittableOptionSignal[A](signal)
+  implicit def toOptionSignal[A](signal: Signal[Option[A]]): OptionSignal[A] = new OptionSignal(signal)
+
+  /** Provides methods on Signal: splitEither */
+  implicit def toEitherSignal[A, B](signal: Signal[Either[A, B]]): EitherSignal[A, B] = new EitherSignal(signal)
+
+  /** Provides methods on Signal: splitTry */
+  implicit def toTrySignal[A](signal: Signal[Try[A]]): TrySignal[A] = new TrySignal(signal)
+
+  /** Provides methods on Signal: splitStatus */
+  implicit def toStatusSignal[In, Out](signal: Signal[Status[In, Out]]): StatusSignal[In, Out] = new StatusSignal(signal)
 
   /** Provides signal-specific debug* methods: debugSpyInitialEval, debugLogInitialEval, debugBreakInitialEval */
   implicit def toDebuggableSignal[A](signal: Signal[A]): DebuggableSignal[A] = new DebuggableSignal[A](signal)

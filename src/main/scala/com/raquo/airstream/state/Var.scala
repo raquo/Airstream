@@ -8,10 +8,10 @@ import com.raquo.airstream.util.hasDuplicateTupleKeys
 
 import scala.util.{Failure, Success, Try}
 
-/** Var is essentially a Signal that you can write to, so it's a source of state like EventBus is a source of events.
+/** Var is essentially a Signal that you can write to, so it's a source of state, like EventBus is a source of events.
   *
-  * There are two kinds of Vars: SourceVar and DerivedVar. The latter you can obtain by calling zoom(a => b, b => a) on
-  * a Var, however, unlike SourceVar, DerivedVar requires an Owner in order to run.
+  * There are two kinds of Vars: [[SourceVar]] and [[DerivedVar]]. The latter you can obtain by calling [[zoom]] on
+  * any Var, however, unlike SourceVar, DerivedVar requires an [[Owner]] in order to run.
   */
 trait Var[A] extends SignalSource[A] with Sink[A] with Named {
 
@@ -121,10 +121,10 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
   }
 
   /** Update a boolean Var by flipping its value (true -> false, or false -> true) */
-  def flip()(implicit ev: A =:= Boolean): Unit = update(v => ev.flip(!ev(v)))
+  def invert()(implicit ev: A =:= Boolean): Unit = update(v => ev.flip(!ev(v)))
 
   /** Observer that writes !var.now(), for vars of booleans. */
-  def flipWriter(implicit ev: A =:= Boolean): Observer[Unit] = updater((curr, _) => ev.flip(!ev(curr)))
+  def invertWriter(implicit ev: A =:= Boolean): Observer[Unit] = updater((curr, _) => ev.flip(!ev(curr)))
 
   @inline def tryNow(): Try[A] = signal.tryNow()
 
@@ -141,6 +141,8 @@ object Var {
   def apply[A](initial: A): Var[A] = fromTry(Success(initial))
 
   @inline def fromTry[A](initial: Try[A]): Var[A] = new SourceVar[A](initial)
+
+  @inline def fromEither[A](initial: Either[Throwable, A]): Var[A] = new SourceVar[A](initial.toTry)
 
   // Unfortunately we need the following tuple types to be concrete classes to satisfy Scala 3
 

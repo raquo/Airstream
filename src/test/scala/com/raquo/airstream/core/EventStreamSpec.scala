@@ -131,55 +131,6 @@ class EventStreamSpec extends UnitSpec {
 
   }
 
-  it("collectSome") {
-
-    implicit val owner: Owner = new TestableOwner
-
-    val bus = new EventBus[Option[Int]]
-
-    val effects = mutable.Buffer[Effect[_]]()
-    bus
-      .events
-      .collectSome
-      .foreach(v => effects += Effect("obs", v))
-
-    effects shouldBe mutable.Buffer()
-
-    // --
-
-    bus.emit(Some(1))
-
-    effects shouldBe mutable.Buffer(
-      Effect("obs", 1)
-    )
-    effects.clear()
-
-    // --
-
-    bus.emit(Some(2))
-
-    effects shouldBe mutable.Buffer(
-      Effect("obs", 2)
-    )
-    effects.clear()
-
-    // --
-
-    bus.emit(None)
-
-    effects shouldBe mutable.Buffer()
-
-    // --
-
-    bus.emit(Some(3))
-
-    effects shouldBe mutable.Buffer(
-      Effect("obs", 3)
-    )
-    effects.clear()
-
-  }
-
   it("collectOpt") {
 
     //def NonEmptyList[A](list: List[A]): Option[List[A]] = {

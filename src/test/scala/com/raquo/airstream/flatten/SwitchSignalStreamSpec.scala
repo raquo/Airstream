@@ -1,7 +1,6 @@
 package com.raquo.airstream.flatten
 
 import com.raquo.airstream.UnitSpec
-import com.raquo.airstream.core.Observable.MetaObservable
 import com.raquo.airstream.core.{EventStream, Observer, Signal}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}

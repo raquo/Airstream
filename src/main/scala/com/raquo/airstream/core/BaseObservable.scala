@@ -1,10 +1,12 @@
 package com.raquo.airstream.core
 
-import com.raquo.airstream.debug.Debugger
+import com.raquo.airstream.debug.{DebuggableObservable, DebuggableSignal, Debugger}
 import com.raquo.airstream.flatten.{AllowFlatMap, FlattenStrategy, MergingStrategy, SwitchingStrategy}
 import com.raquo.airstream.ownership.{Owner, Subscription}
+import com.raquo.airstream.status.{FlatMapStatusObservable, Status}
 import com.raquo.ew.JsArray
 
+import scala.annotation.unused
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
@@ -60,7 +62,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     project: A => Inner[B]
   )(
     implicit strategy: SwitchingStrategy[Self, Inner, Output],
-    allowFlatMap: AllowFlatMap
+    @unused allowFlatMap: AllowFlatMap
   ): Output[B] = {
     strategy.flatten(map(project))
   }
@@ -91,6 +93,16 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     strategy: FlattenStrategy[Self, Inner, Output]
   ): Output[B] = {
     strategy.flatten(map(project))
+  }
+
+  /** Based on [[flatMapSwitch]], but tracks the status of input and output to flatMap. See [[Status]]. */
+  def flatMapWithStatus[B](project: A => EventStream[B]): Self[Status[A, B]] = {
+    FlatMapStatusObservable[A, B, Self](this, project)
+  }
+
+  /** Shorthand for `flatMapWithStatus(_ => innerStream)`. */
+  def flatMapWithStatus[B](innerStream: => EventStream[B]): Self[Status[A, B]] = {
+    flatMapWithStatus(_ => innerStream)
   }
 
   /** Distinct events (but keep all errors) by == (equals) comparison */
@@ -140,10 +152,19 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     ifSignal: Signal[A] => B
   ): B = {
     this match {
-      case stream: EventStream[A@unchecked] => ifStream(stream)
-      case signal: Signal[A@unchecked] => ifSignal(signal)
+      case stream: EventStream[A @unchecked] => ifStream(stream)
+      case signal: Signal[A @unchecked] => ifSignal(signal)
       case _ => throw new Exception("All Observables must extend EventStream or Signal")
     }
+  }
+
+  // #TODO[API] Hiding this for now, I'm not convinced that it's all that useful,
+  //  the Self type inference is still very limited, does not chain well.
+  protected[raquo] def matchStreamOrSignalSelf[B](
+    ifStream: EventStream[A] => EventStream[B],
+    ifSignal: Signal[A] => Signal[B]
+  ): Self[B] = {
+    matchStreamOrSignal(ifStream, ifSignal).asInstanceOf[Self[B]]
   }
 
   // @TODO[API] I don't like the Option[O] output type here very much. We should consider a sentinel error object instead (need to check performance). Or maybe add a recoverOrSkip method or something?
@@ -152,18 +173,12 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
 
   def recoverIgnoreErrors: Self[A] = recover[A] { case _ => None }
 
+  // #TODO[Scala] I'm not sure why I can't implement this method here. Getting weird type error about `Self`.
   /** Convert this to an observable that emits Failure(err) instead of erroring */
   def recoverToTry: Self[Try[A]]
 
-  /** Unwrap Try to "undo" `recoverToTry` – Encode Failure(err) as observable errors, and Success(v) as events */
-  def throwFailure[B](implicit ev: A <:< Try[B]): Self[B] = {
-    map { value =>
-      ev(value) match {
-        case Success(v) => v
-        case Failure(err) => throw err
-      }
-    }
-  }
+  /** Convert this to an observable that emits Left(err) instead of erroring */
+  def recoverToEither: Self[Either[Throwable, A]]
 
   /** Create a new observable that listens to this one and has a debugger attached.
     *

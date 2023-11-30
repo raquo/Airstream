@@ -8,9 +8,10 @@ import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.debug.{DebuggableStream, Debugger, DebuggerStream}
 import com.raquo.airstream.distinct.DistinctStream
 import com.raquo.airstream.eventbus.EventBus
+import com.raquo.airstream.extensions._
 import com.raquo.airstream.misc._
-import com.raquo.airstream.misc.generated._
-import com.raquo.airstream.split.{SplittableOneStream, SplittableOptionStream, SplittableStream}
+import com.raquo.airstream.split.{SplittableOneStream, SplittableStream}
+import com.raquo.airstream.status.{AsyncStatusObservable, Status}
 import com.raquo.airstream.timing._
 import com.raquo.ew.JsArray
 
@@ -56,9 +57,6 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
     */
   def collect[B](pf: PartialFunction[A, B]): EventStream[B] = collectOpt(pf.lift)
 
-  /** Emit `x` if parent stream emits `Some(x)`, do nothing otherwise */
-  def collectSome[B](implicit ev: A <:< Option[B]): EventStream[B] = collectOpt(ev(_))
-
   /** Apply `fn` to parent stream event, and emit resulting x if it returns Some(x)
     *
     * @param fn Note: guarded against exceptions
@@ -70,6 +68,11 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
   /** @param ms milliseconds of delay */
   def delay(ms: Int = 0): EventStream[A] = {
     new DelayStream(parent = this, ms)
+  }
+
+  /** Based on [[delay]], but tracks the status of input and output to that operator. See [[Status]]. */
+  def delayWithStatus(ms: Int): EventStream[Status[A, A]] = {
+    AsyncStatusObservable[A, A, EventStream](this, _.delay(ms))
   }
 
   /** Make a stream that emits this stream's values but waits for `after` stream to emit first in a given transaction.
@@ -84,9 +87,19 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
     new ThrottleStream(parent = this, intervalMs = ms, leading = leading)
   }
 
+  /** Based on [[throttle]], but tracks the status of input and output to that operator. See [[Status]]. */
+  def throttleWithStatus(ms: Int, leading: Boolean = true): EventStream[Status[A, A]] = {
+    AsyncStatusObservable[A, A, EventStream](this, _.throttle(ms, leading))
+  }
+
   /** See docs for [[DebounceStream]] */
   def debounce(ms: Int): EventStream[A] = {
     new DebounceStream(parent = this, ms)
+  }
+
+  /** Based on [[debounce]], but tracks the status of input and output to that operator. See [[Status]]. */
+  def debounceWithStatus(ms: Int): EventStream[Status[A, A]] = {
+    AsyncStatusObservable[A, A, EventStream](this, _.debounce(ms))
   }
 
   /** Drop (skip) the first `numEvents` events from this stream. Note: errors are NOT dropped.
@@ -259,6 +272,13 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
     new SignalFromStream(this, initial, cacheInitialValue)
   }
 
+  /** @param cacheInitialValue if false, signal's initial value will be re-evaluated on every
+    *                          restart (so long as the parent stream does not emit any values)
+    */
+  def toSignalWithEither[B >: A](initial: => Either[Throwable, B], cacheInitialValue: Boolean = false): Signal[B] = {
+    new SignalFromStream(this, initial.toTry, cacheInitialValue)
+  }
+
   /** Just a convenience helper. stream.compose(f) is equivalent to f(stream) */
   def compose[B](operator: EventStream[A] => EventStream[B]): EventStream[B] = {
     operator(this)
@@ -281,7 +301,13 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
     )
   }
 
-  override def recoverToTry: EventStream[Try[A]] = map(Try(_)).recover[Try[A]] { case err => Some(Failure(err)) }
+  override def recoverToTry: EventStream[Try[A]] = {
+    map(Try(_)).recover { case err => Some(Failure(err)) }
+  }
+
+  override def recoverToEither: EventStream[Either[Throwable, A]] = {
+    map(Right(_)).recover { case err => Some(Left(err)) }
+  }
 
   /** See also various debug methods in [[com.raquo.airstream.debug.DebuggableObservable]] */
   override def debugWith(debugger: Debugger[A]): EventStream[A] = {
@@ -311,7 +337,8 @@ object EventStream {
   }
 
   /** @param emitOnce if true, the event will be emitted at most one time.
-    *                 If false, the event will be emitted every time the stream is started. */
+    *                 If false, the event will be emitted every time the stream is started.
+    */
   def fromSeq[A](events: Seq[A], emitOnce: Boolean = false): EventStream[A] = {
     fromCustomSource[A](
       shouldStart = startIndex => if (emitOnce) startIndex == 1 else true,
@@ -321,7 +348,8 @@ object EventStream {
   }
 
   /** @param emitOnce if true, the event will be emitted at most one time.
-    *                 If false, the event will be emitted every time the stream is started. */
+    *                 If false, the event will be emitted every time the stream is started.
+    */
   def fromValue[A](event: A, emitOnce: Boolean = false): EventStream[A] = {
     fromCustomSource[A](
       shouldStart = startIndex => if (emitOnce) startIndex == 1 else true,
@@ -331,8 +359,20 @@ object EventStream {
   }
 
   /** @param emitOnce if true, the event will be emitted at most one time.
-    *                 If false, the event will be emitted every time the stream is started. */
+    *                 If false, the event will be emitted every time the stream is started.
+    */
   def fromTry[A](value: Try[A], emitOnce: Boolean = false): EventStream[A] = {
+    fromCustomSource[A](
+      shouldStart = startIndex => if (emitOnce) startIndex == 1 else true,
+      start = (fireEvent, fireError, _, _) => value.fold(fireError, fireEvent),
+      stop = _ => ()
+    )
+  }
+
+  /** @param emitOnce if true, the event will be emitted at most one time.
+    *                 If false, the event will be emitted every time the stream is started.
+    */
+  def fromEither[A](value: Either[Throwable, A], emitOnce: Boolean = false): EventStream[A] = {
     fromCustomSource[A](
       shouldStart = startIndex => if (emitOnce) startIndex == 1 else true,
       start = (fireEvent, fireError, _, _) => value.fold(fireError, fireEvent),
@@ -451,8 +491,20 @@ object EventStream {
   /** Provides methods on EventStream: splitOne */
   implicit def toSplittableOneStream[A](stream: EventStream[A]): SplittableOneStream[A] = new SplittableOneStream(stream)
 
-  /** Provides methods on EventStream: splitOption */
-  implicit def toSplittableOptionStream[A](stream: EventStream[Option[A]]): SplittableOptionStream[A] = new SplittableOptionStream(stream)
+  /** Provides methods on stream: splitBoolean */
+  implicit def toBooleanStream[A](stream: EventStream[Boolean]): BooleanStream = new BooleanStream(stream)
+
+  /** Provides methods on stream: filterSome, collectSome, splitOption */
+  implicit def toOptionStream[A](stream: EventStream[Option[A]]): OptionStream[A] = new OptionStream(stream)
+
+  /** Provides methods on stream: collectLeft, collectRight */
+  implicit def toEitherStream[A, B](stream: EventStream[Either[A, B]]): EitherStream[A, B] = new EitherStream(stream)
+
+  /** Provides methods on stream: collectFailure, collectSuccess */
+  implicit def toTryStream[A](stream: EventStream[Try[A]]): TryStream[A] = new TryStream(stream)
+
+  /** Provides methods on stream: collectOutput, collectResolved, collectPending, collectPendingInput, splitStatus */
+  implicit def toStatusStream[In, Out](stream: EventStream[Status[In, Out]]): StatusStream[In, Out] = new StatusStream(stream)
 
   /** Provides debug* methods on EventStream: debugSpy, debugLogEvents, debugBreakErrors, etc. */
   implicit def toDebuggableStream[A](stream: EventStream[A]): DebuggableStream[A] = new DebuggableStream[A](stream)

@@ -82,7 +82,7 @@ I created Airstream because I found existing solutions were not suitable for bui
   * [Restarting Observables](#restarting-observables)
     * [Signals Re-Syncing on Restart](#signals-re-syncing-on-restart)
     * [Restarting Streams](#restarting-streams)
-    * [Restarting Streams That Depend on Signals (signal.changes)](#restarting-streams-that-depend-on-signals--signalchanges-)
+    * [Restarting Streams That Depend on Signals (signal.changes)](#restarting-streams-that-depend-on-signals-signalchanges)
     * [Restarting Signals That Depend on Streams](#restarting-signals-that-depend-on-streams)
     * [Stopping is Actually Pausing](#stopping-is-actually-pausing)
     * [Signals That Keep Updating When Stopped](#signals-that-keep-updating-when-stopped)
@@ -1542,7 +1542,7 @@ If instead of adding two observers to `signal.changes`, we add one observer to `
 
 To avoid all this, we have a special mechanism that lets us batch simultaneous events in a new transaction when restarting observables. Currently, it's only used to restart `signal.changes`. Basically, to avoid this restarting glitch, you want to wrap all your simultaneous observer additions into `Transaction.onStart.shared { /* code here */ }`, so any `signal.changes` you restart within that block will all emit in the same transaction. This is also not a perfect match for "normal" Airstream behaviour, and could potentially cause the other kind of FRP glitch where an intermediary event that you do expect to happen is swallowed by the system instead. However, of the two evils I think this is a lesser one, because it's much less common for that to be a problem. Ideally I would like to find a more robust mechanism for this edge case, but currently I lack the time required to do the research.
 
-Airstream's `DynamicOwner` uses this `onStart.shared` mechanism when activating all of its subscriptions, and all Laminar's methods like `Tag.apply` and `amend` do the same when applying multiple modifiers at a time, so you really shouldn't ever need to use `onStart.shared` manually, unless you're an advanced user creating your own custom modifiers or ownership primitives.
+Airstream's `DynamicOwner` uses this `onStart.shared` mechanism when activating all of its subscriptions, and all Laminar's methods like `amend` do the same when applying multiple modifiers at a time, so you really shouldn't ever need to use `onStart.shared` manually, unless you're an advanced user creating your own custom modifiers or ownership primitives.
 
 
 #### Restarting Signals That Depend on Streams

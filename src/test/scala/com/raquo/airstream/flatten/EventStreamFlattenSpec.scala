@@ -513,6 +513,8 @@ class EventStreamFlattenSpec extends AsyncUnitSpec with Matchers {
       bus.events.flatMap(_ => EventStream.fromValue(1))
     }
 
+    // --
+
     assertTypeError("bus.events.map(_ => EventStream.fromValue(1)).flatten")
 
     @nowarn("cat=deprecation")

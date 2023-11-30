@@ -4,7 +4,7 @@ import com.raquo.airstream.core.{EventStream, Observable, Signal}
 
 import scala.annotation.implicitNotFound
 
-/** [[Observable.MetaObservable.switchFlatten]] needs an instance of this trait to know how exactly to do the flattening. */
+/** Specifies how to flatten observables of observables. */
 trait FlattenStrategy[
   -Outer[+_] <: Observable[_],
   -Inner[_],

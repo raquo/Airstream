@@ -185,6 +185,13 @@ class SignalSpec extends UnitSpec {
 
     // .changes can't be a lazy val for memory management purposes
     // (parent should not have a reference to a child that has no observers)
+    // #TODO is this actually a legit concern?
+    //  - This simply links the two observables together for GC purposes
+    //  - GC should still be able to eliminate them when both of them are
+    //    no longer referenced
+    //  - If .changes is a def, in some cases we could GC it sooner
+    //    than if it was linked, but on the flip side, now we need to create
+    //    a new observable for every consumer of .changes, instead of reusing it.
     signal.changes shouldNotBe signal.changes
 
     // --

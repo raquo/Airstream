@@ -1,8 +1,12 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.debug.DebuggableObservable
+import com.raquo.airstream.extensions._
 import com.raquo.airstream.flatten.FlattenStrategy._
-import com.raquo.airstream.flatten.{AllowFlatten, FlattenStrategy, MergingStrategy, SwitchingStrategy}
+import com.raquo.airstream.flatten.{MergingStrategy, SwitchingStrategy}
+import com.raquo.airstream.status.Status
+
+import scala.util.Try
 
 // @TODO[Scala3] Put this trait together with BaseObservable in the same file, and make BaseObservable sealed.
 
@@ -17,36 +21,23 @@ object Observable extends ObservableLowPriorityImplicits {
   /** Provides debug* methods on Observable: debugSpy, debugLogEvents, debugBreakErrors, etc. */
   implicit def toDebuggableObservable[A](observable: Observable[A]): DebuggableObservable[Observable, A] = new DebuggableObservable[Observable, A](observable)
 
-  // @TODO[Elegance] Maybe use implicit evidence on a method instead?
-  implicit class MetaObservable[A, Outer[+_] <: Observable[_], Inner[_]](
-    val parent: Outer[Inner[A]]
-  ) extends AnyVal {
+  /** Provides methods on observable: flip, foldBoolean */
+  implicit def toBooleanObservable[Self[+_] <: Observable[_]](observable: BaseObservable[Self, Boolean]): BooleanObservable[Self] = new BooleanObservable(observable)
 
-    @inline def flatten[Output[+_] <: Observable[_]](
-      implicit strategy: SwitchingStrategy[Outer, Inner, Output],
-      allowFlatMap: AllowFlatten
-    ): Output[A] = {
-      strategy.flatten(parent)
-    }
+  /** Provides methods on observable: mapSome, mapFilterSome, foldOption, mapToRight, mapToLeft */
+  implicit def toOptionObservable[A, Self[+_] <: Observable[_]](observable: BaseObservable[Self, Option[A]]): OptionObservable[A, Self] = new OptionObservable(observable)
 
-    @inline def flattenSwitch[Output[+_] <: Observable[_]](
-      implicit strategy: SwitchingStrategy[Outer, Inner, Output]
-    ): Output[A] = {
-      strategy.flatten(parent)
-    }
+  /** Provides methods on observable: mapRight, mapLeft, foldEither, mapToOption, mapLeftToOption */
+  implicit def toEitherObservable[A, B, Self[+_] <: Observable[_]](observable: BaseObservable[Self, Either[A, B]]): EitherObservable[A, B, Self] = new EitherObservable(observable)
 
-    @inline def flattenMerge[Output[+_] <: Observable[_]](
-      implicit strategy: MergingStrategy[Outer, Inner, Output]
-    ): Output[A] = {
-      strategy.flatten(parent)
-    }
+  /** Provides methods on observable: mapSuccess, mapFailure, foldTry, mapToEither, recoverFailure, throwFailure */
+  implicit def toTryObservable[A, Self[+_] <: Observable[_]](observable: BaseObservable[Self, Try[A]]): TryObservable[A, Self] = new TryObservable(observable)
 
-    @inline def flattenCustom[Output[+_] <: Observable[_]](
-      strategy: FlattenStrategy[Outer, Inner, Output]
-    ): Output[A] = {
-      strategy.flatten(parent)
-    }
-  }
+  /** Provides methods on observable: mapOutput, mapInput, mapResolved, mapPending, foldStatus */
+  implicit def toStatusObservable[In, Out, Self[+_] <: Observable[_]](observable: BaseObservable[Self, Status[In, Out]]): StatusObservable[In, Out, Self] = new StatusObservable(observable)
+
+  /** Provides methods on observable: flattenSwitch, flattenMerge, flattenCustom, flatten (deprecated) */
+  implicit def toMetaObservable[A, Outer[+_] <: Observable[_], Inner[_]](observable: Outer[Inner[A]]): MetaObservable[A, Outer, Inner] = new MetaObservable(observable)
 
   implicit val switchStreamStrategy: SwitchingStrategy[Observable, EventStream, EventStream] = SwitchStreamStrategy
 

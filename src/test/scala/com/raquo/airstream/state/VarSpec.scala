@@ -919,22 +919,22 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
 
     // --
 
-    v.flip()
+    v.invert()
     assertEquals(v.now(), false)
 
     // --
 
-    v.flip()
+    v.invert()
     assertEquals(v.now(), true)
 
     // --
 
-    v.flipWriter.onNext(())
+    v.invertWriter.onNext(())
     assertEquals(v.now(), false)
 
     // --
 
-    v.flipWriter.onNext(())
+    v.invertWriter.onNext(())
     assertEquals(v.now(), true)
   }
 }
