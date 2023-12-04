@@ -679,7 +679,7 @@ class PullResetSignalSpec extends UnitSpec {
 
       unhandledErrors.toList shouldBe List(
         errorNumberMsg,
-        s"CombinedError: $errorNumberMsg"
+        s"CombinedError: Exception: $errorNumberMsg"
       )
       unhandledErrors.clear()
 
@@ -696,10 +696,11 @@ class PullResetSignalSpec extends UnitSpec {
 
       unhandledErrors.toList shouldBe Nil
 
+    } catch {
+      case err: Throwable => throw err
     } finally {
       AirstreamError.registerUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
       AirstreamError.unregisterUnhandledErrorCallback(errorCallback)
-      assert(unhandledErrors.isEmpty)
     }
 
   }

@@ -1,9 +1,8 @@
 package com.raquo.airstream.split
 
 import com.raquo.airstream.common.SingleParentSignal
-import com.raquo.airstream.core.{Protected, Signal, Transaction}
+import com.raquo.airstream.core.{AirstreamError, Protected, Signal, Transaction}
 import com.raquo.airstream.timing.SyncDelayStream
-import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
@@ -124,7 +123,9 @@ class SplitSignal[M[_], Input, Output, Key](
     }
 
     if (duplicateKeysConfig.shouldWarn && duplicateKeys.nonEmpty) {
-      dom.console.error(s"Warning: Duplicate keys detected in {$parent}.split(): `${duplicateKeys.mkString("`, `")}`. This is a bug in your code. See comment in Airstream's DuplicateKeysConfig.scala.")
+      AirstreamError.sendUnhandledError(
+        new Exception(s"Duplicate keys detected in {$parent}.split(): `${duplicateKeys.mkString("`, `")}`. This is a bug in your code. See comment in Airstream's DuplicateKeysConfig.scala.")
+      )
     }
 
     nextOutputs

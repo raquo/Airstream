@@ -159,10 +159,12 @@ class TransactionSpec extends UnitSpec {
       )
       unhandledErrors.clear()
 
+    } catch {
+      case err: Throwable => throw err
+
     } finally {
       AirstreamError.registerUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
       AirstreamError.unregisterUnhandledErrorCallback(errorCallback)
-      assert(unhandledErrors.isEmpty)
     }
   }
 

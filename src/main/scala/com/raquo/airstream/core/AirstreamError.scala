@@ -84,7 +84,7 @@ object AirstreamError {
     *
     * We do not publish a stream of errors because:
     * a) we want to maximally disconnect it from the rest of Airstream's Transaction infrastructure
-    * b) we want easier debugging, and thus a shorter stack trace between
+    * b) we want easier debugging, and thus a shorter stack trace
     *
     * Instead, we provide a similar Observer-based API as described below.
     */
@@ -137,12 +137,12 @@ object AirstreamError {
   }
 
   // @TODO[API,Integrity] How should we report errors here? Must make sure to not induce an infinite loop. Throw an error in a setTimeout?
-  private[airstream] def sendUnhandledError(err: Throwable): Unit = {
+  def sendUnhandledError(err: Throwable): Unit = {
     unhandledErrorCallbacks.foreach(fn => try {
       fn(err)
     } catch {
       case err: Throwable if fn == unsafeRethrowErrorCallback =>
-        // Note: this does not let other error callbacks to execute
+        // Note: this does not let other error callbacks execute
         throw err
       case err: Throwable =>
         dom.console.warn("Error processing an unhandled error callback:")
