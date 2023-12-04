@@ -7,11 +7,34 @@ import scala.scalajs.js
 
 sealed abstract class AirstreamError(message: String) extends Throwable(message)
 
-// @TODO[Naming]
 object AirstreamError {
 
+  def getFullMessage(e: Throwable): String = {
+    // getMessage can have a custom implementation, and thus can throw
+    // Also, currently, MatchError.getMessage throws an NPE
+    // if the object being matched is a native JS type.
+    val errorMessage = try {
+      e.getMessage
+    } catch {
+      case err: Throwable =>
+        // Don't try to read anything from `err` here, things are f*cked as they are already.
+        "(Unable to get the message for this error - exception occurred in its getMessage)"
+    }
+    e.getClass.getSimpleName + ": " + errorMessage
+  }
+
+  def getStackTrace(err: Throwable, newline: String): String = {
+    // See comments in getFullMessage - same applies here.
+    try {
+      err.getStackTrace.mkString(newline)
+    } catch {
+      case err: Throwable =>
+        "(Unable to get the stacktrace for this error - exception occurred in its getStackTrace)"
+    }
+  }
+
   case class VarError(message: String, cause: Option[Throwable])
-    extends AirstreamError(s"$message; cause: ${cause.map(_.getMessage)}") {
+    extends AirstreamError(s"$message; cause: ${cause.map(getFullMessage)}") {
 
     cause.foreach(initCause)
 
@@ -19,7 +42,7 @@ object AirstreamError {
   }
 
   case class ErrorHandlingError(error: Throwable, cause: Throwable)
-    extends AirstreamError(s"ErrorHandlingError: ${error.getMessage}; cause: ${cause.getMessage}") {
+    extends AirstreamError(s"ErrorHandlingError: ${getFullMessage(error)}; cause: ${getFullMessage(cause)}") {
 
     initCause(cause)
 
@@ -27,20 +50,20 @@ object AirstreamError {
   }
 
   case class CombinedError(causes: Seq[Option[Throwable]])
-    extends AirstreamError(s"CombinedError: ${causes.flatten.map(_.getMessage).mkString("; ")}") {
+    extends AirstreamError(s"CombinedError: ${causes.flatten.map(getFullMessage).mkString("; ")}") {
 
     causes.flatten.headOption.foreach(initCause) // Just get the first cause – better than nothing I guess?
 
     override def toString: String = s"CombinedError: ${causes.flatten.toList.mkString("; ")}"
   }
 
-  case class ObserverError(error: Throwable) extends AirstreamError(s"ObserverError: ${error.getMessage}") {
+  case class ObserverError(error: Throwable) extends AirstreamError(s"ObserverError: ${getFullMessage(error)}") {
 
     override def toString: String = s"ObserverError: $error"
   }
 
   case class ObserverErrorHandlingError(error: Throwable, cause: Throwable)
-    extends AirstreamError(s"ObserverErrorHandlingError: ${error.getMessage}; cause: ${cause.getMessage}") {
+    extends AirstreamError(s"ObserverErrorHandlingError: ${getFullMessage(error)}; cause: ${getFullMessage(cause)}") {
 
     initCause(cause)
 
@@ -48,7 +71,7 @@ object AirstreamError {
   }
 
   case class DebugError(error: Throwable, cause: Option[Throwable])
-    extends AirstreamError(s"DebugError: ${error.getMessage}; cause: ${cause.map(_.getMessage)}") {
+    extends AirstreamError(s"DebugError: ${getFullMessage(error)}; cause: ${cause.map(getFullMessage)}") {
 
     override def toString: String = s"DebugError: $error; cause: $cause"
   }
@@ -72,9 +95,12 @@ object AirstreamError {
     */
   val consoleErrorCallback: Throwable => Unit = { err =>
     try {
-      dom.console.error(err.getMessage + "\n" + err.getStackTrace.mkString("\n"))
+      dom.console.error(getFullMessage(err) + "\n" + getStackTrace(err, newline = "\n"))
     } catch {
-      case _: Throwable => ()
+      case err: Throwable =>
+        // If you ever hit this, you will _really_ appreciate this printout.
+        dom.console.error("Error in AirstreamError.consoleErrorCallback:")
+        dom.console.error(err)
     }
   }
 
