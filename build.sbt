@@ -45,7 +45,7 @@ scalacOptions ~= { options: Seq[String] =>
   ))
 }
 
-scalacOptions += {
+scalacOptions ++= sys.env.get("CI").map { _ =>
   val localSourcesPath = baseDirectory.value.toURI
   val remoteSourcesPath = s"https://raw.githubusercontent.com/raquo/Airstream/${git.gitHeadCommit.value.get}/"
   val sourcesOptionName = if (scalaVersion.value.startsWith("2.")) "-P:scalajs:mapSourceURI" else "-scalajs-mapSourceURI"
