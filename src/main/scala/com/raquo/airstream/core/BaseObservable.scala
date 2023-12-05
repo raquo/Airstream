@@ -68,7 +68,9 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
   }
 
   /** Alias to flatMapSwitch(_ => s) */
-  @inline def flatMapTo[B, Inner[_], Output[+_] <: Observable[_]](s: Inner[B])(
+  @inline def flatMapTo[B, Inner[_], Output[+_] <: Observable[_]](
+    s: => Inner[B]
+  )(
     implicit strategy: SwitchingStrategy[Self, Inner, Output]
   ): Output[B] = {
     strategy.flatten(map(_ => s))
@@ -134,31 +136,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
   /** Execute a side effecting callback every time the observable emits.
     * If it's a signal, it also runs when its initial value is evaluated.
     *
-    * Note: some signals such as stream.startWith or signal.composeAll
-    * have `cacheInitialValue` config, which could affect the number of
-    * times this callback is called in cases when you re-start a signal
-    * that was previously started, but has never emitted events before.
-    * In such cases, if cacheInitialValue == false (the default) , it
-    * will cause the signal's initial value to be re-evaluated,
-    * and this will in turn trigger the provided tapEach callback.
-    *
-    * See [[com.raquo.airstream.misc.SignalFromStream]]
-    *
-    * // #TODO[API] How to better type this?
-    * Note: Do not provide a callback that returns a LAZY value such as EventStream,
-    * it will not be started. I may eventually add a flatTapEach method for this.
-    *
-    * Note: Calling tapEach on an observable does not add observers to it. The callback
-    * will only run if something else is listening to the observable.
-    *
-    * Note: The primary method of running side effects in Airstream is putting them
-    * into Observers. In general, it's good practice to keep Observables themselves
-    * free of side effects. Airstream is actually pretty good at handling non-"pure"
-    * observables, but it's better to have such separation of concerns for your own
-    * sanity and the code's predictability / maintainability.
-    *
-    * Note: This method is called `tapEach` for consistency with Scala collections.
-    * Scala also has a general `tap` method available by importing `util.chaining.*`.
+    * See https://github.com/raquo/Airstream/#tapEach for more details.
     */
   def tapEach[U](f: A => U): Self[A] = map { v => f(v); v }
 
