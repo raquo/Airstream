@@ -4,6 +4,7 @@ import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.state.Var
+import org.scalajs.dom
 
 import scala.collection.mutable
 
@@ -166,4 +167,55 @@ class TransactionSpec extends UnitSpec {
     }
   }
 
+  it("Stack safe (no overflow via breadth)") {
+    val owner = new TestableOwner
+    val bus = new EventBus[Unit]
+
+    val num = 20000
+    var ix = 0
+
+    try {
+      bus.events.foreach { _ =>
+        new Transaction(_ =>
+          for {
+            i <- 1 to num
+          } yield {
+            new Transaction(_ =>
+              ix += 1
+            )
+          }
+        )
+      }(owner)
+      bus.emit(())
+      // dom.console.log(s"Done without errors: ${ix}")
+    } catch {
+      case err: Throwable =>
+        dom.console.log(s"Stack overflow (depth) after ${ix} sibling transactions!")
+        throw err
+    }
+  }
+
+  it("Stack safe (no overflow via depth)") {
+    val owner = new TestableOwner
+    val bus = new EventBus[Int]
+
+    val maxNum = 20000
+    var ix = 0
+
+    try {
+      bus.events.filter(_ < maxNum).map { n =>
+        ix = n + 1
+        // dom.console.log(ix)
+        ix
+      }.foreach { n =>
+        bus.emit(n)
+      }(owner)
+      bus.emit(0)
+      // dom.console.log(s"Done without errors: ${ix}")
+    } catch {
+      case err: Throwable =>
+        dom.console.log(s"Stack overflow (depth) after ${ix} nested transactions!")
+        throw err
+    }
+  }
 }
