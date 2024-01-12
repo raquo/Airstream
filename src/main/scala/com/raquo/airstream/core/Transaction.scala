@@ -5,6 +5,7 @@ import com.raquo.airstream.custom.CustomSource
 import com.raquo.airstream.util.JsPriorityQueue
 import com.raquo.ew.{JsArray, JsMap}
 
+import scala.annotation.tailrec
 import scala.scalajs.js
 
 /** Transaction is a moment in time during which Airstream guarantees no FRP glitches.
@@ -230,12 +231,14 @@ object Transaction {
         //  Consider this later when I have moer comprehensive benchmarks.
         pushToStack(newTransaction)
         run(newTransaction)
+        done(newTransaction)
       } { currentTransaction =>
         enqueueChild(parent = currentTransaction, newChild = newTransaction)
       }
     }
 
-    def done(transaction: Transaction): Unit = {
+    /** #Warning: you MUST call done(trx) after calling `run(trx)`! */
+    @tailrec def done(transaction: Transaction): Unit = {
       //println(s"--done trx: ${transaction.id}")
       //if (lastId > 50) {
       //  throw new Exception(">>> Overflow!!!!!")
@@ -251,34 +254,41 @@ object Transaction {
 
       transaction.code = throwDeadTrxError // stop holding up `trx` contents in memory
 
-      peekStack().fold {
+      val maybeNextTransaction = peekStack()
+      if (maybeNextTransaction == js.undefined) {
         if (children.size > 0) {
-          //println(s"Stack is empty but children remain: ${children.map(t => (t._1.id, t._2.map(_.id)))}")
+          // dom.console.log(s"Stack is empty but children remain: ${children.map(t => (t._1.id, t._2.map(_.id)))}")
           var numChildren = 0
           children.forEach((transactions, _) => numChildren += transactions.length)
           throw new Exception(s"Transaction queue error: Stack cleared, but a total of ${numChildren} children for ${children.size} transactions remain. This is a bug in Airstream.")
         }
-      } { nextTransaction =>
+      } else {
+        val nextTransaction = maybeNextTransaction.asInstanceOf[Transaction]
         run(nextTransaction)
+        done(nextTransaction)
       }
     }
 
     /* If this transaction has children remaining, set first child to be run next.
      * Otherwise, remove transaction from the stack and do the same for next transaction on stack.
      */
-    def putNextTransactionOnStack(doneTransaction: Transaction): Unit = {
+    @tailrec def putNextTransactionOnStack(doneTransaction: Transaction): Unit = {
       // We use depth-first because of https://github.com/raquo/Airstream/issues/39
-      dequeueChild(parent = doneTransaction).fold[Unit] {
+      val maybeNextChildTrx = dequeueChild(parent = doneTransaction)
+      if (maybeNextChildTrx == js.undefined) {
         // No children, this transaction is truly done now, remove it from the stack.
         popStack()
         // If any transactions left in the stack, recurse
-        peekStack().foreach { parentTransaction =>
+        val maybeParentTransaction = peekStack()
+        if (maybeParentTransaction != js.undefined) {
+          val parentTransaction = maybeParentTransaction.asInstanceOf[Transaction]
           putNextTransactionOnStack(doneTransaction = parentTransaction)
         }
-      } { nextChild =>
+      } else {
+        val nextChildTrx = maybeNextChildTrx.asInstanceOf[Transaction]
         // Found a child transaction, so put it on the stack, so that it wil run next.
         // Once that child is all done, it will be popped from the stack, and we will
-        pushToStack(nextChild)
+        pushToStack(nextChildTrx)
       }
     }
 
@@ -336,6 +346,7 @@ object Transaction {
 
   private[airstream] def currentTransaction(): js.UndefOr[Transaction] = pendingTransactions.peekStack()
 
+  /** #Warning: you MUST call `done(trx)` after calling `run(trx)`! */
   private def run(transaction: Transaction): Unit = {
     //println(s"--START ${transaction}")
     //maybeCurrentTransaction = transaction
@@ -354,7 +365,6 @@ object Transaction {
       //  iff `code` throws AND the transaction was created while no other transaction is running
       //  This is not very predictable, so we should fix it.
       //println(s"--END ${transaction}")
-      pendingTransactions.done(transaction)
       //maybeCurrentTransaction = js.undefined
     }
   }
