@@ -76,6 +76,12 @@ object AirstreamError {
     override def toString: String = s"DebugError: $error; cause: $cause"
   }
 
+  case class TransactionDepthExceeded(trx: Transaction, depth: Int)
+    extends AirstreamError(s"Transaction depth exceeded maxDepth = $depth: Execution of $trx aborted. See `Transaction.maxDepth`.") {
+
+    override def toString: String = s"TransactionDepthExceeded: $trx; maxDepth: $depth"
+  }
+
   // --
 
   // @TODO[API] I feel like unhandled error reporting should live in its own object somewhere. But where?
