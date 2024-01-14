@@ -1,6 +1,7 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.combine.MergeStream
+import com.raquo.airstream.core.AirstreamError.TransactionDepthExceeded
 import com.raquo.airstream.custom.CustomSource
 import com.raquo.airstream.util.JsPriorityQueue
 import com.raquo.ew.{JsArray, JsMap}
@@ -36,14 +37,31 @@ class Transaction(private[Transaction] var code: Transaction => Any) {
     */
   private[this] var maybePendingObservables: js.UndefOr[JsPriorityQueue[SyncObservable[_]]] = js.undefined
 
-  if (Transaction.onStart.isSharedStart) {
-    // This delays scheduling transactions until the end of
-    // the shared start transaction
-    //println(s">>> onStart.postStartTransactions.push($this)")
-    Transaction.onStart.postStartTransactions.push(this)
+  /**
+    * Note: The transaction may be _actually scheduled_ one layer deeper
+    * than this `depth` due to the `postStartTransactions` mechanism,
+    * but this is good enough for `maxDepth` purposes.
+    */
+  private val depth: Int = Transaction.pendingTransactions.peekStack().fold(1)(_.depth + 1)
+
+  if (Transaction.maxDepth == -1 || depth > Transaction.maxDepth) {
+    // Short circuit to break out of infinite loops without pinning CPU or crashing the whole app.
+    // See e.g. https://github.com/raquo/Laminar/issues/116
+    // This transaction will not be executed. Instead, it is reported in unhandled errors.
+    // Other transactions will continue executing, if you have any that don't exceed the depth.
+    // We don't throw an exception here because I'm afraid this could break things too violently,
+    // and it's not like there is a reasonable way to locally handle such a condition anyway.
+    AirstreamError.sendUnhandledError(TransactionDepthExceeded(this, Transaction.maxDepth))
   } else {
-    //println(s">>> Transaction.pendingTransactions.add($this)")
-    Transaction.pendingTransactions.add(this)
+    if (Transaction.onStart.isSharedStart) {
+      // This delays scheduling transactions until the end of
+      // the shared start transaction
+      //println(s">>> onStart.postStartTransactions.push($this)")
+      Transaction.onStart.postStartTransactions.push(this)
+    } else {
+      //println(s">>> Transaction.pendingTransactions.add($this)")
+      Transaction.pendingTransactions.add(this)
+    }
   }
 
   @inline private[Transaction] def resolvePendingObservables(): Unit = {
@@ -82,6 +100,30 @@ object Transaction {
     * Example of legitimate use case: [[https://github.com/raquo/Airstream/#var-transaction-delay Var transaction delay]]
     */
   def apply(code: Transaction => Unit): Unit = new Transaction(code)
+
+  /** How many _nested_ transactions you can have.
+    *
+    * Airstream will refuse to schedule any transaction that exceeds this limit.
+    * This will prevent the content of the transaction from running, so this
+    * could leave an event not fully propagated. This is, of course, an
+    * undesirable situation, so you should never hit this limit.
+    *
+    * It is very hard to deliberately write valid code that would hit this
+    * limit. If you are hitting this limit, most likely:
+    * - There is an (unterminated) infinite loop in your observable graph,
+    *   e.g. two Var-s updating each other recursively, or
+    * - You are doing something that looks a lot like that for the first
+    *   `maxDepth` transactions.
+    *
+    * You probably need to adjust your code instead of raising this limit,
+    * but if you have a valid need for raising it, please let me know.
+    *
+    * You can set this to -1 to disable the check completely, but then
+    * if you do actually have an infinite loop, your code will pin the
+    * CPU and your single threaded Scala.js app will freeze – not
+    * something you want, especially on your users' devices!
+    */
+  var maxDepth: Int = 1000
 
   /** This object holds a queue of callbacks that should be executed
     * when all observables finish starting. This lets `signal.changes`
@@ -292,8 +334,9 @@ object Transaction {
       }
     }
 
+    /** Returns the top of the stack, i.e. the currently executing transaction, if any. */
     def peekStack(): js.UndefOr[Transaction] = {
-      // in Javascript, this does not fail, but instead return `undefined` if array is empty.
+      // in Javascript, if array is empty, this does not fail, but instead returns `undefined`.
       stack(0)
     }
 
