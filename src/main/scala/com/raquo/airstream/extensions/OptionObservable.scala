@@ -1,6 +1,6 @@
 package com.raquo.airstream.extensions
 
-import com.raquo.airstream.core.{BaseObservable, Observable}
+import com.raquo.airstream.core.{BaseObservable, EventStream, Observable, Signal}
 
 /** See also: [[OptionStream]] */
 class OptionObservable[A, Self[+_] <: Observable[_]](val observable: BaseObservable[Self, Option[A]]) extends AnyVal {
@@ -30,4 +30,26 @@ class OptionObservable[A, Self[+_] <: Observable[_]](val observable: BaseObserva
     observable.map(_.toLeft(right))
   }
 
+  def splitOption[B](
+    project: (A, Signal[A]) => B,
+    ifEmpty: => B
+  ): Signal[B] = {
+    observable match {
+      case stream: EventStream[Option[A @unchecked] @unchecked] =>
+        new OptionStream(stream).splitOption(project, ifEmpty)
+      case signal: Signal[Option[A @unchecked] @unchecked] =>
+        new OptionSignal(signal).splitOption(project, ifEmpty)
+    }
+  }
+
+  def splitOption[B](
+    project: (A, Signal[A]) => B
+  ): Signal[Option[B]] = {
+    observable match {
+      case stream: EventStream[Option[A @unchecked] @unchecked] =>
+        new OptionStream(stream).splitOption(project)
+      case signal: Signal[Option[A @unchecked] @unchecked] =>
+        new OptionSignal(signal).splitOption(project)
+    }
+  }
 }

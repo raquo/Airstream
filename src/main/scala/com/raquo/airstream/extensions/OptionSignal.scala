@@ -33,4 +33,13 @@ class OptionSignal[A](val signal: Signal[Option[A]]) extends AnyVal {
       )
       .map(_.getOrElse(ifEmpty))
   }
+
+  def splitOption[B](
+    project: (A, Signal[A]) => B
+  ): Signal[Option[B]] = {
+    splitOption(
+      (initial, someSignal) => Some(project(initial, someSignal)),
+      ifEmpty = None
+    )
+  }
 }

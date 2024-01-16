@@ -32,4 +32,13 @@ class OptionStream[A](val stream: EventStream[Option[A]]) extends AnyVal {
     new OptionSignal(stream.startWith(None, cacheInitialValue = true)).splitOption(project, ifEmpty)
   }
 
+  def splitOption[B](
+    project: (A, Signal[A]) => B
+  ): Signal[Option[B]] = {
+    splitOption(
+      (initial, someSignal) => Some(project(initial, someSignal)),
+      ifEmpty = None
+    )
+  }
+
 }
