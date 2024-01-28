@@ -67,7 +67,12 @@ object SplittableTypeMacros {
     private[SplittableTypeMacros] val observable: BaseObservable[Self, I],
     private[SplittableTypeMacros] val caseList: List[PartialFunction[Any, Any]],
     private[SplittableTypeMacros] val handlerMap: Map[Int, Function[Any, O]]
-  )
+  ) {
+
+    // MatchSplitObservable should be erased after macro expansion, any instance in runtime is illegal
+    throw new UnsupportedOperationException("splitMatch without toSignal/toStream is illegal")
+
+  }
 
   extension [Self[+_] <: Observable[_], I](inline observable: BaseObservable[Self, I]) {
     inline def splitMatch: MatchSplitObservable[Self, I, Nothing] = MatchSplitObservable.build(observable, Nil, Map.empty[Int, Function[Any, Nothing]])
