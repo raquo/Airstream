@@ -1,6 +1,6 @@
 package com.raquo.airstream.split
 
-import com.raquo.ew.JsArray
+import com.raquo.ew.{JsArray, JsVector}
 
 import scala.collection.immutable
 import scala.scalajs.js
@@ -58,6 +58,13 @@ object Splittable extends LowPrioritySplittableImplicits {
     override def empty[A]: JsArray[A] = JsArray()
   }
 
+  implicit object JsVectorSplittable extends Splittable[JsVector] {
+
+    override def map[A, B](inputs: JsVector[A], project: A => B): JsVector[B] = inputs.map(project)
+
+    override def empty[A]: JsVector[A] = JsVector()
+  }
+
   implicit object ScalaJsArraySplittable extends Splittable[js.Array] {
 
     override def map[A, B](inputs: js.Array[A], project: A => B): js.Array[B] = inputs.map(project)
@@ -73,7 +80,13 @@ trait LowPrioritySplittableImplicits extends LowestPrioritySplittableImplicits {
 
   implicit object ImmutableSeqSplittable extends Splittable[immutable.Seq] {
 
-    override def map[A, B](inputs: immutable.Seq[A], project: A => B): immutable.Seq[B] = inputs.map(project)
+    override def map[A, B](inputs: immutable.Seq[A], project: A => B): immutable.Seq[B] = {
+      val strictInputs = inputs match {
+        case lazyList: LazyList[A @unchecked] => lazyList.toList
+        case _ => inputs
+      }
+      strictInputs.map(project)
+    }
 
     override def empty[A]: immutable.Seq[A] = Nil
   }
@@ -83,7 +96,13 @@ trait LowestPrioritySplittableImplicits {
 
   implicit object SeqSplittable extends Splittable[collection.Seq] {
 
-    override def map[A, B](inputs: collection.Seq[A], project: A => B): collection.Seq[B] = inputs.map(project)
+    override def map[A, B](inputs: collection.Seq[A], project: A => B): collection.Seq[B] = {
+      val strictInputs = inputs match {
+        case lazyList: LazyList[A @unchecked] => lazyList.toList
+        case _ => inputs
+      }
+      strictInputs.map(project)
+    }
 
     override def empty[A]: collection.Seq[A] = Nil
   }

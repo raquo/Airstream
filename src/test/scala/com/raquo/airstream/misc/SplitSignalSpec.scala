@@ -1342,4 +1342,104 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
     assert(fooS_A_observed_2.now() == Foo("a", 5))
     assert(mapFooS_A_observed_2.now() == Foo("a", 5))
   }
+
+  it("LazyList should not break memoization") {
+    val effects = mutable.Buffer[Effect[String]]()
+
+    // #TODO[Test] Would be nice to also verify this with immutable.Seq
+    //  as their implementations are separate.
+
+    val myVar = Var[immutable.Seq[Foo]](LazyList.from(Foo("initial", 1) :: Nil))
+
+    val owner = new TestableOwner
+
+    val signal = myVar.signal.split(_.id)(project = (key, initialFoo, fooSignal) => {
+      assert(key == initialFoo.id, "Key does not match initial value")
+      effects += Effect("init-child", key + "-" + initialFoo.version.toString)
+      fooSignal.foreach { foo =>
+        assert(key == foo.id, "Subsequent value does not match initial key")
+        effects += Effect("update-child", foo.id + "-" + foo.version.toString)
+      }(owner)
+      Bar(key)
+    })
+
+    signal.foreach { result =>
+      effects += Effect("result", result.toString)
+    }(owner)
+
+    effects shouldBe mutable.Buffer(
+      Effect("init-child", "initial-1"),
+      Effect("update-child", "initial-1"),
+      Effect("result", "List(Bar(initial))")
+    )
+
+    effects.clear()
+
+    // --
+
+    myVar.writer.onNext(LazyList.from(Foo("a", 1) :: Nil))
+
+    effects shouldBe mutable.Buffer(
+      Effect("init-child", "a-1"),
+      Effect("update-child", "a-1"),
+      Effect("result", "List(Bar(a))")
+    )
+
+    effects.clear()
+
+    // --
+
+    myVar.writer.onNext(LazyList.from(Foo("a", 2) :: Nil))
+
+    effects shouldBe mutable.Buffer(
+      Effect("result", "List(Bar(a))"),
+      Effect("update-child", "a-2")
+    )
+
+    effects.clear()
+
+    // --
+
+    myVar.writer.onNext(LazyList.from(Foo("a", 3) :: Foo("b", 1) :: Nil))
+
+    effects shouldBe mutable.Buffer(
+      Effect("init-child", "b-1"),
+      Effect("update-child", "b-1"),
+      Effect("result", "List(Bar(a), Bar(b))"),
+      Effect("update-child", "a-3")
+    )
+
+    effects.clear()
+
+    // --
+
+    myVar.writer.onNext(LazyList.from(Foo("b", 1) :: Foo("a", 3) :: Nil))
+
+    effects shouldBe mutable.Buffer(
+      Effect("result", "List(Bar(b), Bar(a))")
+    )
+
+    effects.clear()
+
+    // --
+
+    myVar.writer.onNext(LazyList.from(Foo("b", 2) :: Nil))
+
+    effects shouldBe mutable.Buffer(
+      Effect("result", "List(Bar(b))"),
+      Effect("update-child", "b-2")
+    )
+
+    effects.clear()
+
+    // --
+
+    myVar.writer.onNext(LazyList.from(Foo("b", 2) :: Nil))
+
+    effects shouldBe mutable.Buffer(
+      Effect("result", "List(Bar(b))")
+    )
+
+    //effects.clear()
+  }
 }
