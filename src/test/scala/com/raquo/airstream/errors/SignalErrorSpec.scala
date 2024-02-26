@@ -48,7 +48,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
 
     signal.addObserver(Observer.withRecover(
       effects += Effect("sub", _),
-      { case err => errorEffects += Effect("sub-err", err) }
+      err => errorEffects += Effect("sub-err", err)
     ))
 
 
@@ -122,7 +122,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
 
     signal.addObserver(Observer.withRecover(
       effects += Effect("sub", _),
-      { case err => errorEffects += Effect("sub-err", err) }
+      err => errorEffects += Effect("sub-err", err)
     ))
 
 
@@ -168,7 +168,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
 
     changes.addObserver(Observer.withRecover(
       effects += Effect("sub", _),
-      { case err => errorEffects += Effect("sub-err", err) }
+      err => errorEffects += Effect("sub-err", err)
     ))
 
     // Initial error value should not be evaluated (because no one is looking at it)
@@ -203,7 +203,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
 
     signal.addObserver(Observer.withRecover(
       effects += Effect("sub", _),
-      { case err => errorEffects += Effect("sub-err", err) }
+      err => errorEffects += Effect("sub-err", err)
     ))
 
     calculations shouldBe mutable.Buffer(
@@ -234,12 +234,12 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     }).map(Calculation.log("signalUp", calculations))
 
     val signalDown = signalUp
-      .recover { case _ => Some(-123) }
+      .recover(_ => Some(-123))
       .map(Calculation.log("signalDown", calculations))
 
     signalDown.addObserver(Observer.withRecover(
       effects += Effect("sub", _),
-      { case err => errorEffects += Effect("sub-err", err) }
+      err => errorEffects += Effect("sub-err", err)
     ))
 
 
@@ -296,12 +296,12 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     }).map(Calculation.log("signalUp", calculations))
 
     val signalDown = signalUp
-      .recover { case _ => Some(-123) }
+      .recover(_ => Some(-123))
       .map(Calculation.log("signalDown", calculations))
 
     signalDown.addObserver(Observer.withRecover(
       effects += Effect("sub", _),
-      { case err => errorEffects += Effect("sub-err", err) }
+      err => errorEffects += Effect("sub-err", err)
     ))
 
 

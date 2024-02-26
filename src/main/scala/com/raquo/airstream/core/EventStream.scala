@@ -304,11 +304,11 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
   }
 
   override def recoverToTry: EventStream[Try[A]] = {
-    map(Try(_)).recover { case err => Some(Failure(err)) }
+    map(Try(_)).recover(err => Some(Failure(err)))
   }
 
   override def recoverToEither: EventStream[Either[Throwable, A]] = {
-    map(Right(_)).recover { case err => Some(Left(err)) }
+    map(Right(_)).recover(err => Some(Left(err)))
   }
 
   /** See also various debug methods in [[com.raquo.airstream.debug.DebuggableObservable]] */

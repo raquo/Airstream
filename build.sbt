@@ -30,7 +30,7 @@ ThisBuild / dynver := {
 
 scalaVersion := Versions.Scala_3
 
-crossScalaVersions := Seq(Versions.Scala_2_12, Versions.Scala_2_13, Versions.Scala_3)
+crossScalaVersions := Seq(Versions.Scala_2_13, Versions.Scala_3)
 
 scalacOptions ++= Seq(
   "-feature",

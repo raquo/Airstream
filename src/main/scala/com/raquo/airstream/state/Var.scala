@@ -26,7 +26,7 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
 
   // --
 
-  val writer: Observer[A] = Observer.fromTry { case nextTry => // Note: `case` syntax needed for Scala 2.12
+  val writer: Observer[A] = Observer.fromTry { nextTry =>
     //println(s"> init trx from Var.writer(${nextTry})")
     Transaction(setCurrentValue(nextTry, _))
   }
@@ -46,7 +46,7 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
     *
     * @param mod (currValue, nextInput) => nextValue
     */
-  def updater[B](mod: (A, B) => A): Observer[B] = Observer.fromTry { case nextInputTry =>
+  def updater[B](mod: (A, B) => A): Observer[B] = Observer.fromTry { nextInputTry =>
     Transaction { trx =>
       nextInputTry match {
         case Success(nextInput) =>
@@ -66,12 +66,10 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
     }
   }
 
-  // @TODO[Scala3] When we don't need 2.12, remove 'case' from all PartialFunction instances that don't need it (e.g. Observer.fromTry)
-
   /** @param mod (currValue, nextInput) => nextValue
     *            Note: Must not throw!
     */
-  def tryUpdater[B](mod: (Try[A], B) => Try[A]): Observer[B] = Observer.fromTry { case nextInputTry =>
+  def tryUpdater[B](mod: (Try[A], B) => Try[A]): Observer[B] = Observer.fromTry { nextInputTry =>
     Transaction { trx =>
       nextInputTry match {
         case Success(nextInput) =>
@@ -120,13 +118,11 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
     }
   }
 
-  // #TODO[Scala 2.12] - once we ditch Scala 2.12 we can replace asInstanceOf with ev.flip(!ev(v))
   /** Update a boolean Var by flipping its value (true -> false, or false -> true) */
-  def invert()(implicit ev: A =:= Boolean): Unit = update(v => (!ev(v)).asInstanceOf[A])
+  def invert()(implicit ev: A =:= Boolean): Unit = update(v => ev.flip(!ev(v)))
 
-  // #TODO[Scala 2.12] - once we ditch Scala 2.12 we can replace asInstanceOf with ev.flip(!ev(v))
   /** Observer that writes !var.now(), for vars of booleans. */
-  def invertWriter(implicit ev: A =:= Boolean): Observer[Unit] = updater((curr, _) => (!ev(curr)).asInstanceOf[A])
+  def invertWriter(implicit ev: A =:= Boolean): Observer[Unit] = updater((curr, _) => ev.flip(!ev(curr)))
 
   @inline def tryNow(): Try[A] = signal.tryNow()
 

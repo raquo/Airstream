@@ -141,11 +141,11 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
   }
 
   override def recoverToTry: Signal[Try[A]] = {
-    map(Try(_)).recover[Try[A]] { case err => Some(Failure(err)) }
+    map(Try(_)).recover[Try[A]](err => Some(Failure(err)))
   }
 
   override def recoverToEither: Signal[Either[Throwable, A]] = {
-    map(Right(_)).recover { case err => Some(Left(err)) }
+    map(Right(_)).recover(err => Some(Left(err)))
   }
 
   /** See also debug methods in [[com.raquo.airstream.debug.DebuggableObservable]] */

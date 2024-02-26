@@ -31,13 +31,13 @@ trait Observer[-A] extends Sink[A] with Named {
   def contramap[B](project: B => A): Observer[B] = {
     Observer.withRecover(
       nextValue => onNext(project(nextValue)),
-      { case nextError => onError(nextError) }
+      nextError => onError(nextError)
     )
   }
 
   /** @param project must not throw! */
   def contramapTry[B](project: Try[B] => Try[A]): Observer[B] = {
-    Observer.fromTry { case nextValue => onTry(project(nextValue)) }
+    Observer.fromTry(nextValue => onTry(project(nextValue)))
   }
 
   /** Available only on Observers of Option, this is a shortcut for contramap[B](Some(_)) */
@@ -52,7 +52,7 @@ trait Observer[-A] extends Sink[A] with Named {
   def contracollect[B](pf: PartialFunction[B, A]): Observer[B] = {
     Observer.withRecover(
       nextValue => pf.runWith(onNext)(nextValue),
-      { case nextError => onError(nextError) }
+      nextError => onError(nextError)
     )
   }
 
@@ -70,7 +70,7 @@ trait Observer[-A] extends Sink[A] with Named {
   def contracollectOpt[B](project: B => Option[A]): Observer[B] = {
     Observer.withRecover(
       nextValue => project(nextValue).foreach(onNext),
-      { case nextError => onError(nextError) }
+      nextError => onError(nextError)
     )
   }
 
@@ -97,7 +97,7 @@ trait Observer[-A] extends Sink[A] with Named {
     * stream is stopped.
     */
   def delay(ms: Int): Observer[A] = {
-    Observer.fromTry { case nextValue =>
+    Observer.fromTry { nextValue =>
       js.timers.setTimeout(ms.toDouble) {
         onTry(nextValue)
       }
@@ -127,7 +127,7 @@ object Observer {
 
   /** @param onNext Note: guarded against exceptions */
   def ignoreErrors[A](onNext: A => Unit): Observer[A] = {
-    withRecover(onNext, onError = { case _ => () })
+    withRecover(onNext, onError = _ => ())
   }
 
   /**

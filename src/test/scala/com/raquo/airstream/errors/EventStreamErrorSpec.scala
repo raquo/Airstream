@@ -50,7 +50,7 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     stream.addObserver(Observer.withRecover(
       effects += Effect("sub", _),
-      { case err => errorEffects += Effect("sub-err", err) }
+      err => errorEffects += Effect("sub-err", err)
     ))
 
     calculations shouldBe mutable.Buffer(
@@ -127,7 +127,7 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     stream1.addObserver(Observer.withRecover(
       effects += Effect("sub2", _),
-      { case err => errorEffects += Effect("sub2-err", err) }
+      err => errorEffects += Effect("sub2-err", err)
     ))
 
     bus.writer.onError(err2)
@@ -191,11 +191,11 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     signal1.addObserver(Observer.withRecover(
       effects += Effect("sub2Signal1", _),
-      { case err => errorEffects += Effect("sub2Signal1-err", err) }
+      err => errorEffects += Effect("sub2Signal1-err", err)
     ))
     signal2.addObserver(Observer.withRecover(
       effects += Effect("sub2Signal2", _),
-      { case err => errorEffects += Effect("sub2Signal2-err", err) }
+      err => errorEffects += Effect("sub2Signal2-err", err)
     ))
 
     calculations shouldBe mutable.Buffer()
@@ -254,7 +254,7 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     downStream.addObserver(Observer.withRecover(
       effects += Effect("sub", _),
-      { case err => errorEffects += Effect("sub-err", err) }
+      err => errorEffects += Effect("sub-err", err)
     ))
 
 
@@ -298,7 +298,7 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     val sub = stream.addObserver(Observer.withRecover(
       effects += Effect("sub", _),
-      { case err => errorEffects += Effect("sub-err", err) }
+      err => errorEffects += Effect("sub-err", err)
     ))
 
     calculations shouldBe mutable.Buffer()
@@ -312,7 +312,7 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     stream.addObserver(Observer.withRecover(
       effects += Effect("sub2", _),
-      { case err => errorEffects += Effect("sub2-err", err) }
+      err => errorEffects += Effect("sub2-err", err)
     ))
 
     calculations shouldBe mutable.Buffer()
@@ -353,7 +353,7 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     stream.addObserver(Observer.withRecover(
       onNext = ev => effects += Effect("onNext", ev),
-      onError = { case err => effects += Effect("onError", err.getMessage) }
+      onError = err => effects += Effect("onError", err.getMessage)
     ))(owner)
 
     // --
@@ -393,7 +393,7 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     stream.addObserver(Observer.withRecover(
       onNext = ev => effects += Effect("onNext", ev),
-      onError = { case err => effects += Effect("onError", err.getMessage) }
+      onError = err => effects += Effect("onError", err.getMessage)
     ))(owner)
 
     // -- initial failed state should propagate as an error

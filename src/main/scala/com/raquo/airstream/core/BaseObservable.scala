@@ -171,7 +171,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
   /** @param pf Note: guarded against exceptions */
   def recover[B >: A](pf: PartialFunction[Throwable, Option[B]]): Self[B]
 
-  def recoverIgnoreErrors: Self[A] = recover[A] { case _ => None }
+  def recoverIgnoreErrors: Self[A] = recover[A](_ => None)
 
   // #TODO[Scala] I'm not sure why I can't implement this method here. Getting weird type error about `Self`.
   /** Convert this to an observable that emits Failure(err) instead of erroring */

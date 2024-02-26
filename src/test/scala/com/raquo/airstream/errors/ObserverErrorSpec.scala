@@ -52,7 +52,7 @@ class ObserverErrorSpec extends UnitSpec with BeforeAndAfter {
 
     signal.addObserver(Observer.withRecover(
       effects += Effect("sub1", _),
-      { case err => errorEffects += Effect("sub1-err", err) }
+      err => errorEffects += Effect("sub1-err", err)
     ))
 
     signal.addObserver(Observer.withRecover(
@@ -67,7 +67,7 @@ class ObserverErrorSpec extends UnitSpec with BeforeAndAfter {
 
     signal.addObserver(Observer.withRecover(
       effects += Effect("sub4", _),
-      { case err => errorEffects += Effect("sub4-err", err) }
+      err => errorEffects += Effect("sub4-err", err)
     ))
 
 
@@ -125,7 +125,7 @@ class ObserverErrorSpec extends UnitSpec with BeforeAndAfter {
 
     val effects = mutable.Buffer[Try[Int]]()
 
-    val topObs = Observer.fromTry[Int] { case tryValue => effects += tryValue }
+    val topObs = Observer.fromTry[Int](tryValue => effects += tryValue)
 
     val midObs = topObs.contramap[Int](_ + 100)
 
@@ -344,7 +344,7 @@ class ObserverErrorSpec extends UnitSpec with BeforeAndAfter {
 
     val effects = mutable.Buffer[Try[Int]]()
 
-    val topObs = Observer.fromTry[Int] { case t => effects += t }
+    val topObs = Observer.fromTry[Int](t => effects += t)
 
     val lowObs = topObs.contracollectOpt[Int](v => if (v != 2) Some(v) else None)
 
@@ -358,7 +358,7 @@ class ObserverErrorSpec extends UnitSpec with BeforeAndAfter {
   it("contracollectOpt handles thrown exception from transformation ") {
     val effects = mutable.Buffer[Try[Int]]()
 
-    val topObs = Observer.fromTry[Int] { case t => effects += t }
+    val topObs = Observer.fromTry[Int](t => effects += t)
 
     val propagatedError = ExpectedError("propagated")
     val lowObs = topObs.contracollectOpt[Int](v => if (v == 2) throw ExpectedError("it's 2") else Some(v))

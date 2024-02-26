@@ -12,7 +12,7 @@ import org.scalatest.{Assertion, BeforeAndAfter}
 import scala.collection.{immutable, mutable}
 import scala.scalajs.js
 
-// #Warning: this test is not in the `split` package to make sure that Scala 2.12 and 2.13 specific implicits
+// #Warning: this test is not in the `split` package to make sure that Scala 2.13 specific implicits
 //  in the split package will be resolved correctly even outside of that package.
 
 class SplitSignalSpec extends UnitSpec with BeforeAndAfter {

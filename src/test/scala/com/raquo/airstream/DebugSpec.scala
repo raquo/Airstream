@@ -223,11 +223,11 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
         stopFn = () => Calculation.log("signal-2-stop", calculations)(Success(-1))
       )
 
-    val obs1 = Observer.fromTry[Int] { case ev => Calculation.log("obs-1", calculations)(ev) }
+    val obs1 = Observer.fromTry[Int](ev => Calculation.log("obs-1", calculations)(ev))
 
-    val obs21 = Observer.fromTry[Int] { case ev => Calculation.log("obs-21", calculations)(ev) }
+    val obs21 = Observer.fromTry[Int](ev => Calculation.log("obs-21", calculations)(ev))
 
-    val obs22 = Observer.fromTry[Int] { case ev => Calculation.log("obs-22", calculations)(ev) }
+    val obs22 = Observer.fromTry[Int](ev => Calculation.log("obs-22", calculations)(ev))
 
     val err1 = new Exception("err1")
 
@@ -429,7 +429,7 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
     // #Note: we write out `ev` excessively to make sure that type inference works
 
     val obs = Observer
-      .fromTry[Int] { case ev => Calculation.log("obs", calculations)(ev) }
+      .fromTry[Int](ev => Calculation.log("obs", calculations)(ev))
       .debugSpy(ev => Calculation.log("obs-spy", calculations)(ev))
       .debugSpyEvents(ev => Calculation.log("obs-spy-events", calculations)(Success(ev)))
       .debugSpyErrors(err => Calculation.log("obs-spy-errors", calculations)(Failure(err)))
@@ -756,7 +756,7 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
 
     val err1 = new Exception("err1")
 
-    val obs = Observer.fromTry[Int] { case ev => Calculation.log("obs", calculations)(ev) }
+    val obs = Observer.fromTry[Int](ev => Calculation.log("obs", calculations)(ev))
       .debugSpy {
         case Success(ev) if ev < 10 =>
           Calculation.log("obs.ok", calculations)(Success(ev))
