@@ -9,12 +9,14 @@ import com.raquo.airstream.debug.{DebuggableStream, Debugger, DebuggerStream}
 import com.raquo.airstream.distinct.DistinctStream
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.extensions._
+import com.raquo.airstream.javaflow.FlowPublisherStream
 import com.raquo.airstream.misc._
 import com.raquo.airstream.split.{SplittableOneStream, SplittableStream}
 import com.raquo.airstream.status.{AsyncStatusObservable, Status}
 import com.raquo.airstream.timing._
 import com.raquo.ew.JsArray
 
+import java.util.concurrent.Flow
 import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 import scala.scalajs.js
@@ -386,6 +388,14 @@ object EventStream {
 
   def fromJsPromise[A](promise: js.Promise[A], emitOnce: Boolean = false): EventStream[A] = {
     new JsPromiseStream[A](promise, emitOnce)
+  }
+
+  /** Create a stream from a [[java.util.concurrent.Flow.Publisher]]
+    * - Use this to bring in events from other streaming libraries
+    * that can provide a `Flow.Publisher`, such as FS2 an Monix.
+    */
+  def fromPublisher[A](publisher: Flow.Publisher[A], emitOnce: Boolean = false): EventStream[A] = {
+    FlowPublisherStream(publisher, emitOnce)
   }
 
   /** Easy helper for custom events. See [[CustomStreamSource]] for docs.

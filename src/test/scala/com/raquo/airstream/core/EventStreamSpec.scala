@@ -6,6 +6,7 @@ import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.ownership.Owner
 import org.scalactic.anyvals.NonEmptyList
 
+import java.util.concurrent.Flow
 import scala.collection.mutable
 
 class EventStreamSpec extends UnitSpec {
