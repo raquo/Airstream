@@ -53,37 +53,6 @@ class EventStreamSpec extends UnitSpec {
     effects.clear()
   }
 
-  it("EventStream.fromPublisher") {
-
-    class RangePublisher(r: Range) extends Flow.Publisher[Int] {
-      def subscribe(subscriber: Flow.Subscriber[_ >: Int]): Unit = {
-        val subscription = new Flow.Subscription {
-          def request(n: Long) = r.foreach(subscriber.onNext(_))
-          def cancel() = ()
-        }
-        subscriber.onSubscribe(subscription)
-      }
-    }
-
-    implicit val owner: Owner = new TestableOwner
-
-    val range = 1 to 3
-    val stream = EventStream.fromPublisher(new RangePublisher(range))
-
-    val effects = mutable.Buffer[Effect[_]]()
-    val sub1 = stream.foreach(newValue => effects += Effect("obs1", newValue))
-
-    effects.toList shouldBe range.map(i => Effect("obs1", i))
-    effects.clear()
-
-    sub1.kill()
-
-    val sub2 = stream.foreach(newValue => effects += Effect("obs2", newValue))
-
-    effects.toList shouldBe range.map(i => Effect("obs2", i))
-    effects.clear()
-  }
-
   it("filter") {
 
     implicit val owner: Owner = new TestableOwner

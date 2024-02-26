@@ -432,20 +432,26 @@ If you have an `Observable[Future[A]]`, you can flatten it into `Observable[A]` 
 
 A failed future results in an error (see [Error Handling](#error-handling)).
 
+
 #### Creating Observables from other Streaming APIs
 
-`EventStream.fromPublisher[A]` creates a stream that subscribes to a Reactive Streams [Publisher](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/Flow.Publisher.html) and emits the values that it produces.
+`EventStream.fromPublisher[A]` creates a stream that subscribes to a [Flow.Publisher](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/concurrent/Flow.Publisher.html), and emits the values that it produces.
 
-`Publisher` is a common interface that is useful for interoperating between streaming APIs. For example, you can transform an [FS2](https://fs2.io/) `Stream[IO, A]` into an `EventStream[A]`.
+`Flow.Publisher` is a Java [Reactive Streams](http://www.reactive-streams.org/) interface that is useful for interoperating between streaming APIs. For example, you can transform an [FS2](https://fs2.io/) `Stream[IO, A]` into an Airstream `EventStream[A]`.
+
+The resulting `EventStream` creates a new `Flow.Subscriber` and subscribes it to the publisher every time the `EventStream` is [started](https://github.com/raquo/Airstream#starting-observables), and cancels the subscription when the stream is stopped.
+
 
 ```scala
-import cats.effect.unsafe.implicits._ // implicit IORuntime
+import cats.effect.unsafe.implicits._ // imports implicit IORuntime
 EventStream.fromPublisher(fs2Stream.unsafeToPublisher())
 ```
+
 
 #### `EventStream.fromJsPromise` and `Signal.fromJsPromise`
 
 Behave the same as `fromFuture` above, but accept `js.Promise` instead. Useful for integration with JS libraries and APIs.
+
 
 #### `EventStream.fromSeq`
 
