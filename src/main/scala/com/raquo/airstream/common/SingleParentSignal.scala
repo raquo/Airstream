@@ -15,6 +15,7 @@ trait SingleParentSignal[I, O] extends WritableSignal[O] with InternalTryObserve
 
   /** Note: this is overriden in:
     * - [[com.raquo.airstream.misc.SignalFromStream]] because parent can be stream, and it has cacheInitialValue logic
+    * - [[com.raquo.airstream.split.SplitChildSignal]] because its parent is a special timing stream, not the real parent
     */
   override protected def onWillStart(): Unit = {
     // println(s"${this} > onWillStart")
@@ -37,6 +38,9 @@ trait SingleParentSignal[I, O] extends WritableSignal[O] with InternalTryObserve
     setCurrentValue(nextValue)
   }
 
+  /** Note: this is overridden in:
+    *  - [[com.raquo.airstream.split.SplitChildSignal]] because its parent is a special timing stream, not the real parent
+    */
   override protected def onTry(nextParentValue: Try[I], transaction: Transaction): Unit = {
     if (parentIsSignal) {
       _parentLastUpdateId = Protected.lastUpdateId(parent.asInstanceOf[Signal[_]])

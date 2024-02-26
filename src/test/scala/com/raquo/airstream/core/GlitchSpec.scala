@@ -455,7 +455,7 @@ class GlitchSpec extends UnitSpec {
     // once for a given observable before it finally starts. This was because maybeWillStart
     // used to check (!isStarted) condition, which only becomes true AFTER onWillStart of the
     // observable that triggered the willStart chain has finished. However, apparently it was
-    // possible for willStart to trigger addition of external observer (seee inner-signal),
+    // possible for willStart to trigger addition of external observer (see inner-signal),
     // which would again call up the onWillStart chain on its parents, and if the two observables
     // share parents, that means the same observables would have onWillStart executed on them
     // again, which they don't expect.

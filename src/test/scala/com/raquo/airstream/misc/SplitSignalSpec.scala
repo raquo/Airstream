@@ -4,7 +4,7 @@ import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.{Observer, Signal, Transaction}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
-import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, Subscription}
+import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, ManualOwner, Subscription}
 import com.raquo.airstream.split.DuplicateKeysConfig
 import com.raquo.airstream.state.Var
 import org.scalatest.{Assertion, BeforeAndAfter}
@@ -1173,5 +1173,173 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
     val bus = new EventBus[Option[Foo]]
 
     val _ = bus.events.split(_ => ())((_, _, _) => 100).map(_.getOrElse(0))
+  }
+
+  it("child split signal re-syncs with parent signal") {
+    // https://github.com/raquo/Airstream/issues/120
+
+    val owner = new ManualOwner
+
+    val foosVar = Var[List[Foo]](Nil)
+
+    var ownersById = Map[String, ManualOwner]()
+    var fooSById = Map[String, Signal[Foo]]()
+    var mapFooSById = Map[String, Signal[Foo]]()
+
+    val splitSignal = foosVar.signal.split(_.id)((id, _, fooS) => {
+      ownersById.get(id).foreach(_.killSubscriptions())
+
+      val newOwner = new ManualOwner
+      ownersById = ownersById.updated(id, newOwner)
+
+      fooSById = fooSById.updated(id, fooS)
+
+      val mapFooS = foosVar.signal.map(_.find(_.id == id).get)
+      mapFooSById = mapFooSById.updated(id, mapFooS)
+    })
+
+    // --
+
+    val splitSub = splitSignal.addObserver(Observer.empty)(owner)
+
+    assert(ownersById.isEmpty)
+    assert(fooSById.isEmpty)
+    assert(mapFooSById.isEmpty)
+
+    // --
+
+    foosVar.set(Foo("a", 1) :: Nil)
+
+    val owner_A = ownersById("a")
+    val fooS_A = fooSById("a")
+    val mapFooS_A = mapFooSById("a")
+
+    val fooS_A_observed_1 = fooS_A.observe(owner)
+    val mapFooS_A_observed_1 = mapFooS_A.observe(owner)
+
+    foosVar.set(Foo("a", 2) :: Foo("b", 1) :: Nil)
+
+    assert(ownersById("a") eq owner_A)
+    assert(fooSById("a") eq fooS_A)
+    assert(mapFooSById("a") eq mapFooS_A)
+
+    assert(fooS_A_observed_1.now() == Foo("a", 2))
+    assert(mapFooS_A_observed_1.now() == Foo("a", 2))
+
+    // --
+
+    fooS_A_observed_1.killOriginalSubscription()
+    mapFooS_A_observed_1.killOriginalSubscription()
+
+    foosVar.set(Foo("b", 1) :: Foo("a", 3) :: Nil)
+
+    foosVar.set(Foo("a", 4) :: Nil)
+
+    assert(ownersById("a") eq owner_A)
+    assert(fooSById("a") eq fooS_A)
+    assert(mapFooSById("a") eq mapFooS_A)
+
+    // --
+
+    val fooS_A_observed_2 = fooS_A.observe(owner)
+    val mapFooS_A_observed_2 = mapFooS_A.observe(owner)
+
+    assert(fooS_A_observed_2.now() == Foo("a", 4))
+    assert(mapFooS_A_observed_2.now() == Foo("a", 4))
+
+    // --
+
+    foosVar.set(Foo("a", 5) :: Nil)
+
+    assert(ownersById("a") eq owner_A)
+    assert(fooSById("a") eq fooS_A)
+    assert(mapFooSById("a") eq mapFooS_A)
+
+    assert(fooS_A_observed_2.now() == Foo("a", 5))
+    assert(mapFooS_A_observed_2.now() == Foo("a", 5))
+  }
+
+  it("child split signal re-syncs with parent stream") {
+    // https://github.com/raquo/Airstream/issues/120
+
+    val owner = new ManualOwner
+
+    val foosVar = new EventBus[List[Foo]]
+
+    var ownersById = Map[String, ManualOwner]()
+    var fooSById = Map[String, Signal[Foo]]()
+    var mapFooSById = Map[String, Signal[Foo]]()
+
+    val splitSignal = foosVar.stream.split(_.id)((id, _, fooS) => {
+      ownersById.get(id).foreach(_.killSubscriptions())
+
+      val newOwner = new ManualOwner
+      ownersById = ownersById.updated(id, newOwner)
+
+      fooSById = fooSById.updated(id, fooS)
+
+      val mapFooS = foosVar.stream.startWith(Nil).map(_.find(_.id == id).get)
+      mapFooSById = mapFooSById.updated(id, mapFooS)
+    })
+
+    // --
+
+    val splitSub = splitSignal.addObserver(Observer.empty)(owner)
+
+    assert(ownersById.isEmpty)
+    assert(fooSById.isEmpty)
+    assert(mapFooSById.isEmpty)
+
+    // --
+
+    foosVar.emit(Foo("a", 1) :: Nil)
+
+    val owner_A = ownersById("a")
+    val fooS_A = fooSById("a")
+    val mapFooS_A = mapFooSById("a")
+
+    val fooS_A_observed_1 = fooS_A.observe(owner)
+    val mapFooS_A_observed_1 = mapFooS_A.observe(owner)
+
+    foosVar.emit(Foo("a", 2) :: Foo("b", 1) :: Nil)
+
+    assert(ownersById("a") eq owner_A)
+    assert(fooSById("a") eq fooS_A)
+    assert(mapFooSById("a") eq mapFooS_A)
+
+    assert(fooS_A_observed_1.now() == Foo("a", 2))
+    assert(mapFooS_A_observed_1.now() == Foo("a", 2))
+
+    // --
+
+    fooS_A_observed_1.killOriginalSubscription()
+    mapFooS_A_observed_1.killOriginalSubscription()
+
+    foosVar.emit(Foo("b", 1) :: Foo("a", 3) :: Nil)
+
+    foosVar.emit(Foo("a", 4) :: Nil)
+
+    assert(ownersById("a") eq owner_A)
+    assert(fooSById("a") eq fooS_A)
+    assert(mapFooSById("a") eq mapFooS_A)
+
+    // --
+
+    val fooS_A_observed_2 = fooS_A.observe(owner)
+    val mapFooS_A_observed_2 = mapFooS_A.observe(owner)
+
+    assert(fooS_A_observed_2.now() == Foo("a", 4))
+    assert(mapFooS_A_observed_2.now() == Foo("a", 2)) // this is based on stream so it can't actually re-sync
+
+    // --
+
+    foosVar.emit(Foo("a", 5) :: Nil)
+
+    assert(ownersById("a") eq owner_A)
+    assert(fooSById("a") eq fooS_A)
+    assert(mapFooSById("a") eq mapFooS_A)
+
+    assert(fooS_A_observed_2.now() == Foo("a", 5))
+    assert(mapFooS_A_observed_2.now() == Foo("a", 5))
   }
 }

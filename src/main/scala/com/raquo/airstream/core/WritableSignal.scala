@@ -20,6 +20,14 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
   override protected[airstream] def tryNow(): Try[A] = {
     // println(s"${this} > tryNow (maybeLastSeenCurrentValue = ${maybeLastSeenCurrentValue})")
     maybeLastSeenCurrentValue.getOrElse {
+      // #TODO[Integrity] I'm not sure if updating `_lastUpdateId` here is right.
+      //  - I expected `0` to indicate "initial value" (no events emitted yet),
+      //    as mentioned in Signal.nextUpdateId, but it seems that it's only `0`
+      //    until the signal's initial value is evaluated, then we increment it here.
+      //  - I'm not sure if this is done on purpose or not, it's possible that the
+      //    comment is incorrect. Either way, need to figure this out some time.
+      //  - Currently, tests pass either way, but it's hard to tell definitely
+      //    if this change would really be ok.
       _lastUpdateId = Signal.nextUpdateId()
       val nextValue = currentValueFromParent()
       setCurrentValue(nextValue)
