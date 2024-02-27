@@ -36,7 +36,7 @@ class SplitSignal[M[_], Input, Output, Key](
 
   override protected def currentValueFromParent(): Try[M[Output]] = parent.tryNow().map(memoizedProject)
 
-  /** key -> (inputValue, outputValue, lastParentUpdateId) */ // #nc
+  /** key -> (inputValue, outputValue, lastParentUpdateId) */
   private[this] val memoized: mutable.Map[Key, (Input, Output, Int)] = mutable.Map.empty
 
   override protected def onTry(nextParentValue: Try[M[Input]], transaction: Transaction): Unit = {

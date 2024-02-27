@@ -7,6 +7,7 @@ import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, ManualOwner, Subscription}
 import com.raquo.airstream.split.DuplicateKeysConfig
 import com.raquo.airstream.state.Var
+import com.raquo.ew.JsArray
 import org.scalatest.{Assertion, BeforeAndAfter}
 
 import scala.collection.{immutable, mutable}
@@ -1438,6 +1439,120 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
 
     effects shouldBe mutable.Buffer(
       Effect("result", "List(Bar(b))")
+    )
+
+    //effects.clear()
+  }
+
+  it("split mutable array") {
+    val effects = mutable.Buffer[Effect[String]]()
+
+    // #TODO[Test] Would be nice to also verify this with immutable.Seq
+    //  as their implementations are separate.
+
+    val arr = JsArray(Foo("initial", 1))
+
+    val myVar = Var(arr)
+
+    val owner = new TestableOwner
+
+    val signal = myVar.signal.split(_.id)(project = (key, initialFoo, fooSignal) => {
+      assert(key == initialFoo.id, "Key does not match initial value")
+      effects += Effect("init-child", key + "-" + initialFoo.version.toString)
+      fooSignal.foreach { foo =>
+        assert(key == foo.id, "Subsequent value does not match initial key")
+        effects += Effect("update-child", foo.id + "-" + foo.version.toString)
+      }(owner)
+      Bar(key)
+    })
+
+    signal.foreach { result =>
+      effects += Effect("result", result.toString)
+    }(owner)
+
+    effects shouldBe mutable.Buffer(
+      Effect("init-child", "initial-1"),
+      Effect("update-child", "initial-1"),
+      Effect("result", "Bar(initial)") // Single item JS Array is printed this way
+    )
+
+    effects.clear()
+
+    // --
+
+    arr.update(0, Foo("a", 1))
+
+    myVar.set(arr)
+
+    effects shouldBe mutable.Buffer(
+      Effect("init-child", "a-1"),
+      Effect("update-child", "a-1"),
+      Effect("result", "Bar(a)") // Single item JS Array is printed this way
+    )
+
+    effects.clear()
+
+    // --
+
+    arr.update(0, Foo("a", 2))
+
+    myVar.set(arr)
+
+    effects shouldBe mutable.Buffer(
+      Effect("result", "Bar(a)"), // Single item JS Array is printed this way
+      Effect("update-child", "a-2")
+    )
+
+    effects.clear()
+
+    // --
+
+    arr.update(0, Foo("a", 3))
+    arr.push(Foo("b", 1))
+
+    myVar.set(arr)
+
+    effects shouldBe mutable.Buffer(
+      Effect("init-child", "b-1"),
+      Effect("update-child", "b-1"),
+      Effect("result", "Bar(a),Bar(b)"), // Multi item JS Array is printed this way
+      Effect("update-child", "a-3")
+    )
+
+    effects.clear()
+
+    // --
+
+    arr.reverse()
+
+    myVar.set(arr)
+
+    effects shouldBe mutable.Buffer(
+      Effect("result", "Bar(b),Bar(a)") // Multi item JS Array is printed this way
+    )
+
+    effects.clear()
+
+    // --
+
+    arr.update(0, Foo("b", 2))
+    arr.pop()
+
+    myVar.set(arr)
+
+    effects shouldBe mutable.Buffer(
+      Effect("result", "Bar(b)"), // Single item JS Array is printed this way
+      Effect("update-child", "b-2")
+    )
+
+    effects.clear()
+
+    // --
+
+    myVar.writer.onNext(arr)
+
+    effects shouldBe mutable.Buffer(
+      Effect("result", "Bar(b)") // Single item JS Array is printed this way
     )
 
     //effects.clear()
