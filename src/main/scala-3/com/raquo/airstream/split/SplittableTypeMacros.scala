@@ -210,7 +210,7 @@ object SplittableTypeMacros {
 
     val allCaseDefLists = caseExprList.reverse.zipWithIndex.flatMap { case (caseExpr, idx) =>
       caseExpr.asTerm match {
-        case Block(List(DefDef(_, _, _, Some(Match(_, caseDefList)))), _) => {
+        case Lambda(_, Match(_, caseDefList)) => {
           caseDefList.map { caseDef =>
             val idxExpr = Expr.apply(idx)
             val newRhsExpr = '{ val res = ${caseDef.rhs.asExprOf[Any]}; ($idxExpr, res)}
