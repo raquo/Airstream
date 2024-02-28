@@ -126,7 +126,7 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
 
   @inline def tryNow(): Try[A] = signal.tryNow()
 
-  /** @throws Exception if currentValue is a Failure */
+  /** @throws Throwable if currentValue is a Failure */
   @inline def now(): A = signal.now()
 
   override def toObservable: Signal[A] = signal

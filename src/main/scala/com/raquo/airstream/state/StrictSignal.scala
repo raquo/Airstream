@@ -11,6 +11,10 @@ import scala.util.Try
   */
 trait StrictSignal[+A] extends Signal[A] {
 
+  /** Get the signal's current value
+    *
+    * @throws Throwable the error from the current value's Failure
+    */
   override def now(): A = super.now()
 
   abstract override def tryNow(): Try[A] = super.tryNow()

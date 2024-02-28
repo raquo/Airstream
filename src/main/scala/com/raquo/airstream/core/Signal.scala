@@ -34,7 +34,7 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
 
   /** Get the signal's current value
     *
-    * @throws the signal's error if its current value is an error
+    * @throws Throwable the error from the current value's Failure
     */
   protected[airstream] def now(): A = tryNow().get
 
