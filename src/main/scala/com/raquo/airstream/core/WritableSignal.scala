@@ -18,7 +18,7 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
 
   /** Note: Initial value is only evaluated if/when needed (when there are observers) */
   override protected[airstream] def tryNow(): Try[A] = {
-    // println(s"${this} > tryNow (maybeLastSeenCurrentValue = ${maybeLastSeenCurrentValue})")
+    // dom.console.log(s"${this} > tryNow (maybeLastSeenCurrentValue = ${maybeLastSeenCurrentValue})")
     maybeLastSeenCurrentValue.getOrElse {
       // #TODO[Integrity] I'm not sure if updating `_lastUpdateId` here is right.
       //  - I expected `0` to indicate "initial value" (no events emitted yet),
@@ -28,6 +28,7 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
       //    comment is incorrect. Either way, need to figure this out some time.
       //  - Currently, tests pass either way, but it's hard to tell definitely
       //    if this change would really be ok.
+      // dom.console.log(s"${this} -> eval current value from tryNow")
       _lastUpdateId = Signal.nextUpdateId()
       val nextValue = currentValueFromParent()
       setCurrentValue(nextValue)

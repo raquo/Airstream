@@ -36,6 +36,13 @@ class SplitSignal[M[_], Input, Output, Key](
 
   override protected def currentValueFromParent(): Try[M[Output]] = parent.tryNow().map(memoizedProject)
 
+  // #TODO[Performance]
+  //  - If we don't need Scala semantics for keys, then we can use JS map,
+  //    which would likely be both smaller and faster than Scala Map
+  //  - Keys are often primitives – strings or numbers – so this would
+  //    likely help in most popular use cases.
+  //  - However, don't bother until we can benchmark how much time we spend
+  //    in memoization, and how much we'll gain from switching to JS Maps.
   /** key -> (inputValue, outputValue, lastParentUpdateId) */
   private[this] val memoized: mutable.Map[Key, (Input, Output, Int)] = mutable.Map.empty
 
@@ -101,8 +108,7 @@ class SplitSignal[M[_], Input, Output, Key](
         val inputSignal = distinctCompose(
           new SplitChildSignal[M, Input](
             sharedDelayedParent,
-            initialInput,
-            initialParentLastUpdateId = Protected.lastUpdateId(parent),
+            initialValue = Some((initialInput, Protected.lastUpdateId(parent))),
             () => memoized.get(memoizedKey).map(t => (t._1, t._3))
           )
         )
@@ -113,6 +119,7 @@ class SplitSignal[M[_], Input, Output, Key](
       }
 
       // Cache this key for the first time, or update the input so that inputSignal can fetch it
+      // dom.console.log(s"${this} memoized.update ${memoizedKey} -> ${nextInput}")
       memoized.update(memoizedKey, (nextInput, nextOutput, Protected.lastUpdateId(parent)))
 
       nextOutput
@@ -120,6 +127,7 @@ class SplitSignal[M[_], Input, Output, Key](
 
     memoized.keys.foreach { memoizedKey =>
       if (!nextKeys.contains(memoizedKey)) {
+        // dom.console.log(s"${this} memoized.remove ${memoizedKey}")
         memoized.remove(memoizedKey)
       }
     }

@@ -1232,13 +1232,39 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
     fooS_A_observed_1.killOriginalSubscription()
     mapFooS_A_observed_1.killOriginalSubscription()
 
-    foosVar.set(Foo("b", 1) :: Foo("a", 3) :: Nil)
+    foosVar.set(Foo("b", 2) :: Foo("a", 3) :: Nil)
 
-    foosVar.set(Foo("a", 4) :: Nil)
+    val owner_B = ownersById("b")
+    val fooS_B = fooSById("b")
+    val mapFooS_B = mapFooSById("b")
+
+    val fooS_B_observed_1 = fooS_B.observe(owner_B)
+    val mapFooS_B_observed_1 = mapFooS_B.observe(owner_B)
+
+    assert(ownersById("b") eq owner_B)
+    assert(fooSById("b") eq fooS_B)
+    assert(mapFooSById("b") eq mapFooS_B)
+
+    // Verifying that these signals don't update after their subs getting killed
+    assert(fooS_A_observed_1.now() == Foo("a", 2))
+    assert(mapFooS_A_observed_1.now() == Foo("a", 2))
+
+    // Verifying that if the start of the child signal is delayed,
+    // the child signal still picks up the most recent value,
+    // and not the initial value that it was instantiated with.
+    assert(fooS_B_observed_1.now() == Foo("b", 2))
+    assert(mapFooS_B_observed_1.now() == (Foo("b", 2)))
+
+    // --
+
+    foosVar.set(Foo("a", 4) :: Foo("b", 3) :: Nil)
 
     assert(ownersById("a") eq owner_A)
     assert(fooSById("a") eq fooS_A)
     assert(mapFooSById("a") eq mapFooS_A)
+
+    assert(fooS_B_observed_1.now() == Foo("b", 3))
+    assert(mapFooS_B_observed_1.now() == Foo("b", 3))
 
     // --
 
@@ -1265,13 +1291,13 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
 
     val owner = new ManualOwner
 
-    val foosVar = new EventBus[List[Foo]]
+    val foosBus = new EventBus[List[Foo]]
 
     var ownersById = Map[String, ManualOwner]()
     var fooSById = Map[String, Signal[Foo]]()
-    var mapFooSById = Map[String, Signal[Foo]]()
+    var mapFooSById = Map[String, Signal[Option[Foo]]]()
 
-    val splitSignal = foosVar.stream.split(_.id)((id, _, fooS) => {
+    val splitSignal = foosBus.stream.split(_.id)((id, _, fooS) => {
       ownersById.get(id).foreach(_.killSubscriptions())
 
       val newOwner = new ManualOwner
@@ -1279,7 +1305,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
 
       fooSById = fooSById.updated(id, fooS)
 
-      val mapFooS = foosVar.stream.startWith(Nil).map(_.find(_.id == id).get)
+      val mapFooS = foosBus.stream.startWith(Nil).map(_.find(_.id == id))
       mapFooSById = mapFooSById.updated(id, mapFooS)
     })
 
@@ -1293,36 +1319,62 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
 
     // --
 
-    foosVar.emit(Foo("a", 1) :: Nil)
+    foosBus.emit(Foo("a", 1) :: Nil)
 
     val owner_A = ownersById("a")
     val fooS_A = fooSById("a")
     val mapFooS_A = mapFooSById("a")
 
-    val fooS_A_observed_1 = fooS_A.observe(owner)
-    val mapFooS_A_observed_1 = mapFooS_A.observe(owner)
+    val fooS_A_observed_1 = fooS_A.observe(owner_A)
+    val mapFooS_A_observed_1 = mapFooS_A.observe(owner_A)
 
-    foosVar.emit(Foo("a", 2) :: Foo("b", 1) :: Nil)
+    foosBus.emit(Foo("a", 2) :: Foo("b", 1) :: Nil)
 
     assert(ownersById("a") eq owner_A)
     assert(fooSById("a") eq fooS_A)
     assert(mapFooSById("a") eq mapFooS_A)
 
     assert(fooS_A_observed_1.now() == Foo("a", 2))
-    assert(mapFooS_A_observed_1.now() == Foo("a", 2))
+    assert(mapFooS_A_observed_1.now().contains(Foo("a", 2)))
 
     // --
 
     fooS_A_observed_1.killOriginalSubscription()
     mapFooS_A_observed_1.killOriginalSubscription()
 
-    foosVar.emit(Foo("b", 1) :: Foo("a", 3) :: Nil)
+    foosBus.emit(Foo("b", 2) :: Foo("a", 3) :: Nil)
 
-    foosVar.emit(Foo("a", 4) :: Nil)
+    val owner_B = ownersById("b")
+    val fooS_B = fooSById("b")
+    val mapFooS_B = mapFooSById("b")
+
+    val fooS_B_observed_1 = fooS_B.observe(owner_B)
+    val mapFooS_B_observed_1 = mapFooS_B.observe(owner_B)
+
+    assert(ownersById("b") eq owner_B)
+    assert(fooSById("b") eq fooS_B)
+    assert(mapFooSById("b") eq mapFooS_B)
+
+    // Verifying that these signals don't update after their subs getting killed
+    assert(fooS_A_observed_1.now() == Foo("a", 2))
+    assert(mapFooS_A_observed_1.now().contains(Foo("a", 2)))
+
+    // Verifying that if the start of the child signal is delayed,
+    // the child signal still picks up the most recent value,
+    // and not the initial value that it was instantiated with.
+    assert(fooS_B_observed_1.now() == Foo("b", 2))
+    assert(mapFooS_B_observed_1.now().isEmpty) // this is based on stream so it can't actually re-sync
+
+    // --
+
+    foosBus.emit(Foo("a", 4) :: Foo("b", 3) :: Nil)
 
     assert(ownersById("a") eq owner_A)
     assert(fooSById("a") eq fooS_A)
     assert(mapFooSById("a") eq mapFooS_A)
+
+    assert(fooS_B_observed_1.now() == Foo("b", 3))
+    assert(mapFooS_B_observed_1.now().contains(Foo("b", 3)))
 
     // --
 
@@ -1330,18 +1382,18 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
     val mapFooS_A_observed_2 = mapFooS_A.observe(owner)
 
     assert(fooS_A_observed_2.now() == Foo("a", 4))
-    assert(mapFooS_A_observed_2.now() == Foo("a", 2)) // this is based on stream so it can't actually re-sync
+    assert(mapFooS_A_observed_2.now().contains(Foo("a", 2))) // this is based on stream so it can't actually re-sync
 
     // --
 
-    foosVar.emit(Foo("a", 5) :: Nil)
+    foosBus.emit(Foo("a", 5) :: Nil)
 
     assert(ownersById("a") eq owner_A)
     assert(fooSById("a") eq fooS_A)
     assert(mapFooSById("a") eq mapFooS_A)
 
     assert(fooS_A_observed_2.now() == Foo("a", 5))
-    assert(mapFooS_A_observed_2.now() == Foo("a", 5))
+    assert(mapFooS_A_observed_2.now().contains(Foo("a", 5)))
   }
 
   it("LazyList should not break memoization") {

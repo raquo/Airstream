@@ -17,19 +17,15 @@ import scala.util.{Success, Try}
   * duplicity is undesirable of course, so we take care of it by dropping the first event after initialization IF
   * it happens during the transaction in which this signal was initialized.
   *
+  * @param initialValue note that this can get stale - always try to read memoized value first.
+  *
   * @param getMemoizedValue get the latest memoized value and its corresponding parentLastUpdateId.
   */
 private[airstream] class SplitChildSignal[M[_], A](
   override protected[this] val parent: SyncDelayStream[M[A]],
-  initial: A,
-  initialParentLastUpdateId: Int,
+  private[this] var initialValue: Option[(A, Int)],
   getMemoizedValue: () => Option[(A, Int)]
 ) extends SingleParentSignal[M[A], A] with InternalTryObserver[M[A]] {
-
-  /** Note: initial value is not an "event" and is not "emitted",
-    * so its propagation when starting the signal does not count here.
-    */
-  private var hasEmittedEvents = false
 
   private var maybeInitialTransaction: js.UndefOr[Transaction] = Transaction.currentTransaction()
 
@@ -37,46 +33,53 @@ private[airstream] class SplitChildSignal[M[_], A](
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
-  // onWillStart & currentValueFromParent:
-  // If this child signal is started immediately after it's first initialized,
-  // for example if we add an observer to it in the split operator's render callback,
-  // then while it's being started, its initial value was not memoized yet,
-  // so we pull it via the special channel (`initial` and `initialLastParentUpdateId`)
-
   override protected def onWillStart(): Unit = {
-    // Sync to parent signal. This is similar to standard SingleParentSignal logic,
-    // except `val parent` is a special timing stream, not the real parent signal,
-    // so we need to ge the parent's value and lastUpdateId in a special manner.
-    // dom.console.log(s"${this} > onWillStart")
+    // dom.console.log(s"${this} onWillStart")
+
     Protected.maybeWillStart(parent)
-    // dom.console.log(s"  getMemoizedValue() = ${getMemoizedValue()} ")
-    val newParentLastUpdateId = getMemoizedValue().map(_._2).getOrElse(initialParentLastUpdateId)
-    if (newParentLastUpdateId != _parentLastUpdateId) {
-      // Note: We only update the value and the parent update id on re-start if
-      // the parent has updated while this signal was stopped.
-      // Note that there is no deduplication at this stage. The typical distinctCompose
-      // filtering is applied LATER, on top of this child signal's output.
-      updateCurrentValueFromParent()
-      _parentLastUpdateId = newParentLastUpdateId
+    val maybeInitialValue = pullValueFromParent()
+    // dom.console.log(s"maybeInitialValue = ${maybeInitialValue}")
+
+    maybeInitialValue.foreach {
+      case (nextValue, nextParentLastUpdateId) =>
+        // Sync to parent signal. This is similar to standard SingleParentSignal logic,
+        // except `val parent` is a special timing stream, not the real parent signal,
+        // so we need to ge the parent's value and lastUpdateId in a special manner.
+        if (nextParentLastUpdateId != _parentLastUpdateId) {
+          // Note: We only update the value and the parent update id on re-start if
+          // the parent has updated while this signal was stopped.
+          // Note that there is no deduplication at this stage. The typical distinctCompose
+          // filtering is applied LATER, on top of this child signal's output.
+          updateCurrentValueFromParent(Success(nextValue), nextParentLastUpdateId)
+        }
     }
   }
 
+  override protected def updateCurrentValueFromParent(
+    nextValue: Try[A],
+    nextParentLastUpdateId: Int
+  ): Unit = {
+    super.updateCurrentValueFromParent(nextValue, nextParentLastUpdateId)
+    initialValue = None // No longer needed regardless of what `nextValue` is
+  }
+
   override protected def currentValueFromParent(): Try[A] = {
-    // dom.console.log(s"$this -> currentValueFromParent")
-    // #TODO[Sync] is this right, or is this right only in the context of Laminar usage of split?
-    // #Note See also SignalFromStream for similar logic
-    // #Note This can be called from inside tryNow(), so make sure to avoid an infinite loop
-    if (maybeLastSeenCurrentValue.nonEmpty && hasEmittedEvents) {
-      val m = getMemoizedValue()
-      // dom.console.log(s"  = $m (memoized)")
-      // #Note memoized value should always be available at this point. It's only unavailable
-      //  under very specific conditions (see comment above), and we don't call this method
-      //  in those conditions.
-      Success(getMemoizedValue().get._1)
-    } else {
-      // dom.console.log(s"  = $initial (initial)")
-      Success(initial)
-    }
+    pullValueFromParent()
+      .map(t => Success(t._1))
+      .getOrElse(tryNow()) // #Note: Be careful to avoid infinite loop here
+  }
+
+  private def pullValueFromParent(): Option[(A, Int)] = {
+    // - We try to look at the memoized value first, because
+    //   it's possible that initialValue is outdated (e.g. if
+    //   parent emitted after we created this child signal,
+    //   but before we started this child signal
+    // - But the memoized value is not always available, for
+    //   example, it's not available if the child signal is
+    //   started inside SplitSignal's render (`project`)
+    //   callback, which is typical for Laminar use case.
+    //   - The `initialValue` actually exists for those cases.
+    getMemoizedValue().orElse(initialValue)
   }
 
   override protected def onTry(nextParentValue: Try[M[A]], transaction: Transaction): Unit = {
@@ -90,7 +93,7 @@ private[airstream] class SplitChildSignal[M[_], A](
         maybeInitialTransaction = js.undefined
         droppedDuplicateEvent = true
       } else {
-        hasEmittedEvents = true
+        // hasEmittedEvents = true
         fireTry(Success(freshMemoizedInput), transaction)
       }
     }

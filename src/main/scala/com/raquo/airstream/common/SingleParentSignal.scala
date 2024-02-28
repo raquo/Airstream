@@ -11,31 +11,43 @@ trait SingleParentSignal[I, O] extends WritableSignal[O] with InternalTryObserve
 
   protected[this] val parentIsSignal: Boolean = parent.isInstanceOf[Signal[_]]
 
-  protected[this] var _parentLastUpdateId: Int = 0
+  // Note: `-1` here means that we've never synced up with the parent.
+  //       I am not sure if -1 vs 0 has a practical difference, but looking
+  //       at our onWillStart code, it seems that using -1 here would be more
+  //       prudent. If using 0, the initial onWillStart may not detect the
+  //       "change" (from no value to parent signal's initial value), and the
+  //       signal's value would only be updated in tryNow().
+  protected[this] var _parentLastUpdateId: Int = -1
 
   /** Note: this is overriden in:
     * - [[com.raquo.airstream.misc.SignalFromStream]] because parent can be stream, and it has cacheInitialValue logic
     * - [[com.raquo.airstream.split.SplitChildSignal]] because its parent is a special timing stream, not the real parent
     */
   override protected def onWillStart(): Unit = {
-    // println(s"${this} > onWillStart")
+    // dom.console.log(s"${this} > onWillStart (SPS)")
     Protected.maybeWillStart(parent)
     if (parentIsSignal) {
       val newParentLastUpdateId = Protected.lastUpdateId(parent.asInstanceOf[Signal[_]])
       if (newParentLastUpdateId != _parentLastUpdateId) {
-        updateCurrentValueFromParent()
-        _parentLastUpdateId = newParentLastUpdateId
+        updateCurrentValueFromParent(
+          currentValueFromParent(),
+          newParentLastUpdateId
+        )
       }
     }
   }
 
   /** Note: this is overridden in:
-   *  - [[com.raquo.airstream.distinct.DistinctSignal]]
+   *  - [[com.raquo.airstream.split.SplitChildSignal]] to clear cached initial value (if any)
+   *  - [[com.raquo.airstream.distinct.DistinctSignal]] to filter out isSame events
    */
-  protected def updateCurrentValueFromParent(): Unit = {
-    // println(s"${this} > updateCurrentValueFromParent")
-    val nextValue = currentValueFromParent()
+  protected def updateCurrentValueFromParent(
+    nextValue: Try[O],
+    nextParentLastUpdateId: Int
+  ): Unit = {
+    // dom.console.log(s"${this} > updateCurrentValueFromParent")
     setCurrentValue(nextValue)
+    _parentLastUpdateId = nextParentLastUpdateId
   }
 
   /** Note: this is overridden in:

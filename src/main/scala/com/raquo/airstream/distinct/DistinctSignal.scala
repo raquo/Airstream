@@ -24,16 +24,18 @@ class DistinctSignal[A](
   override protected def currentValueFromParent(): Try[A] = parent.tryNow()
 
   /** Special implementation to add the distinct-ness filter */
-  override protected def updateCurrentValueFromParent(): Unit = {
+  override protected def updateCurrentValueFromParent(
+    nextValue: Try[A],
+    nextParentLastUpdateId: Int
+  ): Unit = {
     // #TODO[Integrity] should I also check for lastUpdateId in addition to isSame?
     //  - if isSame, then it doesn't matter if the parent emitted, right? No event anyway.
     //  - if not isSame, then I don't think it's possible that the parent has NOT emitted,
     //    unless you're using some super weird isSame function where a != a.
-    val nextValue = currentValueFromParent()
     // #Note We check this signal's standard distinction condition with !isSame instead of `==`
     //  because isSame might be something incompatible, e.g. reference equality
     if (resetOnStop || !isSame(nextValue, tryNow())) {
-      setCurrentValue(nextValue)
+      super.updateCurrentValueFromParent(nextValue, nextParentLastUpdateId) // #nc check this?????
     }
   }
 }
