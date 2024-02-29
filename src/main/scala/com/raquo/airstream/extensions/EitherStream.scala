@@ -1,6 +1,6 @@
 package com.raquo.airstream.extensions
 
-import com.raquo.airstream.core.{EventStream, Signal}
+import com.raquo.airstream.core.{EventStream, Observable, Signal}
 import com.raquo.airstream.split.SplittableOneStream
 
 /** See also: [[EitherObservable]] */
@@ -50,4 +50,15 @@ class EitherStream[A, B](val stream: EventStream[Either[A, B]]) extends AnyVal {
     )
   }
 
+  def composeEither[A2, B2](
+    left: Signal[A] => Observable[A2],
+    right: Signal[B] => Observable[B2]
+  ): EventStream[Either[A2, B2]] =
+    ???
+
+  def composeFoldEither[C](
+    left: Signal[A] => Observable[C],
+    right: Signal[B] => Observable[C]
+  ): EventStream[C] =
+    composeEither(left, right).map(_.merge)
 }

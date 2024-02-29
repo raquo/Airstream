@@ -33,4 +33,16 @@ class EitherSignal[A, B](val signal: Signal[Either[A, B]]) extends AnyVal {
     )
   }
 
+  def composeEither[A2, B2](
+    left: Signal[A] => Signal[A2],
+    right: Signal[B] => Signal[B2]
+  ): Signal[Either[A2, B2]] =
+    ???
+
+  def composeFoldEither[C](
+    left: Signal[A] => Signal[C],
+    right: Signal[B] => Signal[C]
+  ): Signal[C] =
+    composeEither(left, right).map(_.merge)
+
 }
