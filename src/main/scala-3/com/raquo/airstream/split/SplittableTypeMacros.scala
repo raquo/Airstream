@@ -2,6 +2,7 @@ package com.raquo.airstream.split
 
 import com.raquo.airstream.core.{EventStream, Signal, Observable, BaseObservable}
 import scala.quoted.{Expr, Quotes, Type}
+import scala.annotation.compileTimeOnly
 
 /**
  * `SplittableTypeMacros` turns this code
@@ -63,15 +64,17 @@ object SplittableTypeMacros {
    *
    * This is important, because `({ case baz: Baz => baz }) :: ({ case Bar(Some(str)) => str }) :: Nil` saves all the infomation needed for the macro to expands into match case definition
    */
-  final class MatchSplitObservable[Self[+_] <: Observable[_] , I, O] private[SplittableTypeMacros] (
-    private[SplittableTypeMacros] val observable: BaseObservable[Self, I],
-    private[SplittableTypeMacros] val caseList: List[PartialFunction[Any, Any]],
-    private[SplittableTypeMacros] val handlerMap: Map[Int, Function[Any, O]]
-  ) {
-
-    // MatchSplitObservable should be erased after macro expansion, any instance in runtime is illegal
+  final class MatchSplitObservable[Self[+_] <: Observable[_] , I, O] {
     throw new UnsupportedOperationException("splitMatch without toSignal/toStream is illegal")
+  }
 
+  object MatchSplitObservable {
+    @compileTimeOnly("splitMatch without toSignal/toStream is illegal")
+    def build[Self[+_] <: Observable[_] , I, O](
+      observable: BaseObservable[Self, I],
+      caseList: List[PartialFunction[Any, Any]],
+      handlerMap: Map[Int, Function[Any, O]]
+    ): MatchSplitObservable[Self, I, O] = throw new UnsupportedOperationException("splitMatch without toSignal/toStream is illegal")
   }
 
   extension [Self[+_] <: Observable[_], I](inline observable: BaseObservable[Self, I]) {
@@ -88,16 +91,6 @@ object SplittableTypeMacros {
 
   extension [I, O](inline matchSplitObservable: MatchSplitObservable[EventStream, I, O]) {
     inline def toStream: EventStream[O] = ${ observableImpl('{ matchSplitObservable })}
-  }
-
-  object MatchSplitObservable {
-    def build[Self[+_] <: Observable[_] , I, O](
-      observable: BaseObservable[Self, I],
-      caseList: List[PartialFunction[Any, Any]],
-      handlerMap: Map[Int, Function[Any, O]]
-    ): MatchSplitObservable[Self, I, O] = {
-      MatchSplitObservable(observable, caseList, handlerMap)
-    }
   }
 
   private def handleCaseImpl[Self[+_] <: Observable[_] : Type, I: Type, O: Type, O1 >: O : Type, A: Type, B: Type](
