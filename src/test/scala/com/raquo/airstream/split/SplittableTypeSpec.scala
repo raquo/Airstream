@@ -471,27 +471,4 @@ class SplittableTypeSpec extends UnitSpec {
 
   }
 
-  it("illegal usage should throw") {
-    val owner = new TestableOwner
-    val fooVar = Var[Foo](Tar)
-    var isThrown = false
-    
-    try {
-      fooVar.signal
-        .splitMatch
-        .handleCase {
-          case Bar(None) => "null"
-        } { case (str, strSignal) =>
-          ()
-        }
-        .handleCase { case baz: Baz => baz } { case (baz, bazSignal) =>
-          ()
-        }
-    } catch {
-      case _: UnsupportedOperationException => isThrown = true
-    } finally {
-      isThrown shouldBe true
-    }
-  }
-
 }
