@@ -2,7 +2,6 @@ package com.raquo.airstream.split
 
 import com.raquo.airstream.core.{EventStream, Signal, Observable, BaseObservable}
 import scala.quoted.{Expr, Quotes, Type}
-import scala.annotation.compileTimeOnly
 
 /**
  * `SplittableTypeMacros` turns this code
@@ -42,40 +41,6 @@ import scala.annotation.compileTimeOnly
  * After macros expansion, compiler will warns above code "match may not be exhaustive" and "unreachable case" as expected.
  */
 object SplittableTypeMacros {
-
-  /**
-   * `MatchSplitObservable` served as macro's data holder for macro expansion.
-   * 
-   * Like any class runtime builder, which uses methods to add various data and a dedicated method to build an instance of the class, `MatchSplitObservable` uses `handleCase`s to keep all code data and `toSignal`/`toStream` to expands macro into to match case definition.
-   * 
-   * For example:
-   *
-   * ```scala
-   *  fooSignal.splitMatch
-   *    .handleCase { case Bar(Some(str)) => str } { (str, strSignal) => renderStrNode(str, strSignal) }
-   *    .handleCase { case baz: Baz => baz } { (baz, bazSignal) => renderBazNode(baz, bazSignal) }
-   * ```
-   * 
-   * will be expanded sematically into:
-   *
-   * ```scala
-   *  MatchSplitObservable.build(fooSignal, ({ case baz: Baz => baz }) :: ({ case Bar(Some(str)) => str }) :: Nil, handlerMap)
-   * ```
-   *
-   * This is important, because `({ case baz: Baz => baz }) :: ({ case Bar(Some(str)) => str }) :: Nil` saves all the infomation needed for the macro to expands into match case definition
-   */
-  final class MatchSplitObservable[Self[+_] <: Observable[_] , I, O] {
-    throw new UnsupportedOperationException("splitMatch without toSignal/toStream is illegal")
-  }
-
-  object MatchSplitObservable {
-    @compileTimeOnly("splitMatch without toSignal/toStream is illegal")
-    def build[Self[+_] <: Observable[_] , I, O](
-      observable: BaseObservable[Self, I],
-      caseList: List[PartialFunction[Any, Any]],
-      handlerMap: Map[Int, Function[Any, O]]
-    ): MatchSplitObservable[Self, I, O] = throw new UnsupportedOperationException("splitMatch without toSignal/toStream is illegal")
-  }
 
   extension [Self[+_] <: Observable[_], I](inline observable: BaseObservable[Self, I]) {
     inline def splitMatch: MatchSplitObservable[Self, I, Nothing] = MatchSplitObservable.build(observable, Nil, Map.empty[Int, Function[Any, Nothing]])
