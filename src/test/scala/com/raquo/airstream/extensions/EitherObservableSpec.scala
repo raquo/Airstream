@@ -251,4 +251,101 @@ class EitherObservableSpec extends UnitSpec {
     )
     effects.clear()
   }
+
+  it("EitherStream: collectRight") {
+    val owner: TestableOwner = new TestableOwner
+
+    val bus = new EventBus[Either[Int, String]]
+
+    val effects = mutable.Buffer[Effect[_]]()
+
+    bus
+      .events
+      .collectRight
+      .foreach(v => effects += Effect("obs", v))(owner)
+
+    effects shouldBe mutable.Buffer()
+
+    // --
+
+    bus.emit(Left(1))
+
+    effects.toList shouldBe Nil
+
+    // --
+
+    bus.emit(Right("a"))
+
+    effects.toList shouldBe List(
+      Effect("obs", "a")
+    )
+    effects.clear()
+
+    // --
+
+    bus.emit(Right("b"))
+
+    effects.toList shouldBe List(
+      Effect("obs", "b")
+    )
+    effects.clear()
+
+    // --
+
+    bus.emit(Left(2))
+
+    effects.toList shouldBe Nil
+  }
+
+  it("EitherStream: collectRight()") {
+    val owner: TestableOwner = new TestableOwner
+
+    val bus = new EventBus[Either[Int, String]]
+
+    val effects = mutable.Buffer[Effect[_]]()
+
+    bus
+      .events
+      .collectRight { case "a" => true }
+      .foreach(v => effects += Effect("obs", v))(owner)
+
+    effects shouldBe mutable.Buffer()
+
+    // --
+
+    bus.emit(Left(1))
+
+    effects.toList shouldBe Nil
+
+    // --
+
+    bus.emit(Right("a"))
+
+    effects.toList shouldBe List(
+      Effect("obs", true)
+    )
+    effects.clear()
+
+    // --
+
+    bus.emit(Right("b"))
+
+    effects.toList shouldBe Nil
+    effects.clear()
+
+    // --
+
+    bus.emit(Right("a"))
+
+    effects.toList shouldBe List(
+      Effect("obs", true)
+    )
+    effects.clear()
+
+    // --
+
+    bus.emit(Left(2))
+
+    effects.toList shouldBe Nil
+  }
 }
