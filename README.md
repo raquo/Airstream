@@ -72,7 +72,9 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [N-arity Operators](#n-arity-operators)
     * [Compose Changes](#compose-changes)
     * [Sync Delay](#sync-delay)
+    * [Async Status Operators](#async-status-operators)
     * [Splitting Observables](#splitting-observables)
+    * [Specialized Type Operators](#specialized-type-operators) for Option-s, Either-s, Try-s, etc.
     * [Flattening Observables](#flattening-observables)
     * [Other Notable Operators](#other-notable-operators)
   * [Operators vs Transactions](#operators-vs-transactions)
@@ -1083,6 +1085,8 @@ signal.distinctTry((prevTryValue, nextTryValue) => isSame) // one comparator for
 
 The same operators are available on streams too.
 
+Note that all `distinct` operators **assume that the values you pass through them are not mutated**. Internally, `distinct` compares every new value to the last received value, and it remembers the latter by reference, so if you're always emitting the same instance (e.g. of `js.Array`) that you're mutating upstream, the `distinct` operator will never be able to detect those mutations, so it will filter them aall out. 
+
 
 #### N-arity Operators
 
@@ -1154,7 +1158,7 @@ Under the hood `delaySync` uses the same `pendingObservables` machinery as `comb
 
 #### Splitting Observables
 
-Airstream offers powerful `split` and `splitToSignals` operators that split an observable of `M[Input]` into an observable of `M[Output]` based on `Input => Key`. The functionality of these operators is very generic, so we will explore its properties by diving into concrete examples.
+Airstream offers a powerful `split` operator that splits an observable of `M[Input]` into an observable of `M[Output]` based on `Input => Key`. The functionality of this operator is very generic, so we will explore its properties by diving into concrete examples.
 
 Note: These operators are available on qualifying streams and signals by means of `SplittableSignal` and `SplittableEventStream` value classes.
 
@@ -1275,9 +1279,6 @@ One option is to change your model to create an ephemeral key, that is generated
 
 Another, simpler solution, is often quite workable – with `splitByIndex` you can use the index of the item in the list as its key. This works as well as any other key if you only ever append items to the list, and don't insert items in the middle, remove items from the middle, or reorder the items. 
 
-##### `splitOption`
-
-This variation of the `split` operator is available for observables of `Option[Foo]`, and it uses `_.isDefined` as a key, thus, it calls the render function when switching from `None` to `Some(foo)`, and updates the signal provided to the render function when switching from `Some(foo1)` to `Some(foo2)`.
 
 ##### `splitOne`
 
@@ -1334,6 +1335,45 @@ In other words, our `splitOne` code above guarantees that every instance of `doc
 
 This all might seem similar to what a `distinct` operator would do, and indeed there is some conceptual overlap, because `distinct` is a fundamental part of `split` semantics, but you will be hard pressed to implement this pattern with `distinct` instead of `splitOne`, at least if you have a single observable like `Signal[Document]` as your input.
 
+
+##### Split Operators for Special Types
+
+The canonical [`split` operator](#splitting-observables) works on collections, but there are a few types that we can think of as fixed-size collections, or perhaps rather, as types with a fixed number of branches, of which only one is active at a time.
+
+For example, all of the following types have two possible branches:
+- `Boolean` has `true` and `false`
+- `Option[Foo]` has `Some[Foo]` and `None`
+- `Try[V]` has `Success[V]` and `Failure`
+- `Either[L, R]` has `Left[L]` and `Right[R]`
+- `Status[In, Out]` has `Pending[In]` and `Resolved[In, Out]`
+
+For each of those types, we have `split<type>` operators that let you switch between the two branches, in a similar manner to how the standard `split` operator lets you switch between the items in the collection.
+
+Perhaps a very concrete example in Laminar would help:
+
+```scala
+val userTrySignal: Signal[Try[User]] = ???
+div(
+  child <-- userTrySignal.splitTry(
+    success = (initialUser: User, userSignal: Signal[User]) =>
+       div("User name: ", text <-- userSignal.map(_.name)),
+    failure = (initialErr: Throwable, errSignal: Signal[Throwable]) =>
+       div("Something is wrong: ", text <-- errSignal.map(_.getMessage))
+  )
+)
+```
+
+As you can see, `splitTry`'s callbacks are very similar to the standard `split` callback, except that the discriminator key was implicitly decided for you (`_.isSuccess`), and you get separate callbacks for each branch, that are precisely typed for its values.
+
+Let's work through this example to make sure you understand what's happening. In the code above, the `failure` callback is called once when `userTrySignal` emits `Failure(v1)` for the first time, and then if it subsequently emits `Failure(v2)`, the `failure` callback is _not_ called again, but `errSignal` is updated with value `v2`. And if then `userTrySignal` emits `Success(v3)`, we forget everything we did with the `failure` callback, and call the `success` callback, and if we then emit `Right(v4)`, then `successSignal` will be updated to value `v4`, but the `success` callback itself will _not_ be called. And so on.
+
+You can see how this parallels the standard [`split` operator](#splitting-observables) behaviour, right? Consider that our `splitTry` is roughly equivalent to `userListSignal.split(_.isSuccess)((_, initialUserTry: Try[User], trySignal: Signal[Try[Usr]]) => C)`, and that the events we mentioned are roughly equivalent to `userListSignal` emitting single-item collections: `List(Failure(v1))`, `List(Failure(v2))`, `List(Failure(v3))`, `List(Failure(v4))`, etc. – so, given the `_.isSuccess` discriminator key, switching between Failure and Success branches is similar to switching between _unrelated_ elements in the list, and switching between values _within the branch_ is similar to _updating_ a collection item with a given "id" (which happens to be `_.isSuccess` in this case).
+
+If this is confusing, make sure you understand the regular `split` operator first. The big Laminar video also has a [chapter](https://www.youtube.com/watch?v=L_AHCkl6L-Q&t=767s) about it, maybe that's more helpful.
+
+Aside from `splitEither`, we also have `splitOption`, `splitTry`, `splitStatus`, `splitStatus`, and `splitBoolean`, which behave similarly. We actually have more type-specific operators for these types, like `mapSome`, `collectRight`, `foldStatus`, etc. – see [Specialized Type Operators](#specialized-type-operators) section below. 
+
+
 ##### Duplicate Key Warnings
 
 The `split` operator does not tolerate items with non-unique keys – this is simply invalid input for it, and it will crash and burn if provided such bad data.
@@ -1351,32 +1391,234 @@ stream.split(_.id, duplicateKeys = DuplicateKeysConfig.noWarnings)(...)
 ```
 
 
+#### Async Status Operators
+
+_For the full list of Status-related operators, see the [Status Operators](#status-operators) subsection below._
+
+When performing async operations using event streams, you sometimes need to know the current status of the operation – was it never triggered, was it triggered but is it still pending, or is it complete? (For error handling, refer to [Airstream error handling](#error-handling)).
+
+Basic types:
+
+```scala
+sealed trait Status[+In, +Out] { /* ... */ }
+case class Pending[+In](input: In) extends Status[In, Nothing] { /* ... */ }
+case class Resolved[+In, +Out](input: In, output: Out, ix: Int) extends Status[In, Out] { /* ... */ }
+```
+
+Suppose we have a stream of networks request arguments (`requestS`), and we want to execute those requests, and show a "loading" indicator while the requests are in progress. This is how we could do it:
+
+```scala
+val requestS: EventStream[Request] = ???
+
+type Response = String // but it could be something else
+
+val responseS: EventStream[Status[Request, Response]] =
+  requestS.flatMapWithStatus { request =>
+    // returns EventStream[Response]
+    FetchStream.get(request.url, request.options)
+  }
+
+val isLoadingS: EventStream[Boolean] = responseS.map(_.isPending)
+
+val textS: EventStream[String] =
+  responseS.foldStatus(
+    resolved = _.toString,
+    pending = _ => "Loading..." 
+  )
+
+// Example usage from Laminar:
+div(
+  child(img(src("spinner.gif"))) <-- isLoadingS,
+  text <-- textS
+)
+
+// Or, perhaps more realistically:
+div(
+  child <-- responseS.splitStatus(
+    (resolved, _) => div("Response: " + resolved.output.toString),
+    (pending, _) => div(img(src("spinner.gif")), "Loading ...")
+  )
+)
+```
+
+When we call `flatMapWithStatus(makeStream)`, we essentially call [flatMapSwitch](#flatmapswitch) on that stream, merge the resulting stream with the original stream, and wrap the events from the original stream into `Pending()`, and the (async) events from the inner stream created by `makeStream` – network responses in this case – into `Resolved()`.
+
+So for example, if requestS emits `request1`, the following will happen:
+1) The `flatMapWithStatus` operator will create `fetchStream = FetchStream.get(request1.url, request1.options)` internally, and `FetchStream` will start executing the request 
+2) The `responseS` stream will immediately emit a `Pending(request1)` event
+3) `fetchStream` will eventually emit the response event (`response1`), which by default happens to be the raw HTTP Body response text
+4) `responseS` will then emit `Resolved(request1, response1, ix = 1)`
+
+If `fetchStream` emitted more events afterward, `responseS` would have emitted the corresponding `Resolved(request1, responseN, ix = N)` events. But this particular `fetchStream` does not do that.
+
+If `requestS` emitted a new `request2` event before we received `response1`, `flatMapWithStatus` would forget about `request1` and would switch to processing `request2` (same sequence as above), similarly to how the regular [flatMapSwitch](#flatmapswitch) operator switches from one stream to another. This means that you may never get to process `response1`.  
+
+Finally, we used `foldStatus` operator that is only available on observables of `Status`, to fold all types of `Status` into a string that we could display. Other Status-specific operators let you map status values over input or output values, etc.: `mapInput(input => input)`, `mapOutput(output => output)`, `mapPending(pending => ???)`, `mapResolved(resolved => ???)`.
+
+Aside from `flatMapWithStatus`, there are similar operators for non-flatMap-based async operators: `delayWithStatus`, `throttleWithStatus`, `debounceWithStatus`. They work similarly,e.g. you can think of `delayWithStatus(ms = 1000)` being equivalent to `flatMapWithStatus(ev => EventStream.delay(ms = 1000, event = ev))`.
+
+For example, suppose we're receiving messages from somewhere (`receivedMessageS`), and whenever a new message comes in, we want to automatically show its text for a few seconds, before switching to showing nothing (empty text). This is how we could do it:
+
+```scala
+val receivedMessageS: EventStream[String] = ???
+
+val messageStatusS: EventStream[Status[String, String]] =
+  receivedMessageS.delayWithStatus(ms = 3000)
+
+val showMessageS: EventStream[String] =
+  messageStatusS.foldStatus(
+    resolved = _ => "",
+    pending = _.input // contains the event fired by `messageReceivedS`, i.e. the message
+  )
+  
+div(text <-- showMessageS) // in Laminar
+```
+
+Note that in this example, both `input` and `output` in the `Resolved` case are the same, and contain the message emitted by `receivedMessageS`, because the `delay` operation does not transform the value, it only delays it.
+
+
+#### Specialized Type Operators
+
+Airstream has many helper operators designed for specific types only. For example, all observables of Boolean have an `.invert` operator that flips the boolean.
+
+Such operators are mostly self-explanatory, at least once you've met similar ones for other types, so we only briefly list them below, with links to the files in which they are defined, that may have additional comments. Note that links go to `master` git branch, not any particular version. You can switch to a version tag in Github UI, or better yet, use your IDE code navigation. 
+
+For the explanation of the split operators mentioned here, see [Split Operators for Special Types](#split-operators-for-special-types) section above.
+
+
+##### Boolean Operators
+
+Operators: `invert`, `foldBoolean`, `splitBoolean`
+
+Sources: [BooleanObservable](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/BooleanObservable.scala), [BooleanStream](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/BooleanStream.scala), [BooleanSignal](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/BooleanSignal.scala) 
+
+
+##### Option Operators
+
+Operators: `mapSome`, `mapFilterSome`, `mapToRight`, `mapToLeft`, `foldOption`, `splitOption`
+
+Stream-only operators: `collectSome`
+
+Sources: [OptionObservable](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/OptionObservable.scala), [OptionStream](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/OptionStream.scala), [OptionSignal](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/OptionSignal.scala)
+
+
+##### Try Operators
+
+Operators: `mapSuccess`, `mapFailure`, `mapToEither`, `foldTry`, `recoverFailure`, `throwFailure`, `splitTry`
+
+Stream-only operators: `collectSuccess`, `collectFailure`
+
+Sources: [TryObservable](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/TryObservable.scala), [TryStream](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/TryStream.scala), [TrySignal](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/TrySignal.scala)
+
+Also, some of the standard operators that deal with Try-s: `recoverToTry`, `EventStream.fromTry`, `Signal.fromTry`
+
+
+##### Either Operators
+
+Operators: `mapRight`, `mapLeft`, `mapToOption`, `mapLeftToOption`, `foldEither`, `swap`, `splitEither`
+
+Stream-only operators: `collectLeft`, `collectRight`
+
+Only when the `L` type in `Either[L, R]` is `Throwable`: `recoverLeft`, `throwLeft`
+
+Sources: [EitherObservable](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/EitherObservable.scala), [EitherStream](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/EitherStream.scala), [EitherSignal](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/EitherSignal.scala), [EitherThrowableObservable](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/EitherThrowableObservable.scala)
+
+Also, some of the standard operators that deal with Either-s: `recoverToEither`, `EventStream.fromEither`, `Signal.fromEither`
+
+
+##### Status Operators
+
+See [Async Status Operators](#async-status-operators) for explanation of the `Status` concept in Airstream.
+
+Operators: `mapOutput`, `mapInput`, `mapResolved`, `mapPending`, `foldStatus`, `splitStatus`
+
+Stream-only operators: `collectOutput`, `collectResolved`, `collectPending`, `collectPendingInput`
+
+Sources: [StatusObservable](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/StatusObservable.scala), [StatusStream](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/StatusStream.scala), [StatusSignal](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/StatusSignal.scala)
+
+Also, some of the standard operators that deal with Try-s:
+
+`flatMapWithStatus`, `delayWithStatus`, `throttleWithStatus`, `debounceWithStatus`.
+
+
 #### Flattening Observables
 
-**Warning!** Avoid using the `flatMap` / `flatten` methods when they are not absolutely needed. The canonical way to combine two observables is `combineWith`, not `flatMap`, so don't use Scala's `for`-comprehensions just to get the value of several observables into one scope. `flatMap` should only be used when you need to switch your stream to mirroring a new observable in response to an incoming event. Using it where a simpler `combineWith` would suffice will degrade performance and cause FRP glitches. **/Warning**
+_Flattening_ generally refers to reducing the number of nested container layers. For example, you could `.flatten` an `Option[Option[A]]` into an `Option[A]`, and in Airstream, you can flatten types like `EventStream[EventStream[A]]` into `EventStream[A]`. The `flatMap` operation works essentially similarly, just adding a `map` operation (that internally creates the nested structure) before flattening it.
 
-Flattening generally refers to reducing the number of nested container layers. In Airstream the precise type definition can be found in the `FlattenStrategy` trait.
+Note: Airstream offers several variations of `flatMap` and `flatten` operators, the "standard" ones being `flatMapSwitch` and `flattenSwitch`. More on these variations below.
 
-Aside from the `def flatMap[...](implicit strategy: FlattenStrategy[...])` method on the `Observable` itself, a similar `flatten` method is available on all observables by means of `MetaObservable` implicit value class. To use these methods, you just need to provide an instance of `FlattenStrategy` that works for your specific observable's type. While you can of course implement your own flattening strategy, we have a few predefined in Airstream:
 
-**`SwitchStreamStrategy`** flattens an `Observable[EventStream[A]]` into an `EventStream[A]`. The resulting stream will emit events from the latest stream emitted by the parent observable. So, as the parent observable emits a new stream, the resulting flattened stream _switches_ to imitating this last emitted stream.
-*  This strategy is the default for the parent observable type that it supports. So if you want to flatten an `Observable[EventStream[A]]` using this strategy, you don't need to pass it to `flatten` explicitly, it is provided implicitly.
+##### Avoid unnecessary flatMap
 
-**`SwitchSignalStrategy`** flattens an `Signal[Signal[A]]` into a `Signal[A]`. Works similar to `SwitchStreamStrategy` but with Signal mechanics, tracking the last emitted value from the last signal emitted by the parent signal. Note: 
-* This strategy is the default for flattening `Signal[Signal[A]]`.
-* When switching to a new signal, the flattened signal emits the current value of the new signal (unless it's the same as the flattened signal's previous current value, as usual).
-* The flattened signal follows standard signal expectations – it's lazy. If you stop observing it, its current value might get stale even if the signal that it's tracking has other observers.
+Unlike other contexts and libraries where flattening may be an unremarkable operation, **in Airstream flattening is special and different and needs your attention to learn properly**.
 
-**SwitchSignalStreamStrategy** and **SwitchSignalObservableStrategy** behave similarly, but work on different combinations of streams and signals. All of these are implicitly available, so you shouldn't need to choose manually.
+Long story short, Airstream is able to automatically prevent [FRP glitches](#frp-glitches) within the confines of a [Transaction](#transactions). Airstream's `flatMap*` and `flatten*` operators are [loopy](#loopy-operators) – so, due to their unlimited flexibility, they must break out of the current Transaction, and fire each of their events in a new Transaction. This is of course undesirable because splintering your dataflow into multiple transactions increases the opportunities for FRP glitches.
 
-To summarize, the above strategies result in an observable that imitates the latest stream / signal emitted by the parent observable. So as soon as the parent observable emits a new stream / signal, it stops listening for values produced by previously emitted futures / signals / streams.
+You should use Airstream `flatMap*` / `flatten` operators **only when you can't implement the required logic using [flowy operators](#flowy-operators) such as `combineWith` or `withCurrentValueOf`**. You should absolutely not be using `flatMap*` operators just to get the current values of two observables into the same scope. Such usage of `flatMap*` operators is **unnecessary**, and is likely to result in FRP glitches as your program grows in size.
 
-**`ConcurrentStreamStrategy`** is essentially a dynamic version of `EventStream.merge`.
-* The resulting stream re-emits all the events emitted by all of the streams emitted by the input observable.
-* If you stop observing the resulting stream, it will forget all of the streams it previously listened to. When you start it up again, it will start listening to the input observable from scratch, as if it's the first time you started it.
-* To use this strategy, you need to explicitly pass it to `flatMap`.
+Unfortunately, with `flatMap` being such a common and innocuous operation on many data types, and being easily available via Scala's for-comprehensions, developers tend to reach for it in Airstream before they learn about the proper way to do these things in Airstream. So, starting with v17, we introduced additional friction to this workflow. Trying to use the methods named `flatMap` and `flatten` now throws a compiler error pointing to this documentation section. For now, you can convert it into deprecation warning by importing `FlattenStrategy.flatMapAllowed` (or `FlattenStrategy.flattenAllowed` for the `flatten` operator), however this option is only there to ease migration to v17, it will be removed in the future. See v17 release blog post for more details.
 
-All built-in strategies result in observables that emit each event in a new transaction, because the toporank of the resulting observable is not knowable in advance, so Airstream can't prove that you aren't creating a loop of observables by using `flatMap`, so it has to play it safe by emitting events in a new transaction.
+If you see this compiler error, you should try to rewrite your logic with flowy operators like `combineWith`. Only if it's truly impossible to do that, should you use `flatMapSwitch`, or one of the other operators detailed below.
+
+**See also Laminar docs about [the flatMap anti-pattern](https://laminar.dev/documenation#flatmap-all-the-things).**
+
+
+##### `flatMapSwitch`
+
+This v17+ flatMap operator matches the default behavior of `flatMap` in prior versions of Airstream. It follows the default "switching" semantics of flatMap in Airstream. This variation of flatMap is probably what you want, if you need flatMap at all. Suppose you have:
+
+
+```scala
+val parentStream: EventStream[A] = ???
+
+def makeInnerStream(ev: A): EventStream[B] = ???
+
+val flatStream: EventStream[B] =
+  parentStream.flatMapSwitch(ev => makeInnerStream(ev))
+``` 
+
+When `parentStream` emits `ev`, `flatStream` calls `makeInnerStream(ev)` to create an `innerStream` from that event, and starts "mirroring" this `innerStream`, i.e. it starts re-emitting all events emitted by this `innerStream`.
+
+Later, when `parentStream` emits a different `ev` event, `flatStream` kills the `innerStream` that it previously created, stops mirroring it, then creates a new version of it by calling `makeInnerStream` again – now with the new `ev` event – and starts "mirroring" this newly created `innerStream`.
+
+So, in short, whenever `parentStream` emits a new `ev` event, `flatStream` **switches** from mirroring the previous `innerStream` to mirroring the next `innerStream`. **It forgets about the previous `innerStream` from then on.**
+
+The `flattenSwitch` operator does the same, except without the mapping part.
+
+This "switching" semantic is the canonical way to flatten observables in Airstream. You can flatten:
+- `Observable[EventStream[A]]` into `EventStream[A]`
+- `Observable[Signal[A]]` into `Observable[A]`
+- `EventStream[Signal[A]` into `EventStream[A]`
+- `Signal[Signal[A]]` into `Signal[A]`
+
+For implementations, see `trait SwitchingStrategy` and `class MetaObservable`. 
+
+You can also flatten observables of Scala Futures, and Futures of Observables, and similarly with JS Promises, **by first converting the Future / Promise into an Observable**, for example using `Signal.fromFuture` or `EventStream.fromJsPromise`.  
+
+
+##### flatMapMerge
+
+Aside from **switching** from one `innerStream` to another, there is another way to flatten an observable of streams – **merging** them. Instead of forgetting the previous `innerStream` when a new one is emitted, keep listening to all of them, accumulating more streams as `parentStream` emits more events.
+
+So, the resulting `flatStream` ends up emitting the events from **all** of the `innerStream`-s that is has seen. This is similar to the `mergeWith` operator, except the streams to be merged are provided dynamically. In that sense, it is also similar to the `EventBus.addSource` functionality, and the latter may be preferable in some cases since it is more flexible, allowing you to remove the added streams if you kept a reference to the subscription. There is no way to remove streams accumulated
+
+```scala
+val parentBus: EventBus[A] = ???
+
+val parentStream: EventStream[A] = parentBus.events
+
+def makeInnerStream(ev: A): EventStream[B] = ???
+
+val flatStream: EventStream[B] =
+  parentStream.flatMapMerge(ev => makeInnerStream(ev))
+  
+parentBus.emit(a1)
+parentBus.emit(a2)
+
+// Now flatStream re-emits the events from both
+// makeInnerStream(a1) and makeInnerStream(a2),
+// assuming it has any observers, of course.
+```
 
 
 #### Other Notable Operators
@@ -1407,7 +1649,11 @@ Like some other operators, these have an optional `resetOnStop` argument. Defaul
 
 `stream.filterWith(signalOfBooleans)` emits events from `stream`, but only when the given signal's (or Var's) current value is `true`.
 
+##### `tapEach`
 
+`observable.tapEach(callback)` executes a side effecting callback every time the observable emits. If it's a signal, it also runs when its initial value is evaluated. This method is similar in spirit to Scala collections `tapEach` method.
+
+`tapEach` is a helper for situations where the ergonomics of chaining are more important than keeping side effects in observers. Normally it's a good practice to put any side-effecting callbacks into observers, where they are easy to find and recognize.
 
 ### Operators vs Transactions
 

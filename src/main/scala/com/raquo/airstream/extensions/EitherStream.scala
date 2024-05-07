@@ -28,7 +28,7 @@ class EitherStream[A, B](val stream: EventStream[Either[A, B]]) extends AnyVal {
     * @param left  (initialLeft, signalOfLeftValues) => output
     *              `left` is called whenever `stream` switches from `Right()` to `Left()`.
     *              `signalOfLeftValues` starts with `initialLeft` value, and updates when
-    *              the parent stream updates from `Left(a) to `Left(b)`.
+    *              the parent stream updates from `Left(a)` to Left(b)`.
     * @param right (initialRight, signalOfRightValues) => output
     *              `right` is called whenever `stream` switches from `Left()` to `Right()`.
     *              `signalOfRightValues` starts with `initialRight` value, and updates when

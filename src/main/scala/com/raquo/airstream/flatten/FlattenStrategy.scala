@@ -28,18 +28,18 @@ trait MergingStrategy[
   +Output[+_] <: Observable[_]
 ] extends FlattenStrategy[Outer, Inner, Output]
 
-@implicitNotFound("\nYou are trying to use Airstream's flatMap operator.\nIt was renamed to flatMapSwitch / flatMapMerge to discourage incorrect usage, especially in for-comprehensions.\nSee https://github.com/raquo/Airstream/#flattening-observables")
+@implicitNotFound("\nYou are trying to use Airstream's flatMap operator.\nIt was renamed to flatMapSwitch / flatMapMerge to discourage incorrect usage, especially in for-comprehensions.\nSee https://github.com/raquo/Airstream/#avoid-unnecessary-flatmap")
 trait AllowFlatMap
 
-@implicitNotFound("\nYou are trying to use Airstream's flatten operator.\nIt was renamed to flattenSwitch / flattenMerge to clarify intent and discourage incorrect usage, similarly to flatMap.\nSee https://github.com/raquo/Airstream/#flattening-observables")
+@implicitNotFound("\nYou are trying to use Airstream's flatten operator.\nIt was renamed to flattenSwitch / flattenMerge to clarify intent and discourage incorrect usage, similarly to flatMap.\nSee https://github.com/raquo/Airstream/#avoid-unnecessary-flatmap")
 trait AllowFlatten
 
 object FlattenStrategy {
 
-  @deprecated("You are using Airstream's deprecated flatMap operator using FlattenStrategy.flatMapAllowed import. This migration helper will be removed in the next version of Airstream. See https://github.com/raquo/Airstream/#flattening-observables", since = "17.0.0")
+  @deprecated("You are using Airstream's deprecated flatMap operator using FlattenStrategy.flatMapAllowed import. This migration helper will be removed in the next version of Airstream. See https://github.com/raquo/Airstream/#avoid-unnecessary-flatmap", since = "17.0.0")
   implicit lazy val allowFlatMap: AllowFlatMap = new AllowFlatMap {}
 
-  @deprecated("You are using Airstream's deprecated flatten operator using FlattenStrategy.flattenAllowed import. This migration helper will be removed in the next version of Airstream. See https://github.com/raquo/Airstream/#flattening-observables", since = "17.0.0")
+  @deprecated("You are using Airstream's deprecated flatten operator using FlattenStrategy.flattenAllowed import. This migration helper will be removed in the next version of Airstream. See https://github.com/raquo/Airstream/#avoid-unnecessary-flatmap", since = "17.0.0")
   implicit lazy val allowFlatten: AllowFlatten = new AllowFlatten {}
 
   /** See docs for [[SwitchStream]] */
