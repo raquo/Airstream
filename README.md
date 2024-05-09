@@ -22,7 +22,7 @@ Airstream has a very generic design, but is primarily intended to serve as a rea
 I created Airstream because I found existing solutions were not suitable for building reactive UI components. My original need for Airstream was to replace the previous reactive layer of [Laminar](https://laminar.dev), but I'll be happy to see it used by other reactive UI libraries as well. Another piece of Laminar you can reuse is [Scala DOM Types](https://github.com/raquo/scala-dom-types).
 
 ```
-"com.raquo" %%% "airstream" % "<version>"  // Requires Scala.js 1.13.0+
+"com.raquo" %%% "airstream" % "<version>"  // Requires Scala.js 1.16.0+
 ```
 
 
@@ -107,13 +107,11 @@ I created Airstream because I found existing solutions were not suitable for bui
 
 [API doc](https://javadoc.io/doc/com.raquo/airstream_sjs1_3/latest/com/raquo/airstream/index.html)
 
-The documentation provided below is a high level overview that occasionally dives into gritty details for things that are hard to figure out on your own. It is pretty comprehensive, but is not a full replacement to discovering every last available method by reading the code (which is quite simple, and has comments) or simply with an IDE's autocomplete functionality.
-
-This documentation explains how _Airstream_ works. Although I try to explain all required concepts and the rationale for doing things a certain way, if you need a primer on reactive programming using streams, consider [this guide](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754) by André Staltz or its [video adaptation](https://egghead.io/courses/introduction-to-reactive-programming).
+This documentation explains not only the functionality that _Airstream_ offers, but also how it works, and the design tradeoffs involved. Nevertheless, if you need a primer on reactive programming using streams, consider [this guide](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754) by André Staltz or its [video adaptation](https://egghead.io/courses/introduction-to-reactive-programming).
 
 This documentation is intended to be read top to bottom, sections further down the line assume knowledge of concepts and behaviours introduced in earlier sections.
 
-For examples of Airstream usage, see [laminar-examples](https://github.com/raquo/laminar-examples), [Laminar](https://github.com/raquo/Laminar) source code, as well as Airstream tests.
+For examples of Airstream usage, see [Laminar Demo](https://demo.laminar.dev), [Laminar](https://github.com/raquo/Laminar) source code, as well as Laminar's and Airstream's test suites.
 
 
 ### EventStream
