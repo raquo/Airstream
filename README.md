@@ -1567,7 +1567,7 @@ Perhaps the most popular legitimate use case for `flatMap` / `flatMapSwitch` is 
 
 ```scala
 val userS: Signal[User] = ???
-val responseS: Signal[Response] = userS.flatMapSwitch { user =>
+val responseS: EventStream[Response] = userS.flatMapSwitch { user =>
   FetchStream.get(s"/user/${user.id}")
 }
 ```
