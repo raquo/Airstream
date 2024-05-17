@@ -250,7 +250,7 @@ You can `scanLeft(initialValue)(fn)` an EventStream into a Signal, or make a Sig
 
 You can get an EventStream of changes from a Signal – `signal.changes` – this stream will re-emit whatever the parent signal emits (subject to laziness of the stream), minus the Signal's initial value.
 
-If you have an observable, you can refine it to a Signal with `Observable#toWeakSignal` or `Observable#toSignalIfStream(ifStream = streamToSignal)`, and to a Stream with `Observable#toStreamOrSignal(ifSignal = signalToStream)`. For example, if you want to convert `Observable[String]` into `Signal[String]` with empty string as initial value in case this Observable is a stream, use `observable.toSignalIfStream(_.startWith(""))`.
+If you have an observable, you can refine it to a Signal with `Observable#toWeakSignal` or `Observable#toSignalIfStream(ifStream = streamToSignal)`, and to a Stream with `Observable#toStreamIfSignal(ifSignal = signalToStream)`. For example, if you want to convert `Observable[String]` into `Signal[String]` with empty string as initial value in case this Observable is a stream, use `observable.toSignalIfStream(_.startWith(""))`.
 
 See also: [Sources & Sinks](#sources--sinks)
 
@@ -1559,6 +1559,22 @@ Unfortunately, with `flatMap` being such a common and innocuous operation on man
 If you see this compiler error, you should try to rewrite your logic with flowy operators like `combineWith`. Only if it's truly impossible to do that, should you use `flatMapSwitch`, or one of the other operators detailed below.
 
 **See also Laminar docs about [the flatMap anti-pattern](https://laminar.dev/documenation#flatmap-all-the-things).**
+
+
+##### Acceptable uses of flatMap
+
+Perhaps the most popular legitimate use case for `flatMap` / `flatMapSwitch` is triggering a network request whenever a signal or stream updates, and subscribing to the corresponding network responses, all in one go, for example:
+
+```scala
+val userS: Signal[User] = ???
+val responseS: Signal[Response] = userS.flatMapSwitch { user =>
+  FetchStream.get(s"/user/${user.id}")
+}
+```
+
+**This is a perfectly valid use case.** You will not see any glitches when doing this, because the response events are fired independently of any other events that your observable graph may emit. And so, you have no choice but to use flatMap here.
+
+From another angle, you know that this will not cause glitches because these network response events are fired _asynchronously_. Glitches are essentially situations when events that you expect to happen _simultaneously_, happen _sequentially_ instead (like in the [diamond glitch example](https://github.com/raquo/Airstream#frp-glitches)). But this mismatch of expectations can't arise if you don't actually expect your events to happen simultaneously with any other events. And since this is basically always the case for async events, the problem of glitches generally doesn't apply to observables emitting events asynchronously.
 
 
 ##### `flatMapSwitch`
