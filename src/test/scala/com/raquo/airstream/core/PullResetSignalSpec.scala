@@ -3,6 +3,7 @@ package com.raquo.airstream.core
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
+import com.raquo.airstream.misc.StreamFromSignal
 import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, Owner, Subscription}
 import com.raquo.airstream.state.Var
 
@@ -432,6 +433,75 @@ class PullResetSignalSpec extends UnitSpec {
       "11 isPositive = true, isEven = false"
     )
     log.clear()
+  }
+
+  it("signal.changes starts signal") {
+    val log = mutable.Buffer[String]()
+
+    val bus = new EventBus[Int]
+
+    var initialValue: Int = -1
+
+    def nextInitialValue: Int = {
+      initialValue += 1
+      initialValue
+    }
+
+    // This signal updates its current value every time it's
+    // started, as long as bus.events does not emit anything.
+    // This update happens in onWillStart, and is the simplest
+    // case to test. SwitchSignal also calls setCurrentValue
+    // from onWillStart.
+    val signal = bus
+      .events
+      .tapEach(v => log += s"bus-$v")
+      .startWith(nextInitialValue, cacheInitialValue = false)
+      .tapEach(v => log += s"signal-$v")
+
+    val stream =
+      new StreamFromSignal(signal, changesOnly = true)
+        .tapEach(v => log += s"stream-$v")
+
+    val owner = new TestableOwner
+
+    log.toList shouldBe Nil
+
+    // --
+
+    val sub0 = stream.addObserver(Observer.empty)(owner)
+
+    log.toList shouldBe List(
+      "signal-0",
+      "stream-0"  // #TODO: this event does not happen, but should
+    )
+    log.clear()
+
+    sub0.kill()
+
+    // --
+
+    val sub1 = stream.addObserver(Observer.empty)(owner)
+
+    log.toList shouldBe List(
+      "signal-1",
+      "stream-1"
+    )
+    log.clear()
+
+    sub1.kill()
+
+    // --
+
+    val sub2 = stream.addObserver(Observer.empty)(owner)
+
+    log.toList shouldBe List(
+      "signal-2",
+      "stream-2"
+    )
+    log.clear()
+
+    sub2.kill()
+
   }
 
   it("onStart shared transaction is resilient to exceptions") {
