@@ -8,6 +8,8 @@ class BooleanObservable[Self[+_] <: Observable[_]](val observable: BaseObservabl
     observable.map(!_)
   }
 
+  @inline def not: Self[Boolean] = invert
+
   def foldBoolean[A](
     whenTrue: => A,
     whenFalse: => A
