@@ -85,6 +85,10 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
     new DerivedVar[A, B](this, in, out, owner, displayNameSuffix = ".zoom")
   }
 
+  def zoomPure[B](in: A => B)(out: (A, B) => A): Var[B] = {
+    new PureDerivedVar[A, B](this, in, out, displayNameSuffix = ".zoomPure")
+  }
+
   def setTry(tryValue: Try[A]): Unit = writer.onTry(tryValue)
 
   final def set(value: A): Unit = setTry(Success(value))
