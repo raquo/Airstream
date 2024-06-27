@@ -81,8 +81,26 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
     }
   }
 
+  /** Create a strictly evaluated DerivedVar. See also: [[zoomLazy]]. */
   def zoom[B](in: A => B)(out: (A, B) => A)(implicit owner: Owner): Var[B] = {
     new DerivedVar[A, B](this, in, out, owner, displayNameSuffix = ".zoom")
+  }
+
+  /** Create a lazily evaluated derived Var.
+    *
+    * Its value will be evaluated only if it has subscribers,
+    * or when you get its value with methods like .now(). Its value
+    * will not be re-evaluated unnecessarily.
+    *
+    * Note: if you update a lazy derived Var's value, it is
+    * not set directly. Instead, you're updating the parent Var,
+    * and it propagates from there (lazily, in case of zoomLazy).
+    *
+    * Note: `in` and `out` functions should be free of side effects,
+    * as they may not get called if the Var's value is not observed.
+    */
+  def zoomLazy[B](in: A => B)(out: (A, B) => A): Var[B] = {
+    new LazyDerivedVar[A, B](this, in, out, displayNameSuffix = ".zoomLazy")
   }
 
   def setTry(tryValue: Try[A]): Unit = writer.onTry(tryValue)
