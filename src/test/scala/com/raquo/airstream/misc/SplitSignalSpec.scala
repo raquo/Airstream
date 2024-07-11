@@ -1185,7 +1185,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
 
     var ownersById = Map[String, ManualOwner]()
     var fooSById = Map[String, Signal[Foo]]()
-    var mapFooSById = Map[String, Signal[Foo]]()
+    var mapFooSById = Map[String, Signal[Option[Foo]]]()
 
     val splitSignal = foosVar.signal.split(_.id)((id, _, fooS) => {
       ownersById.get(id).foreach(_.killSubscriptions())
@@ -1195,7 +1195,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
 
       fooSById = fooSById.updated(id, fooS)
 
-      val mapFooS = foosVar.signal.map(_.find(_.id == id).get)
+      val mapFooS = foosVar.signal.map(_.find(_.id == id))
       mapFooSById = mapFooSById.updated(id, mapFooS)
     })
 
@@ -1225,7 +1225,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
     assert(mapFooSById("a") eq mapFooS_A)
 
     assert(fooS_A_observed_1.now() == Foo("a", 2))
-    assert(mapFooS_A_observed_1.now() == Foo("a", 2))
+    assert(mapFooS_A_observed_1.now().contains(Foo("a", 2)))
 
     // --
 
@@ -1247,13 +1247,13 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
 
     // Verifying that these signals don't update after their subs getting killed
     assert(fooS_A_observed_1.now() == Foo("a", 2))
-    assert(mapFooS_A_observed_1.now() == Foo("a", 2))
+    assert(mapFooS_A_observed_1.now().contains(Foo("a", 2)))
 
     // Verifying that if the start of the child signal is delayed,
     // the child signal still picks up the most recent value,
     // and not the initial value that it was instantiated with.
     assert(fooS_B_observed_1.now() == Foo("b", 2))
-    assert(mapFooS_B_observed_1.now() == (Foo("b", 2)))
+    assert(mapFooS_B_observed_1.now().contains(Foo("b", 2)))
 
     // --
 
@@ -1264,7 +1264,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
     assert(mapFooSById("a") eq mapFooS_A)
 
     assert(fooS_B_observed_1.now() == Foo("b", 3))
-    assert(mapFooS_B_observed_1.now() == Foo("b", 3))
+    assert(mapFooS_B_observed_1.now().contains(Foo("b", 3)))
 
     // --
 
@@ -1272,7 +1272,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
     val mapFooS_A_observed_2 = mapFooS_A.observe(owner)
 
     assert(fooS_A_observed_2.now() == Foo("a", 4))
-    assert(mapFooS_A_observed_2.now() == Foo("a", 4))
+    assert(mapFooS_A_observed_2.now().contains(Foo("a", 4)))
 
     // --
 
@@ -1283,7 +1283,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
     assert(mapFooSById("a") eq mapFooS_A)
 
     assert(fooS_A_observed_2.now() == Foo("a", 5))
-    assert(mapFooS_A_observed_2.now() == Foo("a", 5))
+    assert(mapFooS_A_observed_2.now().contains(Foo("a", 5)))
   }
 
   it("child split signal re-syncs with parent stream") {

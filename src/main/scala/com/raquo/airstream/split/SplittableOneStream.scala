@@ -28,7 +28,7 @@ class SplittableOneStream[Input](val stream: EventStream[Input]) extends AnyVal 
   /** This operator lets you "split" EventStream[Input] into two branches:
     * - processing of Signal[Input] into Output, and
     * - the initial value of Output.
-    * This is a nice shorthand to to signal.splitOption in cases
+    * This is a nice shorthand to signal.splitOption in cases
     * when signal is actually stream.toWeakSignal or stream.startWith(initial)
     */
   def splitStart[Output](

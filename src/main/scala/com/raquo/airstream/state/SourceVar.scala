@@ -6,7 +6,8 @@ import scala.util.Try
 
 /** The regular Var that's created with `Var.apply`.
   *
-  * See also DerivedVar, created with `myVar.zoom(a => b)(b => a)(owner)`
+  * See also DerivedVar, created with `myVar.zoom(a => b)((a, b) => a)(owner)`,
+  * and LazyDerivedVar, created with `myVar.zoomLazy(a => b)((a, b) => a)`
   */
 class SourceVar[A] private[state](initial: Try[A]) extends Var[A] {
 
@@ -22,7 +23,10 @@ class SourceVar[A] private[state](initial: Try[A]) extends Var[A] {
 
   override private[state] def getCurrentValue: Try[A] = currentValue
 
-  override private[state] def setCurrentValue(value: Try[A], transaction: Transaction): Unit = {
+  override private[state] def setCurrentValue(
+    value: Try[A],
+    transaction: Transaction
+  ): Unit = {
     currentValue = value
     _varSignal.onTry(value, transaction)
   }

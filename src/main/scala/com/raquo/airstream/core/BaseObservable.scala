@@ -208,6 +208,9 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
 
   /** Child observable should call this method on its parents when it is started.
     * This observable calls [[onStart]] if this action has given it its first observer (internal or external).
+    *
+    * I think `shouldCallMaybeWillStart` should be `false` when we're calling this from onStart.
+    * In that case, `maybeWillStart` was already called. #TODO But `maybeWillStart` checks for willStartDone status, so does it actually matter?
     */
   protected[airstream] def addInternalObserver(observer: InternalObserver[A], shouldCallMaybeWillStart: Boolean): Unit
 

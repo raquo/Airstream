@@ -1,6 +1,6 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.common.SingleParentSignal
+import com.raquo.airstream.common.{InternalTryObserver, SingleParentSignal}
 import com.raquo.airstream.core.{AirstreamError, Protected, Signal, Transaction}
 import com.raquo.airstream.timing.SyncDelayStream
 
@@ -29,7 +29,8 @@ class SplitSignal[M[_], Input, Output, Key](
   distinctCompose: Signal[Input] => Signal[Input],
   project: (Key, Input, Signal[Input]) => Output,
   splittable: Splittable[M],
-  duplicateKeysConfig: DuplicateKeysConfig = DuplicateKeysConfig.default
+  duplicateKeysConfig: DuplicateKeysConfig = DuplicateKeysConfig.default,
+  strict: Boolean = false // #TODO `false` default for now to keep compatibility with 17.0.0 - consider changing in 18.0.0 #nc
 ) extends SingleParentSignal[M[Input], M[Output]] {
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
@@ -43,8 +44,8 @@ class SplitSignal[M[_], Input, Output, Key](
   //    likely help in most popular use cases.
   //  - However, don't bother until we can benchmark how much time we spend
   //    in memoization, and how much we'll gain from switching to JS Maps.
-  /** key -> (inputValue, outputValue, lastParentUpdateId) */
-  private[this] val memoized: mutable.Map[Key, (Input, Output, Int)] = mutable.Map.empty
+  /** key -> (inputValue, inputSignal, outputValue, lastParentUpdateId) */
+  private[this] val memoized: mutable.Map[Key, (Input, Signal[Input], Output, Int)] = mutable.Map.empty
 
   override protected def onTry(nextParentValue: Try[M[Input]], transaction: Transaction): Unit = {
     super.onTry(nextParentValue, transaction)
@@ -55,6 +56,10 @@ class SplitSignal[M[_], Input, Output, Key](
   }
 
   private[this] val sharedDelayedParent = new SyncDelayStream(parent, this)
+
+  private[this] val emptyObserver = new InternalTryObserver[Input] {
+    override protected def onTry(nextValue: Try[Input], transaction: Transaction): Unit = ()
+  }
 
   private[this] def memoizedProject(nextInputs: M[Input]): M[Output] = {
     // Any keys not in this set by the end of this function will be removed from `memoized` map
@@ -74,9 +79,9 @@ class SplitSignal[M[_], Input, Output, Key](
 
       nextKeys += memoizedKey
 
-      val cachedOutput = memoized.get(memoizedKey).map(_._2)
+      val cachedSignalAndOutput = memoized.get(memoizedKey).map(t => (t._2, t._3))
 
-      val nextOutput = cachedOutput.getOrElse {
+      val nextSignalAndOutput = cachedSignalAndOutput.getOrElse {
         val initialInput = nextInput
 
         // @warning !!! DANGER ZONE !!!
@@ -109,18 +114,25 @@ class SplitSignal[M[_], Input, Output, Key](
           new SplitChildSignal[M, Input](
             sharedDelayedParent,
             initialValue = Some((initialInput, Protected.lastUpdateId(parent))),
-            () => memoized.get(memoizedKey).map(t => (t._1, t._3))
+            () => memoized.get(memoizedKey).map(t => (t._1, t._4))
           )
         )
 
+        if (isStarted && strict) {
+          inputSignal.addInternalObserver(emptyObserver, shouldCallMaybeWillStart = true)
+        }
+
         val newOutput = project(memoizedKey, initialInput, inputSignal)
 
-        newOutput
+        (inputSignal, newOutput)
       }
+
+      val inputSignal = nextSignalAndOutput._1
+      val nextOutput = nextSignalAndOutput._2
 
       // Cache this key for the first time, or update the input so that inputSignal can fetch it
       // dom.console.log(s"${this} memoized.update ${memoizedKey} -> ${nextInput}")
-      memoized.update(memoizedKey, (nextInput, nextOutput, Protected.lastUpdateId(parent)))
+      memoized.update(memoizedKey, (nextInput, inputSignal, nextOutput, Protected.lastUpdateId(parent)))
 
       nextOutput
     })
@@ -128,6 +140,10 @@ class SplitSignal[M[_], Input, Output, Key](
     memoized.keys.foreach { memoizedKey =>
       if (!nextKeys.contains(memoizedKey)) {
         // dom.console.log(s"${this} memoized.remove ${memoizedKey}")
+        if (strict) {
+          val inputSignal = memoized(memoizedKey)._2
+          inputSignal.removeInternalObserver(emptyObserver)
+        }
         memoized.remove(memoizedKey)
       }
     }
@@ -139,5 +155,43 @@ class SplitSignal[M[_], Input, Output, Key](
     }
 
     nextOutputs
+  }
+
+  override protected[this] def onStart(): Unit = {
+    if (strict) {
+      parent.tryNow().foreach { inputs =>
+        // splittable.foreach is perhaps less efficient that memoized.keys,
+        // but it has a predictable order that users expect.
+        splittable.foreach(inputs, (input: Input) => {
+          val memoizedKey = key(input)
+          val maybeInputSignal = memoized.get(memoizedKey).map(_._2)
+          maybeInputSignal.foreach { inputSignal =>
+            // - If inputSignal not found because `parent.tryNow()` and `memoized`
+            //   are temporarily out of sync, it should be added later just fine
+            //   when they sync up.
+            // - Typical pattern is to call Protected.maybeWillStart(inputSignal) in onWillStart,
+            //   but our SplitSignal does not actually depend on these inputSignal-s, so I think
+            //   it's ok to do both onWillStart and onStart for them here.
+            inputSignal.addInternalObserver(emptyObserver, shouldCallMaybeWillStart = true)
+          }
+        })
+      }
+    }
+    super.onStart()
+  }
+
+  override protected[this] def onStop(): Unit = {
+    if (strict) {
+      // memoized.keys has no defined order, so we don't want to
+      // use it for starting subscriptions, but for stopping them,
+      // seems fine.
+      // This way we make sure to remove observers from exactly
+      // all items that are in `memoized`, no more, no less.
+      memoized.keys.foreach { memoizedKey =>
+        val inputSignal = memoized(memoizedKey)._2
+        inputSignal.removeInternalObserver(emptyObserver)
+      }
+    }
+    super.onStop()
   }
 }

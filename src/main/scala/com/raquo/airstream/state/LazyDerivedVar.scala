@@ -12,17 +12,17 @@ import scala.util.{Failure, Success, Try}
   * Unlike the regular DerivedVar, you don't need to provide an Owner
   * to create LazyDerivedVar, and you're allowed to update this Var
   * even if its signal has no subscribers.
+  *
+  * @param zoomOut  (currentParentValue, nextValue) => nextParentValue.
   */
 class LazyDerivedVar[A, B](
   parent: Var[A],
-  zoomIn: A => B,
+  override val signal: StrictSignal[B],
   zoomOut: (A, B) => A,
   displayNameSuffix: String
 ) extends Var[B] {
 
   override private[state] def underlyingVar: SourceVar[_] = parent.underlyingVar
-
-  private[this] val _varSignal = new LazyDerivedVarSignal(parent, zoomIn, displayName)
 
   // #Note this getCurrentValue implementation is different from SourceVar
   //  - SourceVar's getCurrentValue looks at an internal currentValue variable
@@ -34,7 +34,7 @@ class LazyDerivedVar[A, B](
   override private[state] def getCurrentValue: Try[B] = signal.tryNow()
 
   override private[state] def setCurrentValue(value: Try[B], transaction: Transaction): Unit = {
-    parent.tryNow() match {
+    parent.signal.tryNow() match {
       case Success(parentValue) =>
         // This can update the parent without causing an infinite loop because
         // the parent updates this derived var's signal, it does not call
@@ -46,8 +46,6 @@ class LazyDerivedVar[A, B](
         AirstreamError.sendUnhandledError(VarError(s"Unable to zoom out of lazy derived var when the parent var is failed.", cause = Some(err)))
     }
   }
-
-  override val signal: StrictSignal[B] = _varSignal
 
   override protected def defaultDisplayName: String = parent.displayName + displayNameSuffix
 }

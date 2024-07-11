@@ -4,6 +4,7 @@ import com.raquo.airstream.core.AirstreamError.VarError
 import com.raquo.airstream.core.Source.SignalSource
 import com.raquo.airstream.core.{AirstreamError, Named, Observer, Signal, Sink, Transaction}
 import com.raquo.airstream.ownership.Owner
+import com.raquo.airstream.split.SplittableVar
 import com.raquo.airstream.util.hasDuplicateTupleKeys
 
 import scala.util.{Failure, Success, Try}
@@ -100,7 +101,12 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
     * as they may not get called if the Var's value is not observed.
     */
   def zoomLazy[B](in: A => B)(out: (A, B) => A): Var[B] = {
-    new LazyDerivedVar[A, B](this, in, out, displayNameSuffix = ".zoomLazy")
+    val zoomedSignal = new LazyStrictSignal(signal, in, displayName, displayNameSuffix = ".zoomLazy.signal")
+    new LazyDerivedVar[A, B](
+      parent = this,
+      signal = zoomedSignal,
+      zoomOut = (currValue, nextZoomedValue) => out(currValue, nextZoomedValue),
+      displayNameSuffix = ".zoomLazy")
   }
 
   def setTry(tryValue: Try[A]): Unit = writer.onTry(tryValue)
@@ -270,5 +276,7 @@ object Var {
     hasDuplicateTupleKeys(tuples.map(t => t.copy(_1 = t._1.underlyingVar)))
   }
 
+  /** Provides methods on Var: split, splitMutate */
+  implicit def toSplittableVar[M[_], Input](signal: Var[M[Input]]): SplittableVar[M, Input] = new SplittableVar(signal)
 }
 
