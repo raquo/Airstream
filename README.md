@@ -72,8 +72,9 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [N-arity Operators](#n-arity-operators)
     * [Compose Changes](#compose-changes)
     * [Sync Delay](#sync-delay)
-    * [Async Status Operators](#async-status-operators)
     * [Splitting Observables](#splitting-observables)
+    * [Splitting Vars](#splitting-vars)
+    * [Async Status Operators](#async-status-operators)
     * [Specialized Type Operators](#specialized-type-operators) for Option-s, Either-s, Try-s, etc.
     * [Flattening Observables](#flattening-observables)
     * [Other Notable Operators](#other-notable-operators)
@@ -663,37 +664,32 @@ Keep in mind that transaction scheduling is fully synchronous, we do not introdu
 
 ##### Derived Vars
 
-If you have a `Var[A]`, you can get zoomed / derived `Var[B]` by providing `A => B`, `(A, B) => A`, and an owner. The result is a `DerivedVar`, essentially a combination of `var.signal.map` and `writer.contramap` packaged in a Var, and so to simulate the strictness of Var, creating DerivedVar requires an owner.
+If you have a `Var[A]`, you can get zoomed / derived `Var[B]` by providing a lens: `A => B` and `(A, B) => A`. The result is a `LazyDerivedVar`, essentially a combination of `var.signal.map` and `writer.contramap` packaged in a Var.
 
-When you have a derived var, updates to it are propagated to the source var and vice versa, as long as derived var's signal has listeners. Don't try to set/update a derived Var's value when it has no listeners. The value will not be updated, and Airstream will emit an unhandled error.
+The value of the derived var is linked two-way to its parent var. Updating one updates the other.
+
+Example:
 
 ```scala
 case class FormData(num: Int, str: String)
-val owner: Owner = ???
-val source = Var(FormData(0, "a"))
-val derived = source.zoom(_.num)((f, n) => f.copy(num = n))(owner)
+val formDataVar = Var(FormData(0, "a"))
+val strVar = formDataVar.zoomLazy(_.str)((formData, newStr) => formData.copy(str = newStr))
 
-source.update(_.copy(num = 2))
-// source.now() == Form(2, "a")
-// derived.now() == 2
+// strVar.now() == "a"
 
-derived.set(3)
-// source.now() == Form(3, "a")
-// derived.now() == 3
+formDataVar.update(_.copy(str = "b"))
+// formDataVar.now() == FormData(0, "b")
+// strVar.now() == "b"
 
-owner.killSubscriptions()
-
-source.update(_.copy(num = 3))
-// derived var did not update:
-// derived.now() == 3
-
-derived.set(5)
-// neither var updated:
-// source.now() == Form(4, "a")
-// derived.now() == 3
+strVar.set("c")
+// formDataVar.now() == FormData(0, "c")
+// strVar.now() == "c"
 ```
 
-Note: DerivedVar starts out with a subscription owned by `owner`, that counts as a listener of course. However, just like `OwnedSignal` in general, if it obtains any other listeners, it will continue running even if the original owner kills its subscription.
+As the name implies, `LazyDerivedVar` is evaluated lazily, unlike other Vars. That is, the `zoomIn` function you provide (`A => B`) will not be called until and unless you actually read the value from this Var (whether by calling `.now()` or subscribing to its signal). Generally it's not a problem as `zoomIn` is usually just a pure field selection function (e.g. it's just `_.str` in the example above).
+
+Before the introduction of `zoomLazy`, Airstream also offered a strict `zoom` method, which is now considered inferior, because it requires an `Owner`. Note that derived vars created with the old `zoom` method could only be updated if their owner remained active, or if they had any other subscribers. Otherwise, attempting to update the var would cause Airstream to emit an unhandled error. The old `zoom` method will be deprecated in 18.0.0.
+
 
 ##### Batch Updates
 
@@ -1389,6 +1385,41 @@ stream.split(_.id, duplicateKeys = DuplicateKeysConfig.noWarnings)(...)
 ```
 
 
+#### Splitting Vars
+
+Similarly to how you can `split` a `Signal[List[A]]` into N individual `Signal[A]` (see the whole section above), you can split a `Var[List[A]]` into N individual `Var[A]`. Each of those Vars is linked both ways to the parent `Var[List[A]]`, such that updating the parent Var updates the relevant child Vars, and updating the child Var updates the data of that child in the parent Var.
+
+For example, in the example below, the user's name in both `userVar` and `usersVar` is updated when you type the new name into the input text box.
+
+```scala
+// Laminar example
+case class User(id: String, name: String)
+val usersVar = Var[List[User]](???)
+
+div(
+  usersVar.split(_.id)((userId, initial, userVar) => {
+    div(
+      s"User ${userId}: ",
+      input(
+        value <-- userVar.signal.map(_.name),
+        onInput.mapToValue --> { newName =>
+          userVar.update(_.copy(name = newName))
+        }
+      )
+    )
+  })
+)
+```
+
+These individual child Var-s provided by `split` work similarly to lazy derived vars created with the Var's `zoomLazy` method. Their state is always derived from the state of the splittable parent var (`usersVar` in this case). The `zoomIn` function selects the item by the split key (`_.id` in this case), and the `zoomOut` function updates the item in the parent var, finding it by matching the split key (`_.id == userId`). 
+
+
+##### Splitting Vars with in-place mutations
+
+Vars that contain mutable collections such as `mutable.Buffer` or `js.Array` also offer a `splitMutate` method. It works just like their regular `split` method, except that when you update one of the individual child Var-s, the `splitMutate` operator **mutates** the contents of the splittable Var with the new child data, instead of creating an updated copy of it. For large collections this could be more efficient.
+
+
+
 #### Async Status Operators
 
 _For the full list of Status-related operators, see the [Status Operators](#status-operators) subsection below._
@@ -1477,7 +1508,7 @@ Note that in this example, both `input` and `output` in the `Resolved` case are 
 
 #### Specialized Type Operators
 
-Airstream has many helper operators designed for specific types only. For example, all observables of Boolean have an `.invert` operator that flips the boolean.
+Airstream has many helper operators designed for specific types only. For example, all observables of Boolean have an `.not` aka `.invert` operator that flips the boolean.
 
 Such operators are mostly self-explanatory, at least once you've met similar ones for other types, so we only briefly list them below, with links to the files in which they are defined, that may have additional comments. Note that links go to `master` git branch, not any particular version. You can switch to a version tag in Github UI, or better yet, use your IDE code navigation. 
 
@@ -1486,7 +1517,7 @@ For the explanation of the split operators mentioned here, see [Split Operators 
 
 ##### Boolean Operators
 
-Operators: `invert`, `foldBoolean`, `splitBoolean`
+Operators: `not` aka `invert`, `foldBoolean`, `splitBoolean`
 
 Sources: [BooleanObservable](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/BooleanObservable.scala), [BooleanStream](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/BooleanStream.scala), [BooleanSignal](https://github.com/raquo/Airstream/blob/master/src/main/scala/com/raquo/airstream/extensions/BooleanSignal.scala) 
 
