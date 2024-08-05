@@ -20,9 +20,13 @@ class DynamicOwnerSpec extends UnitSpec {
     val obs1 = Observer[Int](effects += Effect("obs1", _))
     val obs2 = Observer[Int](effects += Effect("obs2", _))
 
-    val dynOwner = new DynamicOwner(() => fail("Attempted to use permakilled owner!"))
+    val dynOwner =
+      new DynamicOwner(() => fail("Attempted to use permakilled owner!"))
 
-    DynamicSubscription.unsafe(dynOwner, owner => bus1.events.addObserver(obs1)(owner))
+    DynamicSubscription.unsafe(
+      dynOwner,
+      owner => bus1.events.addObserver(obs1)(owner)
+    )
 
     bus1.writer.onNext(100)
 
@@ -45,7 +49,8 @@ class DynamicOwnerSpec extends UnitSpec {
 
     // --
 
-    val dynSub2 = DynamicSubscription.subscribeObserver(dynOwner, var2.signal, obs2)
+    val dynSub2 =
+      DynamicSubscription.subscribeObserver(dynOwner, var2.signal, obs2)
     effects shouldBe mutable.Buffer(Effect("obs2", 0))
     effects.clear()
 
@@ -59,11 +64,16 @@ class DynamicOwnerSpec extends UnitSpec {
 
     // --
 
-    dynOwner.activate() // this subscribes to the signal. It remembers 3 despite deactivation because Var is a StrictSignal. Not the best test I guess.
+    dynOwner
+      .activate() // this subscribes to the signal. It remembers 3 despite deactivation because Var is a StrictSignal. Not the best test I guess.
     bus1.writer.onNext(400)
     var2.writer.onNext(4)
 
-    effects shouldBe mutable.Buffer(Effect("obs2", 3), Effect("obs1", 400), Effect("obs2", 4))
+    effects shouldBe mutable.Buffer(
+      Effect("obs2", 3),
+      Effect("obs1", 400),
+      Effect("obs2", 4)
+    )
     effects.clear()
 
     // --

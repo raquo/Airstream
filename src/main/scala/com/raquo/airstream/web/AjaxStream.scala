@@ -1,6 +1,11 @@
 package com.raquo.airstream.web
 
-import com.raquo.airstream.core.{EventStream, Observer, Transaction, WritableStream}
+import com.raquo.airstream.core.{
+  EventStream,
+  Observer,
+  Transaction,
+  WritableStream
+}
 import com.raquo.airstream.web.AjaxStream._
 import org.scalajs.dom
 
@@ -9,62 +14,74 @@ import scala.scalajs.js.|
 
 // @TODO[Test] Needs testing
 
-/**
-  * [[AjaxStream]] performs an HTTP request and emits an [[dom.XMLHttpRequest]] on success,
-  * or an [[AjaxStreamError]] error (AjaxStatusError | AjaxNetworkError | AjaxTimeout | AjaxAbort) on failure.
+/** [[AjaxStream]] performs an HTTP request and emits an [[dom.XMLHttpRequest]]
+  * on success, or an [[AjaxStreamError]] error (AjaxStatusError |
+  * AjaxNetworkError | AjaxTimeout | AjaxAbort) on failure.
   *
-  * Acceptable HTTP response status codes are 2xx and 304, others result in AjaxStatusError.
+  * Acceptable HTTP response status codes are 2xx and 304, others result in
+  * AjaxStatusError.
   *
   * The network request is only performed when the stream is started.
   *
-  * When stream is restarted, a new request is performed, and the subsequent response is emitted.
-  * The previous request is not aborted, but its response will be ignored.
+  * When stream is restarted, a new request is performed, and the subsequent
+  * response is emitted. The previous request is not aborted, but its response
+  * will be ignored.
   *
-  * Warning: dom.XmlHttpRequest is an ugly, imperative JS construct. We set event callbacks for
-  * onload, onerror, onabort, ontimeout, and if requested, also for onprogress and onreadystatechange.
-  * Make sure you don't override Airstream's listeners, or this stream will not work properly.
+  * Warning: dom.XmlHttpRequest is an ugly, imperative JS construct. We set
+  * event callbacks for onload, onerror, onabort, ontimeout, and if requested,
+  * also for onprogress and onreadystatechange. Make sure you don't override
+  * Airstream's listeners, or this stream will not work properly.
   *
-  * @see [[dom.XMLHttpRequest]] for a description of the parameters
+  * @see
+  *   [[dom.XMLHttpRequest]] for a description of the parameters
   *
-  * @param requestObserver          - called just before the request is sent
-  * @param progressObserver         - called when download progress is reported
-  * @param uploadProgressObserver   - called when upload progress is reported
-  * @param readyStateChangeObserver - called when readyState changes
+  * @param requestObserver
+  *   \- called just before the request is sent
+  * @param progressObserver
+  *   \- called when download progress is reported
+  * @param uploadProgressObserver
+  *   \- called when upload progress is reported
+  * @param readyStateChangeObserver
+  *   \- called when readyState changes
   */
 class AjaxStream(
-  method: String,
-  url: String,
-  data: InputData,
-  timeoutMs: Int,
-  headers: Map[String, String],
-  withCredentials: Boolean,
-  responseType: String,
-  isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
-  requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
-  progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
-  uploadProgressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
-  readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
+    method: String,
+    url: String,
+    data: InputData,
+    timeoutMs: Int,
+    headers: Map[String, String],
+    withCredentials: Boolean,
+    responseType: String,
+    isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
+    requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
+    progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] =
+      Observer.empty,
+    uploadProgressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] =
+      Observer.empty,
+    readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
 ) extends WritableStream[dom.XMLHttpRequest] {
 
   override protected val topoRank: Int = 1
 
   private var maybePendingRequest: js.UndefOr[dom.XMLHttpRequest] = js.undefined
 
-  /** This stream will emit at most one event per request regardless of the outcome.
+  /** This stream will emit at most one event per request regardless of the
+    * outcome.
     *
     * You need to introspect the result to determine whether the request
     * succeeded, failed, timed out, or was aborted.
     */
   lazy val completeEvents: EventStream[dom.XMLHttpRequest] = {
-    this.recover {
-      case err: AjaxStreamError => Some(err.xhr)
+    this.recover { case err: AjaxStreamError =>
+      Some(err.xhr)
     }
   }
 
   override protected def onWillStart(): Unit = ()
 
   override protected[this] def onStart(): Unit = {
-    val request = AjaxStream.initRequest(timeoutMs, withCredentials, responseType)
+    val request =
+      AjaxStream.initRequest(timeoutMs, withCredentials, responseType)
 
     maybePendingRequest = request
 
@@ -82,7 +99,16 @@ class AjaxStream(
         if (isStatusCodeSuccess(status))
           Transaction(fireValue(request, _))
         else
-          Transaction(fireError(AjaxStatusError(request, status, s"Ajax request failed: $status ${request.statusText}"), _))
+          Transaction(
+            fireError(
+              AjaxStatusError(
+                request,
+                status,
+                s"Ajax request failed: $status ${request.statusText}"
+              ),
+              _
+            )
+          )
       }
     }
 
@@ -94,7 +120,15 @@ class AjaxStream(
         //  - `ev` is not actually a dom.ErrorEvent, but a useless dom.ProgressEvent
         //  - Reasons could be network, DNS, CORS, etc.
 
-        Transaction(fireError(AjaxNetworkError(request, s"Ajax request failed: unknown network reason."), _))
+        Transaction(
+          fireError(
+            AjaxNetworkError(
+              request,
+              s"Ajax request failed: unknown network reason."
+            ),
+            _
+          )
+        )
       }
     }
 
@@ -130,7 +164,6 @@ class AjaxStream(
       }
     }
 
-
     if (readyStateChangeObserver != Observer.empty) {
       request.onreadystatechange = (_: dom.Event) => {
         if (maybePendingRequest.contains(request)) {
@@ -157,18 +190,31 @@ class AjaxStream(
 
 object AjaxStream {
 
-  type InputData = String | js.typedarray.ArrayBufferView | dom.Blob | dom.FormData
+  type InputData = String | js.typedarray.ArrayBufferView | dom.Blob |
+    dom.FormData
 
   /** A more detailed version of [[dom.ext.AjaxException]] (no relation) */
-  sealed abstract class AjaxStreamError(val xhr: dom.XMLHttpRequest, message: String) extends Exception(message)
+  sealed abstract class AjaxStreamError(
+      val xhr: dom.XMLHttpRequest,
+      message: String
+  ) extends Exception(message)
 
-  final case class AjaxStatusError(override val xhr: dom.XMLHttpRequest, val status: Int, message: String) extends AjaxStreamError(xhr, message)
+  final case class AjaxStatusError(
+      override val xhr: dom.XMLHttpRequest,
+      val status: Int,
+      message: String
+  ) extends AjaxStreamError(xhr, message)
 
-  final case class AjaxNetworkError(override val xhr: dom.XMLHttpRequest, message: String) extends AjaxStreamError(xhr, message)
+  final case class AjaxNetworkError(
+      override val xhr: dom.XMLHttpRequest,
+      message: String
+  ) extends AjaxStreamError(xhr, message)
 
-  final case class AjaxTimeout(override val xhr: dom.XMLHttpRequest) extends AjaxStreamError(xhr, "Ajax request timed out.")
+  final case class AjaxTimeout(override val xhr: dom.XMLHttpRequest)
+      extends AjaxStreamError(xhr, "Ajax request timed out.")
 
-  final case class AjaxAbort(override val xhr: dom.XMLHttpRequest) extends AjaxStreamError(xhr, "Ajax request was aborted.")
+  final case class AjaxAbort(override val xhr: dom.XMLHttpRequest)
+      extends AjaxStreamError(xhr, "Ajax request was aborted.")
 
   // @TODO[API] I'm not sure that creating an Ajax request should result in a stream of responses.
   //  - Another alternative is that it should result in an object that exposes several streams, e.g. responseStream,
@@ -177,23 +223,26 @@ object AjaxStream {
 
   // @TODO[API] Consider API like AjaxEventStream(_.GET, url, ...) using something like dom.experimental.HttpMethod
 
-  /**
-    * Returns an [[EventStream]] that performs an HTTP `GET` request.
+  /** Returns an [[EventStream]] that performs an HTTP `GET` request.
     *
-    * @see [[AjaxStream]]
+    * @see
+    *   [[AjaxStream]]
     */
   def get(
-    url: String,
-    data: InputData = null,
-    timeoutMs: Int = 0,
-    headers: Map[String, String] = Map.empty,
-    withCredentials: Boolean = false,
-    responseType: String = "",
-    isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
-    requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
-    progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
-    uploadProgressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
-    readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
+      url: String,
+      data: InputData = null,
+      timeoutMs: Int = 0,
+      headers: Map[String, String] = Map.empty,
+      withCredentials: Boolean = false,
+      responseType: String = "",
+      isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
+      requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
+      progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] =
+        Observer.empty,
+      uploadProgressObserver: Observer[
+        (dom.XMLHttpRequest, dom.ProgressEvent)
+      ] = Observer.empty,
+      readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
   ): AjaxStream = {
     new AjaxStream(
       "GET",
@@ -211,23 +260,26 @@ object AjaxStream {
     )
   }
 
-  /**
-    * Returns an [[EventStream]] that performs an HTTP `POST` request.
+  /** Returns an [[EventStream]] that performs an HTTP `POST` request.
     *
-    * @see [[AjaxStream]]
+    * @see
+    *   [[AjaxStream]]
     */
   def post(
-    url: String,
-    data: InputData = null,
-    timeoutMs: Int = 0,
-    headers: Map[String, String] = Map.empty,
-    withCredentials: Boolean = false,
-    responseType: String = "",
-    isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
-    requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
-    progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
-    uploadProgressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
-    readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
+      url: String,
+      data: InputData = null,
+      timeoutMs: Int = 0,
+      headers: Map[String, String] = Map.empty,
+      withCredentials: Boolean = false,
+      responseType: String = "",
+      isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
+      requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
+      progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] =
+        Observer.empty,
+      uploadProgressObserver: Observer[
+        (dom.XMLHttpRequest, dom.ProgressEvent)
+      ] = Observer.empty,
+      readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
   ): AjaxStream = {
     new AjaxStream(
       "POST",
@@ -245,23 +297,26 @@ object AjaxStream {
     )
   }
 
-  /**
-    * Returns an [[EventStream]] that performs an HTTP `PUT` request.
+  /** Returns an [[EventStream]] that performs an HTTP `PUT` request.
     *
-    * @see [[AjaxStream]]
+    * @see
+    *   [[AjaxStream]]
     */
   def put(
-    url: String,
-    data: InputData = null,
-    timeoutMs: Int = 0,
-    headers: Map[String, String] = Map.empty,
-    withCredentials: Boolean = false,
-    responseType: String = "",
-    isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
-    requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
-    progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
-    uploadProgressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
-    readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
+      url: String,
+      data: InputData = null,
+      timeoutMs: Int = 0,
+      headers: Map[String, String] = Map.empty,
+      withCredentials: Boolean = false,
+      responseType: String = "",
+      isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
+      requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
+      progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] =
+        Observer.empty,
+      uploadProgressObserver: Observer[
+        (dom.XMLHttpRequest, dom.ProgressEvent)
+      ] = Observer.empty,
+      readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
   ): AjaxStream = {
     new AjaxStream(
       "PUT",
@@ -279,23 +334,26 @@ object AjaxStream {
     )
   }
 
-  /**
-    * Returns an [[EventStream]] that performs an HTTP `PATCH` request.
+  /** Returns an [[EventStream]] that performs an HTTP `PATCH` request.
     *
-    * @see [[AjaxStream]]
+    * @see
+    *   [[AjaxStream]]
     */
   def patch(
-    url: String,
-    data: InputData = null,
-    timeoutMs: Int = 0,
-    headers: Map[String, String] = Map.empty,
-    withCredentials: Boolean = false,
-    responseType: String = "",
-    isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
-    requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
-    progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
-    uploadProgressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
-    readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
+      url: String,
+      data: InputData = null,
+      timeoutMs: Int = 0,
+      headers: Map[String, String] = Map.empty,
+      withCredentials: Boolean = false,
+      responseType: String = "",
+      isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
+      requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
+      progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] =
+        Observer.empty,
+      uploadProgressObserver: Observer[
+        (dom.XMLHttpRequest, dom.ProgressEvent)
+      ] = Observer.empty,
+      readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
   ): AjaxStream = {
     new AjaxStream(
       "PATCH",
@@ -313,23 +371,26 @@ object AjaxStream {
     )
   }
 
-  /**
-    * Returns an [[EventStream]] that performs an HTTP `DELETE` request.
+  /** Returns an [[EventStream]] that performs an HTTP `DELETE` request.
     *
-    * @see [[AjaxStream]]
+    * @see
+    *   [[AjaxStream]]
     */
   def delete(
-    url: String,
-    data: InputData = null,
-    timeoutMs: Int = 0,
-    headers: Map[String, String] = Map.empty,
-    withCredentials: Boolean = false,
-    responseType: String = "",
-    isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
-    requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
-    progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
-    uploadProgressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] = Observer.empty,
-    readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
+      url: String,
+      data: InputData = null,
+      timeoutMs: Int = 0,
+      headers: Map[String, String] = Map.empty,
+      withCredentials: Boolean = false,
+      responseType: String = "",
+      isStatusCodeSuccess: Int => Boolean = defaultIsStatusCodeSuccess,
+      requestObserver: Observer[dom.XMLHttpRequest] = Observer.empty,
+      progressObserver: Observer[(dom.XMLHttpRequest, dom.ProgressEvent)] =
+        Observer.empty,
+      uploadProgressObserver: Observer[
+        (dom.XMLHttpRequest, dom.ProgressEvent)
+      ] = Observer.empty,
+      readyStateChangeObserver: Observer[dom.XMLHttpRequest] = Observer.empty
   ): AjaxStream = {
     new AjaxStream(
       "DELETE",
@@ -347,16 +408,19 @@ object AjaxStream {
     )
   }
 
-  /** Initializes and configures the XmlHttpRequest. This does not cause any network activity.
+  /** Initializes and configures the XmlHttpRequest. This does not cause any
+    * network activity.
     *
-    * Note: after initializing the request, you need to openRequest(), and then sendRequest()
+    * Note: after initializing the request, you need to openRequest(), and then
+    * sendRequest()
     *
-    * AjaxEventStream already does this internally. This is provided as a building block for custom logic.
+    * AjaxEventStream already does this internally. This is provided as a
+    * building block for custom logic.
     */
   def initRequest(
-    timeoutMs: Int = 0,
-    withCredentials: Boolean = false,
-    responseType: String = ""
+      timeoutMs: Int = 0,
+      withCredentials: Boolean = false,
+      responseType: String = ""
   ): dom.XMLHttpRequest = {
     val request = new dom.XMLHttpRequest
     request.responseType = responseType
@@ -365,20 +429,23 @@ object AjaxStream {
     request
   }
 
-  /** The request should be initialized and configured with all the callbacks by this point.
+  /** The request should be initialized and configured with all the callbacks by
+    * this point.
     *
-    * AjaxEventStream already does this internally. This is provided as a building block for custom logic.
+    * AjaxEventStream already does this internally. This is provided as a
+    * building block for custom logic.
     */
   def sendRequest(
-    request: dom.XMLHttpRequest,
-    method: String,
-    url: String,
-    data: InputData = null,
-    headers: Map[String, String] = Map.empty
+      request: dom.XMLHttpRequest,
+      method: String,
+      url: String,
+      data: InputData = null,
+      headers: Map[String, String] = Map.empty
   ): Unit = {
     request.open(method, url)
     headers.foreach(Function.tupled(request.setRequestHeader))
-    if (data == null) request.send() else request.send(data.asInstanceOf[js.Any])
+    if (data == null) request.send()
+    else request.send(data.asInstanceOf[js.Any])
   }
 
   def defaultIsStatusCodeSuccess(status: Int): Boolean = {

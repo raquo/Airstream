@@ -17,7 +17,10 @@ class TransferableSubscriptionSpec extends UnitSpec {
 
     // --
 
-    val sub = new TransferableSubscription(() => activationCounter += 1, () => deactivationCounter += 1)
+    val sub = new TransferableSubscription(
+      () => activationCounter += 1,
+      () => deactivationCounter += 1
+    )
 
     assert(activationCounter == 0)
     assert(deactivationCounter == 0)
@@ -66,7 +69,10 @@ class TransferableSubscriptionSpec extends UnitSpec {
 
     // --
 
-    val sub = new TransferableSubscription(() => activationCounter += 1, () => deactivationCounter += 1)
+    val sub = new TransferableSubscription(
+      () => activationCounter += 1,
+      () => deactivationCounter += 1
+    )
 
     assert(activationCounter == 0)
     assert(deactivationCounter == 0)
@@ -122,7 +128,10 @@ class TransferableSubscriptionSpec extends UnitSpec {
 
     // --
 
-    val sub = new TransferableSubscription(() => activationCounter += 1, () => deactivationCounter += 1)
+    val sub = new TransferableSubscription(
+      () => activationCounter += 1,
+      () => deactivationCounter += 1
+    )
 
     assert(activationCounter == 0)
     assert(deactivationCounter == 0)
@@ -185,7 +194,10 @@ class TransferableSubscriptionSpec extends UnitSpec {
 
     // --
 
-    val sub = new TransferableSubscription(() => activationCounter += 1, () => deactivationCounter += 1)
+    val sub = new TransferableSubscription(
+      () => activationCounter += 1,
+      () => deactivationCounter += 1
+    )
 
     assert(activationCounter == 0)
     assert(deactivationCounter == 0)

@@ -6,7 +6,10 @@ import java.util.concurrent.Flow
 
 object FlowPublisherStream {
 
-  def apply[A](publisher: Flow.Publisher[A], emitOnce: Boolean = false): EventStream[A] = {
+  def apply[A](
+      publisher: Flow.Publisher[A],
+      emitOnce: Boolean = false
+  ): EventStream[A] = {
     var subscription: Flow.Subscription = null
 
     EventStream.fromCustomSource[A](

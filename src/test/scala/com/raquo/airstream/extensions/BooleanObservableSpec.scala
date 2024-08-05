@@ -16,9 +16,7 @@ class BooleanObservableSpec extends UnitSpec {
     val bus = new EventBus[Boolean]
 
     val effects = mutable.Buffer[Effect[_]]()
-    bus
-      .stream
-      .invert
+    bus.stream.invert
       .foreach(v => effects += Effect("obs", v))
 
     effects shouldBe mutable.Buffer()
@@ -51,8 +49,7 @@ class BooleanObservableSpec extends UnitSpec {
     val bus = new EventBus[Boolean]
 
     val effects = mutable.Buffer[Effect[_]]()
-    bus
-      .stream
+    bus.stream
       .splitBoolean(
         trueF = { signal =>
           effects += Effect("true", true)
@@ -149,8 +146,7 @@ class BooleanObservableSpec extends UnitSpec {
     val _var = Var(true)
 
     val effects = mutable.Buffer[Effect[_]]()
-    _var
-      .signal
+    _var.signal
       .splitBoolean(
         whenTrue = { signal =>
           effects += Effect("true", true)

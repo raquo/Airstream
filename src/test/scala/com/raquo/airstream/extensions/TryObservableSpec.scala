@@ -20,11 +20,10 @@ class TryObservableSpec extends UnitSpec {
     val bus = new EventBus[Try[Int]]
 
     val effects = mutable.Buffer[Effect[_]]()
-    bus
-      .events
+    bus.events
       .mapFailure({
         case err @ TryError(msg) => err.copy(msg = msg + "-x")
-        case other => other
+        case other               => other
       })
       .mapSuccess(_ * 10)
       .foldTry(
@@ -71,14 +70,12 @@ class TryObservableSpec extends UnitSpec {
 
     val effects = mutable.Buffer[Effect[_]]()
 
-    bus
-      .events
-      .collectSuccess { case x if x >= 10 => x.toString}
+    bus.events
+      .collectSuccess { case x if x >= 10 => x.toString }
       .foreach(v => effects += Effect("obs-success", v))
 
-    bus
-      .events
-      .collectFailure { case TryError(msg) => msg}
+    bus.events
+      .collectFailure { case TryError(msg) => msg }
       .foreach(v => effects += Effect("obs-failure", v))
 
     effects shouldBe mutable.Buffer()
@@ -125,17 +122,18 @@ class TryObservableSpec extends UnitSpec {
     val effects = mutable.Buffer[Effect[_]]()
 
     var ix = 0
-    bus
-      .events
+    bus.events
       .splitTry(
         success = (_, successS) => {
           ix += 1
-          successS.foreach(r => effects += Effect(s"success-${ix}", r))(innerOwner)
+          successS
+            .foreach(r => effects += Effect(s"success-${ix}", r))(innerOwner)
           ix
         },
         failure = (_, failureS) => {
           ix += 1
-          failureS.foreach(l => effects += Effect(s"failure-${ix}", l))(innerOwner)
+          failureS
+            .foreach(l => effects += Effect(s"failure-${ix}", l))(innerOwner)
           ix
         }
       )
@@ -171,7 +169,7 @@ class TryObservableSpec extends UnitSpec {
 
     effects shouldBe mutable.Buffer(
       Effect("success-2", 100),
-      Effect("obs", 2),
+      Effect("obs", 2)
     )
     effects.clear()
 
@@ -193,7 +191,7 @@ class TryObservableSpec extends UnitSpec {
 
     effects shouldBe mutable.Buffer(
       Effect("failure-3", TryError("err3")),
-      Effect("obs", 3),
+      Effect("obs", 3)
     )
     effects.clear()
 

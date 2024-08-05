@@ -11,27 +11,27 @@ import org.scalatest.matchers.should
 class ShouldSyntax[A](val actual: A) extends AnyVal {
 
   def shouldBe(
-    expected: scala.Any
-  )(
-    implicit pos: source.Position,
-    prettifier: Prettifier
+      expected: scala.Any
+  )(implicit
+      pos: source.Position,
+      prettifier: Prettifier
   ): Assertion = {
     ShouldSyntax.shouldBe(actual, expected)(pos, prettifier)
   }
 
-  def shouldBeEmpty(
-    implicit pos: source.Position,
-    prettifier: Prettifier,
-    emptiness: Emptiness[A]
+  def shouldBeEmpty(implicit
+      pos: source.Position,
+      prettifier: Prettifier,
+      emptiness: Emptiness[A]
   ): Assertion = {
     ShouldSyntax.shouldBeEmpty(actual)(pos, prettifier, emptiness)
   }
 
   def shouldNotBe(
-    expected: scala.Any
-  )(
-    implicit pos: source.Position,
-    prettifier: Prettifier
+      expected: scala.Any
+  )(implicit
+      pos: source.Position,
+      prettifier: Prettifier
   ): Assertion = {
     ShouldSyntax.shouldNotBe(actual, expected)(pos, prettifier)
   }
@@ -45,31 +45,31 @@ object ShouldSyntax extends should.Matchers {
   //  If you do, see SKIP-DOTTY-START and SKIP-DOTTY-STOP in ScalaTest code and go from there.
 
   def shouldBe[A](
-    actual: A,
-    expected: scala.Any
-  )(
-    implicit pos: source.Position,
-    prettifier: Prettifier
+      actual: A,
+      expected: scala.Any
+  )(implicit
+      pos: source.Position,
+      prettifier: Prettifier
   ): Assertion = {
     actual shouldBe expected
   }
 
   def shouldBeEmpty[A](
-    actual: A
-  )(
-    implicit pos: source.Position,
-    prettifier: Prettifier,
-    emptiness: Emptiness[A]
+      actual: A
+  )(implicit
+      pos: source.Position,
+      prettifier: Prettifier,
+      emptiness: Emptiness[A]
   ): Assertion = {
     actual shouldBe empty
   }
 
   def shouldNotBe[A](
-    actual: A,
-    expected: scala.Any
-  )(
-    implicit pos: source.Position,
-    prettifier: Prettifier
+      actual: A,
+      expected: scala.Any
+  )(implicit
+      pos: source.Position,
+      prettifier: Prettifier
   ): Assertion = {
     actual shouldNot be(expected)
   }

@@ -6,7 +6,10 @@ class TestableSubscription(owner: Owner) {
 
   var killCount = 0
 
-  val subscription = new Subscription(owner, cleanup = () => {
-    killCount += 1
-  })
+  val subscription = new Subscription(
+    owner,
+    cleanup = () => {
+      killCount += 1
+    }
+  )
 }

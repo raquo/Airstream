@@ -8,15 +8,18 @@ import scala.util.Try
   * because a subscription is not needed to maintain it, we just call onTry
   * whenever the Var's current value is updated.
   *
-  * Consequently, we expose its current value with now() / tryNow() methods
-  * (see StrictSignal).
+  * Consequently, we expose its current value with now() / tryNow() methods (see
+  * StrictSignal).
   */
-private[state] class VarSignal[A] private[state](
-  initial: Try[A],
-  parentDisplayName: => String
-) extends WritableSignal[A] with StrictSignal[A] {
+private[state] class VarSignal[A] private[state] (
+    initial: Try[A],
+    parentDisplayName: => String
+) extends WritableSignal[A]
+    with StrictSignal[A] {
 
-  /** SourceVar does not directly depend on other observables, so it breaks the graph. */
+  /** SourceVar does not directly depend on other observables, so it breaks the
+    * graph.
+    */
   override protected val topoRank: Int = 1
 
   setCurrentValue(initial)
@@ -25,7 +28,10 @@ private[state] class VarSignal[A] private[state](
     * signal's current value stays up to date. If this signal is stopped, this
     * value will not be propagated anywhere further though.
     */
-  private[state] def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
+  private[state] def onTry(
+      nextValue: Try[A],
+      transaction: Transaction
+  ): Unit = {
     fireTry(nextValue, transaction)
   }
 
@@ -33,5 +39,6 @@ private[state] class VarSignal[A] private[state](
 
   override protected def onWillStart(): Unit = () // noop
 
-  override protected def defaultDisplayName: String = parentDisplayName + ".signal"
+  override protected def defaultDisplayName: String =
+    parentDisplayName + ".signal"
 }

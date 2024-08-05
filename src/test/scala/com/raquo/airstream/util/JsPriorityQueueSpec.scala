@@ -7,7 +7,8 @@ import scala.util.Try
 class JsPriorityQueueSpec extends UnitSpec {
 
   class Foo(val rank: Int) {
-    override def toString: String = s"Foo@${this.hashCode().toHexString}(rank=$rank)"
+    override def toString: String =
+      s"Foo@${this.hashCode().toHexString}(rank=$rank)"
   }
 
   it("queues items by priority") {
@@ -21,33 +22,47 @@ class JsPriorityQueueSpec extends UnitSpec {
     q.enqueue("1")
     q.enqueue("4444")
 
-    assert(q.debugQueue == List(
-      "1", "22", "333", "4444"
-    ))
+    assert(
+      q.debugQueue == List(
+        "1",
+        "22",
+        "333",
+        "4444"
+      )
+    )
 
     // --
 
     assert(q.dequeue() == "1")
 
-    assert(q.debugQueue == List(
-      "22", "333", "4444"
-    ))
+    assert(
+      q.debugQueue == List(
+        "22",
+        "333",
+        "4444"
+      )
+    )
 
     // --
 
     assert(q.dequeue() == "22")
 
-    assert(q.debugQueue == List(
-      "333", "4444"
-    ))
+    assert(
+      q.debugQueue == List(
+        "333",
+        "4444"
+      )
+    )
 
     // --
 
     assert(q.dequeue() == "333")
 
-    assert(q.debugQueue == List(
-      "4444"
-    ))
+    assert(
+      q.debugQueue == List(
+        "4444"
+      )
+    )
 
     // --
 
@@ -64,65 +79,91 @@ class JsPriorityQueueSpec extends UnitSpec {
     q.enqueue("a")
     q.enqueue("bb")
 
-    assert(q.debugQueue == List(
-      "a", "bb"
-    ))
+    assert(
+      q.debugQueue == List(
+        "a",
+        "bb"
+      )
+    )
 
     // --
 
     assert(q.dequeue() == "a")
 
-    assert(q.debugQueue == List(
-      "bb"
-    ))
+    assert(
+      q.debugQueue == List(
+        "bb"
+      )
+    )
 
     // --
 
     q.enqueue("dddd")
 
-    assert(q.debugQueue == List(
-      "bb", "dddd"
-    ))
+    assert(
+      q.debugQueue == List(
+        "bb",
+        "dddd"
+      )
+    )
 
     // --
 
     q.enqueue("ccc")
 
-    assert(q.debugQueue == List(
-      "bb", "ccc", "dddd"
-    ))
+    assert(
+      q.debugQueue == List(
+        "bb",
+        "ccc",
+        "dddd"
+      )
+    )
 
     // --
 
     q.enqueue("a")
 
-    assert(q.debugQueue == List(
-      "a", "bb", "ccc", "dddd"
-    ))
+    assert(
+      q.debugQueue == List(
+        "a",
+        "bb",
+        "ccc",
+        "dddd"
+      )
+    )
 
     // --
 
     assert(q.dequeue() == "a")
 
-    assert(q.debugQueue == List(
-      "bb", "ccc", "dddd"
-    ))
+    assert(
+      q.debugQueue == List(
+        "bb",
+        "ccc",
+        "dddd"
+      )
+    )
 
     // --
 
     assert(q.dequeue() == "bb")
 
-    assert(q.debugQueue == List(
-      "ccc", "dddd"
-    ))
+    assert(
+      q.debugQueue == List(
+        "ccc",
+        "dddd"
+      )
+    )
 
     // --
 
     assert(q.dequeue() == "ccc")
 
-    assert(q.debugQueue == List(
-      "dddd"
-    ))
+    assert(
+      q.debugQueue == List(
+        "dddd"
+      )
+    )
 
     // --
 
@@ -155,58 +196,94 @@ class JsPriorityQueueSpec extends UnitSpec {
     q.enqueue(f1)
     q.enqueue(f2)
 
-    assert(q.debugQueue == List(
-      f1, f2, f33, f31, f32, f41, f42, f5
-    ))
+    assert(
+      q.debugQueue == List(
+        f1,
+        f2,
+        f33,
+        f31,
+        f32,
+        f41,
+        f42,
+        f5
+      )
+    )
 
     // --
 
     assert(q.dequeue() == f1)
     assert(q.dequeue() == f2)
 
-    assert(q.debugQueue == List(
-      f33, f31, f32, f41, f42, f5
-    ))
+    assert(
+      q.debugQueue == List(
+        f33,
+        f31,
+        f32,
+        f41,
+        f42,
+        f5
+      )
+    )
 
     // --
 
     assert(q.dequeue() == f33)
 
-    assert(q.debugQueue == List(
-      f31, f32, f41, f42, f5
-    ))
+    assert(
+      q.debugQueue == List(
+        f31,
+        f32,
+        f41,
+        f42,
+        f5
+      )
+    )
 
     // --
 
     assert(q.dequeue() == f31)
 
-    assert(q.debugQueue == List(
-      f32, f41, f42, f5
-    ))
+    assert(
+      q.debugQueue == List(
+        f32,
+        f41,
+        f42,
+        f5
+      )
+    )
 
     // --
 
     assert(q.dequeue() == f32)
 
-    assert(q.debugQueue == List(
-      f41, f42, f5
-    ))
+    assert(
+      q.debugQueue == List(
+        f41,
+        f42,
+        f5
+      )
+    )
 
     // --
 
     assert(q.dequeue() == f41)
 
-    assert(q.debugQueue == List(
-      f42, f5
-    ))
+    assert(
+      q.debugQueue == List(
+        f42,
+        f5
+      )
+    )
 
     // --
 
     assert(q.dequeue() == f42)
 
-    assert(q.debugQueue == List(
-      f5
-    ))
+    assert(
+      q.debugQueue == List(
+        f5
+      )
+    )
 
     // --
 
@@ -233,49 +310,76 @@ class JsPriorityQueueSpec extends UnitSpec {
     q.enqueue(f3)
     q.enqueue(f2)
 
-    assert(q.debugQueue == List(
-      f1, f1, f2, f2, f3, f4
-    ))
+    assert(
+      q.debugQueue == List(
+        f1,
+        f1,
+        f2,
+        f2,
+        f3,
+        f4
+      )
+    )
 
     // --
 
     assert(q.dequeue() == f1)
 
-    assert(q.debugQueue == List(
-      f1, f2, f2, f3, f4
-    ))
+    assert(
+      q.debugQueue == List(
+        f1,
+        f2,
+        f2,
+        f3,
+        f4
+      )
+    )
 
     // --
 
     assert(q.dequeue() == f1)
 
-    assert(q.debugQueue == List(
-      f2, f2, f3, f4
-    ))
+    assert(
+      q.debugQueue == List(
+        f2,
+        f2,
+        f3,
+        f4
+      )
+    )
 
     // --
 
     assert(q.dequeue() == f2)
 
-    assert(q.debugQueue == List(
-      f2, f3, f4
-    ))
+    assert(
+      q.debugQueue == List(
+        f2,
+        f3,
+        f4
+      )
+    )
 
     // --
 
     assert(q.dequeue() == f2)
 
-    assert(q.debugQueue == List(
-      f3, f4
-    ))
+    assert(
+      q.debugQueue == List(
+        f3,
+        f4
+      )
+    )
 
     // --
 
     assert(q.dequeue() == f3)
 
-    assert(q.debugQueue == List(
-      f4
-    ))
+    assert(
+      q.debugQueue == List(
+        f4
+      )
+    )
 
     // --
 

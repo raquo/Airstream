@@ -23,11 +23,15 @@ class TransactionSpec extends UnitSpec with BeforeAndAfter {
   before {
     errorEffects.clear()
     AirstreamError.registerUnhandledErrorCallback(errorCallback)
-    AirstreamError.unregisterUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
+    AirstreamError.unregisterUnhandledErrorCallback(
+      AirstreamError.consoleErrorCallback
+    )
   }
 
   after {
-    AirstreamError.registerUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
+    AirstreamError.registerUnhandledErrorCallback(
+      AirstreamError.consoleErrorCallback
+    )
     AirstreamError.unregisterUnhandledErrorCallback(errorCallback)
     assert(errorEffects.isEmpty) // #Note this fails the test rather inelegantly
   }
@@ -40,8 +44,7 @@ class TransactionSpec extends UnitSpec with BeforeAndAfter {
     val clickBus = new EventBus[Unit]
     val log = Var[List[Int]](Nil)
 
-    clickBus
-      .events
+    clickBus.events
       .foreach { _ =>
         n = n + 2
         log.update(curr => {
@@ -183,9 +186,7 @@ class TransactionSpec extends UnitSpec with BeforeAndAfter {
           for {
             i <- 1 to num
           } yield {
-            new Transaction(_ =>
-              ix += 1
-            )
+            new Transaction(_ => ix += 1)
           }
         )
       }(owner)
@@ -193,7 +194,9 @@ class TransactionSpec extends UnitSpec with BeforeAndAfter {
       // dom.console.log(s"Done without errors: ${ix}")
     } catch {
       case err: Throwable =>
-        dom.console.log(s"Stack overflow (depth) after ${ix} sibling transactions!")
+        dom.console.log(
+          s"Stack overflow (depth) after ${ix} sibling transactions!"
+        )
         throw err
     }
   }
@@ -207,23 +210,31 @@ class TransactionSpec extends UnitSpec with BeforeAndAfter {
     val maxNum = 20000
     var ix = 0
 
-    assert(defaultMaxDepth < maxNum, "defaultMaxDepth is weirdly high... all ok?")
+    assert(
+      defaultMaxDepth < maxNum,
+      "defaultMaxDepth is weirdly high... all ok?"
+    )
 
     Transaction.maxDepth = maxNum + 1
 
     try {
-      bus.events.filter(_ < maxNum).map { n =>
-        ix = n + 1
-        // dom.console.log(ix)
-        ix
-      }.foreach { n =>
-        bus.emit(n)
-      }(owner)
+      bus.events
+        .filter(_ < maxNum)
+        .map { n =>
+          ix = n + 1
+          // dom.console.log(ix)
+          ix
+        }
+        .foreach { n =>
+          bus.emit(n)
+        }(owner)
       bus.emit(0)
       // dom.console.log(s"Done without errors: ${ix}")
     } catch {
       case err: Throwable =>
-        dom.console.log(s"Stack overflow (depth) after ${ix} nested transactions!")
+        dom.console.log(
+          s"Stack overflow (depth) after ${ix} nested transactions!"
+        )
         throw err
     } finally {
       Transaction.maxDepth = defaultMaxDepth
@@ -239,33 +250,38 @@ class TransactionSpec extends UnitSpec with BeforeAndAfter {
 
     var nestedIx = 0
 
-    assert(Transaction.maxDepth < maxNum, "defaultMaxDepth is weirdly high... all ok?")
+    assert(
+      Transaction.maxDepth < maxNum,
+      "defaultMaxDepth is weirdly high... all ok?"
+    )
 
-
-    bus.events.filter(_ < maxNum).map { n =>
-      ix = n + 1
-      // dom.console.log(ix)
-      ix
-    }.foreach { n =>
-      Transaction { _ =>
-        nestedIx += 1
+    bus.events
+      .filter(_ < maxNum)
+      .map { n =>
+        ix = n + 1
+        // dom.console.log(ix)
+        ix
+      }
+      .foreach { n =>
         Transaction { _ =>
           nestedIx += 1
           Transaction { _ =>
             nestedIx += 1
-            // dom.console.log(s"nestedIx=${nestedIx}")
+            Transaction { _ =>
+              nestedIx += 1
+              // dom.console.log(s"nestedIx=${nestedIx}")
+            }
           }
         }
-      }
-      bus.emit(n)
-    }(owner)
+        bus.emit(n)
+      }(owner)
     bus.emit(0)
 
     assert(errorEffects.nonEmpty)
 
     assert(!errorEffects.exists {
       case Effect("unhandled", TransactionDepthExceeded(_, _)) => false
-      case _ => true
+      case _                                                   => true
     })
 
     errorEffects.clear()

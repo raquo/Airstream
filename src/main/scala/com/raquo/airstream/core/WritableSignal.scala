@@ -16,7 +16,9 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
     maybeLastSeenCurrentValue = newValue
   }
 
-  /** Note: Initial value is only evaluated if/when needed (when there are observers) */
+  /** Note: Initial value is only evaluated if/when needed (when there are
+    * observers)
+    */
   override protected[airstream] def tryNow(): Try[A] = {
     // dom.console.log(s"${this} > tryNow (maybeLastSeenCurrentValue = ${maybeLastSeenCurrentValue})")
     maybeLastSeenCurrentValue.getOrElse {
@@ -36,16 +38,25 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
     }
   }
 
-  override protected final def fireValue(nextValue: A, transaction: Transaction): Unit = {
+  override protected final def fireValue(
+      nextValue: A,
+      transaction: Transaction
+  ): Unit = {
     fireTry(Success(nextValue), transaction)
   }
 
-  override protected final def fireError(nextError: Throwable, transaction: Transaction): Unit = {
+  override protected final def fireError(
+      nextError: Throwable,
+      transaction: Transaction
+  ): Unit = {
     fireTry(Failure(nextError), transaction)
   }
 
   /** Signal propagates only if its value has changed */
-  override protected def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
+  override protected def fireTry(
+      nextValue: Try[A],
+      transaction: Transaction
+  ): Unit = {
     // println(s"$this > FIRE > $nextValue")
 
     setCurrentValue(nextValue)

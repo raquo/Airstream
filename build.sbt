@@ -19,13 +19,19 @@ libraryDependencies ++= Seq(
 
 // Makes sure to increment the version for local development
 ThisBuild / version := dynverGitDescribeOutput.value
-  .mkVersion(out => versionFmt(out, dynverSonatypeSnapshots.value), fallbackVersion(dynverCurrentDate.value))
+  .mkVersion(
+    out => versionFmt(out, dynverSonatypeSnapshots.value),
+    fallbackVersion(dynverCurrentDate.value)
+  )
 
 ThisBuild / dynver := {
   val d = new java.util.Date
   sbtdynver.DynVer
     .getGitDescribeOutput(d)
-    .mkVersion(out => versionFmt(out, dynverSonatypeSnapshots.value), fallbackVersion(d))
+    .mkVersion(
+      out => versionFmt(out, dynverSonatypeSnapshots.value),
+      fallbackVersion(d)
+    )
 }
 
 scalaVersion := Versions.Scala_3
@@ -39,16 +45,21 @@ scalacOptions ++= Seq(
 )
 
 scalacOptions ~= { options: Seq[String] =>
-  options.filterNot(Set(
-    "-Ywarn-value-discard",
-    "-Wvalue-discard"
-  ))
+  options.filterNot(
+    Set(
+      "-Ywarn-value-discard",
+      "-Wvalue-discard"
+    )
+  )
 }
 
 scalacOptions ++= sys.env.get("CI").map { _ =>
   val localSourcesPath = (LocalRootProject / baseDirectory).value.toURI
-  val remoteSourcesPath = s"https://raw.githubusercontent.com/raquo/Airstream/${git.gitHeadCommit.value.get}/"
-  val sourcesOptionName = if (scalaVersion.value.startsWith("2.")) "-P:scalajs:mapSourceURI" else "-scalajs-mapSourceURI"
+  val remoteSourcesPath =
+    s"https://raw.githubusercontent.com/raquo/Airstream/${git.gitHeadCommit.value.get}/"
+  val sourcesOptionName =
+    if (scalaVersion.value.startsWith("2.")) "-P:scalajs:mapSourceURI"
+    else "-scalajs-mapSourceURI"
 
   s"${sourcesOptionName}:$localSourcesPath->$remoteSourcesPath"
 }
@@ -59,10 +70,12 @@ scalacOptions ++= sys.env.get("CI").map { _ =>
   }
 }
 
-(Compile / scalacOptions) ~= (_.filterNot(Set(
-  "-deprecation",
-  "-Xfatal-warnings"
-)))
+(Compile / scalacOptions) ~= (_.filterNot(
+  Set(
+    "-deprecation",
+    "-Xfatal-warnings"
+  )
+))
 
 (Compile / doc / scalacOptions) ~= (_.filterNot(
   Set(
@@ -76,7 +89,7 @@ scalacOptions ++= sys.env.get("CI").map { _ =>
     "-Ykind-projector",
     "-from-tasty",
     "-encoding",
-    "utf8",
+    "utf8"
   )
 ))
 
@@ -99,7 +112,6 @@ useYarn := true
 scalaJSUseMainModuleInitializer := true
 
 (Compile / fastOptJS / scalaJSLinkerConfig) ~= { _.withSourceMap(false) }
-
 
 // -- Code generators for N-arity functionality
 

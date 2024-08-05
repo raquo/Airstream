@@ -164,7 +164,12 @@ class CombineStreamsSpec extends UnitSpec {
       bus3.emit(T3(iteration))
       bus4.emit(T4(iteration))
       effects.toList shouldBe List(
-        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1)),
+        (
+          T1(iteration),
+          T2(iteration - 1),
+          T3(iteration - 1),
+          T4(iteration - 1)
+        ),
         (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1)),
         (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1)),
         (T1(iteration), T2(iteration), T3(iteration), T4(iteration))
@@ -226,11 +231,41 @@ class CombineStreamsSpec extends UnitSpec {
       bus4.emit(T4(iteration))
       bus5.emit(T5(iteration))
       effects.toList shouldBe List(
-        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration))
+        (
+          T1(iteration),
+          T2(iteration - 1),
+          T3(iteration - 1),
+          T4(iteration - 1),
+          T5(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration - 1),
+          T4(iteration - 1),
+          T5(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration - 1),
+          T5(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration)
+        )
       )
     }
 
@@ -294,12 +329,54 @@ class CombineStreamsSpec extends UnitSpec {
       bus5.emit(T5(iteration))
       bus6.emit(T6(iteration))
       effects.toList shouldBe List(
-        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration))
+        (
+          T1(iteration),
+          T2(iteration - 1),
+          T3(iteration - 1),
+          T4(iteration - 1),
+          T5(iteration - 1),
+          T6(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration - 1),
+          T4(iteration - 1),
+          T5(iteration - 1),
+          T6(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration - 1),
+          T5(iteration - 1),
+          T6(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration - 1),
+          T6(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration),
+          T6(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration),
+          T6(iteration)
+        )
       )
     }
 
@@ -318,7 +395,8 @@ class CombineStreamsSpec extends UnitSpec {
     val bus6 = new EventBus[T6]()
     val bus7 = new EventBus[T7]()
 
-    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7)
+    val combinedStream =
+      EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7)]()
 
@@ -368,13 +446,69 @@ class CombineStreamsSpec extends UnitSpec {
       bus6.emit(T6(iteration))
       bus7.emit(T7(iteration))
       effects.toList shouldBe List(
-        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration))
+        (
+          T1(iteration),
+          T2(iteration - 1),
+          T3(iteration - 1),
+          T4(iteration - 1),
+          T5(iteration - 1),
+          T6(iteration - 1),
+          T7(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration - 1),
+          T4(iteration - 1),
+          T5(iteration - 1),
+          T6(iteration - 1),
+          T7(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration - 1),
+          T5(iteration - 1),
+          T6(iteration - 1),
+          T7(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration - 1),
+          T6(iteration - 1),
+          T7(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration),
+          T6(iteration - 1),
+          T7(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration),
+          T6(iteration),
+          T7(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration),
+          T6(iteration),
+          T7(iteration)
+        )
       )
     }
 
@@ -394,7 +528,8 @@ class CombineStreamsSpec extends UnitSpec {
     val bus7 = new EventBus[T7]()
     val bus8 = new EventBus[T8]()
 
-    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8)
+    val combinedStream =
+      EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8)]()
 
@@ -448,14 +583,86 @@ class CombineStreamsSpec extends UnitSpec {
       bus7.emit(T7(iteration))
       bus8.emit(T8(iteration))
       effects.toList shouldBe List(
-        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration))
+        (
+          T1(iteration),
+          T2(iteration - 1),
+          T3(iteration - 1),
+          T4(iteration - 1),
+          T5(iteration - 1),
+          T6(iteration - 1),
+          T7(iteration - 1),
+          T8(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration - 1),
+          T4(iteration - 1),
+          T5(iteration - 1),
+          T6(iteration - 1),
+          T7(iteration - 1),
+          T8(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration - 1),
+          T5(iteration - 1),
+          T6(iteration - 1),
+          T7(iteration - 1),
+          T8(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration - 1),
+          T6(iteration - 1),
+          T7(iteration - 1),
+          T8(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration),
+          T6(iteration - 1),
+          T7(iteration - 1),
+          T8(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration),
+          T6(iteration),
+          T7(iteration - 1),
+          T8(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration),
+          T6(iteration),
+          T7(iteration),
+          T8(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration),
+          T6(iteration),
+          T7(iteration),
+          T8(iteration)
+        )
       )
     }
 
@@ -476,7 +683,8 @@ class CombineStreamsSpec extends UnitSpec {
     val bus8 = new EventBus[T8]()
     val bus9 = new EventBus[T9]()
 
-    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9)
+    val combinedStream =
+      EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]()
 
@@ -534,20 +742,109 @@ class CombineStreamsSpec extends UnitSpec {
       bus8.emit(T8(iteration))
       bus9.emit(T9(iteration))
       effects.toList shouldBe List(
-        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1), T9(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration - 1)),
-        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration))
+        (
+          T1(iteration),
+          T2(iteration - 1),
+          T3(iteration - 1),
+          T4(iteration - 1),
+          T5(iteration - 1),
+          T6(iteration - 1),
+          T7(iteration - 1),
+          T8(iteration - 1),
+          T9(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration - 1),
+          T4(iteration - 1),
+          T5(iteration - 1),
+          T6(iteration - 1),
+          T7(iteration - 1),
+          T8(iteration - 1),
+          T9(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration - 1),
+          T5(iteration - 1),
+          T6(iteration - 1),
+          T7(iteration - 1),
+          T8(iteration - 1),
+          T9(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration - 1),
+          T6(iteration - 1),
+          T7(iteration - 1),
+          T8(iteration - 1),
+          T9(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration),
+          T6(iteration - 1),
+          T7(iteration - 1),
+          T8(iteration - 1),
+          T9(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration),
+          T6(iteration),
+          T7(iteration - 1),
+          T8(iteration - 1),
+          T9(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration),
+          T6(iteration),
+          T7(iteration),
+          T8(iteration - 1),
+          T9(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration),
+          T6(iteration),
+          T7(iteration),
+          T8(iteration),
+          T9(iteration - 1)
+        ),
+        (
+          T1(iteration),
+          T2(iteration),
+          T3(iteration),
+          T4(iteration),
+          T5(iteration),
+          T6(iteration),
+          T7(iteration),
+          T8(iteration),
+          T9(iteration)
+        )
       )
     }
 
     subscription.kill()
   }
-
 
 }

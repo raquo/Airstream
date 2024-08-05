@@ -5,7 +5,8 @@ import com.raquo.airstream.core.{Transaction, WritableSignal}
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
-class JsPromiseSignal[A](promise: js.Promise[A]) extends WritableSignal[Option[A]] {
+class JsPromiseSignal[A](promise: js.Promise[A])
+    extends WritableSignal[Option[A]] {
 
   override protected val topoRank: Int = 1
 
@@ -17,7 +18,8 @@ class JsPromiseSignal[A](promise: js.Promise[A]) extends WritableSignal[Option[A
   setCurrentValue(Success(None))
 
   // #Note: We can't pull data from JS Promise on demand, this async access below is the best we can do.
-  override protected def currentValueFromParent(): Try[Option[A]] = tryNow() // noop
+  override protected def currentValueFromParent(): Try[Option[A]] =
+    tryNow() // noop
 
   override protected def onWillStart(): Unit = {
     if (!promiseSubscribed) {
@@ -26,13 +28,15 @@ class JsPromiseSignal[A](promise: js.Promise[A]) extends WritableSignal[Option[A
         (nextValue: A) => {
           onPromiseResolved(Success(nextValue))
         },
-        js.defined { (rawException: Any) => {
-          val nextError = rawException match {
-            case th: Throwable => th
-            case _ => js.JavaScriptException(rawException)
+        js.defined { (rawException: Any) =>
+          {
+            val nextError = rawException match {
+              case th: Throwable => th
+              case _             => js.JavaScriptException(rawException)
+            }
+            onPromiseResolved(Failure(nextError))
           }
-          onPromiseResolved(Failure(nextError))
-        }}
+        }
       )
     }
   }
@@ -44,7 +48,7 @@ class JsPromiseSignal[A](promise: js.Promise[A]) extends WritableSignal[Option[A
     //  long after the onWillStart / onStart chain has finished.
     // #Note fireTry sets current value even if the signal has no observers
     val nextValue = nextPromiseValue.map(Some(_))
-    //println(s"> init trx from FutureSignal($value)")
+    // println(s"> init trx from FutureSignal($value)")
     Transaction(fireTry(nextValue, _)) // #Note[onStart,trx,async]
   }
 }

@@ -11,15 +11,15 @@ import scala.collection.mutable
 
 class CombineSignalsSpec extends UnitSpec {
 
-  case class T1(v: Int) { def inc: T1 = T1(v+1) }
-  case class T2(v: Int) { def inc: T2 = T2(v+1) }
-  case class T3(v: Int) { def inc: T3 = T3(v+1) }
-  case class T4(v: Int) { def inc: T4 = T4(v+1) }
-  case class T5(v: Int) { def inc: T5 = T5(v+1) }
-  case class T6(v: Int) { def inc: T6 = T6(v+1) }
-  case class T7(v: Int) { def inc: T7 = T7(v+1) }
-  case class T8(v: Int) { def inc: T8 = T8(v+1) }
-  case class T9(v: Int) { def inc: T9 = T9(v+1) }
+  case class T1(v: Int) { def inc: T1 = T1(v + 1) }
+  case class T2(v: Int) { def inc: T2 = T2(v + 1) }
+  case class T3(v: Int) { def inc: T3 = T3(v + 1) }
+  case class T4(v: Int) { def inc: T4 = T4(v + 1) }
+  case class T5(v: Int) { def inc: T5 = T5(v + 1) }
+  case class T6(v: Int) { def inc: T6 = T6(v + 1) }
+  case class T7(v: Int) { def inc: T7 = T7(v + 1) }
+  case class T8(v: Int) { def inc: T8 = T8(v + 1) }
+  case class T9(v: Int) { def inc: T9 = T9(v + 1) }
 
   it("CombineSignal2 works") {
 
@@ -151,10 +151,30 @@ class CombineSignalsSpec extends UnitSpec {
       var4.update(_.inc)
       effects.toList shouldBe (
         List(
-          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1))
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration),
+            T3(1 + iteration),
+            T4(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration),
+            T4(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1)
+          )
         )
       )
     }
@@ -203,11 +223,41 @@ class CombineSignalsSpec extends UnitSpec {
       var5.update(_.inc)
       effects.toList shouldBe (
         List(
-          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1))
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration),
+            T3(1 + iteration),
+            T4(1 + iteration),
+            T5(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration),
+            T4(1 + iteration),
+            T5(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration),
+            T5(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration + 1)
+          )
         )
       )
     }
@@ -258,12 +308,54 @@ class CombineSignalsSpec extends UnitSpec {
       var6.update(_.inc)
       effects.toList shouldBe (
         List(
-          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration), T6(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1))
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration),
+            T3(1 + iteration),
+            T4(1 + iteration),
+            T5(1 + iteration),
+            T6(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration),
+            T4(1 + iteration),
+            T5(1 + iteration),
+            T6(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration),
+            T5(1 + iteration),
+            T6(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration),
+            T6(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration + 1),
+            T6(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration + 1),
+            T6(1 + iteration + 1)
+          )
         )
       )
     }
@@ -283,7 +375,8 @@ class CombineSignalsSpec extends UnitSpec {
     val var6 = Var(T6(1))
     val var7 = Var(T7(1))
 
-    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7)
+    val combinedSignal =
+      Signal.combine(var1, var2, var3, var4, var5, var6, var7)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7)]()
 
@@ -316,13 +409,69 @@ class CombineSignalsSpec extends UnitSpec {
       var7.update(_.inc)
       effects.toList shouldBe (
         List(
-          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration), T7(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1))
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration),
+            T3(1 + iteration),
+            T4(1 + iteration),
+            T5(1 + iteration),
+            T6(1 + iteration),
+            T7(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration),
+            T4(1 + iteration),
+            T5(1 + iteration),
+            T6(1 + iteration),
+            T7(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration),
+            T5(1 + iteration),
+            T6(1 + iteration),
+            T7(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration),
+            T6(1 + iteration),
+            T7(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration + 1),
+            T6(1 + iteration),
+            T7(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration + 1),
+            T6(1 + iteration + 1),
+            T7(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration + 1),
+            T6(1 + iteration + 1),
+            T7(1 + iteration + 1)
+          )
         )
       )
     }
@@ -343,7 +492,8 @@ class CombineSignalsSpec extends UnitSpec {
     val var7 = Var(T7(1))
     val var8 = Var(T8(1))
 
-    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8)
+    val combinedSignal =
+      Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8)]()
 
@@ -377,14 +527,86 @@ class CombineSignalsSpec extends UnitSpec {
       var8.update(_.inc)
       effects.toList shouldBe (
         List(
-          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration), T8(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1))
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration),
+            T3(1 + iteration),
+            T4(1 + iteration),
+            T5(1 + iteration),
+            T6(1 + iteration),
+            T7(1 + iteration),
+            T8(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration),
+            T4(1 + iteration),
+            T5(1 + iteration),
+            T6(1 + iteration),
+            T7(1 + iteration),
+            T8(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration),
+            T5(1 + iteration),
+            T6(1 + iteration),
+            T7(1 + iteration),
+            T8(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration),
+            T6(1 + iteration),
+            T7(1 + iteration),
+            T8(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration + 1),
+            T6(1 + iteration),
+            T7(1 + iteration),
+            T8(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration + 1),
+            T6(1 + iteration + 1),
+            T7(1 + iteration),
+            T8(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration + 1),
+            T6(1 + iteration + 1),
+            T7(1 + iteration + 1),
+            T8(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration + 1),
+            T6(1 + iteration + 1),
+            T7(1 + iteration + 1),
+            T8(1 + iteration + 1)
+          )
         )
       )
     }
@@ -406,7 +628,8 @@ class CombineSignalsSpec extends UnitSpec {
     val var8 = Var(T8(1))
     val var9 = Var(T9(1))
 
-    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8, var9)
+    val combinedSignal =
+      Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8, var9)
 
     val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]()
 
@@ -441,21 +664,110 @@ class CombineSignalsSpec extends UnitSpec {
       var9.update(_.inc)
       effects.toList shouldBe (
         List(
-          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration), T9(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration)),
-          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1))
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration),
+            T3(1 + iteration),
+            T4(1 + iteration),
+            T5(1 + iteration),
+            T6(1 + iteration),
+            T7(1 + iteration),
+            T8(1 + iteration),
+            T9(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration),
+            T4(1 + iteration),
+            T5(1 + iteration),
+            T6(1 + iteration),
+            T7(1 + iteration),
+            T8(1 + iteration),
+            T9(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration),
+            T5(1 + iteration),
+            T6(1 + iteration),
+            T7(1 + iteration),
+            T8(1 + iteration),
+            T9(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration),
+            T6(1 + iteration),
+            T7(1 + iteration),
+            T8(1 + iteration),
+            T9(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration + 1),
+            T6(1 + iteration),
+            T7(1 + iteration),
+            T8(1 + iteration),
+            T9(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration + 1),
+            T6(1 + iteration + 1),
+            T7(1 + iteration),
+            T8(1 + iteration),
+            T9(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration + 1),
+            T6(1 + iteration + 1),
+            T7(1 + iteration + 1),
+            T8(1 + iteration),
+            T9(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration + 1),
+            T6(1 + iteration + 1),
+            T7(1 + iteration + 1),
+            T8(1 + iteration + 1),
+            T9(1 + iteration)
+          ),
+          (
+            T1(1 + iteration + 1),
+            T2(1 + iteration + 1),
+            T3(1 + iteration + 1),
+            T4(1 + iteration + 1),
+            T5(1 + iteration + 1),
+            T6(1 + iteration + 1),
+            T7(1 + iteration + 1),
+            T8(1 + iteration + 1),
+            T9(1 + iteration + 1)
+          )
         )
       )
     }
 
     subscription.kill()
   }
-
 
 }

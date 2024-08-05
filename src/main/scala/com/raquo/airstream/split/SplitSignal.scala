@@ -8,34 +8,43 @@ import scala.collection.mutable
 import scala.scalajs.js
 import scala.util.Try
 
-/** Broadly similar to `parent.map(_.map(project))`, but the `project` part
-  * gets access to more data and is memoized by key.
+/** Broadly similar to `parent.map(_.map(project))`, but the `project` part gets
+  * access to more data and is memoized by key.
   *
   * See docs.
   *
-  * @param key       A sort of grouping / memoization key for inputs in `parent`
-  * @param distinctCompose   Transformation to apply to each key's input stream before providing it to `project`
-  *                  - Usually you want `_.distinct` here, so that each of the streams is only triggered
-  *                    when the input for its key actually changes (otherwise they would get an update
-  *                    every time that the parent stream emitted)
-  * @param project   (key, initialInput, inputChangesForThisKey) => output
-  *                  - Will only be called ONCE for a given key as long as parent contains an Input for this Key
-  *                  - Updates to Input with this Key will be published in `inputChangesForThisKey`
-  *                  - After parent stops containing an Input for this Key, we forget we ever called project for this key
+  * @param key
+  *   A sort of grouping / memoization key for inputs in `parent`
+  * @param distinctCompose
+  *   Transformation to apply to each key's input stream before providing it to
+  *   `project`
+  *   - Usually you want `_.distinct` here, so that each of the streams is only
+  *     triggered when the input for its key actually changes (otherwise they
+  *     would get an update every time that the parent stream emitted)
+  * @param project
+  *   (key, initialInput, inputChangesForThisKey) => output
+  *   - Will only be called ONCE for a given key as long as parent contains an
+  *     Input for this Key
+  *   - Updates to Input with this Key will be published in
+  *     `inputChangesForThisKey`
+  *   - After parent stops containing an Input for this Key, we forget we ever
+  *     called project for this key
   */
 class SplitSignal[M[_], Input, Output, Key](
-  override protected[this] val parent: Signal[M[Input]],
-  key: Input => Key,
-  distinctCompose: Signal[Input] => Signal[Input],
-  project: (Key, Input, Signal[Input]) => Output,
-  splittable: Splittable[M],
-  duplicateKeysConfig: DuplicateKeysConfig = DuplicateKeysConfig.default,
-  strict: Boolean = false // #TODO `false` default for now to keep compatibility with 17.0.0 - consider changing in 18.0.0 #nc
+    override protected[this] val parent: Signal[M[Input]],
+    key: Input => Key,
+    distinctCompose: Signal[Input] => Signal[Input],
+    project: (Key, Input, Signal[Input]) => Output,
+    splittable: Splittable[M],
+    duplicateKeysConfig: DuplicateKeysConfig = DuplicateKeysConfig.default,
+    strict: Boolean =
+      false // #TODO `false` default for now to keep compatibility with 17.0.0 - consider changing in 18.0.0 #nc
 ) extends SingleParentSignal[M[Input], M[Output]] {
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
-  override protected def currentValueFromParent(): Try[M[Output]] = parent.tryNow().map(memoizedProject)
+  override protected def currentValueFromParent(): Try[M[Output]] =
+    parent.tryNow().map(memoizedProject)
 
   // #TODO[Performance]
   //  - If we don't need Scala semantics for keys, then we can use JS map,
@@ -45,9 +54,14 @@ class SplitSignal[M[_], Input, Output, Key](
   //  - However, don't bother until we can benchmark how much time we spend
   //    in memoization, and how much we'll gain from switching to JS Maps.
   /** key -> (inputValue, inputSignal, outputValue, lastParentUpdateId) */
-  private[this] val memoized: mutable.Map[Key, (Input, Signal[Input], Output, Int)] = mutable.Map.empty
+  private[this] val memoized
+      : mutable.Map[Key, (Input, Signal[Input], Output, Int)] =
+    mutable.Map.empty
 
-  override protected def onTry(nextParentValue: Try[M[Input]], transaction: Transaction): Unit = {
+  override protected def onTry(
+      nextParentValue: Try[M[Input]],
+      transaction: Transaction
+  ): Unit = {
     super.onTry(nextParentValue, transaction)
     nextParentValue.fold(
       nextError => fireError(nextError, transaction),
@@ -58,84 +72,100 @@ class SplitSignal[M[_], Input, Output, Key](
   private[this] val sharedDelayedParent = new SyncDelayStream(parent, this)
 
   private[this] val emptyObserver = new InternalTryObserver[Input] {
-    override protected def onTry(nextValue: Try[Input], transaction: Transaction): Unit = ()
+    override protected def onTry(
+        nextValue: Try[Input],
+        transaction: Transaction
+    ): Unit = ()
   }
 
   private[this] def memoizedProject(nextInputs: M[Input]): M[Output] = {
     // Any keys not in this set by the end of this function will be removed from `memoized` map
     // This ensures that previously memoized values are forgotten once the source observables stops emitting their inputs
-    val nextKeys = mutable.HashSet.empty[Key] // HashSet has desirable performance tradeoffs
+    val nextKeys =
+      mutable.HashSet.empty[Key] // HashSet has desirable performance tradeoffs
 
-    val duplicateKeys = if (duplicateKeysConfig.shouldWarn) js.Array[Key]() else null
+    val duplicateKeys =
+      if (duplicateKeysConfig.shouldWarn) js.Array[Key]() else null
 
-    val nextOutputs = splittable.map(nextInputs, { (nextInput: Input) =>
-      val memoizedKey = key(nextInput)
+    val nextOutputs = splittable.map(
+      nextInputs,
+      { (nextInput: Input) =>
+        val memoizedKey = key(nextInput)
 
-      if (duplicateKeysConfig.shouldWarn && nextKeys.contains(memoizedKey)) {
-        if (!duplicateKeys.contains(memoizedKey)) { // #Note: this uses scala == key comparison here, as desired
-          duplicateKeys.push(memoizedKey)
+        if (duplicateKeysConfig.shouldWarn && nextKeys.contains(memoizedKey)) {
+          if (!duplicateKeys.contains(memoizedKey)) { // #Note: this uses scala == key comparison here, as desired
+            duplicateKeys.push(memoizedKey)
+          }
         }
-      }
 
-      nextKeys += memoizedKey
+        nextKeys += memoizedKey
 
-      val cachedSignalAndOutput = memoized.get(memoizedKey).map(t => (t._2, t._3))
+        val cachedSignalAndOutput =
+          memoized.get(memoizedKey).map(t => (t._2, t._3))
 
-      val nextSignalAndOutput = cachedSignalAndOutput.getOrElse {
-        val initialInput = nextInput
+        val nextSignalAndOutput = cachedSignalAndOutput.getOrElse {
+          val initialInput = nextInput
 
-        // @warning !!! DANGER ZONE !!!
-        // - We must avoid mapping over this signal itself here to avoid infinite loop (this function calling `initialValue`)
-        // - We must avoid looking at `memoized.get(key)` before `memoized` is populated with that key a few lines below
-        // = Therefore, we derive the child signal from the parent stream and a known initial value
-        //   - Using this signal's own changes instead won't work, because if the user calls `addObserver` or `foreach`
-        //     in the `project` callback, this will evaluate `initialValue`, causing an infinite loop.
-        //   - @TODO[Integrity] Moreover, it seems that such an infinite loop won't be detected.
-        //      Not sure why. I'm guessing must be one of our guards being excessive, but I can't find it.
+          // @warning !!! DANGER ZONE !!!
+          // - We must avoid mapping over this signal itself here to avoid infinite loop (this function calling `initialValue`)
+          // - We must avoid looking at `memoized.get(key)` before `memoized` is populated with that key a few lines below
+          // = Therefore, we derive the child signal from the parent stream and a known initial value
+          //   - Using this signal's own changes instead won't work, because if the user calls `addObserver` or `foreach`
+          //     in the `project` callback, this will evaluate `initialValue`, causing an infinite loop.
+          //   - @TODO[Integrity] Moreover, it seems that such an infinite loop won't be detected.
+          //      Not sure why. I'm guessing must be one of our guards being excessive, but I can't find it.
 
-        // Potential problem:
-        // - calling `project` calls `inputSignal.foreach` in user code (e.g.)
-        // - the result of `project` is needed to build output, to memoize it
-        // - `inputSignal.foreach` in user code triggers `inputSignal.onAddedExternalObserver`
-        // - that calls for `inputSignal.tryNow` to send the value to the new observer
-        // - that calls `parent.tryNow.map(memoizedProject)`
-        // - at this point, we still haven't obtained the output of `project` because we're still
-        //   running inside of it
-        // - so the code of memoizedProject goes into the same branch and into the `else` branch of `cachedOutput.getOrElse`
-        // - which is where the flow started, so that's a loop
-        // = I've been in this mess for so long, I forgot how exactly I fixed this. Tests will catch that if this happens again.
+          // Potential problem:
+          // - calling `project` calls `inputSignal.foreach` in user code (e.g.)
+          // - the result of `project` is needed to build output, to memoize it
+          // - `inputSignal.foreach` in user code triggers `inputSignal.onAddedExternalObserver`
+          // - that calls for `inputSignal.tryNow` to send the value to the new observer
+          // - that calls `parent.tryNow.map(memoizedProject)`
+          // - at this point, we still haven't obtained the output of `project` because we're still
+          //   running inside of it
+          // - so the code of memoizedProject goes into the same branch and into the `else` branch of `cachedOutput.getOrElse`
+          // - which is where the flow started, so that's a loop
+          // = I've been in this mess for so long, I forgot how exactly I fixed this. Tests will catch that if this happens again.
 
-        // - `inputSignal` fetches the latest input from `memoized` and emits that, subject to `compose`,
-        //   which by default applies the `distinct` operator to filter out changes to OTHER keys.
-        // - Without this default, each inputSignal would receive updates whenever any other unrelated key
-        //   was updated in the parent list of inputs. We do have a test to check that behaviour too.
+          // - `inputSignal` fetches the latest input from `memoized` and emits that, subject to `compose`,
+          //   which by default applies the `distinct` operator to filter out changes to OTHER keys.
+          // - Without this default, each inputSignal would receive updates whenever any other unrelated key
+          //   was updated in the parent list of inputs. We do have a test to check that behaviour too.
 
-        val inputSignal = distinctCompose(
-          new SplitChildSignal[M, Input](
-            sharedDelayedParent,
-            initialValue = Some((initialInput, Protected.lastUpdateId(parent))),
-            () => memoized.get(memoizedKey).map(t => (t._1, t._4))
+          val inputSignal = distinctCompose(
+            new SplitChildSignal[M, Input](
+              sharedDelayedParent,
+              initialValue =
+                Some((initialInput, Protected.lastUpdateId(parent))),
+              () => memoized.get(memoizedKey).map(t => (t._1, t._4))
+            )
           )
+
+          if (isStarted && strict) {
+            inputSignal.addInternalObserver(
+              emptyObserver,
+              shouldCallMaybeWillStart = true
+            )
+          }
+
+          val newOutput = project(memoizedKey, initialInput, inputSignal)
+
+          (inputSignal, newOutput)
+        }
+
+        val inputSignal = nextSignalAndOutput._1
+        val nextOutput = nextSignalAndOutput._2
+
+        // Cache this key for the first time, or update the input so that inputSignal can fetch it
+        // dom.console.log(s"${this} memoized.update ${memoizedKey} -> ${nextInput}")
+        memoized.update(
+          memoizedKey,
+          (nextInput, inputSignal, nextOutput, Protected.lastUpdateId(parent))
         )
 
-        if (isStarted && strict) {
-          inputSignal.addInternalObserver(emptyObserver, shouldCallMaybeWillStart = true)
-        }
-
-        val newOutput = project(memoizedKey, initialInput, inputSignal)
-
-        (inputSignal, newOutput)
+        nextOutput
       }
-
-      val inputSignal = nextSignalAndOutput._1
-      val nextOutput = nextSignalAndOutput._2
-
-      // Cache this key for the first time, or update the input so that inputSignal can fetch it
-      // dom.console.log(s"${this} memoized.update ${memoizedKey} -> ${nextInput}")
-      memoized.update(memoizedKey, (nextInput, inputSignal, nextOutput, Protected.lastUpdateId(parent)))
-
-      nextOutput
-    })
+    )
 
     memoized.keys.foreach { memoizedKey =>
       if (!nextKeys.contains(memoizedKey)) {
@@ -150,7 +180,9 @@ class SplitSignal[M[_], Input, Output, Key](
 
     if (duplicateKeysConfig.shouldWarn && duplicateKeys.nonEmpty) {
       AirstreamError.sendUnhandledError(
-        new Exception(s"Duplicate keys detected in {$parent}.split(): `${duplicateKeys.mkString("`, `")}`. This is a bug in your code. See comment in Airstream's DuplicateKeysConfig.scala.")
+        new Exception(
+          s"Duplicate keys detected in {$parent}.split(): `${duplicateKeys.mkString("`, `")}`. This is a bug in your code. See comment in Airstream's DuplicateKeysConfig.scala."
+        )
       )
     }
 
@@ -162,19 +194,25 @@ class SplitSignal[M[_], Input, Output, Key](
       parent.tryNow().foreach { inputs =>
         // splittable.foreach is perhaps less efficient that memoized.keys,
         // but it has a predictable order that users expect.
-        splittable.foreach(inputs, (input: Input) => {
-          val memoizedKey = key(input)
-          val maybeInputSignal = memoized.get(memoizedKey).map(_._2)
-          maybeInputSignal.foreach { inputSignal =>
-            // - If inputSignal not found because `parent.tryNow()` and `memoized`
-            //   are temporarily out of sync, it should be added later just fine
-            //   when they sync up.
-            // - Typical pattern is to call Protected.maybeWillStart(inputSignal) in onWillStart,
-            //   but our SplitSignal does not actually depend on these inputSignal-s, so I think
-            //   it's ok to do both onWillStart and onStart for them here.
-            inputSignal.addInternalObserver(emptyObserver, shouldCallMaybeWillStart = true)
+        splittable.foreach(
+          inputs,
+          (input: Input) => {
+            val memoizedKey = key(input)
+            val maybeInputSignal = memoized.get(memoizedKey).map(_._2)
+            maybeInputSignal.foreach { inputSignal =>
+              // - If inputSignal not found because `parent.tryNow()` and `memoized`
+              //   are temporarily out of sync, it should be added later just fine
+              //   when they sync up.
+              // - Typical pattern is to call Protected.maybeWillStart(inputSignal) in onWillStart,
+              //   but our SplitSignal does not actually depend on these inputSignal-s, so I think
+              //   it's ok to do both onWillStart and onStart for them here.
+              inputSignal.addInternalObserver(
+                emptyObserver,
+                shouldCallMaybeWillStart = true
+              )
+            }
           }
-        })
+        )
       }
     }
     super.onStart()

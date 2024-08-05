@@ -11,10 +11,16 @@ import scala.util.{Success, Try}
   *
   * See docs on custom sources, and [[CustomSource.Config]]
   */
-class CustomSignalSource[A] (
-  getInitialValue: => Try[A],
-  makeConfig: (SetCurrentValue[A], GetCurrentValue[A], GetStartIndex, GetIsStarted) => CustomSource.Config
-) extends WritableSignal[A] with CustomSource[A] {
+class CustomSignalSource[A](
+    getInitialValue: => Try[A],
+    makeConfig: (
+        SetCurrentValue[A],
+        GetCurrentValue[A],
+        GetStartIndex,
+        GetIsStarted
+    ) => CustomSource.Config
+) extends WritableSignal[A]
+    with CustomSource[A] {
 
   override protected[this] val config: Config = makeConfig(
     value => Transaction(fireTry(value, _)),
@@ -30,18 +36,28 @@ object CustomSignalSource {
 
   @deprecated("Use Signal.fromCustomSource", "15.0.0-M1")
   def apply[A](
-    initial: => A
+      initial: => A
   )(
-    config: (SetCurrentValue[A], GetCurrentValue[A], GetStartIndex, GetIsStarted) => Config
+      config: (
+          SetCurrentValue[A],
+          GetCurrentValue[A],
+          GetStartIndex,
+          GetIsStarted
+      ) => Config
   ): Signal[A] = {
     new CustomSignalSource[A](Success(initial), config)
   }
 
   @deprecated("Use Signal.fromCustomSource", "15.0.0-M1")
   def fromTry[A](
-    initial: => Try[A]
+      initial: => Try[A]
   )(
-    config: (SetCurrentValue[A], GetCurrentValue[A], GetStartIndex, GetIsStarted) => Config
+      config: (
+          SetCurrentValue[A],
+          GetCurrentValue[A],
+          GetStartIndex,
+          GetIsStarted
+      ) => Config
   ): Signal[A] = {
     new CustomSignalSource[A](initial, config)
   }

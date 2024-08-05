@@ -13,7 +13,9 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
 
   describe("Signal.flatten") {
 
-    it("initial unresolved future results in emitted default value and an async event") {
+    it(
+      "initial unresolved future results in emitted default value and an async event"
+    ) {
 
       implicit val owner: TestableOwner = new TestableOwner
 
@@ -22,7 +24,6 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
       val obs = Observer[Int](effects += Effect("obs", _))
 
       def makePromise() = Promise[Int]()
-
 
       def clearLogs(): Assertion = {
         effects.clear()
@@ -72,7 +73,9 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
       }
     }
 
-    it("initial future that is resolved sync-before the observer is added results in initial value of None") {
+    it(
+      "initial future that is resolved sync-before the observer is added results in initial value of None"
+    ) {
 
       implicit val owner: TestableOwner = new TestableOwner
 
@@ -93,7 +96,9 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
 
       val futureBus = new EventBus[Future[Int]]()
 
-      val signal = futureBus.events.startWith(promise0.future).flatMapSwitch(Signal.fromFuture(_, initial = -200))
+      val signal = futureBus.events
+        .startWith(promise0.future)
+        .flatMapSwitch(Signal.fromFuture(_, initial = -200))
       promise0.success(-100)
 
       signal.addObserver(obs)
@@ -124,7 +129,9 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
       }
     }
 
-    it("initial already-resolved future results in an async event if resolved async-before stream creation") {
+    it(
+      "initial already-resolved future results in an async event if resolved async-before stream creation"
+    ) {
 
       implicit val owner: TestableOwner = new TestableOwner
 
@@ -148,7 +155,9 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
       promise0.success(-100)
 
       delay {
-        val signal = futureBus.events.startWith(promise0.future).flatMapSwitch(Signal.fromFuture(_, initial = -200))
+        val signal = futureBus.events
+          .startWith(promise0.future)
+          .flatMapSwitch(Signal.fromFuture(_, initial = -200))
         signal.addObserver(obs)
 
         effects shouldBe mutable.Buffer(Effect("obs", -200))

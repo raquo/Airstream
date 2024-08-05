@@ -7,21 +7,22 @@ import scala.util.{Failure, Success, Try}
 
 // #TODO[API] Since this has an initial value, should this be a signal perhaps?
 
-/** @param next (currentState => (nextState, nextIntervalMs)
-  *             Note: guarded against exceptions.
-  *             If `next` throws, stream will emit that error
+/** @param next
+  *   (currentState => (nextState, nextIntervalMs) Note: guarded against
+  *   exceptions. If `next` throws, stream will emit that error
   */
 class PeriodicStream[A](
-  initial: A,
-  next: A => Option[(A, Int)],
-  resetOnStop: Boolean
+    initial: A,
+    next: A => Option[(A, Int)],
+    resetOnStop: Boolean
 ) extends WritableStream[A] {
 
   override protected val topoRank: Int = 1
 
   private var currentValue: A = initial
 
-  private var maybeTimeoutHandle: js.UndefOr[js.timers.SetTimeoutHandle] = js.undefined
+  private var maybeTimeoutHandle: js.UndefOr[js.timers.SetTimeoutHandle] =
+    js.undefined
 
   // @TODO[API] Not a fan of exposing the ability to write to a stream on the stream itself,
   //  we separate this out on EventBus and Var

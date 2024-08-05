@@ -8,7 +8,6 @@ import com.raquo.airstream.state.Var
 
 import scala.collection.mutable
 
-
 class SwitchSignalStreamSpec extends UnitSpec {
 
   it("mirrors last emitted signal, but only if subscribed") {
@@ -20,17 +19,19 @@ class SwitchSignalStreamSpec extends UnitSpec {
 
     // Create 4 test vars and add logging to their streams
     val sourceVars = (1 to 4).map(_ => Var(-1))
-    val sourceSignals = sourceVars.zipWithIndex.map {
-      case (vr, index) => vr.signal.map(Calculation.log(s"signal-$index", calculations))
+    val sourceSignals = sourceVars.zipWithIndex.map { case (vr, index) =>
+      vr.signal.map(Calculation.log(s"signal-$index", calculations))
     }
 
     val metaBus = new EventBus[Signal[Int]]
 
-    val latestNumberS = metaBus.events.flattenSwitch // SwitchSignalStreamStrategy is the default (provided implicitly)
+    val latestNumberS =
+      metaBus.events.flattenSwitch // SwitchSignalStreamStrategy is the default (provided implicitly)
 
     val flattenObserver = Observer[Int](effects += Effect("flattened-obs", _))
 
-    val flattenStream = latestNumberS.map(Calculation.log("flattened", calculations))
+    val flattenStream =
+      latestNumberS.map(Calculation.log("flattened", calculations))
 
     calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer()
@@ -205,18 +206,25 @@ class SwitchSignalStreamSpec extends UnitSpec {
     val manualBus = new EventBus[Int]
 
     // Create 4 test vars and add logging to their streams
-    val sourceStreams = (1 to 4).map(n => EventStream.merge(manualBus.events, EventStream.fromSeq(List(1, 2).map(n * 10 + _))))
-    val sourceSignals = sourceStreams.zipWithIndex.map {
-      case (stream, index) => stream.startWith(0).map(Calculation.log(s"signal-$index", calculations))
+    val sourceStreams = (1 to 4).map(n =>
+      EventStream.merge(
+        manualBus.events,
+        EventStream.fromSeq(List(1, 2).map(n * 10 + _))
+      )
+    )
+    val sourceSignals = sourceStreams.zipWithIndex.map { case (stream, index) =>
+      stream.startWith(0).map(Calculation.log(s"signal-$index", calculations))
     }
 
     val metaBus = new EventBus[Signal[Int]]
 
-    val latestNumberS = metaBus.events.flattenSwitch // SwitchSignalStreamStrategy is the default (provided implicitly)
+    val latestNumberS =
+      metaBus.events.flattenSwitch // SwitchSignalStreamStrategy is the default (provided implicitly)
 
     val flattenObserver = Observer[Int](effects += Effect("flattened-obs", _))
 
-    val flattenStream = latestNumberS.map(Calculation.log("flattened", calculations))
+    val flattenStream =
+      latestNumberS.map(Calculation.log("flattened", calculations))
 
     calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer()
@@ -235,12 +243,12 @@ class SwitchSignalStreamSpec extends UnitSpec {
     metaBus.emit(source0)
 
     calculations shouldBe mutable.Buffer(
-      Calculation("signal-0",0),
-      Calculation("flattened",0),
-      Calculation("signal-0",11),
-      Calculation("flattened",11),
-      Calculation("signal-0",12),
-      Calculation("flattened",12)
+      Calculation("signal-0", 0),
+      Calculation("flattened", 0),
+      Calculation("signal-0", 11),
+      Calculation("flattened", 11),
+      Calculation("signal-0", 12),
+      Calculation("flattened", 12)
     )
     effects shouldBe mutable.Buffer(
       Effect("flattened-obs", 0),
@@ -332,7 +340,7 @@ class SwitchSignalStreamSpec extends UnitSpec {
 
     calculations shouldBe mutable.Buffer(
       Calculation("signal-1", 20),
-      Calculation("flattened", 20),
+      Calculation("flattened", 20)
     )
     effects shouldBe mutable.Buffer(
       Effect("flattened-obs", 20)

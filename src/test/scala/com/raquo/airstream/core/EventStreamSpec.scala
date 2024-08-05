@@ -62,7 +62,8 @@ class EventStreamSpec extends UnitSpec {
     val stream = EventStream.fromSeq(range, emitOnce = true)
 
     val effects = mutable.Buffer[Effect[_]]()
-    val subscription0 = stream.filter(f).foreach(newValue => effects += Effect("obs0", newValue))
+    val subscription0 =
+      stream.filter(f).foreach(newValue => effects += Effect("obs0", newValue))
 
     subscription0.kill()
     effects.toList shouldBe range.filter(f).map(i => Effect("obs0", i))
@@ -77,7 +78,9 @@ class EventStreamSpec extends UnitSpec {
     val stream = EventStream.fromSeq(range, emitOnce = true)
 
     val effects = mutable.Buffer[Effect[_]]()
-    val subscription0 = stream.filterNot(f).foreach(newValue => effects += Effect("obs0", newValue))
+    val subscription0 = stream
+      .filterNot(f)
+      .foreach(newValue => effects += Effect("obs0", newValue))
 
     subscription0.kill()
     effects.toList shouldBe range.filterNot(f).map(i => Effect("obs0", i))
@@ -90,8 +93,7 @@ class EventStreamSpec extends UnitSpec {
     val bus = new EventBus[Either[String, Int]]
 
     val effects = mutable.Buffer[Effect[_]]()
-    bus
-      .events
+    bus.events
       .collect { case Right(i) => i }
       .foreach(v => effects += Effect("obs", v))
 
@@ -134,17 +136,16 @@ class EventStreamSpec extends UnitSpec {
 
   it("collectOpt") {
 
-    //def NonEmptyList[A](list: List[A]): Option[List[A]] = {
+    // def NonEmptyList[A](list: List[A]): Option[List[A]] = {
     //  if (list.nonEmpty) Some(list) else None
-    //}
+    // }
 
     implicit val owner: Owner = new TestableOwner
 
     val bus = new EventBus[List[Int]]
 
     val effects = mutable.Buffer[Effect[_]]()
-    bus
-      .events
+    bus.events
       .collectOpt(NonEmptyList.from(_))
       .foreach(v => effects += Effect("obs", v.head))
 

@@ -6,7 +6,9 @@ import com.raquo.airstream.core.{AirstreamError, Observable}
 
 import scala.util.Try
 
-/** See [[DebuggableObservable]] and [[DebuggableSignal]] for user-facing debug methods */
+/** See [[DebuggableObservable]] and [[DebuggableSignal]] for user-facing debug
+  * methods
+  */
 trait DebuggerObservable[A] extends InternalTryObserver[A] {
 
   protected val debugger: Debugger[A]
@@ -25,7 +27,8 @@ trait DebuggerObservable[A] extends InternalTryObserver[A] {
     try {
       debugger.onStart()
     } catch {
-      case err: Throwable => AirstreamError.sendUnhandledError(DebugError(err, cause = None))
+      case err: Throwable =>
+        AirstreamError.sendUnhandledError(DebugError(err, cause = None))
     }
   }
 
@@ -33,7 +36,8 @@ trait DebuggerObservable[A] extends InternalTryObserver[A] {
     try {
       debugger.onStop()
     } catch {
-      case err: Throwable => AirstreamError.sendUnhandledError(DebugError(err, cause = None))
+      case err: Throwable =>
+        AirstreamError.sendUnhandledError(DebugError(err, cause = None))
     }
   }
 }

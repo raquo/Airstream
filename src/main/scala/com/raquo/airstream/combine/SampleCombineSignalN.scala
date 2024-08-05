@@ -8,21 +8,27 @@ import scala.util.Try
 
 /** This signal emits the combined value when samplingSignal is updated.
   *
-  * When the combined signal emits, it looks up the current value of sampledSignals,
-  * but updates to those signals do not trigger updates to the combined stream.
+  * When the combined signal emits, it looks up the current value of
+  * sampledSignals, but updates to those signals do not trigger updates to the
+  * combined stream.
   *
-  * Works similar to Rx's "withLatestFrom", except without glitches (see a diamond case test for this in GlitchSpec).
+  * Works similar to Rx's "withLatestFrom", except without glitches (see a
+  * diamond case test for this in GlitchSpec).
   *
-  * @param sampledSignals Never update this array - this signal owns it.
-  * @param combinator     Note: Must not throw! Must be pure.
+  * @param sampledSignals
+  *   Never update this array - this signal owns it.
+  * @param combinator
+  *   Note: Must not throw! Must be pure.
   */
 class SampleCombineSignalN[A, Out](
-  samplingSignal: Signal[A],
-  sampledSignals: JsArray[Signal[A]],
-  combinator: JsArray[A] => Out
-) extends MultiParentSignal[A, Out] with CombineObservable[Out] {
+    samplingSignal: Signal[A],
+    sampledSignals: JsArray[Signal[A]],
+    combinator: JsArray[A] => Out
+) extends MultiParentSignal[A, Out]
+    with CombineObservable[Out] {
 
-  override protected val topoRank: Int = Protected.maxTopoRank(samplingSignal, sampledSignals) + 1
+  override protected val topoRank: Int =
+    Protected.maxTopoRank(samplingSignal, sampledSignals) + 1
 
   override protected[this] def inputsReady: Boolean = true
 
@@ -34,17 +40,24 @@ class SampleCombineSignalN[A, Out](
     arr
   }
 
-  override protected[this] val parentObservers: JsArray[InternalParentObserver[_]] = {
+  override protected[this] val parentObservers
+      : JsArray[InternalParentObserver[_]] = {
     val arr = JsArray[InternalParentObserver[_]](
-      InternalParentObserver.fromTry[A](samplingSignal, (_, trx) => {
-        onInputsReady(trx)
-      })
+      InternalParentObserver.fromTry[A](
+        samplingSignal,
+        (_, trx) => {
+          onInputsReady(trx)
+        }
+      )
     )
     sampledSignals.forEach { sampledSignal =>
       arr.push(
-        InternalParentObserver.fromTry[A](sampledSignal, (_, _) => {
-          // Do nothing, we just want to ensure that sampledSignal is started.
-        })
+        InternalParentObserver.fromTry[A](
+          sampledSignal,
+          (_, _) => {
+            // Do nothing, we just want to ensure that sampledSignal is started.
+          }
+        )
       )
     }
     arr

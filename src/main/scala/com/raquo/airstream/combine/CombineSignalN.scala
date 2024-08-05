@@ -6,24 +6,30 @@ import com.raquo.ew.JsArray
 
 import scala.util.Try
 
-/**
-  * @param parents Never update this array - this signal owns it.
-  * @param combinator Must not throw! Must be pure.
+/** @param parents
+  *   Never update this array - this signal owns it.
+  * @param combinator
+  *   Must not throw! Must be pure.
   */
 class CombineSignalN[A, Out](
-  override protected[this] val parents: JsArray[Signal[A]],
-  protected[this] val combinator: JsArray[A] => Out
-) extends MultiParentSignal[A, Out] with CombineObservable[Out] {
+    override protected[this] val parents: JsArray[Signal[A]],
+    protected[this] val combinator: JsArray[A] => Out
+) extends MultiParentSignal[A, Out]
+    with CombineObservable[Out] {
 
   // @TODO[API] Maybe this should throw if parents.isEmpty
 
   override protected val topoRank: Int = Protected.maxTopoRank(0, parents) + 1
 
-  override protected[this] val parentObservers: JsArray[InternalParentObserver[_]] = {
+  override protected[this] val parentObservers
+      : JsArray[InternalParentObserver[_]] = {
     parents.map { parent =>
-      InternalParentObserver.fromTry[A](parent, (_, trx) => {
-        onInputsReady(trx)
-      })
+      InternalParentObserver.fromTry[A](
+        parent,
+        (_, trx) => {
+          onInputsReady(trx)
+        }
+      )
     }
   }
 

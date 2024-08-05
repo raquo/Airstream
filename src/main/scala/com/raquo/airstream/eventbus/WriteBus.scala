@@ -1,45 +1,65 @@
 package com.raquo.airstream.eventbus
 
-import com.raquo.airstream.core.{EventStream, InternalObserver, Observer, Transaction}
+import com.raquo.airstream.core.{
+  EventStream,
+  InternalObserver,
+  Observer,
+  Transaction
+}
 import com.raquo.airstream.ownership.{Owner, Subscription}
 import com.raquo.airstream.util.hasDuplicateTupleKeys
 
 import scala.util.Try
 
 class WriteBus[A](
-  parentDisplayName: => String,
-  displayNameSuffix: String = ".writer"
+    parentDisplayName: => String,
+    displayNameSuffix: String = ".writer"
 ) extends Observer[A] {
 
   /** Hidden here because the public interface of WriteBus is all about writing
     * rather than reading, but exposed in [[EventBus]]
     */
-  private[eventbus] val stream: EventBusStream[A] = new EventBusStream(displayName)
+  private[eventbus] val stream: EventBusStream[A] = new EventBusStream(
+    displayName
+  )
 
-  /** Note: this source will be removed when the `owner` you provide says so.
-    * To remove this source manually, call .kill() on the resulting Subscription.
+  /** Note: this source will be removed when the `owner` you provide says so. To
+    * remove this source manually, call .kill() on the resulting Subscription.
     */
-  def addSource(sourceStream: EventStream[A])(implicit owner: Owner): Subscription = {
+  def addSource(
+      sourceStream: EventStream[A]
+  )(implicit owner: Owner): Subscription = {
     stream.addSource(sourceStream)
-    new Subscription(owner, cleanup = () => {
-      stream.removeSource(sourceStream)
-    })
+    new Subscription(
+      owner,
+      cleanup = () => {
+        stream.removeSource(sourceStream)
+      }
+    )
   }
 
-  def contracomposeWriter[B](operator: EventStream[B] => EventStream[A])(implicit owner: Owner): WriteBus[B] = {
+  def contracomposeWriter[B](
+      operator: EventStream[B] => EventStream[A]
+  )(implicit owner: Owner): WriteBus[B] = {
     val mapBus = new WriteBus[B](displayName, ".contracomposeWriter")
     addSource(mapBus.stream.compose(operator))(owner)
     mapBus
   }
 
-  /** Behaves similar to `contramap`, but gives you a WriteBus, not just an Observer */
-  def contramapWriter[B](project: B => A)(implicit owner: Owner): WriteBus[B] = {
+  /** Behaves similar to `contramap`, but gives you a WriteBus, not just an
+    * Observer
+    */
+  def contramapWriter[B](
+      project: B => A
+  )(implicit owner: Owner): WriteBus[B] = {
     val mapBus = new WriteBus[B](displayName, ".contramapWriter")
     addSource(mapBus.stream.map(project))(owner)
     mapBus
   }
 
-  /** Behaves similar to `filter`, but gives you a WriteBus, not just an Observer */
+  /** Behaves similar to `filter`, but gives you a WriteBus, not just an
+    * Observer
+    */
   def filterWriter(passes: A => Boolean)(implicit owner: Owner): WriteBus[A] = {
     val filterBus = new WriteBus[A](displayName, ".filterWriter")
     addSource(filterBus.stream.filter(passes))(owner)
@@ -67,26 +87,36 @@ class WriteBus[A](
     nextValue.fold(onError, onNext)
   }
 
-  private[eventbus] def onNextWithSharedTransaction(nextValue: A, sharedTransaction: Transaction): Unit = {
+  private[eventbus] def onNextWithSharedTransaction(
+      nextValue: A,
+      sharedTransaction: Transaction
+  ): Unit = {
     if (stream.isStarted) {
       stream.onNextWithSharedTransaction(nextValue, sharedTransaction)
     }
   }
 
-  private[eventbus] def onErrorWithSharedTransaction(nextError: Throwable, sharedTransaction: Transaction): Unit = {
+  private[eventbus] def onErrorWithSharedTransaction(
+      nextError: Throwable,
+      sharedTransaction: Transaction
+  ): Unit = {
     if (stream.isStarted) {
       stream.onErrorWithSharedTransaction(nextError, sharedTransaction)
     }
   }
 
-  private[eventbus] def onTryWithSharedTransaction(nextValue: Try[A], sharedTransaction: Transaction): Unit = {
+  private[eventbus] def onTryWithSharedTransaction(
+      nextValue: Try[A],
+      sharedTransaction: Transaction
+  ): Unit = {
     nextValue.fold(
       onErrorWithSharedTransaction(_, sharedTransaction),
       onNextWithSharedTransaction(_, sharedTransaction)
     )
   }
 
-  override protected def defaultDisplayName: String = parentDisplayName + displayNameSuffix
+  override protected def defaultDisplayName: String =
+    parentDisplayName + displayNameSuffix
 }
 
 object WriteBus {
@@ -99,29 +129,40 @@ object WriteBus {
     * Example usage: emitTry(writeBus1 -> value1, writeBus2 -> value2)
     */
   def emit(values: BusTuple[_]*): Unit = {
-    //println(s"> init trx from WriteBus.emit($values)")
+    // println(s"> init trx from WriteBus.emit($values)")
     if (hasDuplicateTupleKeys(values.map(_.tuple))) {
-      throw new Exception("Unable to {EventBus,WriteBus}.emit: the provided list of event buses has duplicates. You can't make an observable emit more than one event per transaction.")
+      throw new Exception(
+        "Unable to {EventBus,WriteBus}.emit: the provided list of event buses has duplicates. You can't make an observable emit more than one event per transaction."
+      )
     }
     Transaction(trx => values.foreach(emitValue(_, trx)))
   }
 
   /** Emit events into several WriteBus-es at once (in the same transaction)
-    * Example usage: emitTry(writeBus1 -> Success(value1), writeBus2 -> Failure(error2))
+    * Example usage: emitTry(writeBus1 -> Success(value1), writeBus2 ->
+    * Failure(error2))
     */
   def emitTry(values: BusTryTuple[_]*): Unit = {
-    //println(s"> init trx from WriteBus.emitTry($values)")
+    // println(s"> init trx from WriteBus.emitTry($values)")
     if (hasDuplicateTupleKeys(values.map(_.tuple))) {
-      throw new Exception("Unable to {EventBus,WriteBus}.emitTry: the provided list of event buses has duplicates. You can't make an observable emit more than one event per transaction.")
+      throw new Exception(
+        "Unable to {EventBus,WriteBus}.emitTry: the provided list of event buses has duplicates. You can't make an observable emit more than one event per transaction."
+      )
     }
     Transaction(trx => values.foreach(emitTryValue(_, trx)))
   }
 
-  @inline private def emitValue[A](tuple: BusTuple[A], transaction: Transaction): Unit = {
+  @inline private def emitValue[A](
+      tuple: BusTuple[A],
+      transaction: Transaction
+  ): Unit = {
     tuple.tuple._1.onNextWithSharedTransaction(tuple.tuple._2, transaction)
   }
 
-  @inline private def emitTryValue[A](tuple: BusTryTuple[A], transaction: Transaction): Unit = {
+  @inline private def emitTryValue[A](
+      tuple: BusTryTuple[A],
+      transaction: Transaction
+  ): Unit = {
     tuple.tuple._1.onTryWithSharedTransaction(tuple.tuple._2, transaction)
   }
 }

@@ -13,13 +13,14 @@ object AirstreamError {
     // getMessage can have a custom implementation, and thus can throw
     // Also, currently, MatchError.getMessage throws an NPE
     // if the object being matched is a native JS type.
-    val errorMessage = try {
-      e.getMessage
-    } catch {
-      case err: Throwable =>
-        // Don't try to read anything from `err` here, things are f*cked as they are already.
-        "(Unable to get the message for this error - exception occurred in its getMessage)"
-    }
+    val errorMessage =
+      try {
+        e.getMessage
+      } catch {
+        case err: Throwable =>
+          // Don't try to read anything from `err` here, things are f*cked as they are already.
+          "(Unable to get the message for this error - exception occurred in its getMessage)"
+      }
     e.getClass.getSimpleName + ": " + errorMessage
   }
 
@@ -34,7 +35,7 @@ object AirstreamError {
   }
 
   case class VarError(message: String, cause: Option[Throwable])
-    extends AirstreamError(s"$message; cause: ${cause.map(getFullMessage)}") {
+      extends AirstreamError(s"$message; cause: ${cause.map(getFullMessage)}") {
 
     cause.foreach(initCause)
 
@@ -42,7 +43,9 @@ object AirstreamError {
   }
 
   case class ErrorHandlingError(error: Throwable, cause: Throwable)
-    extends AirstreamError(s"ErrorHandlingError: ${getFullMessage(error)}; cause: ${getFullMessage(cause)}") {
+      extends AirstreamError(
+        s"ErrorHandlingError: ${getFullMessage(error)}; cause: ${getFullMessage(cause)}"
+      ) {
 
     initCause(cause)
 
@@ -50,58 +53,77 @@ object AirstreamError {
   }
 
   case class CombinedError(causes: Seq[Option[Throwable]])
-    extends AirstreamError(s"CombinedError: ${causes.flatten.map(getFullMessage).mkString("; ")}") {
+      extends AirstreamError(
+        s"CombinedError: ${causes.flatten.map(getFullMessage).mkString("; ")}"
+      ) {
 
-    causes.flatten.headOption.foreach(initCause) // Just get the first cause – better than nothing I guess?
+    causes.flatten.headOption.foreach(
+      initCause
+    ) // Just get the first cause – better than nothing I guess?
 
-    override def toString: String = s"CombinedError: ${causes.flatten.toList.mkString("; ")}"
+    override def toString: String =
+      s"CombinedError: ${causes.flatten.toList.mkString("; ")}"
   }
 
-  case class ObserverError(error: Throwable) extends AirstreamError(s"ObserverError: ${getFullMessage(error)}") {
+  case class ObserverError(error: Throwable)
+      extends AirstreamError(s"ObserverError: ${getFullMessage(error)}") {
 
     override def toString: String = s"ObserverError: $error"
   }
 
   case class ObserverErrorHandlingError(error: Throwable, cause: Throwable)
-    extends AirstreamError(s"ObserverErrorHandlingError: ${getFullMessage(error)}; cause: ${getFullMessage(cause)}") {
+      extends AirstreamError(
+        s"ObserverErrorHandlingError: ${getFullMessage(error)}; cause: ${getFullMessage(cause)}"
+      ) {
 
     initCause(cause)
 
-    override def toString: String = s"ObserverErrorHandlingError: $error; cause: $cause"
+    override def toString: String =
+      s"ObserverErrorHandlingError: $error; cause: $cause"
   }
 
   case class DebugError(error: Throwable, cause: Option[Throwable])
-    extends AirstreamError(s"DebugError: ${getFullMessage(error)}; cause: ${cause.map(getFullMessage)}") {
+      extends AirstreamError(
+        s"DebugError: ${getFullMessage(error)}; cause: ${cause.map(getFullMessage)}"
+      ) {
 
     override def toString: String = s"DebugError: $error; cause: $cause"
   }
 
   case class TransactionDepthExceeded(trx: Transaction, depth: Int)
-    extends AirstreamError(s"Transaction depth exceeded maxDepth = $depth: Execution of $trx aborted. See `Transaction.maxDepth`.") {
+      extends AirstreamError(
+        s"Transaction depth exceeded maxDepth = $depth: Execution of $trx aborted. See `Transaction.maxDepth`."
+      ) {
 
-    override def toString: String = s"TransactionDepthExceeded: $trx; maxDepth: $depth"
+    override def toString: String =
+      s"TransactionDepthExceeded: $trx; maxDepth: $depth"
   }
 
   // --
 
   // @TODO[API] I feel like unhandled error reporting should live in its own object somewhere. But where?
 
-  /** Unhandled error reporting is the last line of defense to report errors that would otherwise silently disappear into the void.
+  /** Unhandled error reporting is the last line of defense to report errors
+    * that would otherwise silently disappear into the void.
     *
-    * We do not publish a stream of errors because:
-    * a) we want to maximally disconnect it from the rest of Airstream's Transaction infrastructure
-    * b) we want easier debugging, and thus a shorter stack trace
+    * We do not publish a stream of errors because: a) we want to maximally
+    * disconnect it from the rest of Airstream's Transaction infrastructure b)
+    * we want easier debugging, and thus a shorter stack trace
     *
     * Instead, we provide a similar Observer-based API as described below.
     */
-  private[this] val unhandledErrorCallbacks = mutable.Buffer[Throwable => Unit]()
+  private[this] val unhandledErrorCallbacks =
+    mutable.Buffer[Throwable => Unit]()
 
-  /** Note: In IE, console is not defined unless the developer tools console is actually open.
-    *       Some test environments might be lacking the console as well (e.g. node.js without jsdom).
+  /** Note: In IE, console is not defined unless the developer tools console is
+    * actually open. Some test environments might be lacking the console as well
+    * (e.g. node.js without jsdom).
     */
   val consoleErrorCallback: Throwable => Unit = { err =>
     try {
-      dom.console.error(getFullMessage(err) + "\n" + getStackTrace(err, newline = "\n"))
+      dom.console.error(
+        getFullMessage(err) + "\n" + getStackTrace(err, newline = "\n")
+      )
     } catch {
       case err: Throwable =>
         // If you ever hit this, you will _really_ appreciate this printout.
@@ -120,7 +142,9 @@ object AirstreamError {
     * It's useful to fail tests in case of unhandled errors.
     */
   val unsafeRethrowErrorCallback: Throwable => Unit = { err =>
-    dom.console.warn("Using unsafe rethrow error callback. Note: other registered error callbacks might not run. Use with caution.")
+    dom.console.warn(
+      "Using unsafe rethrow error callback. Note: other registered error callbacks might not run. Use with caution."
+    )
     throw err
   }
 
@@ -138,24 +162,30 @@ object AirstreamError {
     if (ix >= 0) {
       unhandledErrorCallbacks.remove(ix)
     } else {
-      throw new Exception("This function is not currently registered as unhandled error callback. Make sure you're not accidentally creating a new function value when calling this.")
+      throw new Exception(
+        "This function is not currently registered as unhandled error callback. Make sure you're not accidentally creating a new function value when calling this."
+      )
     }
   }
 
   // @TODO[API,Integrity] How should we report errors here? Must make sure to not induce an infinite loop. Throw an error in a setTimeout?
   def sendUnhandledError(err: Throwable): Unit = {
-    unhandledErrorCallbacks.foreach(fn => try {
-      fn(err)
-    } catch {
-      case err: Throwable if fn == unsafeRethrowErrorCallback =>
-        // Note: this does not let other error callbacks execute
-        throw err
-      case err: Throwable =>
-        dom.console.warn("Error processing an unhandled error callback:")
-        js.timers.setTimeout(0)(throw err)
-    })
+    unhandledErrorCallbacks.foreach(fn =>
+      try {
+        fn(err)
+      } catch {
+        case err: Throwable if fn == unsafeRethrowErrorCallback =>
+          // Note: this does not let other error callbacks execute
+          throw err
+        case err: Throwable =>
+          dom.console.warn("Error processing an unhandled error callback:")
+          js.timers.setTimeout(0)(throw err)
+      }
+    )
   }
 
-  /** To remove console logger, call .unregisterUnhandledErrorCallback(consoleErrorCallback) */
+  /** To remove console logger, call
+    * .unregisterUnhandledErrorCallback(consoleErrorCallback)
+    */
   registerUnhandledErrorCallback(consoleErrorCallback)
 }

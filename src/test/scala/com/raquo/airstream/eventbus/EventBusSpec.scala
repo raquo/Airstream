@@ -19,7 +19,8 @@ class EventBusSpec extends UnitSpec {
 
     bus.writer.onNext(1)
 
-    val subscription0 = bus.events.foreach(newValue => effects += Effect("obs0", newValue))
+    val subscription0 =
+      bus.events.foreach(newValue => effects += Effect("obs0", newValue))
 
     // new observer should not receive any previous events
     effects shouldBe mutable.Buffer()
@@ -42,11 +43,16 @@ class EventBusSpec extends UnitSpec {
 
     val sub1 = bus.events.addObserver(obs1)
     val sub2 = bus.events.addObserver(obs2)
-    val subscription3 = bus.events.foreach(newValue => effects += Effect("obs3", newValue))
+    val subscription3 =
+      bus.events.foreach(newValue => effects += Effect("obs3", newValue))
 
     bus.writer.onNext(5)
 
-    effects shouldBe mutable.Buffer(Effect("obs1", 5), Effect("obs2", 5), Effect("obs3", 5))
+    effects shouldBe mutable.Buffer(
+      Effect("obs1", 5),
+      Effect("obs2", 5),
+      Effect("obs3", 5)
+    )
     effects.clear()
 
     sub2.kill()
@@ -86,7 +92,9 @@ class EventBusSpec extends UnitSpec {
 
     val effects = mutable.Buffer[Effect[_]]()
 
-    testBus.events.foreach(newValue => effects += Effect("obs0", newValue))(testOwner)
+    testBus.events.foreach(newValue => effects += Effect("obs0", newValue))(
+      testOwner
+    )
 
     bus1.writer.onNext(1)
 
@@ -153,19 +161,23 @@ class EventBusSpec extends UnitSpec {
 
     // --
 
-    Try(EventBus.emit(
-      bus1 -> 2,
-      bus2 -> 2,
-      bus1 -> 2
-    )).isFailure shouldBe true
+    Try(
+      EventBus.emit(
+        bus1 -> 2,
+        bus2 -> 2,
+        bus1 -> 2
+      )
+    ).isFailure shouldBe true
 
     // --
 
-    Try(EventBus.emitTry(
-      bus1 -> Success(3),
-      bus2 -> Success(4),
-      bus2 -> Success(5)
-    )).isFailure shouldBe true
+    Try(
+      EventBus.emitTry(
+        bus1 -> Success(3),
+        bus2 -> Success(4),
+        bus2 -> Success(5)
+      )
+    ).isFailure shouldBe true
   }
 
   it("disallow duplicate event buses in WriteBus.emit and WriteBus.emitTry") {
@@ -191,18 +203,22 @@ class EventBusSpec extends UnitSpec {
 
     // --
 
-    Try(WriteBus.emit(
-      bus1.writer -> "2",
-      bus2.writer -> 2,
-      bus1.writer -> "2"
-    )).isFailure shouldBe true
+    Try(
+      WriteBus.emit(
+        bus1.writer -> "2",
+        bus2.writer -> 2,
+        bus1.writer -> "2"
+      )
+    ).isFailure shouldBe true
 
     // --
 
-    Try(WriteBus.emitTry(
-      bus1.writer -> Success("3"),
-      bus2.writer -> Success(4),
-      bus2.writer -> Success(5)
-    )).isFailure shouldBe true
+    Try(
+      WriteBus.emitTry(
+        bus1.writer -> Success("3"),
+        bus2.writer -> Success(4),
+        bus2.writer -> Success(5)
+      )
+    ).isFailure shouldBe true
   }
 }

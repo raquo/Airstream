@@ -23,12 +23,11 @@ class DistinctSpec extends UnitSpec {
 
     val obs = Observer.fromTry[Int] {
       case Success(value) => effects += Effect("obs", value)
-      case Failure(err) => errorEffects += Effect("obs-err", err.getMessage)
+      case Failure(err)   => errorEffects += Effect("obs-err", err.getMessage)
     }
 
     val bus = new EventBus[Int]
-    val stream = bus.events
-      .distinct
+    val stream = bus.events.distinct
       .map(Calculation.log("stream", calculations))
 
     val sub1 = stream.addObserver(obs)(testOwner)
@@ -130,12 +129,11 @@ class DistinctSpec extends UnitSpec {
 
     val obs = Observer.fromTry[Int] {
       case Success(value) => effects += Effect("obs", value)
-      case Failure(err) => errorEffects += Effect("obs-err", err.getMessage)
+      case Failure(err)   => errorEffects += Effect("obs-err", err.getMessage)
     }
 
     val _var = Var(0)
-    val signal = _var.signal
-      .distinct
+    val signal = _var.signal.distinct
       .map(Calculation.log("signal", calculations))
 
     val sub1 = signal.addObserver(obs)(testOwner)
@@ -221,7 +219,7 @@ class DistinctSpec extends UnitSpec {
     effects.clear()
 
     // --
-    
+
     sub3.kill()
 
     _var.writer.onNext(3)
@@ -248,7 +246,7 @@ class DistinctSpec extends UnitSpec {
 
     calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer()
-    
+
     // --
 
     _var.writer.onNext(4)
@@ -302,7 +300,7 @@ class DistinctSpec extends UnitSpec {
 
     val obs = Observer.fromTry[Int] {
       case Success(value) => effects += Effect("obs", value)
-      case Failure(err) => errorEffects += Effect("obs-err", err.getMessage)
+      case Failure(err)   => errorEffects += Effect("obs-err", err.getMessage)
     }
 
     val bus = new EventBus[Int]

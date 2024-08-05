@@ -19,7 +19,8 @@ class MergeStreamSpec extends UnitSpec {
     val tens = bus.events.map(_ * 10)
     val hundreds = tens.map(_ * 10)
 
-    val sub1 = EventStream.merge(tens, hundreds)
+    val sub1 = EventStream
+      .merge(tens, hundreds)
       .map(Calculation.log("merged", calculations))
       .addObserver(Observer.empty)(owner)
 
@@ -29,7 +30,7 @@ class MergeStreamSpec extends UnitSpec {
 
     calculations.toList shouldBe List(
       Calculation("merged", 10),
-      Calculation("merged", 100),
+      Calculation("merged", 100)
     )
 
     calculations.clear()
@@ -40,7 +41,7 @@ class MergeStreamSpec extends UnitSpec {
 
     calculations.toList shouldBe List(
       Calculation("merged", 20),
-      Calculation("merged", 200),
+      Calculation("merged", 200)
     )
 
     calculations.clear()
@@ -51,7 +52,8 @@ class MergeStreamSpec extends UnitSpec {
 
     // -- Order of events is the same (based on topoRank) even if order of observables is reversed
 
-    val sub2 = EventStream.merge(hundreds, tens)
+    val sub2 = EventStream
+      .merge(hundreds, tens)
       .map(Calculation.log("merged", calculations))
       .addObserver(Observer.empty)(owner)
 
@@ -61,7 +63,7 @@ class MergeStreamSpec extends UnitSpec {
 
     calculations.toList shouldBe List(
       Calculation("merged", 10),
-      Calculation("merged", 100),
+      Calculation("merged", 100)
     )
 
     calculations.clear()
@@ -94,7 +96,7 @@ class MergeStreamSpec extends UnitSpec {
 
     calculations.toList shouldBe List(
       Calculation("combined", 11),
-      Calculation("combined", 101),
+      Calculation("combined", 101)
     )
 
     calculations.clear()
@@ -105,7 +107,7 @@ class MergeStreamSpec extends UnitSpec {
 
     calculations.toList shouldBe List(
       Calculation("combined", 22),
-      Calculation("combined", 202),
+      Calculation("combined", 202)
     )
 
   }

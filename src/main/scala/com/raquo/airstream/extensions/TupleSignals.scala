@@ -20,7 +20,8 @@ class TupleSignal2[T1, T2](val signal: Signal[(T1, T2)]) extends AnyVal {
 
 // --
 
-class TupleSignal3[T1, T2, T3](val signal: Signal[(T1, T2, T3)]) extends AnyVal {
+class TupleSignal3[T1, T2, T3](val signal: Signal[(T1, T2, T3)])
+    extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3) => Out): Signal[Out] = {
     new MapSignal[(T1, T2, T3), Out](
@@ -33,7 +34,8 @@ class TupleSignal3[T1, T2, T3](val signal: Signal[(T1, T2, T3)]) extends AnyVal 
 
 // --
 
-class TupleSignal4[T1, T2, T3, T4](val signal: Signal[(T1, T2, T3, T4)]) extends AnyVal {
+class TupleSignal4[T1, T2, T3, T4](val signal: Signal[(T1, T2, T3, T4)])
+    extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4) => Out): Signal[Out] = {
     new MapSignal[(T1, T2, T3, T4), Out](
@@ -46,7 +48,8 @@ class TupleSignal4[T1, T2, T3, T4](val signal: Signal[(T1, T2, T3, T4)]) extends
 
 // --
 
-class TupleSignal5[T1, T2, T3, T4, T5](val signal: Signal[(T1, T2, T3, T4, T5)]) extends AnyVal {
+class TupleSignal5[T1, T2, T3, T4, T5](val signal: Signal[(T1, T2, T3, T4, T5)])
+    extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5) => Out): Signal[Out] = {
     new MapSignal[(T1, T2, T3, T4, T5), Out](
@@ -59,7 +62,9 @@ class TupleSignal5[T1, T2, T3, T4, T5](val signal: Signal[(T1, T2, T3, T4, T5)])
 
 // --
 
-class TupleSignal6[T1, T2, T3, T4, T5, T6](val signal: Signal[(T1, T2, T3, T4, T5, T6)]) extends AnyVal {
+class TupleSignal6[T1, T2, T3, T4, T5, T6](
+    val signal: Signal[(T1, T2, T3, T4, T5, T6)]
+) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6) => Out): Signal[Out] = {
     new MapSignal[(T1, T2, T3, T4, T5, T6), Out](
@@ -72,7 +77,9 @@ class TupleSignal6[T1, T2, T3, T4, T5, T6](val signal: Signal[(T1, T2, T3, T4, T
 
 // --
 
-class TupleSignal7[T1, T2, T3, T4, T5, T6, T7](val signal: Signal[(T1, T2, T3, T4, T5, T6, T7)]) extends AnyVal {
+class TupleSignal7[T1, T2, T3, T4, T5, T6, T7](
+    val signal: Signal[(T1, T2, T3, T4, T5, T6, T7)]
+) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7) => Out): Signal[Out] = {
     new MapSignal[(T1, T2, T3, T4, T5, T6, T7), Out](
@@ -85,9 +92,13 @@ class TupleSignal7[T1, T2, T3, T4, T5, T6, T7](val signal: Signal[(T1, T2, T3, T
 
 // --
 
-class TupleSignal8[T1, T2, T3, T4, T5, T6, T7, T8](val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8)]) extends AnyVal {
+class TupleSignal8[T1, T2, T3, T4, T5, T6, T7, T8](
+    val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8)]
+) extends AnyVal {
 
-  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8) => Out): Signal[Out] = {
+  def mapN[Out](
+      project: (T1, T2, T3, T4, T5, T6, T7, T8) => Out
+  ): Signal[Out] = {
     new MapSignal[(T1, T2, T3, T4, T5, T6, T7, T8), Out](
       parent = signal,
       project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8),
@@ -98,16 +109,20 @@ class TupleSignal8[T1, T2, T3, T4, T5, T6, T7, T8](val signal: Signal[(T1, T2, T
 
 // --
 
-class TupleSignal9[T1, T2, T3, T4, T5, T6, T7, T8, T9](val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]) extends AnyVal {
+class TupleSignal9[T1, T2, T3, T4, T5, T6, T7, T8, T9](
+    val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]
+) extends AnyVal {
 
-  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9) => Out): Signal[Out] = {
+  def mapN[Out](
+      project: (T1, T2, T3, T4, T5, T6, T7, T8, T9) => Out
+  ): Signal[Out] = {
     new MapSignal[(T1, T2, T3, T4, T5, T6, T7, T8, T9), Out](
       parent = signal,
-      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9),
+      project = v =>
+        project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9),
       recover = None
     )
   }
 }
 
 // --
-

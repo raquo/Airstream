@@ -6,7 +6,8 @@ import com.raquo.airstream.core.{AirstreamError, Observer}
 import scala.util.{Failure, Success, Try}
 
 /** See [[DebuggableObserver]] for user-facing debug methods */
-class DebuggerObserver[A](parent: Observer[A], debug: Try[A] => Unit) extends Observer[A] {
+class DebuggerObserver[A](parent: Observer[A], debug: Try[A] => Unit)
+    extends Observer[A] {
 
   override def defaultDisplayName: String = {
     parent match {
@@ -33,5 +34,7 @@ class DebuggerObserver[A](parent: Observer[A], debug: Try[A] => Unit) extends Ob
 
   final override def onNext(nextValue: A): Unit = onTry(Success(nextValue))
 
-  final override def onError(nextError: Throwable): Unit = onTry(Failure(nextError))
+  final override def onError(nextError: Throwable): Unit = onTry(
+    Failure(nextError)
+  )
 }

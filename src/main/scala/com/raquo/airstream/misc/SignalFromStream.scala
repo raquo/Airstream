@@ -7,9 +7,9 @@ import scala.scalajs.js
 import scala.util.Try
 
 class SignalFromStream[A](
-  override protected[this] val parent: EventStream[A],
-  pullInitialValue: => Try[A],
-  cacheInitialValue: Boolean
+    override protected[this] val parent: EventStream[A],
+    pullInitialValue: => Try[A],
+    cacheInitialValue: Boolean
 ) extends SingleParentSignal[A, A] {
 
   private var hasEmittedEvents = false
@@ -42,7 +42,10 @@ class SignalFromStream[A](
     }
   }
 
-  override protected def onTry(nextParentValue: Try[A], transaction: Transaction): Unit = {
+  override protected def onTry(
+      nextParentValue: Try[A],
+      transaction: Transaction
+  ): Unit = {
     hasEmittedEvents = true
     super.onTry(nextParentValue, transaction)
     fireTry(nextParentValue, transaction)

@@ -17,8 +17,14 @@ trait MutableSplittable[M[_]] {
   /** Equivalent of array.update(index, newValue) */
   def updateAtIndex[A](items: M[A], index: Int, newItem: A): Unit
 
-  /** Equivalent of array.find(predicate).foreach(array.update(foundIndex, newItem)) */
-  def findUpdateInPlace[A](items: M[A], predicate: A => Boolean, newItem: A): Boolean = {
+  /** Equivalent of array.find(predicate).foreach(array.update(foundIndex,
+    * newItem))
+    */
+  def findUpdateInPlace[A](
+      items: M[A],
+      predicate: A => Boolean,
+      newItem: A
+  ): Boolean = {
     // #Warning: This implementation assumes cheap O(1) index access.
     //  Override this method for efficiency as needed (e.g. for ListBuffer – see below).
     var found = false
@@ -45,40 +51,58 @@ object MutableSplittable {
 
     override def getByIndex[A](items: JsArray[A], index: Int): A = items(index)
 
-    override def updateAtIndex[A](items: JsArray[A], index: Int, newItem: A): Unit = {
+    override def updateAtIndex[A](
+        items: JsArray[A],
+        index: Int,
+        newItem: A
+    ): Unit = {
       items.update(index, newItem)
     }
   }
 
-  implicit object ScalaJsArrayMutableSplittable extends MutableSplittable[js.Array] {
+  implicit object ScalaJsArrayMutableSplittable
+      extends MutableSplittable[js.Array] {
 
-    override val splittable: Splittable[js.Array] = Splittable.ScalaJsArraySplittable
+    override val splittable: Splittable[js.Array] =
+      Splittable.ScalaJsArraySplittable
 
     override def size[A](items: js.Array[A]): Int = items.length
 
     override def getByIndex[A](items: js.Array[A], index: Int): A = items(index)
 
-    override def updateAtIndex[A](items: js.Array[A], index: Int, newItem: A): Unit = {
+    override def updateAtIndex[A](
+        items: js.Array[A],
+        index: Int,
+        newItem: A
+    ): Unit = {
       items.update(index, newItem)
     }
   }
 
-  implicit object BufferMutableSplittable extends MutableSplittable[mutable.Buffer] {
+  implicit object BufferMutableSplittable
+      extends MutableSplittable[mutable.Buffer] {
 
-    override val splittable: Splittable[mutable.Buffer] = Splittable.BufferSplittable
+    override val splittable: Splittable[mutable.Buffer] =
+      Splittable.BufferSplittable
 
     override def size[A](items: mutable.Buffer[A]): Int = items.size
 
-    override def getByIndex[A](items: mutable.Buffer[A], index: Int): A = items(index)
+    override def getByIndex[A](items: mutable.Buffer[A], index: Int): A = items(
+      index
+    )
 
-    override def updateAtIndex[A](items: mutable.Buffer[A], index: Int, newItem: A): Unit = {
+    override def updateAtIndex[A](
+        items: mutable.Buffer[A],
+        index: Int,
+        newItem: A
+    ): Unit = {
       items.update(index, newItem)
     }
 
     override def findUpdateInPlace[A](
-      items: mutable.Buffer[A],
-      predicate: A => Boolean,
-      newItem: A
+        items: mutable.Buffer[A],
+        predicate: A => Boolean,
+        newItem: A
     ): Boolean = {
       items match {
         case _: mutable.ListBuffer[A @unchecked] =>

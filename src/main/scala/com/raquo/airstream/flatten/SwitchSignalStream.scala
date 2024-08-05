@@ -1,57 +1,76 @@
 package com.raquo.airstream.flatten
 
 import com.raquo.airstream.common.InternalTryObserver
-import com.raquo.airstream.core.{EventStream, InternalObserver, Protected, Signal, Transaction, WritableStream}
+import com.raquo.airstream.core.{
+  EventStream,
+  InternalObserver,
+  Protected,
+  Signal,
+  Transaction,
+  WritableStream
+}
 
 import scala.scalajs.js
 import scala.util.{Success, Try}
 
 /** This flattens an EventStream [ Signal[A] ] into an EventStream[A]
   *
-  * When this stream is started, it re-emits the current value of the last signal emitted by `parent`
-  * (including any updates to it, until it switches to the next signal).
+  * When this stream is started, it re-emits the current value of the last
+  * signal emitted by `parent` (including any updates to it, until it switches
+  * to the next signal).
   */
 class SwitchSignalStream[A](
-  parent: EventStream[Signal[A]]
-) extends WritableStream[A] with InternalTryObserver[Signal[A]] {
+    parent: EventStream[Signal[A]]
+) extends WritableStream[A]
+    with InternalTryObserver[Signal[A]] {
 
   override protected val topoRank: Int = 1
 
-  private[this] var maybeCurrentSignalTry: js.UndefOr[Try[Signal[A]]] = js.undefined
+  private[this] var maybeCurrentSignalTry: js.UndefOr[Try[Signal[A]]] =
+    js.undefined
 
   private[this] var lastSeenSignalUpdateId: Int = 0
 
-  private[this] val internalEventObserver: InternalObserver[A] = InternalObserver.fromTry[A](
-    onTry = (nextTry, _) => {
-      //println(s"> init trx from SwitchSignalStream.onValue($nextTry)")
-      Transaction { trx =>
-        if (isStarted) {
-          fireTry(nextTry, trx)
-          maybeCurrentSignalTry.foreach { _.foreach { currentSignal =>
-            lastSeenSignalUpdateId = Protected.lastUpdateId(currentSignal)
-          }}
+  private[this] val internalEventObserver: InternalObserver[A] =
+    InternalObserver.fromTry[A](
+      onTry = (nextTry, _) => {
+        // println(s"> init trx from SwitchSignalStream.onValue($nextTry)")
+        Transaction { trx =>
+          if (isStarted) {
+            fireTry(nextTry, trx)
+            maybeCurrentSignalTry.foreach {
+              _.foreach { currentSignal =>
+                lastSeenSignalUpdateId = Protected.lastUpdateId(currentSignal)
+              }
+            }
+          }
         }
       }
-    }
-  )
+    )
 
   override protected def onWillStart(): Unit = {
     Protected.maybeWillStart(parent)
-    maybeCurrentSignalTry.foreach { _.foreach { currentSignal =>
-      Protected.maybeWillStart(currentSignal)
-    }}
+    maybeCurrentSignalTry.foreach {
+      _.foreach { currentSignal =>
+        Protected.maybeWillStart(currentSignal)
+      }
+    }
   }
 
-  override protected def onTry(nextSignalTry: Try[Signal[A]], transaction: Transaction): Unit = {
+  override protected def onTry(
+      nextSignalTry: Try[Signal[A]],
+      transaction: Transaction
+  ): Unit = {
     switchToSignal(nextSignalTry)
   }
 
   private def switchToSignal(
-    nextSignalTry: Try[Signal[A]]
+      nextSignalTry: Try[Signal[A]]
   ): Unit = {
     val isSameSignal = maybeCurrentSignalTry.fold(false) { currentSignalTry =>
       (nextSignalTry, currentSignalTry) match {
-        case (Success(nextSignal), Success(currentSignal)) => nextSignal eq currentSignal
+        case (Success(nextSignal), Success(currentSignal)) =>
+          nextSignal eq currentSignal
         case _ => false
       }
     }
@@ -69,7 +88,7 @@ class SwitchSignalStream[A](
       // we set this in case the transaction does not execute (not sure how this could happen though).
       lastSeenSignalUpdateId = -1
 
-      //println(s"> init trx from SwitchSignalStream.onTry (new signal)")
+      // println(s"> init trx from SwitchSignalStream.onTry (new signal)")
       Transaction { trx =>
         if (isStarted) {
           // #Note: Timing is important here.
@@ -85,11 +104,17 @@ class SwitchSignalStream[A](
 
           nextSignalTry.foreach(Protected.maybeWillStart)
 
-          fireTry(nextSignalTry.flatMap(_.tryNow()), trx) // #Note[onStart,trx,loop]
+          fireTry(
+            nextSignalTry.flatMap(_.tryNow()),
+            trx
+          ) // #Note[onStart,trx,loop]
 
           nextSignalTry.foreach { nextSignal =>
             lastSeenSignalUpdateId = Protected.lastUpdateId(nextSignal)
-            nextSignal.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false)
+            nextSignal.addInternalObserver(
+              internalEventObserver,
+              shouldCallMaybeWillStart = false
+            )
           }
         }
       }
@@ -102,7 +127,7 @@ class SwitchSignalStream[A](
     maybeCurrentSignalTry.foreach(_.foreach { currentSignal =>
       val newSignalLastUpdateId = Protected.lastUpdateId(currentSignal)
       if (newSignalLastUpdateId != lastSeenSignalUpdateId) {
-        //println(s"> init trx from SwitchSignalStream.onTry (same signal)")
+        // println(s"> init trx from SwitchSignalStream.onTry (same signal)")
         Transaction { trx =>
           if (isStarted) {
             fireTry(currentSignal.tryNow(), trx) // #Note[onStart,trx,loop]
@@ -110,7 +135,10 @@ class SwitchSignalStream[A](
           }
         }
       }
-      currentSignal.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false)
+      currentSignal.addInternalObserver(
+        internalEventObserver,
+        shouldCallMaybeWillStart = false
+      )
     })
   }
 
@@ -121,8 +149,10 @@ class SwitchSignalStream[A](
   }
 
   private def removeInternalObserverFromCurrentSignal(): Unit = {
-    maybeCurrentSignalTry.foreach { _.foreach { currentSignal =>
-      currentSignal.removeInternalObserver(internalEventObserver)
-    }}
+    maybeCurrentSignalTry.foreach {
+      _.foreach { currentSignal =>
+        currentSignal.removeInternalObserver(internalEventObserver)
+      }
+    }
   }
 }

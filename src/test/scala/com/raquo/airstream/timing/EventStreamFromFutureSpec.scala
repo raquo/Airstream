@@ -30,12 +30,10 @@ class EventStreamFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     .fromFuture(promise.future)
     .map(Calculation.log("stream", calculations))
 
-
   before {
     owner.killSubscriptions()
     clearLogs()
   }
-
 
   it("asynchronously emits a future value") {
     val promise = makePromise()
@@ -65,7 +63,9 @@ class EventStreamFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     }
   }
 
-  it("asynchronously emits if observer added synchronously right after the future resolves") {
+  it(
+    "asynchronously emits if observer added synchronously right after the future resolves"
+  ) {
     val promise = makePromise()
     val stream = makeStream(promise)
 
@@ -82,7 +82,9 @@ class EventStreamFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     }
   }
 
-  it("asynchronously emits if observer added asynchronously after the future resolves") {
+  it(
+    "asynchronously emits if observer added asynchronously after the future resolves"
+  ) {
     val promise = makePromise()
     val stream = makeStream(promise)
 
@@ -109,7 +111,9 @@ class EventStreamFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     }
   }
 
-  it("does not emit to second observer if it was added asynchronously after the future resolved") {
+  it(
+    "does not emit to second observer if it was added asynchronously after the future resolved"
+  ) {
     val promise = makePromise()
     val stream = makeStream(promise)
 

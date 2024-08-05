@@ -23,11 +23,15 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
   before {
     errorEffects.clear()
     AirstreamError.registerUnhandledErrorCallback(errorCallback)
-    AirstreamError.unregisterUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
+    AirstreamError.unregisterUnhandledErrorCallback(
+      AirstreamError.consoleErrorCallback
+    )
   }
 
   after {
-    AirstreamError.registerUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
+    AirstreamError.registerUnhandledErrorCallback(
+      AirstreamError.consoleErrorCallback
+    )
     AirstreamError.unregisterUnhandledErrorCallback(errorCallback)
     assert(errorEffects.isEmpty) // #Note this fails the test rather inelegantly
   }
@@ -139,9 +143,11 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(s.tryNow() == Failure(err1))
     assert(d.tryNow() == Failure(err1))
 
-    assert(errorEffects.toList == List(
-      Effect("unhandled", err1)
-    ))
+    assert(
+      errorEffects.toList == List(
+        Effect("unhandled", err1)
+      )
+    )
 
     errorEffects.clear()
 
@@ -154,7 +160,13 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     // Remember, a Var without a listener does emit its errors into "unhandled"
     errorEffects shouldBe mutable.Buffer(
-      Effect("unhandled", VarError("Unable to update a failed Var. Consider Var#tryUpdate instead.", cause = Some(err1)))
+      Effect(
+        "unhandled",
+        VarError(
+          "Unable to update a failed Var. Consider Var#tryUpdate instead.",
+          cause = Some(err1)
+        )
+      )
     )
     errorEffects.clear()
 
@@ -172,7 +184,13 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
       d -> 2
     )
     errorEffects shouldBe mutable.Buffer(
-      Effect("unhandled", VarError("Unable to Var.{set,setTry}: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None))
+      Effect(
+        "unhandled",
+        VarError(
+          "Unable to Var.{set,setTry}: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.",
+          cause = None
+        )
+      )
     )
     errorEffects.clear()
 
@@ -195,7 +213,8 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     d.signal.addObserver(obs)(obsOwner)
 
-    varOwner.killSubscriptions() // we're specifically killing the owner that updates the derived var
+    varOwner
+      .killSubscriptions() // we're specifically killing the owner that updates the derived var
 
     assert(effects.toList == List(Effect("obs", 1)))
 
@@ -240,13 +259,20 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d.now() == 2)
     assert(d.signal.now() == 2)
 
-    assert(errorEffects.toList == List(
-      Effect("unhandled", VarError("Unable to set current value Success(34) on inactive derived var", None))
-    ))
+    assert(
+      errorEffects.toList == List(
+        Effect(
+          "unhandled",
+          VarError(
+            "Unable to set current value Success(34) on inactive derived var",
+            None
+          )
+        )
+      )
+    )
 
     errorEffects.clear()
   }
-
 
   it("signal does not glitch") {
 
@@ -258,7 +284,9 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
     val s = Var(Form(1))
     val d = s.zoom(_.int)((f, v) => f.copy(int = v))(owner)
 
-    val combinedSignal = d.signal.combineWithFn(s.signal)(_ * 1000 + _.int) // e.g. if s.now() is Form(2), this is 2002
+    val combinedSignal = d.signal.combineWithFn(s.signal)(
+      _ * 1000 + _.int
+    ) // e.g. if s.now() is Form(2), this is 2002
 
     val sourceObs = Observer[Form](f => effects += Effect("source-obs", f.int))
     val derivedObs = Observer[Int](effects += Effect("derived-obs", _))
@@ -296,11 +324,13 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
     d.signal.addObserver(derivedObs)(owner)
     combinedSignal.addObserver(combinedObs)(owner)
 
-    assert(effects.toList == List(
-      Effect("source-obs", 2),
-      Effect("derived-obs", 2),
-      Effect("combined-obs", 2002),
-    ))
+    assert(
+      effects.toList == List(
+        Effect("source-obs", 2),
+        Effect("derived-obs", 2),
+        Effect("combined-obs", 2002)
+      )
+    )
 
     calculations.clear()
     effects.clear()
@@ -313,11 +343,13 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     s.set(Form(3))
 
-    assert(effects.toList == List(
-      Effect("source-obs", 3),
-      Effect("derived-obs", 3),
-      Effect("combined-obs", 3003)
-    ))
+    assert(
+      effects.toList == List(
+        Effect("source-obs", 3),
+        Effect("derived-obs", 3),
+        Effect("combined-obs", 3003)
+      )
+    )
 
     calculations.clear()
     effects.clear()
@@ -326,11 +358,13 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     d.set(4)
 
-    assert(effects.toList == List(
-      Effect("source-obs", 4),
-      Effect("derived-obs", 4),
-      Effect("combined-obs", 4004)
-    ))
+    assert(
+      effects.toList == List(
+        Effect("source-obs", 4),
+        Effect("derived-obs", 4),
+        Effect("combined-obs", 4004)
+      )
+    )
 
     calculations.clear()
     effects.clear()
@@ -341,11 +375,13 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     derivedAdder.onNext(10)
 
-    assert(effects.toList == List(
-      Effect("source-obs", 14),
-      Effect("derived-obs", 14),
-      Effect("combined-obs", 14014)
-    ))
+    assert(
+      effects.toList == List(
+        Effect("source-obs", 14),
+        Effect("derived-obs", 14),
+        Effect("combined-obs", 14014)
+      )
+    )
   }
 
   it("error handling") {
@@ -376,10 +412,15 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(s.tryNow() == Failure(err1))
     assert(d.tryNow() == Failure(err1))
 
-    assert(errorEffects.toList == List(
-      Effect("unhandled", err1),
-      Effect("unhandled", err1) // two observers (one built into the derived var) – two errors
-    ))
+    assert(
+      errorEffects.toList == List(
+        Effect("unhandled", err1),
+        Effect(
+          "unhandled",
+          err1
+        ) // two observers (one built into the derived var) – two errors
+      )
+    )
 
     errorEffects.clear()
 
@@ -392,7 +433,13 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     // Remember, a Var without a listener does emit its errors into "unhandled"
     errorEffects shouldBe mutable.Buffer(
-      Effect("unhandled", VarError("Unable to update a failed Var. Consider Var#tryUpdate instead.", cause = Some(err1)))
+      Effect(
+        "unhandled",
+        VarError(
+          "Unable to update a failed Var. Consider Var#tryUpdate instead.",
+          cause = Some(err1)
+        )
+      )
     )
     errorEffects.clear()
 
@@ -410,10 +457,15 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(s.tryNow() == Failure(err1))
     assert(d.tryNow() == Failure(err1))
 
-    assert(errorEffects.toList == List(
-      Effect("unhandled", err1),
-      Effect("unhandled", err1) // two observers (one built into the derived var) – two errors
-    ))
+    assert(
+      errorEffects.toList == List(
+        Effect("unhandled", err1),
+        Effect(
+          "unhandled",
+          err1
+        ) // two observers (one built into the derived var) – two errors
+      )
+    )
 
     errorEffects.clear()
 
@@ -424,10 +476,15 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(s.tryNow() == Failure(err2))
     assert(d.tryNow() == Failure(err2))
 
-    assert(errorEffects.toList == List(
-      Effect("unhandled", err2),
-      Effect("unhandled", err2) // two observers (one built into the derived var) – two errors
-    ))
+    assert(
+      errorEffects.toList == List(
+        Effect("unhandled", err2),
+        Effect(
+          "unhandled",
+          err2
+        ) // two observers (one built into the derived var) – two errors
+      )
+    )
 
     errorEffects.clear()
 
@@ -444,9 +501,17 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(s.tryNow() == Failure(err2))
     assert(d.tryNow() == Failure(err2))
 
-    assert(errorEffects.toList == List(
-      Effect("unhandled", VarError("Unable to zoom out of derived var when the parent var is failed.", Some(err2)))
-    ))
+    assert(
+      errorEffects.toList == List(
+        Effect(
+          "unhandled",
+          VarError(
+            "Unable to zoom out of derived var when the parent var is failed.",
+            Some(err2)
+          )
+        )
+      )
+    )
 
     errorEffects.clear()
   }

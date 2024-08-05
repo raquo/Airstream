@@ -1,11 +1,19 @@
 package com.raquo.airstream.common
 
-import com.raquo.airstream.core.{Observable, Protected, Signal, Transaction, WritableSignal}
+import com.raquo.airstream.core.{
+  Observable,
+  Protected,
+  Signal,
+  Transaction,
+  WritableSignal
+}
 
 import scala.util.Try
 
 /** A simple stream that only has one parent. */
-trait SingleParentSignal[I, O] extends WritableSignal[O] with InternalTryObserver[I] {
+trait SingleParentSignal[I, O]
+    extends WritableSignal[O]
+    with InternalTryObserver[I] {
 
   protected[this] val parent: Observable[I]
 
@@ -20,14 +28,17 @@ trait SingleParentSignal[I, O] extends WritableSignal[O] with InternalTryObserve
   protected[this] var _parentLastUpdateId: Int = -1
 
   /** Note: this is overriden in:
-    * - [[com.raquo.airstream.misc.SignalFromStream]] because parent can be stream, and it has cacheInitialValue logic
-    * - [[com.raquo.airstream.split.SplitChildSignal]] because its parent is a special timing stream, not the real parent
+    *   - [[com.raquo.airstream.misc.SignalFromStream]] because parent can be
+    *     stream, and it has cacheInitialValue logic
+    *   - [[com.raquo.airstream.split.SplitChildSignal]] because its parent is a
+    *     special timing stream, not the real parent
     */
   override protected def onWillStart(): Unit = {
     // dom.console.log(s"${this} > onWillStart (SPS)")
     Protected.maybeWillStart(parent)
     if (parentIsSignal) {
-      val newParentLastUpdateId = Protected.lastUpdateId(parent.asInstanceOf[Signal[_]])
+      val newParentLastUpdateId =
+        Protected.lastUpdateId(parent.asInstanceOf[Signal[_]])
       if (newParentLastUpdateId != _parentLastUpdateId) {
         updateCurrentValueFromParent(
           currentValueFromParent(),
@@ -38,12 +49,14 @@ trait SingleParentSignal[I, O] extends WritableSignal[O] with InternalTryObserve
   }
 
   /** Note: this is overridden in:
-   *  - [[com.raquo.airstream.split.SplitChildSignal]] to clear cached initial value (if any)
-   *  - [[com.raquo.airstream.distinct.DistinctSignal]] to filter out isSame events
-   */
+    *   - [[com.raquo.airstream.split.SplitChildSignal]] to clear cached initial
+    *     value (if any)
+    *   - [[com.raquo.airstream.distinct.DistinctSignal]] to filter out isSame
+    *     events
+    */
   protected def updateCurrentValueFromParent(
-    nextValue: Try[O],
-    nextParentLastUpdateId: Int
+      nextValue: Try[O],
+      nextParentLastUpdateId: Int
   ): Unit = {
     // dom.console.log(s"${this} > updateCurrentValueFromParent")
     setCurrentValue(nextValue)
@@ -51,11 +64,16 @@ trait SingleParentSignal[I, O] extends WritableSignal[O] with InternalTryObserve
   }
 
   /** Note: this is overridden in:
-    *  - [[com.raquo.airstream.split.SplitChildSignal]] because its parent is a special timing stream, not the real parent
+    *   - [[com.raquo.airstream.split.SplitChildSignal]] because its parent is a
+    *     special timing stream, not the real parent
     */
-  override protected def onTry(nextParentValue: Try[I], transaction: Transaction): Unit = {
+  override protected def onTry(
+      nextParentValue: Try[I],
+      transaction: Transaction
+  ): Unit = {
     if (parentIsSignal) {
-      _parentLastUpdateId = Protected.lastUpdateId(parent.asInstanceOf[Signal[_]])
+      _parentLastUpdateId =
+        Protected.lastUpdateId(parent.asInstanceOf[Signal[_]])
     }
   }
 

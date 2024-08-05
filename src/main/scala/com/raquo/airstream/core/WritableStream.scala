@@ -6,7 +6,10 @@ import scala.util.Try
 
 trait WritableStream[A] extends EventStream[A] with WritableObservable[A] {
 
-  override protected[this] def fireValue(nextValue: A, transaction: Transaction): Unit = {
+  override protected[this] def fireValue(
+      nextValue: A,
+      transaction: Transaction
+  ): Unit = {
     // println(s"$this > FIRE > $nextValue")
 
     // === CAUTION ===
@@ -18,7 +21,8 @@ trait WritableStream[A] extends EventStream[A] with WritableObservable[A] {
       try {
         observer.onNext(nextValue)
       } catch {
-        case err: Throwable => AirstreamError.sendUnhandledError(ObserverError(err))
+        case err: Throwable =>
+          AirstreamError.sendUnhandledError(ObserverError(err))
       }
     }
 
@@ -34,8 +38,11 @@ trait WritableStream[A] extends EventStream[A] with WritableObservable[A] {
     }
   }
 
-  override protected[this] def fireError(nextError: Throwable, transaction: Transaction): Unit = {
-    //println(s"$this > FIRE > $nextError")
+  override protected[this] def fireError(
+      nextError: Throwable,
+      transaction: Transaction
+  ): Unit = {
+    // println(s"$this > FIRE > $nextError")
 
     // === CAUTION ===
     // The following logic must match Signal's fireTry! It is separated here for performance.
@@ -58,7 +65,10 @@ trait WritableStream[A] extends EventStream[A] with WritableObservable[A] {
     }
   }
 
-  override protected[this] final def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
+  override protected[this] final def fireTry(
+      nextValue: Try[A],
+      transaction: Transaction
+  ): Unit = {
     nextValue.fold(
       fireError(_, transaction),
       fireValue(_, transaction)

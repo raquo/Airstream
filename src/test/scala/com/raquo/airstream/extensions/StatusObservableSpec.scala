@@ -20,9 +20,10 @@ class StatusObservableSpec extends UnitSpec {
     val bus = new EventBus[Int]
 
     val effects = mutable.Buffer[Effect[_]]()
-    bus
-      .stream
-      .flatMapWithStatus(v => EventStream.fromSeq(v :: v + 1 :: Nil).map(_ * 10))
+    bus.stream
+      .flatMapWithStatus(v =>
+        EventStream.fromSeq(v :: v + 1 :: Nil).map(_ * 10)
+      )
       .map { v =>
         effects += Effect("tap", v)
         v
@@ -30,12 +31,14 @@ class StatusObservableSpec extends UnitSpec {
       .splitStatus(
         resolved = (init, signal) => {
           effects += Effect("resolved", init)
-          signal.foreach(v => effects += Effect("resolved-signal", v))(innerOwner)
+          signal
+            .foreach(v => effects += Effect("resolved-signal", v))(innerOwner)
           init
         },
         pending = (init, signal) => {
           effects += Effect("pending", init)
-          signal.foreach(v => effects += Effect("pending-signal", v))(innerOwner)
+          signal
+            .foreach(v => effects += Effect("pending-signal", v))(innerOwner)
           init
         }
       )
@@ -57,12 +60,10 @@ class StatusObservableSpec extends UnitSpec {
         Effect("pending", pending1),
         Effect("pending-signal", pending1),
         Effect("obs", pending1),
-
         Effect("tap", resolved1),
         Effect("resolved", resolved1),
         Effect("resolved-signal", resolved1),
         Effect("obs", resolved1),
-
         Effect("tap", resolved2),
         Effect("obs", resolved1),
         Effect("resolved-signal", resolved2)
@@ -71,7 +72,6 @@ class StatusObservableSpec extends UnitSpec {
 
     effects.clear()
     innerOwner.killSubscriptions()
-
 
     // --
 
@@ -87,12 +87,10 @@ class StatusObservableSpec extends UnitSpec {
         Effect("pending", pending1),
         Effect("pending-signal", pending1),
         Effect("obs", pending1),
-
         Effect("tap", resolved1),
         Effect("resolved", resolved1),
         Effect("resolved-signal", resolved1),
         Effect("obs", resolved1),
-
         Effect("tap", resolved2),
         Effect("obs", resolved1),
         Effect("resolved-signal", resolved2)
@@ -112,9 +110,10 @@ class StatusObservableSpec extends UnitSpec {
     val _var = Var(10)
 
     val effects = mutable.Buffer[Effect[_]]()
-    _var
-      .signal
-      .flatMapWithStatus(v => EventStream.fromSeq(v :: v + 1 :: Nil).map(_ * 10))
+    _var.signal
+      .flatMapWithStatus(v =>
+        EventStream.fromSeq(v :: v + 1 :: Nil).map(_ * 10)
+      )
       .map { v =>
         effects += Effect("tap", v)
         v
@@ -123,12 +122,14 @@ class StatusObservableSpec extends UnitSpec {
       .splitStatus(
         resolved = (init, signal) => {
           effects += Effect("resolved", init)
-          signal.foreach(v => effects += Effect("resolved-signal", v))(innerOwner)
+          signal
+            .foreach(v => effects += Effect("resolved-signal", v))(innerOwner)
           init
         },
         pending = (init, signal) => {
           effects += Effect("pending", init)
-          signal.foreach(v => effects += Effect("pending-signal", v))(innerOwner)
+          signal
+            .foreach(v => effects += Effect("pending-signal", v))(innerOwner)
           init
         }
       )
@@ -144,12 +145,10 @@ class StatusObservableSpec extends UnitSpec {
         Effect("pending", pending1),
         Effect("pending-signal", pending1),
         Effect("obs", pending1),
-
         Effect("tap", resolved1),
         Effect("resolved", resolved1),
         Effect("resolved-signal", resolved1),
         Effect("obs", resolved1),
-
         Effect("tap", resolved2),
         Effect("obs", resolved1),
         Effect("resolved-signal", resolved2)
@@ -158,7 +157,6 @@ class StatusObservableSpec extends UnitSpec {
 
     effects.clear()
     innerOwner.killSubscriptions()
-
 
     // --
 
@@ -174,12 +172,10 @@ class StatusObservableSpec extends UnitSpec {
         Effect("pending", pending1),
         Effect("pending-signal", pending1),
         Effect("obs", pending1),
-
         Effect("tap", resolved1),
         Effect("resolved", resolved1),
         Effect("resolved-signal", resolved1),
         Effect("obs", resolved1),
-
         Effect("tap", resolved2),
         Effect("obs", resolved1),
         Effect("resolved-signal", resolved2)

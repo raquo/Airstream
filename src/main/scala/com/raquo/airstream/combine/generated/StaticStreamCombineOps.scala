@@ -13,212 +13,344 @@ import com.raquo.ew.JsArray
 object StaticStreamCombineOps {
 
   def combine[T1, T2](
-    s1: EventSource[T1], s2: EventSource[T2]
+      s1: EventSource[T1],
+      s2: EventSource[T2]
   ): EventStream[(T1, T2)] = {
     combineWithFn(s1, s2)(Tuple2.apply[T1, T2])
   }
 
   /** @param combinator Must not throw! */
   def combineWithFn[T1, T2, Out](
-    s1: EventSource[T1], s2: EventSource[T2]
+      s1: EventSource[T1],
+      s2: EventSource[T2]
   )(
-    combinator: (T1, T2) => Out
+      combinator: (T1, T2) => Out
   ): EventStream[Out] = {
     new CombineStreamN[Any, Out](
       parentStreams = JsArray(s1.toObservable, s2.toObservable),
-      combinator = arr => combinator(
-        arr(0).asInstanceOf[T1],
-        arr(1).asInstanceOf[T2],
-      )
+      combinator = arr =>
+        combinator(
+          arr(0).asInstanceOf[T1],
+          arr(1).asInstanceOf[T2]
+        )
     )
   }
 
   // --
 
   def combine[T1, T2, T3](
-    s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3]
+      s1: EventSource[T1],
+      s2: EventSource[T2],
+      s3: EventSource[T3]
   ): EventStream[(T1, T2, T3)] = {
     combineWithFn(s1, s2, s3)(Tuple3.apply[T1, T2, T3])
   }
 
   /** @param combinator Must not throw! */
   def combineWithFn[T1, T2, T3, Out](
-    s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3]
+      s1: EventSource[T1],
+      s2: EventSource[T2],
+      s3: EventSource[T3]
   )(
-    combinator: (T1, T2, T3) => Out
+      combinator: (T1, T2, T3) => Out
   ): EventStream[Out] = {
     new CombineStreamN[Any, Out](
-      parentStreams = JsArray(s1.toObservable, s2.toObservable, s3.toObservable),
-      combinator = arr => combinator(
-        arr(0).asInstanceOf[T1],
-        arr(1).asInstanceOf[T2],
-        arr(2).asInstanceOf[T3],
-      )
+      parentStreams =
+        JsArray(s1.toObservable, s2.toObservable, s3.toObservable),
+      combinator = arr =>
+        combinator(
+          arr(0).asInstanceOf[T1],
+          arr(1).asInstanceOf[T2],
+          arr(2).asInstanceOf[T3]
+        )
     )
   }
 
   // --
 
   def combine[T1, T2, T3, T4](
-    s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4]
+      s1: EventSource[T1],
+      s2: EventSource[T2],
+      s3: EventSource[T3],
+      s4: EventSource[T4]
   ): EventStream[(T1, T2, T3, T4)] = {
     combineWithFn(s1, s2, s3, s4)(Tuple4.apply[T1, T2, T3, T4])
   }
 
   /** @param combinator Must not throw! */
   def combineWithFn[T1, T2, T3, T4, Out](
-    s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4]
+      s1: EventSource[T1],
+      s2: EventSource[T2],
+      s3: EventSource[T3],
+      s4: EventSource[T4]
   )(
-    combinator: (T1, T2, T3, T4) => Out
+      combinator: (T1, T2, T3, T4) => Out
   ): EventStream[Out] = {
     new CombineStreamN[Any, Out](
-      parentStreams = JsArray(s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable),
-      combinator = arr => combinator(
-        arr(0).asInstanceOf[T1],
-        arr(1).asInstanceOf[T2],
-        arr(2).asInstanceOf[T3],
-        arr(3).asInstanceOf[T4],
-      )
+      parentStreams = JsArray(
+        s1.toObservable,
+        s2.toObservable,
+        s3.toObservable,
+        s4.toObservable
+      ),
+      combinator = arr =>
+        combinator(
+          arr(0).asInstanceOf[T1],
+          arr(1).asInstanceOf[T2],
+          arr(2).asInstanceOf[T3],
+          arr(3).asInstanceOf[T4]
+        )
     )
   }
 
   // --
 
   def combine[T1, T2, T3, T4, T5](
-    s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5]
+      s1: EventSource[T1],
+      s2: EventSource[T2],
+      s3: EventSource[T3],
+      s4: EventSource[T4],
+      s5: EventSource[T5]
   ): EventStream[(T1, T2, T3, T4, T5)] = {
     combineWithFn(s1, s2, s3, s4, s5)(Tuple5.apply[T1, T2, T3, T4, T5])
   }
 
   /** @param combinator Must not throw! */
   def combineWithFn[T1, T2, T3, T4, T5, Out](
-    s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5]
+      s1: EventSource[T1],
+      s2: EventSource[T2],
+      s3: EventSource[T3],
+      s4: EventSource[T4],
+      s5: EventSource[T5]
   )(
-    combinator: (T1, T2, T3, T4, T5) => Out
+      combinator: (T1, T2, T3, T4, T5) => Out
   ): EventStream[Out] = {
     new CombineStreamN[Any, Out](
-      parentStreams = JsArray(s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable),
-      combinator = arr => combinator(
-        arr(0).asInstanceOf[T1],
-        arr(1).asInstanceOf[T2],
-        arr(2).asInstanceOf[T3],
-        arr(3).asInstanceOf[T4],
-        arr(4).asInstanceOf[T5],
-      )
+      parentStreams = JsArray(
+        s1.toObservable,
+        s2.toObservable,
+        s3.toObservable,
+        s4.toObservable,
+        s5.toObservable
+      ),
+      combinator = arr =>
+        combinator(
+          arr(0).asInstanceOf[T1],
+          arr(1).asInstanceOf[T2],
+          arr(2).asInstanceOf[T3],
+          arr(3).asInstanceOf[T4],
+          arr(4).asInstanceOf[T5]
+        )
     )
   }
 
   // --
 
   def combine[T1, T2, T3, T4, T5, T6](
-    s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6]
+      s1: EventSource[T1],
+      s2: EventSource[T2],
+      s3: EventSource[T3],
+      s4: EventSource[T4],
+      s5: EventSource[T5],
+      s6: EventSource[T6]
   ): EventStream[(T1, T2, T3, T4, T5, T6)] = {
     combineWithFn(s1, s2, s3, s4, s5, s6)(Tuple6.apply[T1, T2, T3, T4, T5, T6])
   }
 
   /** @param combinator Must not throw! */
   def combineWithFn[T1, T2, T3, T4, T5, T6, Out](
-    s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6]
+      s1: EventSource[T1],
+      s2: EventSource[T2],
+      s3: EventSource[T3],
+      s4: EventSource[T4],
+      s5: EventSource[T5],
+      s6: EventSource[T6]
   )(
-    combinator: (T1, T2, T3, T4, T5, T6) => Out
+      combinator: (T1, T2, T3, T4, T5, T6) => Out
   ): EventStream[Out] = {
     new CombineStreamN[Any, Out](
-      parentStreams = JsArray(s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable),
-      combinator = arr => combinator(
-        arr(0).asInstanceOf[T1],
-        arr(1).asInstanceOf[T2],
-        arr(2).asInstanceOf[T3],
-        arr(3).asInstanceOf[T4],
-        arr(4).asInstanceOf[T5],
-        arr(5).asInstanceOf[T6],
-      )
+      parentStreams = JsArray(
+        s1.toObservable,
+        s2.toObservable,
+        s3.toObservable,
+        s4.toObservable,
+        s5.toObservable,
+        s6.toObservable
+      ),
+      combinator = arr =>
+        combinator(
+          arr(0).asInstanceOf[T1],
+          arr(1).asInstanceOf[T2],
+          arr(2).asInstanceOf[T3],
+          arr(3).asInstanceOf[T4],
+          arr(4).asInstanceOf[T5],
+          arr(5).asInstanceOf[T6]
+        )
     )
   }
 
   // --
 
   def combine[T1, T2, T3, T4, T5, T6, T7](
-    s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7]
+      s1: EventSource[T1],
+      s2: EventSource[T2],
+      s3: EventSource[T3],
+      s4: EventSource[T4],
+      s5: EventSource[T5],
+      s6: EventSource[T6],
+      s7: EventSource[T7]
   ): EventStream[(T1, T2, T3, T4, T5, T6, T7)] = {
-    combineWithFn(s1, s2, s3, s4, s5, s6, s7)(Tuple7.apply[T1, T2, T3, T4, T5, T6, T7])
+    combineWithFn(s1, s2, s3, s4, s5, s6, s7)(
+      Tuple7.apply[T1, T2, T3, T4, T5, T6, T7]
+    )
   }
 
   /** @param combinator Must not throw! */
   def combineWithFn[T1, T2, T3, T4, T5, T6, T7, Out](
-    s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7]
+      s1: EventSource[T1],
+      s2: EventSource[T2],
+      s3: EventSource[T3],
+      s4: EventSource[T4],
+      s5: EventSource[T5],
+      s6: EventSource[T6],
+      s7: EventSource[T7]
   )(
-    combinator: (T1, T2, T3, T4, T5, T6, T7) => Out
+      combinator: (T1, T2, T3, T4, T5, T6, T7) => Out
   ): EventStream[Out] = {
     new CombineStreamN[Any, Out](
-      parentStreams = JsArray(s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable),
-      combinator = arr => combinator(
-        arr(0).asInstanceOf[T1],
-        arr(1).asInstanceOf[T2],
-        arr(2).asInstanceOf[T3],
-        arr(3).asInstanceOf[T4],
-        arr(4).asInstanceOf[T5],
-        arr(5).asInstanceOf[T6],
-        arr(6).asInstanceOf[T7],
-      )
+      parentStreams = JsArray(
+        s1.toObservable,
+        s2.toObservable,
+        s3.toObservable,
+        s4.toObservable,
+        s5.toObservable,
+        s6.toObservable,
+        s7.toObservable
+      ),
+      combinator = arr =>
+        combinator(
+          arr(0).asInstanceOf[T1],
+          arr(1).asInstanceOf[T2],
+          arr(2).asInstanceOf[T3],
+          arr(3).asInstanceOf[T4],
+          arr(4).asInstanceOf[T5],
+          arr(5).asInstanceOf[T6],
+          arr(6).asInstanceOf[T7]
+        )
     )
   }
 
   // --
 
   def combine[T1, T2, T3, T4, T5, T6, T7, T8](
-    s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8]
+      s1: EventSource[T1],
+      s2: EventSource[T2],
+      s3: EventSource[T3],
+      s4: EventSource[T4],
+      s5: EventSource[T5],
+      s6: EventSource[T6],
+      s7: EventSource[T7],
+      s8: EventSource[T8]
   ): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8)] = {
-    combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8)(Tuple8.apply[T1, T2, T3, T4, T5, T6, T7, T8])
+    combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8)(
+      Tuple8.apply[T1, T2, T3, T4, T5, T6, T7, T8]
+    )
   }
 
   /** @param combinator Must not throw! */
   def combineWithFn[T1, T2, T3, T4, T5, T6, T7, T8, Out](
-    s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8]
+      s1: EventSource[T1],
+      s2: EventSource[T2],
+      s3: EventSource[T3],
+      s4: EventSource[T4],
+      s5: EventSource[T5],
+      s6: EventSource[T6],
+      s7: EventSource[T7],
+      s8: EventSource[T8]
   )(
-    combinator: (T1, T2, T3, T4, T5, T6, T7, T8) => Out
+      combinator: (T1, T2, T3, T4, T5, T6, T7, T8) => Out
   ): EventStream[Out] = {
     new CombineStreamN[Any, Out](
-      parentStreams = JsArray(s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable, s8.toObservable),
-      combinator = arr => combinator(
-        arr(0).asInstanceOf[T1],
-        arr(1).asInstanceOf[T2],
-        arr(2).asInstanceOf[T3],
-        arr(3).asInstanceOf[T4],
-        arr(4).asInstanceOf[T5],
-        arr(5).asInstanceOf[T6],
-        arr(6).asInstanceOf[T7],
-        arr(7).asInstanceOf[T8],
-      )
+      parentStreams = JsArray(
+        s1.toObservable,
+        s2.toObservable,
+        s3.toObservable,
+        s4.toObservable,
+        s5.toObservable,
+        s6.toObservable,
+        s7.toObservable,
+        s8.toObservable
+      ),
+      combinator = arr =>
+        combinator(
+          arr(0).asInstanceOf[T1],
+          arr(1).asInstanceOf[T2],
+          arr(2).asInstanceOf[T3],
+          arr(3).asInstanceOf[T4],
+          arr(4).asInstanceOf[T5],
+          arr(5).asInstanceOf[T6],
+          arr(6).asInstanceOf[T7],
+          arr(7).asInstanceOf[T8]
+        )
     )
   }
 
   // --
 
   def combine[T1, T2, T3, T4, T5, T6, T7, T8, T9](
-    s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8], s9: EventSource[T9]
+      s1: EventSource[T1],
+      s2: EventSource[T2],
+      s3: EventSource[T3],
+      s4: EventSource[T4],
+      s5: EventSource[T5],
+      s6: EventSource[T6],
+      s7: EventSource[T7],
+      s8: EventSource[T8],
+      s9: EventSource[T9]
   ): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9)] = {
-    combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8, s9)(Tuple9.apply[T1, T2, T3, T4, T5, T6, T7, T8, T9])
+    combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8, s9)(
+      Tuple9.apply[T1, T2, T3, T4, T5, T6, T7, T8, T9]
+    )
   }
 
   /** @param combinator Must not throw! */
   def combineWithFn[T1, T2, T3, T4, T5, T6, T7, T8, T9, Out](
-    s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8], s9: EventSource[T9]
+      s1: EventSource[T1],
+      s2: EventSource[T2],
+      s3: EventSource[T3],
+      s4: EventSource[T4],
+      s5: EventSource[T5],
+      s6: EventSource[T6],
+      s7: EventSource[T7],
+      s8: EventSource[T8],
+      s9: EventSource[T9]
   )(
-    combinator: (T1, T2, T3, T4, T5, T6, T7, T8, T9) => Out
+      combinator: (T1, T2, T3, T4, T5, T6, T7, T8, T9) => Out
   ): EventStream[Out] = {
     new CombineStreamN[Any, Out](
-      parentStreams = JsArray(s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable, s8.toObservable, s9.toObservable),
-      combinator = arr => combinator(
-        arr(0).asInstanceOf[T1],
-        arr(1).asInstanceOf[T2],
-        arr(2).asInstanceOf[T3],
-        arr(3).asInstanceOf[T4],
-        arr(4).asInstanceOf[T5],
-        arr(5).asInstanceOf[T6],
-        arr(6).asInstanceOf[T7],
-        arr(7).asInstanceOf[T8],
-        arr(8).asInstanceOf[T9],
-      )
+      parentStreams = JsArray(
+        s1.toObservable,
+        s2.toObservable,
+        s3.toObservable,
+        s4.toObservable,
+        s5.toObservable,
+        s6.toObservable,
+        s7.toObservable,
+        s8.toObservable,
+        s9.toObservable
+      ),
+      combinator = arr =>
+        combinator(
+          arr(0).asInstanceOf[T1],
+          arr(1).asInstanceOf[T2],
+          arr(2).asInstanceOf[T3],
+          arr(3).asInstanceOf[T4],
+          arr(4).asInstanceOf[T5],
+          arr(5).asInstanceOf[T6],
+          arr(6).asInstanceOf[T7],
+          arr(7).asInstanceOf[T8],
+          arr(8).asInstanceOf[T9]
+        )
     )
   }
 

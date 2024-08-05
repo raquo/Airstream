@@ -1,9 +1,16 @@
 package com.raquo.airstream.common
 
-import com.raquo.airstream.core.{InternalObserver, Observable, Protected, WritableStream}
+import com.raquo.airstream.core.{
+  InternalObserver,
+  Observable,
+  Protected,
+  WritableStream
+}
 
 /** A simple stream that only has one parent. */
-trait SingleParentStream[I, O] extends WritableStream[O] with InternalObserver[I] {
+trait SingleParentStream[I, O]
+    extends WritableStream[O]
+    with InternalObserver[I] {
 
   protected[this] val parent: Observable[I]
 

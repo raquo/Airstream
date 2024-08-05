@@ -6,7 +6,9 @@ organization := "com.raquo"
 
 homepage := Some(url("https://github.com/raquo/Airstream"))
 
-licenses += ("MIT", url("https://github.com/raquo/Airstream/blob/master/LICENSE.md"))
+licenses += ("MIT", url(
+  "https://github.com/raquo/Airstream/blob/master/LICENSE.md"
+))
 
 scmInfo := Some(
   ScmInfo(
@@ -31,4 +33,3 @@ pomIncludeRepository := { _ => false }
 sonatypeCredentialHost := "s01.oss.sonatype.org"
 
 sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
-

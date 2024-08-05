@@ -32,12 +32,10 @@ class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
       .map(Calculation.log("signal", calculations))
   }
 
-
   before {
     owner.killSubscriptions()
     clearLogs()
   }
-
 
   it("asynchronously emits a future value") {
     val promise = makePromise()
@@ -65,7 +63,9 @@ class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     }
   }
 
-  it("asynchronously emits if observer added synchronously right after the future resolves") {
+  it(
+    "asynchronously emits if observer added synchronously right after the future resolves"
+  ) {
     val promise = makePromise()
     val signal = makeSignal(promise)
 
@@ -83,7 +83,9 @@ class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     }
   }
 
-  it("synchronously emits if observers added asynchronously after the future resolves and signal already emitted") {
+  it(
+    "synchronously emits if observers added asynchronously after the future resolves and signal already emitted"
+  ) {
     val promise = makePromise()
     val signal = makeSignal(promise)
 

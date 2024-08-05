@@ -27,7 +27,8 @@ class TupleStream2[T1, T2](val stream: EventStream[(T1, T2)]) extends AnyVal {
 
 // --
 
-class TupleStream3[T1, T2, T3](val stream: EventStream[(T1, T2, T3)]) extends AnyVal {
+class TupleStream3[T1, T2, T3](val stream: EventStream[(T1, T2, T3)])
+    extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3), Out](
@@ -47,7 +48,8 @@ class TupleStream3[T1, T2, T3](val stream: EventStream[(T1, T2, T3)]) extends An
 
 // --
 
-class TupleStream4[T1, T2, T3, T4](val stream: EventStream[(T1, T2, T3, T4)]) extends AnyVal {
+class TupleStream4[T1, T2, T3, T4](val stream: EventStream[(T1, T2, T3, T4)])
+    extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4), Out](
@@ -57,7 +59,9 @@ class TupleStream4[T1, T2, T3, T4](val stream: EventStream[(T1, T2, T3, T4)]) ex
     )
   }
 
-  def filterN(passes: (T1, T2, T3, T4) => Boolean): EventStream[(T1, T2, T3, T4)] = {
+  def filterN(
+      passes: (T1, T2, T3, T4) => Boolean
+  ): EventStream[(T1, T2, T3, T4)] = {
     new FilterStream[(T1, T2, T3, T4)](
       parent = stream,
       passes = v => passes(v._1, v._2, v._3, v._4)
@@ -67,7 +71,9 @@ class TupleStream4[T1, T2, T3, T4](val stream: EventStream[(T1, T2, T3, T4)]) ex
 
 // --
 
-class TupleStream5[T1, T2, T3, T4, T5](val stream: EventStream[(T1, T2, T3, T4, T5)]) extends AnyVal {
+class TupleStream5[T1, T2, T3, T4, T5](
+    val stream: EventStream[(T1, T2, T3, T4, T5)]
+) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5), Out](
@@ -77,7 +83,9 @@ class TupleStream5[T1, T2, T3, T4, T5](val stream: EventStream[(T1, T2, T3, T4, 
     )
   }
 
-  def filterN(passes: (T1, T2, T3, T4, T5) => Boolean): EventStream[(T1, T2, T3, T4, T5)] = {
+  def filterN(
+      passes: (T1, T2, T3, T4, T5) => Boolean
+  ): EventStream[(T1, T2, T3, T4, T5)] = {
     new FilterStream[(T1, T2, T3, T4, T5)](
       parent = stream,
       passes = v => passes(v._1, v._2, v._3, v._4, v._5)
@@ -87,7 +95,9 @@ class TupleStream5[T1, T2, T3, T4, T5](val stream: EventStream[(T1, T2, T3, T4, 
 
 // --
 
-class TupleStream6[T1, T2, T3, T4, T5, T6](val stream: EventStream[(T1, T2, T3, T4, T5, T6)]) extends AnyVal {
+class TupleStream6[T1, T2, T3, T4, T5, T6](
+    val stream: EventStream[(T1, T2, T3, T4, T5, T6)]
+) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6), Out](
@@ -97,7 +107,9 @@ class TupleStream6[T1, T2, T3, T4, T5, T6](val stream: EventStream[(T1, T2, T3, 
     )
   }
 
-  def filterN(passes: (T1, T2, T3, T4, T5, T6) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6)] = {
+  def filterN(
+      passes: (T1, T2, T3, T4, T5, T6) => Boolean
+  ): EventStream[(T1, T2, T3, T4, T5, T6)] = {
     new FilterStream[(T1, T2, T3, T4, T5, T6)](
       parent = stream,
       passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6)
@@ -107,9 +119,13 @@ class TupleStream6[T1, T2, T3, T4, T5, T6](val stream: EventStream[(T1, T2, T3, 
 
 // --
 
-class TupleStream7[T1, T2, T3, T4, T5, T6, T7](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7)]) extends AnyVal {
+class TupleStream7[T1, T2, T3, T4, T5, T6, T7](
+    val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7)]
+) extends AnyVal {
 
-  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7) => Out): EventStream[Out] = {
+  def mapN[Out](
+      project: (T1, T2, T3, T4, T5, T6, T7) => Out
+  ): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7), Out](
       parent = stream,
       project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7),
@@ -117,7 +133,9 @@ class TupleStream7[T1, T2, T3, T4, T5, T6, T7](val stream: EventStream[(T1, T2, 
     )
   }
 
-  def filterN(passes: (T1, T2, T3, T4, T5, T6, T7) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6, T7)] = {
+  def filterN(
+      passes: (T1, T2, T3, T4, T5, T6, T7) => Boolean
+  ): EventStream[(T1, T2, T3, T4, T5, T6, T7)] = {
     new FilterStream[(T1, T2, T3, T4, T5, T6, T7)](
       parent = stream,
       passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6, v._7)
@@ -127,9 +145,13 @@ class TupleStream7[T1, T2, T3, T4, T5, T6, T7](val stream: EventStream[(T1, T2, 
 
 // --
 
-class TupleStream8[T1, T2, T3, T4, T5, T6, T7, T8](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8)]) extends AnyVal {
+class TupleStream8[T1, T2, T3, T4, T5, T6, T7, T8](
+    val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8)]
+) extends AnyVal {
 
-  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8) => Out): EventStream[Out] = {
+  def mapN[Out](
+      project: (T1, T2, T3, T4, T5, T6, T7, T8) => Out
+  ): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8), Out](
       parent = stream,
       project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8),
@@ -137,7 +159,9 @@ class TupleStream8[T1, T2, T3, T4, T5, T6, T7, T8](val stream: EventStream[(T1, 
     )
   }
 
-  def filterN(passes: (T1, T2, T3, T4, T5, T6, T7, T8) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8)] = {
+  def filterN(
+      passes: (T1, T2, T3, T4, T5, T6, T7, T8) => Boolean
+  ): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8)] = {
     new FilterStream[(T1, T2, T3, T4, T5, T6, T7, T8)](
       parent = stream,
       passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8)
@@ -147,17 +171,24 @@ class TupleStream8[T1, T2, T3, T4, T5, T6, T7, T8](val stream: EventStream[(T1, 
 
 // --
 
-class TupleStream9[T1, T2, T3, T4, T5, T6, T7, T8, T9](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]) extends AnyVal {
+class TupleStream9[T1, T2, T3, T4, T5, T6, T7, T8, T9](
+    val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]
+) extends AnyVal {
 
-  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9) => Out): EventStream[Out] = {
+  def mapN[Out](
+      project: (T1, T2, T3, T4, T5, T6, T7, T8, T9) => Out
+  ): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9), Out](
       parent = stream,
-      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9),
+      project = v =>
+        project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9),
       recover = None
     )
   }
 
-  def filterN(passes: (T1, T2, T3, T4, T5, T6, T7, T8, T9) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9)] = {
+  def filterN(
+      passes: (T1, T2, T3, T4, T5, T6, T7, T8, T9) => Boolean
+  ): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9)] = {
     new FilterStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9)](
       parent = stream,
       passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9)
@@ -166,4 +197,3 @@ class TupleStream9[T1, T2, T3, T4, T5, T6, T7, T8, T9](val stream: EventStream[(
 }
 
 // --
-

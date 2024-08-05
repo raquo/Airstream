@@ -1,52 +1,70 @@
 package com.raquo.airstream.flatten
 
 import com.raquo.airstream.common.InternalTryObserver
-import com.raquo.airstream.core.{InternalObserver, Protected, Signal, Transaction, WritableSignal}
+import com.raquo.airstream.core.{
+  InternalObserver,
+  Protected,
+  Signal,
+  Transaction,
+  WritableSignal
+}
 
 import scala.scalajs.js
 import scala.util.{Success, Try}
 
 /** This flattens a Signal[ Signal[A] ] into a Signal[A]
   *
-  * When this signal is started, its current value tracks the current value of the last signal emitted by `parent`.
+  * When this signal is started, its current value tracks the current value of
+  * the last signal emitted by `parent`.
   */
 class SwitchSignal[A](
-  parent: Signal[Signal[A]]
-) extends WritableSignal[A] with InternalTryObserver[Signal[A]] {
+    parent: Signal[Signal[A]]
+) extends WritableSignal[A]
+    with InternalTryObserver[Signal[A]] {
 
   override protected val topoRank: Int = 1
 
-  private[this] var maybeCurrentSignalTry: js.UndefOr[Try[Signal[A]]] = js.undefined
+  private[this] var maybeCurrentSignalTry: js.UndefOr[Try[Signal[A]]] =
+    js.undefined
 
   private[this] var innerSignalLastSeenUpdateId: Int = 0
 
-  private[this] def currentSignalTry: Try[Signal[A]] = maybeCurrentSignalTry.getOrElse {
-    val initialSignal = parent.tryNow()
-    maybeCurrentSignalTry = initialSignal
-    initialSignal
-  }
-
-  private[this] val internalEventObserver: InternalObserver[A] = InternalObserver.fromTry[A](
-    onTry = (nextTry, _) => {
-      //println(s"> init trx from $this SwitchSignal.onValue($nextTry)")
-      innerSignalLastSeenUpdateId = Protected.lastUpdateId(currentSignalTry.get)
-      Transaction(fireTry(nextTry, _))
+  private[this] def currentSignalTry: Try[Signal[A]] =
+    maybeCurrentSignalTry.getOrElse {
+      val initialSignal = parent.tryNow()
+      maybeCurrentSignalTry = initialSignal
+      initialSignal
     }
-  )
+
+  private[this] val internalEventObserver: InternalObserver[A] =
+    InternalObserver.fromTry[A](
+      onTry = (nextTry, _) => {
+        // println(s"> init trx from $this SwitchSignal.onValue($nextTry)")
+        innerSignalLastSeenUpdateId =
+          Protected.lastUpdateId(currentSignalTry.get)
+        Transaction(fireTry(nextTry, _))
+      }
+    )
 
   // #Note this is only used when getting the initial value of this signal
   override protected def currentValueFromParent(): Try[A] = {
     parent.tryNow().flatMap(_.tryNow())
   }
 
-  override protected def onTry(nextParentValue: Try[Signal[A]], transaction: Transaction): Unit = {
+  override protected def onTry(
+      nextParentValue: Try[Signal[A]],
+      transaction: Transaction
+  ): Unit = {
     switchToSignalOnline(nextParentValue)
   }
 
-  private def isSameSignal(signalTry1: Try[Signal[A]], signalTry2: Try[Signal[A]]): Boolean = {
+  private def isSameSignal(
+      signalTry1: Try[Signal[A]],
+      signalTry2: Try[Signal[A]]
+  ): Boolean = {
     (signalTry1, signalTry2) match {
       case (Success(signal1), Success(signal2)) => signal1 eq signal2
-      case _ => false
+      case _                                    => false
     }
   }
 
@@ -65,7 +83,8 @@ class SwitchSignal[A](
     if (isSameSignal(nextSignalTry, currentSignalTry)) {
       // println(" - same signal")
       currentSignalTry.foreach(Protected.maybeWillStart)
-      val nextSignal = nextSignalTry.get // if isSameSignal is true, nextSignalTry is guaranteed Success()
+      val nextSignal =
+        nextSignalTry.get // if isSameSignal is true, nextSignalTry is guaranteed Success()
       val nextSignalLastUpdateId = Protected.lastUpdateId(nextSignal)
       if (nextSignalLastUpdateId != innerSignalLastSeenUpdateId) {
         setCurrentValue(nextSignal.tryNow())
@@ -79,9 +98,15 @@ class SwitchSignal[A](
 
       nextSignalTry.foreach(Protected.maybeWillStart)
       setCurrentValue(nextSignalTry.flatMap(_.tryNow()))
-      innerSignalLastSeenUpdateId = nextSignalTry.map(Protected.lastUpdateId).getOrElse(0)
+      innerSignalLastSeenUpdateId =
+        nextSignalTry.map(Protected.lastUpdateId).getOrElse(0)
 
-      nextSignalTry.foreach(_.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false))
+      nextSignalTry.foreach(
+        _.addInternalObserver(
+          internalEventObserver,
+          shouldCallMaybeWillStart = false
+        )
+      )
     }
   }
 
@@ -103,9 +128,8 @@ class SwitchSignal[A](
 
       // Update this signal's value with nextSignal's current value (or an error if we don't have nextSignal)
 
-      //println(s"> init trx from SwitchSignal.onTry (new signal)")
+      // println(s"> init trx from SwitchSignal.onTry (new signal)")
       Transaction { trx =>
-
         // #Note: Timing is important here.
         // 1. Create the `trx` transaction, since we need that boundary when flattening
         // 2. Ensure next signal is started by adding an internal observer to it
@@ -124,11 +148,20 @@ class SwitchSignal[A](
         if (isStarted) {
           nextSignalTry.foreach(Protected.maybeWillStart)
 
-          fireTry(nextSignalTry.flatMap(_.tryNow()), trx) // #Note[onStart,trx,loop]
+          fireTry(
+            nextSignalTry.flatMap(_.tryNow()),
+            trx
+          ) // #Note[onStart,trx,loop]
 
-          innerSignalLastSeenUpdateId = nextSignalTry.map(Protected.lastUpdateId).getOrElse(0)
+          innerSignalLastSeenUpdateId =
+            nextSignalTry.map(Protected.lastUpdateId).getOrElse(0)
 
-          nextSignalTry.foreach(_.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false))
+          nextSignalTry.foreach(
+            _.addInternalObserver(
+              internalEventObserver,
+              shouldCallMaybeWillStart = false
+            )
+          )
         }
       }
     }
@@ -136,7 +169,12 @@ class SwitchSignal[A](
 
   override protected[this] def onStart(): Unit = {
     parent.addInternalObserver(this, shouldCallMaybeWillStart = false)
-    currentSignalTry.foreach(_.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false))
+    currentSignalTry.foreach(
+      _.addInternalObserver(
+        internalEventObserver,
+        shouldCallMaybeWillStart = false
+      )
+    )
     super.onStart()
   }
 

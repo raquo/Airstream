@@ -1,37 +1,46 @@
 package com.raquo.airstream.web
 
-import com.raquo.airstream.core.{EventStream, InternalObserver, Transaction, WritableStream}
+import com.raquo.airstream.core.{
+  EventStream,
+  InternalObserver,
+  Transaction,
+  WritableStream
+}
 import org.scalajs.dom
 
 import scala.scalajs.js
 
-/** Note: [[dom.BodyInit]] is a union type that includes String
-  * and some other Javascript-specific data types.
+/** Note: [[dom.BodyInit]] is a union type that includes String and some other
+  * Javascript-specific data types.
   */
-object FetchStream extends FetchBuilder[dom.BodyInit, String](
-  encodeRequest = identity,
-  decodeResponse = response => EventStream.fromJsPromise(response.text())
-) {
+object FetchStream
+    extends FetchBuilder[dom.BodyInit, String](
+      encodeRequest = identity,
+      decodeResponse = response => EventStream.fromJsPromise(response.text())
+    ) {
 
   lazy val raw: FetchBuilder[dom.BodyInit, dom.Response] = {
     new FetchBuilder(identity, EventStream.fromValue(_))
   }
 
   def withCodec[In, Out](
-    encodeRequest: In => dom.BodyInit,
-    decodeResponse: dom.Response => EventStream[Out]
+      encodeRequest: In => dom.BodyInit,
+      decodeResponse: dom.Response => EventStream[Out]
   ): FetchBuilder[In, Out] = {
     new FetchBuilder(encodeRequest, decodeResponse)
   }
 
   def withEncoder[In](
-    encodeRequest: In => dom.BodyInit,
+      encodeRequest: In => dom.BodyInit
   ): FetchBuilder[In, String] = {
-    new FetchBuilder(encodeRequest, response => EventStream.fromJsPromise(response.text()))
+    new FetchBuilder(
+      encodeRequest,
+      response => EventStream.fromJsPromise(response.text())
+    )
   }
 
   def withDecoder[Out](
-    decodeResponse: dom.Response => EventStream[Out]
+      decodeResponse: dom.Response => EventStream[Out]
   ): FetchBuilder[dom.BodyInit, Out] = {
     new FetchBuilder(encodeRequest = identity, decodeResponse)
   }
@@ -39,37 +48,43 @@ object FetchStream extends FetchBuilder[dom.BodyInit, String](
 }
 
 class FetchBuilder[In, Out](
-  encodeRequest: In => dom.BodyInit,
-  decodeResponse: dom.Response => EventStream[Out]
+    encodeRequest: In => dom.BodyInit,
+    decodeResponse: dom.Response => EventStream[Out]
 ) {
 
   def get(
-    url: String,
-    setOptions: (FetchOptions[In] => Unit)*
+      url: String,
+      setOptions: (FetchOptions[In] => Unit)*
   ): EventStream[Out] = {
     apply(_.GET, url, setOptions: _*)
   }
 
   def post(
-    url: String,
-    setOptions: (FetchOptions[In] => Unit)*
+      url: String,
+      setOptions: (FetchOptions[In] => Unit)*
   ): EventStream[Out] = {
     apply(_.POST, url, setOptions: _*)
   }
 
   def put(
-    url: String,
-    setOptions: (FetchOptions[In] => Unit)*
+      url: String,
+      setOptions: (FetchOptions[In] => Unit)*
   ): EventStream[Out] = {
     apply(_.PUT, url, setOptions: _*)
   }
 
   def apply(
-    method: dom.HttpMethod.type => dom.HttpMethod,
-    url: String,
-    setOptions: (FetchOptions[In] => Unit)*
+      method: dom.HttpMethod.type => dom.HttpMethod,
+      url: String,
+      setOptions: (FetchOptions[In] => Unit)*
   ): EventStream[Out] = {
-    val (request, maybeAbortController, maybeAbortStream, shouldAbortOnStop, emitOnce) = {
+    val (
+      request,
+      maybeAbortController,
+      maybeAbortStream,
+      shouldAbortOnStop,
+      emitOnce
+    ) = {
       val options = new FetchOptions[In](encodeRequest)
       setOptions.foreach(setOption => setOption(options))
       options.request.method = method(dom.HttpMethod)
@@ -107,17 +122,19 @@ class FetchBuilder[In, Out](
 
 /** Make requests using the Fetch API, the modern alternative to Ajax.
   *
-  * @see https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+  * @see
+  *   https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
   *
-  * Use get / post / apply / etc. methods on FetchStream companion object to make Fetch requests.
+  * Use get / post / apply / etc. methods on FetchStream companion object to
+  * make Fetch requests.
   */
 class FetchStream private[web] (
-  url: String,
-  requestInit: dom.RequestInit,
-  maybeAbortController: js.UndefOr[dom.AbortController],
-  maybeAbortStream: js.UndefOr[EventStream[Any]],
-  shouldAbortOnStop: Boolean,
-  emitOnce: Boolean
+    url: String,
+    requestInit: dom.RequestInit,
+    maybeAbortController: js.UndefOr[dom.AbortController],
+    maybeAbortStream: js.UndefOr[EventStream[Any]],
+    shouldAbortOnStop: Boolean,
+    emitOnce: Boolean
 ) extends WritableStream[js.Promise[dom.Response]] {
 
   // TODO[API] Not sure if this should be a stream or a signal
@@ -151,7 +168,10 @@ class FetchStream private[web] (
   override protected def onWillStart(): Unit = {
     if (!(emitOnce && hasEmittedEvents)) {
       maybeAbortStream.foreach { abortStream =>
-        abortStream.addInternalObserver(maybeAbortStreamObserver.get, shouldCallMaybeWillStart = true)
+        abortStream.addInternalObserver(
+          maybeAbortStreamObserver.get,
+          shouldCallMaybeWillStart = true
+        )
       }
       val responsePromise = dom.Fetch.fetch(url, requestInit)
       // #TODO[Integrity] Is it ok to emit asynchronously here? Maybe we should save `responsePromise` and emit it `onStart`?
@@ -170,14 +190,15 @@ class FetchStream private[web] (
 }
 
 class FetchOptions[In] private[web] (
-  encodeRequest: In => dom.BodyInit
+    encodeRequest: In => dom.BodyInit
 ) {
 
   private[web] val request: dom.RequestInit = new dom.RequestInit {}
 
   private var maybeHeaders: js.UndefOr[dom.Headers] = js.undefined
 
-  private[web] var maybeAbortController: js.UndefOr[dom.AbortController] = js.undefined
+  private[web] var maybeAbortController: js.UndefOr[dom.AbortController] =
+    js.undefined
 
   private[web] var maybeAbortStream: js.UndefOr[EventStream[Any]] = js.undefined
 
@@ -195,7 +216,8 @@ class FetchOptions[In] private[web] (
   }
 
   /** Set headers, overriding previous values for the corresponding keys.
-    * @param kvs (key1 -> value1, key2 -> value2)
+    * @param kvs
+    *   (key1 -> value1, key2 -> value2)
     */
   def headers(kvs: (String, String)*): Unit = {
     if (maybeHeaders.isEmpty) {
@@ -212,7 +234,8 @@ class FetchOptions[In] private[web] (
     * accept multiple values, the provided value(s) will be added to the key
     * without removing the previously set value.
     *
-    * @param kvs (key1 -> value1, key2 -> value2)
+    * @param kvs
+    *   (key1 -> value1, key2 -> value2)
     */
   def headersAppend(kvs: (String, String)*): Unit = {
     if (maybeHeaders.isEmpty) {
@@ -225,9 +248,9 @@ class FetchOptions[In] private[web] (
     }
   }
 
-  /** Abort the Fetch request when `abortStream` emits.
-    * This is a wrapper for https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal
-    * Errors emitted by abortStream will be re-emitted by FetchStream.
+  /** Abort the Fetch request when `abortStream` emits. This is a wrapper for
+    * https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal Errors
+    * emitted by abortStream will be re-emitted by FetchStream.
     */
   def abortStream(source: EventStream[Any]): Unit = {
     getOrCreateAbortController()
@@ -236,20 +259,23 @@ class FetchOptions[In] private[web] (
 
   /** Abort the fetch request if FetchStream is stopped.
     *
-    * By default, stopping the stream does not affect the underlying Fetch request,
-    * and toggling this setting does not really affect visible execution of the stream.
+    * By default, stopping the stream does not affect the underlying Fetch
+    * request, and toggling this setting does not really affect visible
+    * execution of the stream.
     *
-    * Aborting on stop might yield a marginal efficiency gain in certain scenarios.
+    * Aborting on stop might yield a marginal efficiency gain in certain
+    * scenarios.
     */
   def abortOnStop(): Unit = {
     getOrCreateAbortController()
     shouldAbortOnStop = true
   }
 
-  /** By default, the fetch stream initiates a new request every time it is started.
+  /** By default, the fetch stream initiates a new request every time it is
+    * started.
     *
-    * Set `emitOnce(true)` to make it initiate a new request only once (the first time
-    * it's started).
+    * Set `emitOnce(true)` to make it initiate a new request only once (the
+    * first time it's started).
     */
   def emitOnce(v: Boolean): Unit = {
     shouldEmitOnce = v
@@ -263,7 +289,9 @@ class FetchOptions[In] private[web] (
     request.mode = get(dom.RequestMode)
   }
 
-  def credentials(get: dom.RequestCredentials.type => dom.RequestCredentials): Unit = {
+  def credentials(
+      get: dom.RequestCredentials.type => dom.RequestCredentials
+  ): Unit = {
     request.credentials = get(dom.RequestCredentials)
   }
 
@@ -283,7 +311,9 @@ class FetchOptions[In] private[web] (
     request.referrer = ""
   }
 
-  def referrerPolicy(get: dom.ReferrerPolicy.type => dom.ReferrerPolicy): Unit = {
+  def referrerPolicy(
+      get: dom.ReferrerPolicy.type => dom.ReferrerPolicy
+  ): Unit = {
     request.referrerPolicy = get(dom.ReferrerPolicy)
   }
 

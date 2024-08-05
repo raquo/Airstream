@@ -5,16 +5,21 @@ import com.raquo.airstream.core.{Protected, Signal, Transaction}
 
 import scala.util.Try
 
-/** Emits only values that are distinct from the last emitted value, according to isSame function */
+/** Emits only values that are distinct from the last emitted value, according
+  * to isSame function
+  */
 class DistinctSignal[A](
-  override protected[this] val parent: Signal[A],
-  isSame: (Try[A], Try[A]) => Boolean,
-  resetOnStop: Boolean
+    override protected[this] val parent: Signal[A],
+    isSame: (Try[A], Try[A]) => Boolean,
+    resetOnStop: Boolean
 ) extends SingleParentSignal[A, A] {
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
-  override protected def onTry(nextParentValue: Try[A], transaction: Transaction): Unit = {
+  override protected def onTry(
+      nextParentValue: Try[A],
+      transaction: Transaction
+  ): Unit = {
     super.onTry(nextParentValue, transaction)
     if (!isSame(tryNow(), nextParentValue)) {
       fireTry(nextParentValue, transaction)
@@ -25,8 +30,8 @@ class DistinctSignal[A](
 
   /** Special implementation to add the distinct-ness filter */
   override protected def updateCurrentValueFromParent(
-    nextValue: Try[A],
-    nextParentLastUpdateId: Int
+      nextValue: Try[A],
+      nextParentLastUpdateId: Int
   ): Unit = {
     // #TODO[Integrity] should I also check for lastUpdateId in addition to isSame?
     //  - if isSame, then it doesn't matter if the parent emitted, right? No event anyway.
@@ -35,7 +40,10 @@ class DistinctSignal[A](
     // #Note We check this signal's standard distinction condition with !isSame instead of `==`
     //  because isSame might be something incompatible, e.g. reference equality
     if (resetOnStop || !isSame(nextValue, tryNow())) {
-      super.updateCurrentValueFromParent(nextValue, nextParentLastUpdateId) // #nc check this?????
+      super.updateCurrentValueFromParent(
+        nextValue,
+        nextParentLastUpdateId
+      ) // #nc check this?????
     }
   }
 }

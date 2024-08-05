@@ -22,7 +22,8 @@ class GlitchSpec extends UnitSpec {
     val tens = bus.events.map(_ * 10)
     val hundreds = tens.map(_ * 10)
 
-    val tuples = hundreds.combineWith(tens)
+    val tuples = hundreds
+      .combineWith(tens)
       .map(Calculation.log("tuples", calculations))
 
     tuples.foreach(effects += Effect("tuples", _))
@@ -81,7 +82,8 @@ class GlitchSpec extends UnitSpec {
     val tens = bus.events.map(_ * 10)
     val hundreds = tens.map(_ * 10).toSignal(initial = 0)
 
-    val tuples = tens.withCurrentValueOf(hundreds)
+    val tuples = tens
+      .withCurrentValueOf(hundreds)
       .map(Calculation.log("tuples", calculations))
 
     tuples.foreach(effects += Effect("tuples", _))
@@ -226,11 +228,20 @@ class GlitchSpec extends UnitSpec {
     // X = D + E
 
     val streamTupleAB = busA.events.combineWith(busB.events)
-    val streamC = streamTupleAB.mapN(_ + _).map(Calculation.log("C", calculations))
-    val streamD = busB.events.combineWith(streamC).mapN(_ + _).map(Calculation.log("D", calculations))
-    val streamE = busA.events.combineWith(streamC).mapN(_ + _).map(Calculation.log("E", calculations))
+    val streamC =
+      streamTupleAB.mapN(_ + _).map(Calculation.log("C", calculations))
+    val streamD = busB.events
+      .combineWith(streamC)
+      .mapN(_ + _)
+      .map(Calculation.log("D", calculations))
+    val streamE = busA.events
+      .combineWith(streamC)
+      .mapN(_ + _)
+      .map(Calculation.log("E", calculations))
 
-    val streamX = streamD.combineWith(streamE).mapN(_ + _)
+    val streamX = streamD
+      .combineWith(streamE)
+      .mapN(_ + _)
       .map(Calculation.log("X", calculations))
 
     streamX.foreach(effects += Effect("X", _))
@@ -265,7 +276,10 @@ class GlitchSpec extends UnitSpec {
 
     calculations shouldBe mutable.Buffer(
       Calculation("C", 201),
-      Calculation("E", 401), // @TODO[Integrity] This order is acceptable, but why is E evaluated before D?
+      Calculation(
+        "E",
+        401
+      ), // @TODO[Integrity] This order is acceptable, but why is E evaluated before D?
       Calculation("D", 202),
       Calculation("X", 603)
     )
@@ -281,7 +295,9 @@ class GlitchSpec extends UnitSpec {
   // @TODO NEED AN EVENT BUS TEST SIMILAR TO MERGE TEST ABOVE
 
   // @TODO NEED TO TEST NEW CYCLICAL LOGIC (FIX seenObservables first)
-  ignore("deadlocked pending observables resolve by firing a soft synced observable") {
+  ignore(
+    "deadlocked pending observables resolve by firing a soft synced observable"
+  ) {
 
     // @TODO Unsynced version produces unexpected results. Figure that out first before proceeding. Something probably wrong in EventBus
 
@@ -307,10 +323,13 @@ class GlitchSpec extends UnitSpec {
 
     busA.writer.addSource(streamC)
     busB.writer.addSource(streamC)
-    busA.writer.addSource(streamB.map(_ * 10).map(Calculation.log("B x 10", calculations)))
+    busA.writer.addSource(
+      streamB.map(_ * 10).map(Calculation.log("B x 10", calculations))
+    )
     busB.writer.addSource(streamA.filter(_ <= 100).map(_ + 1))
 
-    val streamD = streamA.combineWith(streamB)
+    val streamD = streamA
+      .combineWith(streamB)
       .mapN(_ + _)
       .map(Calculation.log("D", calculations))
 
@@ -334,7 +353,6 @@ class GlitchSpec extends UnitSpec {
     )
     calculations.clear()
     effects.clear()
-
 
     // >> create two event buses that depend on each other's streams
     // >> add some filter to make sure the loop terminates
@@ -381,8 +399,7 @@ class GlitchSpec extends UnitSpec {
     var n = 0
     val clickBus = new EventBus[Unit]
     val log = Var[List[Int]](Nil)
-    clickBus
-      .events
+    clickBus.events
       .foreach { _ =>
         n = n + 2
         log.update(_ :+ (n - 2))
@@ -415,7 +432,7 @@ class GlitchSpec extends UnitSpec {
     case class Append(i: Int) extends Action
 
     case class State(
-      seq: Seq[Int]
+        seq: Seq[Int]
     )
 
     val clickBus = new EventBus[Unit]
@@ -425,17 +442,19 @@ class GlitchSpec extends UnitSpec {
     var n = 0
     val actions: EventStream[Action] = clickBus.events.flatMapSwitch { _ =>
       n += 2
-      EventStream.merge(
-        EventStream.fromValue(n - 2, emitOnce = true),
-        EventStream.fromValue(n - 1, emitOnce = true)
-      ).map(Append.apply)
+      EventStream
+        .merge(
+          EventStream.fromValue(n - 2, emitOnce = true),
+          EventStream.fromValue(n - 1, emitOnce = true)
+        )
+        .map(Append.apply)
     }
 
     val updatedState =
       actions
         .withCurrentValueOf(stateVar.signal)
-        .map {
-          case (Append(i), State(seq)) => State(seq :+ i)
+        .map { case (Append(i), State(seq)) =>
+          State(seq :+ i)
         }
 
     updatedState.addObserver(stateVar.writer)(owner)
@@ -445,7 +464,9 @@ class GlitchSpec extends UnitSpec {
     stateVar.now() shouldBe State(List(0, 1))
   }
 
-  it("Avoid redundant evaluation of signal's initial value in this weird case") {
+  it(
+    "Avoid redundant evaluation of signal's initial value in this weird case"
+  ) {
 
     // onWillStart evaluates the signal's initial value. This is an effect we care about,
     // because it could be mutable or effectful, and also, because if the signal updates
@@ -481,8 +502,7 @@ class GlitchSpec extends UnitSpec {
 
     val initial = 0
 
-    bus
-      .stream
+    bus.stream
       .startWith({
         effects += Effect("eval-init", initial)
         initial
@@ -495,41 +515,52 @@ class GlitchSpec extends UnitSpec {
         effects += Effect("inner-init", isEven)
         signal
           .setDisplayName(s"inner-signal-$isEven")
-          .foreach(v => effects += Effect(s"inner-signal-$isEven", v))(innerOwner)
+          .foreach(v => effects += Effect(s"inner-signal-$isEven", v))(
+            innerOwner
+          )
         isEven
       })
       .foreach(v => effects += Effect("obs", v))(owner)
 
-    assertEquals(effects.toList, List(
-      Effect("eval-init", 0),
-      Effect("tap", 0),
-      Effect("inner-init", true),
-      Effect("inner-signal-true", 0),
-      Effect("obs", true)
-    ))
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("eval-init", 0),
+        Effect("tap", 0),
+        Effect("inner-init", true),
+        Effect("inner-signal-true", 0),
+        Effect("obs", true)
+      )
+    )
     effects.clear()
 
     // --
 
     bus.emit(2)
 
-    assertEquals(effects.toList, List(
-      Effect("tap", 2),
-      Effect("obs", true),
-      Effect("inner-signal-true", 2)
-    ))
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("tap", 2),
+        Effect("obs", true),
+        Effect("inner-signal-true", 2)
+      )
+    )
     effects.clear()
 
     // --
 
     bus.emit(3)
 
-    assertEquals(effects.toList, List(
-      Effect("tap", 3),
-      Effect("inner-init", false),
-      Effect("inner-signal-false", 3),
-      Effect("obs", false)
-    ))
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("tap", 3),
+        Effect("inner-init", false),
+        Effect("inner-signal-false", 3),
+        Effect("obs", false)
+      )
+    )
     effects.clear()
   }
 }

@@ -20,7 +20,8 @@ class SampleCombineSignal2Spec extends UnitSpec {
     val calculations = mutable.Buffer[Calculation[Int]]()
     val effects = mutable.Buffer[Effect[Int]]()
 
-    val sampledSignal = sampledVar.signal.map(Calculation.log("sampled", calculations))
+    val sampledSignal =
+      sampledVar.signal.map(Calculation.log("sampled", calculations))
 
     val combinedSignal = samplingVar.signal
       .map(Calculation.log("sampling", calculations))
@@ -43,10 +44,10 @@ class SampleCombineSignal2Spec extends UnitSpec {
     calculations shouldBe mutable.Buffer(
       Calculation("sampling", 100),
       Calculation("sampled", 10),
-      Calculation("combined", 110),
+      Calculation("combined", 110)
     )
     effects shouldBe mutable.Buffer(
-      Effect("combined", 110),
+      Effect("combined", 110)
     )
 
     calculations.clear()

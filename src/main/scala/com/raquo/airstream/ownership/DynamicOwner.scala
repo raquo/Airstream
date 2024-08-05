@@ -9,26 +9,28 @@ import com.raquo.ew.JsArray
 //  - I think I've addressed those issues with `pendingSubscriptionRemovals`, but need to be very careful when changing anything here.
 //  - Small things like `foreach` caching `subscriptions.length` are very important.
 
-/** DynamicOwner manages [[DynamicSubscription]]-s similarly to how Owner manages `Subscription`s,
-  * except `DynamicSubscription` can be activated and deactivated repeatedly.
+/** DynamicOwner manages [[DynamicSubscription]]-s similarly to how Owner
+  * manages `Subscription`s, except `DynamicSubscription` can be activated and
+  * deactivated repeatedly.
   *
   * @param onAccessAfterKilled
-  *          Called if you attempt to use any Owner created by this DynamicOwner
-  *          after that Owner was killed.
-  *          It's intended to log and/or throw for reporting / debugging purposes.
+  *   Called if you attempt to use any Owner created by this DynamicOwner after
+  *   that Owner was killed. It's intended to log and/or throw for reporting /
+  *   debugging purposes.
   */
 class DynamicOwner(onAccessAfterKilled: () => Unit) {
 
-  /** Note: This is enforced to be a sorted set outside of the type system. #performance
-    * Note: This should remain private, we don't want to expose the ability to kill individual
-    *       subscriptions to code that didn't create those subscriptions.
-    *       We rely on that in TransferableSubscription for example.
+  /** Note: This is enforced to be a sorted set outside of the type system.
+    * #performance Note: This should remain private, we don't want to expose the
+    * ability to kill individual subscriptions to code that didn't create those
+    * subscriptions. We rely on that in TransferableSubscription for example.
     */
   private[this] val subscriptions: JsArray[DynamicSubscription] = JsArray()
 
   private var isSafeToRemoveSubscription = true
 
-  private val pendingSubscriptionRemovals: JsArray[DynamicSubscription] = JsArray()
+  private val pendingSubscriptionRemovals: JsArray[DynamicSubscription] =
+    JsArray()
 
   private var _maybeCurrentOwner: Option[Owner] = None
 
@@ -38,7 +40,9 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
 
   @inline def hasSubscriptions: Boolean = numSubscriptions != 0
 
-  /** Exposing this for testing mostly. Outside world should not need to know anything about this owner's subscriptions. */
+  /** Exposing this for testing mostly. Outside world should not need to know
+    * anything about this owner's subscriptions.
+    */
   @inline def numSubscriptions: Int = subscriptions.length
 
   // @Note[API] We don't allow activating the DynamicOwner *while* it is being deactivated (and vice versa)
@@ -60,19 +64,20 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
         isSafeToRemoveSubscription = false
         numPrependedSubs = 0
         var i = 0;
-        val originalNumSubs = subscriptions.length // avoid double-starting subs added during the loop. See the big comment above
-        //println("    - start iteration of " + this)
+        val originalNumSubs =
+          subscriptions.length // avoid double-starting subs added during the loop. See the big comment above
+        // println("    - start iteration of " + this)
         while (i < originalNumSubs) {
           // Prepending a sub while iterating shifts array indices, so we account for that
           //  - Use case for this: in Laminar controlled inputs logic, we create a prepend sub
           //    inside another dynamic subscription's activate callback
           val ix = i + numPrependedSubs
           val sub = subscriptions(ix)
-          //println(s"    - activating ${sub} from iteration (ix = ${ix}, i = ${i}")
+          // println(s"    - activating ${sub} from iteration (ix = ${ix}, i = ${i}")
           sub.onActivate(newOwner)
           i += 1
         }
-        //println(s"    - stop iteration of $this. numPrependedSubs = $numPrependedSubs")
+        // println(s"    - stop iteration of $this. numPrependedSubs = $numPrependedSubs")
         removePendingSubscriptionsNow()
         isSafeToRemoveSubscription = true
         numPrependedSubs = 0
@@ -83,7 +88,7 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
   }
 
   def deactivate(): Unit = {
-    //println(s"    - deactivating $this (numSubs=${subscriptions.length})")
+    // println(s"    - deactivating $this (numSubs=${subscriptions.length})")
     if (isActive) {
       // We need to first deactivate all dynamic subscriptions.
       // If we killed the current owner's subscriptions first instead,
@@ -111,10 +116,15 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
     }
   }
 
-  /** @param prepend  - If true, dynamic owner will prepend subscription to the list instead of appending.
-    *                   This affects activation and deactivation order of subscriptions.
+  /** @param prepend
+    *   \- If true, dynamic owner will prepend subscription to the list instead
+    *   of appending. This affects activation and deactivation order of
+    *   subscriptions.
     */
-  private[ownership] def addSubscription(subscription: DynamicSubscription, prepend: Boolean): Unit = {
+  private[ownership] def addSubscription(
+      subscription: DynamicSubscription,
+      prepend: Boolean
+  ): Unit = {
     if (prepend) {
       numPrependedSubs += 1
       subscriptions.unshift(subscription)
@@ -122,12 +132,14 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
       subscriptions.push(subscription)
     }
     _maybeCurrentOwner.foreach { o =>
-      //println(s"    - activating ${subscription} after adding it to $this")
+      // println(s"    - activating ${subscription} after adding it to $this")
       subscription.onActivate(o)
     }
   }
 
-  private[ownership] def removeSubscription(subscription: DynamicSubscription): Unit = {
+  private[ownership] def removeSubscription(
+      subscription: DynamicSubscription
+  ): Unit = {
     if (isSafeToRemoveSubscription) {
       removeSubscriptionNow(subscription)
     } else {
@@ -135,7 +147,9 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
     }
   }
 
-  private[this] def removeSubscriptionNow(subscription: DynamicSubscription): Unit = {
+  private[this] def removeSubscriptionNow(
+      subscription: DynamicSubscription
+  ): Unit = {
     val index = subscriptions.indexOf(subscription)
     if (index != -1) {
       subscriptions.splice(index, deleteCount = 1)
@@ -143,7 +157,9 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
         subscription.onDeactivate()
       }
     } else {
-      throw new Exception("Can not remove DynamicSubscription from DynamicOwner: subscription not found. Did you already kill it?")
+      throw new Exception(
+        "Can not remove DynamicSubscription from DynamicOwner: subscription not found. Did you already kill it?"
+      )
     }
   }
 

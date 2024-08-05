@@ -1,7 +1,11 @@
 package com.raquo.airstream.ownership
 
 import com.raquo.airstream.UnitSpec
-import com.raquo.airstream.fixtures.{TestableOneTimeOwner, TestableOwner, TestableSubscription}
+import com.raquo.airstream.fixtures.{
+  TestableOneTimeOwner,
+  TestableOwner,
+  TestableSubscription
+}
 
 import scala.util.Try
 
@@ -88,14 +92,18 @@ class OwnerSpec extends UnitSpec {
     errorCallbackCounter = 0
     cleanedCounter = 0
 
-    Try(sub3.kill()).isFailure shouldBe true // Can not kill already killed subscription
+    Try(
+      sub3.kill()
+    ).isFailure shouldBe true // Can not kill already killed subscription
   }
 
   it("OneTimeOwner handles callbacks that throw") {
 
     var cleanedCounter = 0
 
-    val owner = new TestableOneTimeOwner(() => throw new Exception("OneTimeOwner misused!"))
+    val owner = new TestableOneTimeOwner(() =>
+      throw new Exception("OneTimeOwner misused!")
+    )
 
     val sub1 = new Subscription(owner, cleanup = () => cleanedCounter += 1)
     val sub2 = new Subscription(owner, cleanup = () => cleanedCounter += 1)
@@ -118,7 +126,9 @@ class OwnerSpec extends UnitSpec {
 
     // --
 
-    Try(new Subscription(owner, cleanup = () => cleanedCounter += 1)).isFailure shouldBe true
+    Try(
+      new Subscription(owner, cleanup = () => cleanedCounter += 1)
+    ).isFailure shouldBe true
 
     owner._testSubscriptions shouldBe Nil
     cleanedCounter shouldBe 1 // verify subscription was cleaned up

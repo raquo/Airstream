@@ -5,14 +5,17 @@ import com.raquo.airstream.core.{Transaction, WritableStream}
 import scala.scalajs.js
 import scala.scalajs.js.|
 
-/** This stream emits a value that the promise resolves with, even if the promise
-  * was already resolved.
+/** This stream emits a value that the promise resolves with, even if the
+  * promise was already resolved.
   *
-  * This stream emits only once. If you want to remember the value, Use [[JsPromiseSignal]] instead.
+  * This stream emits only once. If you want to remember the value, Use
+  * [[JsPromiseSignal]] instead.
   *
-  * @param promise Note: guarded against failures
+  * @param promise
+  *   Note: guarded against failures
   */
-class JsPromiseStream[A](promise: js.Promise[A], emitOnce: Boolean) extends WritableStream[A] {
+class JsPromiseStream[A](promise: js.Promise[A], emitOnce: Boolean)
+    extends WritableStream[A] {
 
   override protected val topoRank: Int = 1
 
@@ -32,20 +35,22 @@ class JsPromiseStream[A](promise: js.Promise[A], emitOnce: Boolean) extends Writ
       promise.`then`[Unit](
         (nextValue: A) => {
           isPending = false
-          //println(s"> init trx from FutureEventStream.init($nextValue)")
+          // println(s"> init trx from FutureEventStream.init($nextValue)")
           Transaction(fireValue(nextValue, _))
           (): Unit | js.Thenable[Unit]
         },
-        js.defined { (rawException: Any) => {
-          isPending = false
-          val nextError = rawException match {
-            case th: Throwable => th
-            case _ => js.JavaScriptException(rawException)
+        js.defined { (rawException: Any) =>
+          {
+            isPending = false
+            val nextError = rawException match {
+              case th: Throwable => th
+              case _             => js.JavaScriptException(rawException)
+            }
+            // println(s"> init trx from JsPromiseEventStream.init($nextError)")
+            Transaction(fireError(nextError, _))
+            (): Unit | js.Thenable[Unit]
           }
-          //println(s"> init trx from JsPromiseEventStream.init($nextError)")
-          Transaction(fireError(nextError, _))
-          (): Unit | js.Thenable[Unit]
-        }}
+        }
       )
     }
   }

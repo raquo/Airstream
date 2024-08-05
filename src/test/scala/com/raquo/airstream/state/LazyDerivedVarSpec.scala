@@ -25,11 +25,15 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
   before {
     errorEffects.clear()
     AirstreamError.registerUnhandledErrorCallback(errorCallback)
-    AirstreamError.unregisterUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
+    AirstreamError.unregisterUnhandledErrorCallback(
+      AirstreamError.consoleErrorCallback
+    )
   }
 
   after {
-    AirstreamError.registerUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
+    AirstreamError.registerUnhandledErrorCallback(
+      AirstreamError.consoleErrorCallback
+    )
     AirstreamError.unregisterUnhandledErrorCallback(errorCallback)
     assert(errorEffects.isEmpty) // #Note this fails the test rather inelegantly
   }
@@ -66,18 +70,22 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d.now() == 10)
     assert(d.signal.now() == 10)
 
-    assert(effects.toList == List(
-      "zoomIn-10"
-    ))
+    assert(
+      effects.toList == List(
+        "zoomIn-10"
+      )
+    )
     effects.clear()
 
     // --
 
     d.writer.onNext(20)
 
-    assert(effects.toList == List(
-      "zoomOut-Form(20)"
-    ))
+    assert(
+      effects.toList == List(
+        "zoomOut-Form(20)"
+      )
+    )
     effects.clear()
 
     assert(s.tryNow() == Success(Form(20)))
@@ -99,18 +107,22 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     //  This "zoomIn-20" calculation is redundant and thus undesirable,
     //  but I don't see an elegant way to fix it. zoomPure is
     //  supposed to be pure, so it's not a big deal I think.
-    assert(effects.toList == List(
-      "zoomIn-20"
-    ))
+    assert(
+      effects.toList == List(
+        "zoomIn-20"
+      )
+    )
     effects.clear()
 
     // --
 
     d.update(_ + 1)
 
-    assert(effects.toList == List(
-      "zoomOut-Form(21)"
-    ))
+    assert(
+      effects.toList == List(
+        "zoomOut-Form(21)"
+      )
+    )
     effects.clear()
 
     assert(s.now() == Form(21))
@@ -121,18 +133,22 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d.now() == 21)
     assert(d.signal.now() == 21)
 
-    assert(effects.toList == List(
-      "zoomIn-21" // #TODO this one is also undesirable, see TODO comment above.
-    ))
+    assert(
+      effects.toList == List(
+        "zoomIn-21" // #TODO this one is also undesirable, see TODO comment above.
+      )
+    )
     effects.clear()
 
     // --
 
     d.tryUpdate(currTry => currTry.map(_ + 1))
 
-    assert(effects.toList == List(
-      "zoomOut-Form(22)"
-    ))
+    assert(
+      effects.toList == List(
+        "zoomOut-Form(22)"
+      )
+    )
     effects.clear()
 
     assert(s.now() == Form(22))
@@ -143,9 +159,11 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d.now() == 22)
     assert(d.signal.now() == 22)
 
-    assert(effects.toList == List(
-      "zoomIn-22" // #TODO this one is also undesirable, see TODO comment above.
-    ))
+    assert(
+      effects.toList == List(
+        "zoomIn-22" // #TODO this one is also undesirable, see TODO comment above.
+      )
+    )
     effects.clear()
 
     // --
@@ -162,9 +180,11 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d.now() == 30)
     assert(d.signal.now() == 30)
 
-    assert(effects.toList == List(
-      "zoomIn-30"
-    ))
+    assert(
+      effects.toList == List(
+        "zoomIn-30"
+      )
+    )
     effects.clear()
 
     // --
@@ -181,9 +201,11 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d.now() == 31)
     assert(d.signal.now() == 31)
 
-    assert(effects.toList == List(
-      "zoomIn-31"
-    ))
+    assert(
+      effects.toList == List(
+        "zoomIn-31"
+      )
+    )
     effects.clear()
 
     // --
@@ -198,9 +220,11 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d.now() == 32)
     assert(d.signal.now() == 32)
 
-    assert(effects.toList == List(
-      "zoomIn-32"
-    ))
+    assert(
+      effects.toList == List(
+        "zoomIn-32"
+      )
+    )
     effects.clear()
   }
 
@@ -240,9 +264,11 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d.now() == 10)
     assert(d.signal.now() == 10)
 
-    assert(effects.toList == List(
-      "zoomIn-10"
-    ))
+    assert(
+      effects.toList == List(
+        "zoomIn-10"
+      )
+    )
     effects.clear()
 
     // -- Errors propagate
@@ -254,9 +280,11 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     assert(effects.toList == Nil)
 
-    assert(errorEffects.toList == List(
-      Effect("unhandled", err1)
-    ))
+    assert(
+      errorEffects.toList == List(
+        Effect("unhandled", err1)
+      )
+    )
 
     errorEffects.clear()
 
@@ -271,7 +299,13 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     // Remember, a Var without a listener does emit its errors into "unhandled"
     errorEffects shouldBe mutable.Buffer(
-      Effect("unhandled", VarError("Unable to update a failed Var. Consider Var#tryUpdate instead.", cause = Some(err1)))
+      Effect(
+        "unhandled",
+        VarError(
+          "Unable to update a failed Var. Consider Var#tryUpdate instead.",
+          cause = Some(err1)
+        )
+      )
     )
     errorEffects.clear()
 
@@ -285,9 +319,11 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     assert(d.tryNow() == Success(0))
 
-    assert(effects.toList == List(
-      "zoomIn-0"
-    ))
+    assert(
+      effects.toList == List(
+        "zoomIn-0"
+      )
+    )
     effects.clear()
 
     // -- Can't update the same underlying var twice
@@ -298,7 +334,13 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     )
     assert(effects.toList == Nil)
     errorEffects shouldBe mutable.Buffer(
-      Effect("unhandled", VarError("Unable to Var.{set,setTry}: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None))
+      Effect(
+        "unhandled",
+        VarError(
+          "Unable to Var.{set,setTry}: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.",
+          cause = None
+        )
+      )
     )
     errorEffects.clear()
 
@@ -310,18 +352,22 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(s.now() == Form(1))
     assert(s.signal.now() == Form(1))
 
-    assert(effects.toList == List(
-      "zoomOut-Form(1)"
-    ))
+    assert(
+      effects.toList == List(
+        "zoomOut-Form(1)"
+      )
+    )
     effects.clear()
 
     assert(d.tryNow() == Success(1))
     assert(d.now() == 1)
     assert(d.signal.now() == 1)
 
-    assert(effects.toList == List(
-      "zoomIn-1"
-    ))
+    assert(
+      effects.toList == List(
+        "zoomIn-1"
+      )
+    )
     effects.clear()
 
     // --
@@ -341,11 +387,13 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     d.set(2)
 
-    assert(effects.toList == List(
-      "zoomOut-Form(2)",
-      "zoomIn-2",
-      "obs-2"
-    ))
+    assert(
+      effects.toList == List(
+        "zoomOut-Form(2)",
+        "zoomIn-2",
+        "obs-2"
+      )
+    )
     effects.clear()
 
     assert(s.tryNow() == Success(Form(2)))
@@ -371,9 +419,11 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     d.set(34)
 
     // #TODO This is different from DerivedVar, which throws an error in this case – intentional?
-    assert(effects.toList == List(
-      "zoomOut-Form(34)"
-    ))
+    assert(
+      effects.toList == List(
+        "zoomOut-Form(34)"
+      )
+    )
     effects.clear()
 
     assert(s.now() == Form(34))
@@ -384,9 +434,11 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d.now() == 34)
     assert(d.signal.now() == 34)
 
-    assert(effects.toList == List(
-      "zoomIn-34"
-    ))
+    assert(
+      effects.toList == List(
+        "zoomIn-34"
+      )
+    )
     effects.clear()
 
     assert(effects.isEmpty)
@@ -439,28 +491,34 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d1.now() == Form(10))
     assert(d1.signal.now() == Form(10))
 
-    assert(effects.toList == List(
-      "d1.zoomIn-Form(10)"
-    ))
+    assert(
+      effects.toList == List(
+        "d1.zoomIn-Form(10)"
+      )
+    )
     effects.clear()
 
     assert(d2.tryNow() == Success(10))
     assert(d2.now() == 10)
     assert(d2.signal.now() == 10)
 
-    assert(effects.toList == List(
-      "d2.zoomIn-10"
-    ))
+    assert(
+      effects.toList == List(
+        "d2.zoomIn-10"
+      )
+    )
     effects.clear()
 
     // --
 
     d2.set(20)
 
-    assert(effects.toList == List(
-      "d2.zoomOut-Form(20)",
-      "d1.zoomOut-MetaForm(Form(20))"
-    ))
+    assert(
+      effects.toList == List(
+        "d2.zoomOut-Form(20)",
+        "d1.zoomOut-MetaForm(Form(20))"
+      )
+    )
     effects.clear()
 
     assert(s.tryNow() == Success(MetaForm(Form(20))))
@@ -473,27 +531,33 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d1.now() == Form(20))
     assert(d1.signal.now() == Form(20))
 
-    assert(effects.toList == List(
-      "d1.zoomIn-Form(20)"
-    ))
+    assert(
+      effects.toList == List(
+        "d1.zoomIn-Form(20)"
+      )
+    )
     effects.clear()
 
     assert(d2.tryNow() == Success(20))
     assert(d2.now() == 20)
     assert(d2.signal.now() == 20)
 
-    assert(effects.toList == List(
-      "d2.zoomIn-20"
-    ))
+    assert(
+      effects.toList == List(
+        "d2.zoomIn-20"
+      )
+    )
     effects.clear()
 
     // --
 
     d1.set(Form(30))
 
-    assert(effects.toList == List(
-      "d1.zoomOut-MetaForm(Form(30))"
-    ))
+    assert(
+      effects.toList == List(
+        "d1.zoomOut-MetaForm(Form(30))"
+      )
+    )
     effects.clear()
 
     assert(s.tryNow() == Success(MetaForm(Form(30))))
@@ -506,18 +570,22 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d1.now() == Form(30))
     assert(d1.signal.now() == Form(30))
 
-    assert(effects.toList == List(
-      "d1.zoomIn-Form(30)"
-    ))
+    assert(
+      effects.toList == List(
+        "d1.zoomIn-Form(30)"
+      )
+    )
     effects.clear()
 
     assert(d2.tryNow() == Success(30))
     assert(d2.now() == 30)
     assert(d2.signal.now() == 30)
 
-    assert(effects.toList == List(
-      "d2.zoomIn-30"
-    ))
+    assert(
+      effects.toList == List(
+        "d2.zoomIn-30"
+      )
+    )
     effects.clear()
   }
 
@@ -555,10 +623,12 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
       }
     )(d2Owner)
 
-    assert(effects.toList == List(
-      "d1.zoomIn-Form(10)",
-      "d2.zoomIn-10"
-    ))
+    assert(
+      effects.toList == List(
+        "d1.zoomIn-Form(10)",
+        "d2.zoomIn-10"
+      )
+    )
     effects.clear()
 
     // --
@@ -581,12 +651,14 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     d2.set(20)
 
-    assert(effects.toList == List(
-      "d2.zoomOut-Form(20)",
-      "d1.zoomOut-MetaForm(Form(20))",
-      "d1.zoomIn-Form(20)",
-      "d2.zoomIn-20"
-    ))
+    assert(
+      effects.toList == List(
+        "d2.zoomOut-Form(20)",
+        "d1.zoomOut-MetaForm(Form(20))",
+        "d1.zoomIn-Form(20)",
+        "d2.zoomIn-20"
+      )
+    )
     effects.clear()
 
     assert(s.tryNow() == Success(MetaForm(Form(20))))
@@ -601,17 +673,19 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d2.now() == 20)
     assert(d2.signal.now() == 20)
 
-    assert(effects.toList ==  Nil)
+    assert(effects.toList == Nil)
 
     // --
 
     d1.set(Form(30))
 
-    assert(effects.toList == List(
-      "d1.zoomOut-MetaForm(Form(30))",
-      "d1.zoomIn-Form(30)",
-      "d2.zoomIn-30"
-    ))
+    assert(
+      effects.toList == List(
+        "d1.zoomOut-MetaForm(Form(30))",
+        "d1.zoomIn-Form(30)",
+        "d2.zoomIn-30"
+      )
+    )
     effects.clear()
 
     assert(s.tryNow() == Success(MetaForm(Form(30))))
@@ -663,9 +737,11 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
       }
     )
 
-    assert(effects.toList == List(
-      "d1.zoomIn-Form(10)"
-    ))
+    assert(
+      effects.toList == List(
+        "d1.zoomIn-Form(10)"
+      )
+    )
     effects.clear()
 
     // --
@@ -684,20 +760,24 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d2.now() == 10)
     assert(d2.signal.now() == 10)
 
-    assert(effects.toList == List(
-      "d2.zoomIn-10"
-    ))
+    assert(
+      effects.toList == List(
+        "d2.zoomIn-10"
+      )
+    )
     effects.clear()
 
     // --
 
     d2.set(20)
 
-    assert(effects.toList == List(
-      "d2.zoomOut-Form(20)",
-      "d1.zoomOut-MetaForm(Form(20))",
-      "d1.zoomIn-Form(20)"
-    ))
+    assert(
+      effects.toList == List(
+        "d2.zoomOut-Form(20)",
+        "d1.zoomOut-MetaForm(Form(20))",
+        "d1.zoomIn-Form(20)"
+      )
+    )
     effects.clear()
 
     assert(s.tryNow() == Success(MetaForm(Form(20))))
@@ -714,19 +794,23 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d2.now() == 20)
     assert(d2.signal.now() == 20)
 
-    assert(effects.toList ==  List(
-      "d2.zoomIn-20"
-    ))
+    assert(
+      effects.toList == List(
+        "d2.zoomIn-20"
+      )
+    )
     effects.clear()
 
     // --
 
     d1.set(Form(30))
 
-    assert(effects.toList == List(
-      "d1.zoomOut-MetaForm(Form(30))",
-      "d1.zoomIn-Form(30)"
-    ))
+    assert(
+      effects.toList == List(
+        "d1.zoomOut-MetaForm(Form(30))",
+        "d1.zoomIn-Form(30)"
+      )
+    )
     effects.clear()
 
     assert(s.tryNow() == Success(MetaForm(Form(30))))
@@ -743,9 +827,11 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d2.now() == 30)
     assert(d2.signal.now() == 30)
 
-    assert(effects.toList == List(
-      "d2.zoomIn-30"
-    ))
+    assert(
+      effects.toList == List(
+        "d2.zoomIn-30"
+      )
+    )
     effects.clear()
   }
 
@@ -758,7 +844,9 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     val s = Var(Form(1))
     val d = s.zoomLazy(_.int)((f, v) => f.copy(int = v))
 
-    val combinedSignal = d.signal.combineWithFn(s.signal)(_ * 1000 + _.int) // e.g. if s.now() is Form(2), this is 2002
+    val combinedSignal = d.signal.combineWithFn(s.signal)(
+      _ * 1000 + _.int
+    ) // e.g. if s.now() is Form(2), this is 2002
 
     val sourceObs = Observer[Form](f => effects += Effect("source-obs", f.int))
     val derivedObs = Observer[Int](effects += Effect("derived-obs", _))
@@ -793,11 +881,13 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     d.signal.addObserver(derivedObs)(owner)
     combinedSignal.addObserver(combinedObs)(owner)
 
-    assert(effects.toList == List(
-      Effect("source-obs", 2),
-      Effect("derived-obs", 2),
-      Effect("combined-obs", 2002),
-    ))
+    assert(
+      effects.toList == List(
+        Effect("source-obs", 2),
+        Effect("derived-obs", 2),
+        Effect("combined-obs", 2002)
+      )
+    )
 
     effects.clear()
 
@@ -809,11 +899,13 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     s.set(Form(3))
 
-    assert(effects.toList == List(
-      Effect("source-obs", 3),
-      Effect("derived-obs", 3),
-      Effect("combined-obs", 3003)
-    ))
+    assert(
+      effects.toList == List(
+        Effect("source-obs", 3),
+        Effect("derived-obs", 3),
+        Effect("combined-obs", 3003)
+      )
+    )
 
     effects.clear()
 
@@ -821,11 +913,13 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     d.set(4)
 
-    assert(effects.toList == List(
-      Effect("source-obs", 4),
-      Effect("derived-obs", 4),
-      Effect("combined-obs", 4004)
-    ))
+    assert(
+      effects.toList == List(
+        Effect("source-obs", 4),
+        Effect("derived-obs", 4),
+        Effect("combined-obs", 4004)
+      )
+    )
 
     effects.clear()
 
@@ -835,11 +929,13 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     derivedAdder.onNext(10)
 
-    assert(effects.toList == List(
-      Effect("source-obs", 14),
-      Effect("derived-obs", 14),
-      Effect("combined-obs", 14014)
-    ))
+    assert(
+      effects.toList == List(
+        Effect("source-obs", 14),
+        Effect("derived-obs", 14),
+        Effect("combined-obs", 14014)
+      )
+    )
   }
 
   it("error handling") {
@@ -869,9 +965,11 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(s.tryNow() == Failure(err1))
     assert(d.tryNow() == Failure(err1))
 
-    assert(errorEffects.toList == List(
-      Effect("unhandled", err1)
-    ))
+    assert(
+      errorEffects.toList == List(
+        Effect("unhandled", err1)
+      )
+    )
 
     errorEffects.clear()
 
@@ -884,7 +982,13 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     // Remember, a Var without a listener does emit its errors into "unhandled"
     errorEffects shouldBe mutable.Buffer(
-      Effect("unhandled", VarError("Unable to update a failed Var. Consider Var#tryUpdate instead.", cause = Some(err1)))
+      Effect(
+        "unhandled",
+        VarError(
+          "Unable to update a failed Var. Consider Var#tryUpdate instead.",
+          cause = Some(err1)
+        )
+      )
     )
     errorEffects.clear()
 
@@ -902,9 +1006,11 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(s.tryNow() == Failure(err1))
     assert(d.tryNow() == Failure(err1))
 
-    assert(errorEffects.toList == List(
-      Effect("unhandled", err1),
-    ))
+    assert(
+      errorEffects.toList == List(
+        Effect("unhandled", err1)
+      )
+    )
 
     errorEffects.clear()
 
@@ -915,9 +1021,11 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(s.tryNow() == Failure(err2))
     assert(d.tryNow() == Failure(err2))
 
-    assert(errorEffects.toList == List(
-      Effect("unhandled", err2)
-    ))
+    assert(
+      errorEffects.toList == List(
+        Effect("unhandled", err2)
+      )
+    )
 
     errorEffects.clear()
 
@@ -934,9 +1042,17 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(s.tryNow() == Failure(err2))
     assert(d.tryNow() == Failure(err2))
 
-    assert(errorEffects.toList == List(
-      Effect("unhandled", VarError("Unable to zoom out of lazy derived var when the parent var is failed.", Some(err2)))
-    ))
+    assert(
+      errorEffects.toList == List(
+        Effect(
+          "unhandled",
+          VarError(
+            "Unable to zoom out of lazy derived var when the parent var is failed.",
+            Some(err2)
+          )
+        )
+      )
+    )
 
     errorEffects.clear()
   }

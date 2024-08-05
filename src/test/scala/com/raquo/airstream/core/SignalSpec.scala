@@ -43,7 +43,10 @@ class SignalSpec extends UnitSpec {
     val sub1 = signal.addObserver(signalObserver1)
 
     calculations shouldBe mutable.Buffer(
-      Calculation("map-signal", -1) // First time current value of this signal was needed, so it is now calculated
+      Calculation(
+        "map-signal",
+        -1
+      ) // First time current value of this signal was needed, so it is now calculated
     )
     effects shouldBe mutable.Buffer(
       Effect("signal-obs-1", -1)

@@ -1,28 +1,33 @@
 package com.raquo.airstream.ownership
 
-/** This subscription is hyper dynamic, allowing you to change DynamicOwner on the fly.
+/** This subscription is hyper dynamic, allowing you to change DynamicOwner on
+  * the fly.
   *
-  * It works by creating DynamicSubscription-s under the hood with your provided owner and activate()
-  * and deactivate() methods, but it has a special semantic: when transferring this subscription
-  * from one active DynamicOwner to another active DynamicOwner, neither activate() nor deactivate()
-  * are called because continuity of active ownership is maintained.
+  * It works by creating DynamicSubscription-s under the hood with your provided
+  * owner and activate() and deactivate() methods, but it has a special
+  * semantic: when transferring this subscription from one active DynamicOwner
+  * to another active DynamicOwner, neither activate() nor deactivate() are
+  * called because continuity of active ownership is maintained.
   *
-  * So in effect, this subscription only cares whether it's owned or not, so it does not expose the
-  * owner to you: notice the `activate` callback is not provided with an Owner.
+  * So in effect, this subscription only cares whether it's owned or not, so it
+  * does not expose the owner to you: notice the `activate` callback is not
+  * provided with an Owner.
   *
-  * An example of where this is useful is tracking mounting and unmounting of elements in Laminar.
-  * If an element is mounted, we want to call activate(), if unmounted, we want to call deactivate(),
-  * but if the element is MOVED from one mounted parent to another mounted parent, it just remains
-  * mounted, this transition is of no interest to us. If not for this subscription's special design,
-  * we would need to call deactivate() to "detach" the subscription from its old parent's owner and
-  * then immediately afterwards call activate() to "attach" the subscription to the new parent's owner,
-  * but that would deactivate and then immediately re-activate all subscriptions on the Laminar element
-  * being moved (and all of its descendants), which would be very wasteful. Well, you do need to know
-  * Laminar to understand this example.
+  * An example of where this is useful is tracking mounting and unmounting of
+  * elements in Laminar. If an element is mounted, we want to call activate(),
+  * if unmounted, we want to call deactivate(), but if the element is MOVED from
+  * one mounted parent to another mounted parent, it just remains mounted, this
+  * transition is of no interest to us. If not for this subscription's special
+  * design, we would need to call deactivate() to "detach" the subscription from
+  * its old parent's owner and then immediately afterwards call activate() to
+  * "attach" the subscription to the new parent's owner, but that would
+  * deactivate and then immediately re-activate all subscriptions on the Laminar
+  * element being moved (and all of its descendants), which would be very
+  * wasteful. Well, you do need to know Laminar to understand this example.
   */
 class TransferableSubscription(
-  activate: () => Unit,
-  deactivate: () => Unit
+    activate: () => Unit,
+    deactivate: () => Unit
 ) {
 
   /** This is None initially, and when the last subscription was .kill()-ed.
@@ -30,7 +35,9 @@ class TransferableSubscription(
     */
   private var maybeSubscription: Option[DynamicSubscription] = None
 
-  /** Whether we are currently transferring this subscription from one active owner to another active owner. */
+  /** Whether we are currently transferring this subscription from one active
+    * owner to another active owner.
+    */
   private var isLiveTransferInProgress: Boolean = false
 
   def hasOwner: Boolean = maybeSubscription.nonEmpty
@@ -39,9 +46,11 @@ class TransferableSubscription(
 
   /** Update the owner of this subscription. */
   def setOwner(nextOwner: DynamicOwner): Unit = {
-    //println(s"    - setOwner of ${this} to ${nextOwner}")
+    // println(s"    - setOwner of ${this} to ${nextOwner}")
     if (isLiveTransferInProgress) {
-      throw new Exception("Unable to set owner on DynamicTransferableSubscription while a transfer on this subscription is already in progress.")
+      throw new Exception(
+        "Unable to set owner on DynamicTransferableSubscription while a transfer on this subscription is already in progress."
+      )
     }
 
     // @Note this short-circuit is important. As explained in Laminar comments,
@@ -81,21 +90,24 @@ class TransferableSubscription(
           // because there is no gap in ownership, just a transfer.
           // (proof – the previous subscription is active)
           if (!isLiveTransferInProgress) {
-            //println(s"    - activating pilot dynSub which is:")
+            // println(s"    - activating pilot dynSub which is:")
             activate()
           }
-          new Subscription(parentOwner, cleanup = () => {
-            // If transfer is in progress when this cleanup happens, this means this cleanup
-            // method was be called when killing the PREVIOUS subscription that we're replacing,
-            // so we need to skip deactivation here because now the NEW subscription will do it instead.
-            if (!isLiveTransferInProgress) {
-              deactivate()
+          new Subscription(
+            parentOwner,
+            cleanup = () => {
+              // If transfer is in progress when this cleanup happens, this means this cleanup
+              // method was be called when killing the PREVIOUS subscription that we're replacing,
+              // so we need to skip deactivation here because now the NEW subscription will do it instead.
+              if (!isLiveTransferInProgress) {
+                deactivate()
+              }
             }
-          })
+          )
         }
       )
 
-      //println(s"    - created pilot $newPilotSubscription")
+      // println(s"    - created pilot $newPilotSubscription")
 
       maybeSubscription = Some(newPilotSubscription)
 
@@ -105,7 +117,9 @@ class TransferableSubscription(
 
   def clearOwner(): Unit = {
     if (isLiveTransferInProgress) {
-      throw new Exception("Unable to clear owner on DynamicTransferableSubscription while a transfer on this subscription is already in progress.")
+      throw new Exception(
+        "Unable to clear owner on DynamicTransferableSubscription while a transfer on this subscription is already in progress."
+      )
     }
 
     maybeSubscription.foreach { subscription =>

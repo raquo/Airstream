@@ -22,7 +22,9 @@ class ScanLeftSignalSpec extends UnitSpec {
     val bus = new EventBus[Int]
 
     val signal = bus.events
-      .scanLeft(initial = "numbers:"){ (acc, nextValue) => acc + " " + nextValue.toString }
+      .scanLeft(initial = "numbers:") { (acc, nextValue) =>
+        acc + " " + nextValue.toString
+      }
       .map(Calculation.log("signal", calculations))
 
     bus.writer.onNext(1)
@@ -101,7 +103,9 @@ class ScanLeftSignalSpec extends UnitSpec {
     val _var = Var(0)
 
     val signal = _var.signal
-      .scanLeft(makeInitial = initial => s"numbers: init=${initial}"){ (acc, nextValue) => acc + " " + nextValue.toString }
+      .scanLeft(makeInitial = initial => s"numbers: init=${initial}") {
+        (acc, nextValue) => acc + " " + nextValue.toString
+      }
       .map(Calculation.log("signal", calculations))
 
     _var.writer.onNext(1)

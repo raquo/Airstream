@@ -14,7 +14,10 @@ object Effect {
     value
   }
 
-  def logObserver[V](name: String, to: mutable.Buffer[Effect[V]]): Observer[V] = {
+  def logObserver[V](
+      name: String,
+      to: mutable.Buffer[Effect[V]]
+  ): Observer[V] = {
     Observer[V](log(name, to))
   }
 }

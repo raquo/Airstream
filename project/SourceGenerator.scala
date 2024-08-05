@@ -21,7 +21,9 @@ abstract class SourceGenerator(outputFile: File) {
     List(outputFile)
   }
 
-  protected def enter(prefix: String, suffix: String = "")(inside: => Unit): Unit = {
+  protected def enter(prefix: String, suffix: String = "")(
+      inside: => Unit
+  ): Unit = {
     line(prefix)
     val originalIndent = currentIndent
     currentIndent = currentIndent + indentStep
@@ -41,14 +43,23 @@ abstract class SourceGenerator(outputFile: File) {
     printStream.println()
   }
 
-  protected def tupleType(size: Int, prefix: String = "T", suffix: String = "", separator: String = ", "): String =
+  protected def tupleType(
+      size: Int,
+      prefix: String = "T",
+      suffix: String = "",
+      separator: String = ", "
+  ): String =
     tupleTypeRaw(size, prefix, suffix).mkString(separator)
 
   protected def tupleAccess(size: Int, varName: String): String = {
     tupleAccessRaw(size, varName).mkString(", ")
   }
 
-  private def tupleTypeRaw(size: Int, prefix: String = "T", suffix: String = ""): Seq[String] = {
+  private def tupleTypeRaw(
+      size: Int,
+      prefix: String = "T",
+      suffix: String = ""
+  ): Seq[String] = {
     (1 to size).map(i => s"${prefix}${i}${suffix}")
   }
 

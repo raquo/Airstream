@@ -10,16 +10,18 @@ class JsPriorityQueue[A](getRank: A => Int) {
     val itemRank = getRank(item)
     var insertAtIndex = 0
     var foundHigherRank = false
-    while (
-      insertAtIndex < queue.length && !foundHigherRank
-    ) {
+    while (insertAtIndex < queue.length && !foundHigherRank) {
       if (getRank(queue(insertAtIndex)) > itemRank) {
         foundHigherRank = true
       } else {
         insertAtIndex += 1
       }
     }
-    queue.splice(index = insertAtIndex, deleteCount = 0, item) // insert at index
+    queue.splice(
+      index = insertAtIndex,
+      deleteCount = 0,
+      item
+    ) // insert at index
   }
 
   /** Note: throws exception if there are no items in the queue */

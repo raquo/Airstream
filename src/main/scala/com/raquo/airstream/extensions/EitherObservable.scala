@@ -3,7 +3,9 @@ package com.raquo.airstream.extensions
 import com.raquo.airstream.core.{BaseObservable, Observable}
 
 /** See also: [[EitherStream]] */
-class EitherObservable[A, B, Self[+_] <: Observable[_]](val observable: BaseObservable[Self, Either[A, B]]) extends AnyVal {
+class EitherObservable[A, B, Self[+_] <: Observable[_]](
+    val observable: BaseObservable[Self, Either[A, B]]
+) extends AnyVal {
 
   /** Maps the value in Right(x) */
   def mapRight[BB](project: B => BB): Self[Either[A, BB]] = {
@@ -17,8 +19,8 @@ class EitherObservable[A, B, Self[+_] <: Observable[_]](val observable: BaseObse
 
   /** Maps the values in Left(y) and Right(x) */
   def foldEither[C](
-    left: A => C,
-    right: B => C
+      left: A => C,
+      right: B => C
   ): Self[C] = {
     observable.map(_.fold(left, right))
   }

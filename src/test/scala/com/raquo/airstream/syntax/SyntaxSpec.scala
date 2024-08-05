@@ -19,36 +19,47 @@ class SyntaxSpec extends UnitSpec {
     case class Foo(a: Int, b: Int, c: Boolean, d: String)
 
     locally {
-      val tuple4stream = bus.events.combineWith(bus1.events, bus2.events, bus3.events)
+      val tuple4stream =
+        bus.events.combineWith(bus1.events, bus2.events, bus3.events)
       tuple4stream: EventStream[(Int, Int, Boolean, String)]
     }
 
     locally {
-      val tuple4stream = bus.events.combineWithFn(bus1.events, bus2.events, bus3.events)(Foo.apply)
+      val tuple4stream =
+        bus.events.combineWithFn(bus1.events, bus2.events, bus3.events)(
+          Foo.apply
+        )
       tuple4stream: EventStream[Foo]
     }
 
     locally {
-      val fooStream = bus.events.withCurrentValueOf(
-        bus1.events.startWith(0),
-        bus2.events.startWith(false),
-        bus3.events.startWith("")
-      ).mapN(Foo.apply)
+      val fooStream = bus.events
+        .withCurrentValueOf(
+          bus1.events.startWith(0),
+          bus2.events.startWith(false),
+          bus3.events.startWith("")
+        )
+        .mapN(Foo.apply)
       fooStream: EventStream[Foo]
     }
 
     // --
 
     locally {
-      val tuple4stream = bus.events.combineWith(bus1.events).combineWith(bus2.events, bus3.events)
+      val tuple4stream = bus.events
+        .combineWith(bus1.events)
+        .combineWith(bus2.events, bus3.events)
       tuple4stream: EventStream[(Int, Int, Boolean, String)]
     }
 
     locally {
-      val fooStream = bus.events.withCurrentValueOf(bus1.events.startWith(0)).withCurrentValueOf(
-        bus2.events.startWith(false),
-        bus3.events.startWith("")
-      ).mapN(Foo.apply)
+      val fooStream = bus.events
+        .withCurrentValueOf(bus1.events.startWith(0))
+        .withCurrentValueOf(
+          bus2.events.startWith(false),
+          bus3.events.startWith("")
+        )
+        .mapN(Foo.apply)
       fooStream: EventStream[Foo]
     }
   }
@@ -68,7 +79,12 @@ class SyntaxSpec extends UnitSpec {
     }
 
     locally {
-      val combinedStream = EventStream.combineWithFn(bus.events, bus1.events, bus2.events, bus3.events)(Foo.apply)
+      val combinedStream = EventStream.combineWithFn(
+        bus.events,
+        bus1.events,
+        bus2.events,
+        bus3.events
+      )(Foo.apply)
       combinedStream: EventStream[Foo]
     }
   }
@@ -78,12 +94,18 @@ class SyntaxSpec extends UnitSpec {
     val bus = new EventBus[Int]
 
     locally {
-      val flatStream = bus.events.flatMapSwitch(a => EventStream.fromFuture(Future.successful(a)))
+      val flatStream = bus.events.flatMapSwitch(a =>
+        EventStream.fromFuture(Future.successful(a))
+      )
       flatStream: EventStream[Int]
     }
 
     locally {
-      val flatSignal = bus.events.startWith(0).flatMapSwitch(a => Signal.fromFuture(Future.successful(a), initial = 0))
+      val flatSignal = bus.events
+        .startWith(0)
+        .flatMapSwitch(a =>
+          Signal.fromFuture(Future.successful(a), initial = 0)
+        )
       flatSignal: Signal[Int]
     }
   }

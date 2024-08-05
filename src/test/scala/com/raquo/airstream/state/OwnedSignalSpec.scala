@@ -47,7 +47,10 @@ class OwnedSignalSpec extends UnitSpec {
 
     bus.writer.onNext(2)
 
-    calculations shouldBe mutable.Buffer(Calculation("bus", 2), Calculation("signal", 20))
+    calculations shouldBe mutable.Buffer(
+      Calculation("bus", 2),
+      Calculation("signal", 20)
+    )
     calculations.clear()
 
     signalViewer.now() shouldBe 20

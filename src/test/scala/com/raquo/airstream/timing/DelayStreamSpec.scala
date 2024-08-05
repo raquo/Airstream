@@ -21,7 +21,6 @@ class DelayStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
     effects.clear()
   }
 
-
   it("events are delayed, and purged on stop") {
     val bus = new EventBus[Int]
     val stream = bus.events.delay(30)

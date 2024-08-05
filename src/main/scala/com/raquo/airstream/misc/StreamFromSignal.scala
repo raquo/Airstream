@@ -6,9 +6,10 @@ import com.raquo.airstream.core.{Protected, Signal, Transaction}
 import scala.util.Try
 
 class StreamFromSignal[A](
-  override protected[this] val parent: Signal[A],
-  changesOnly: Boolean
-) extends SingleParentStream[A, A] with InternalTryObserver[A] {
+    override protected[this] val parent: Signal[A],
+    changesOnly: Boolean
+) extends SingleParentStream[A, A]
+    with InternalTryObserver[A] {
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
@@ -43,7 +44,10 @@ class StreamFromSignal[A](
     super.onStart()
   }
 
-  override protected def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
+  override protected def onTry(
+      nextValue: Try[A],
+      transaction: Transaction
+  ): Unit = {
     fireTry(nextValue, transaction)
     lastSeenParentUpdateId = Protected.lastUpdateId(parent)
     isFirstPull = false

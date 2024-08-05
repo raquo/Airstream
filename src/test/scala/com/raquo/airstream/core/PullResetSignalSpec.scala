@@ -3,7 +3,12 @@ package com.raquo.airstream.core
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
-import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, Owner, Subscription}
+import com.raquo.airstream.ownership.{
+  DynamicOwner,
+  DynamicSubscription,
+  Owner,
+  Subscription
+}
 import com.raquo.airstream.state.Var
 
 import scala.collection.mutable
@@ -12,14 +17,18 @@ class PullResetSignalSpec extends UnitSpec {
 
   it("signal.changes & startWith") {
 
-    test(CACHE_INITIAL_VALUE = false/*, EMIT_CHANGE_ON_RESTART = true*/)
-    //test(CACHE_INITIAL_VALUE = false, EMIT_CHANGE_ON_RESTART = false)
-    //test(CACHE_INITIAL_VALUE = true, EMIT_CHANGE_ON_RESTART = true)
-    test(CACHE_INITIAL_VALUE = true/*, EMIT_CHANGE_ON_RESTART = false*/)
+    test(CACHE_INITIAL_VALUE = false /*, EMIT_CHANGE_ON_RESTART = true*/ )
+    // test(CACHE_INITIAL_VALUE = false, EMIT_CHANGE_ON_RESTART = false)
+    // test(CACHE_INITIAL_VALUE = true, EMIT_CHANGE_ON_RESTART = true)
+    test(CACHE_INITIAL_VALUE = true /*, EMIT_CHANGE_ON_RESTART = false*/ )
 
-    def test(CACHE_INITIAL_VALUE: Boolean/*, EMIT_CHANGE_ON_RESTART: Boolean*/): Unit = {
+    def test(
+        CACHE_INITIAL_VALUE: Boolean /*, EMIT_CHANGE_ON_RESTART: Boolean*/
+    ): Unit = {
 
-      withClue(s"Test with cacheInitialValue=$CACHE_INITIAL_VALUE" /* + s"emitChangeOnRestart=$EMIT_CHANGE_ON_RESTART"*/) {
+      withClue(
+        s"Test with cacheInitialValue=$CACHE_INITIAL_VALUE" /* + s"emitChangeOnRestart=$EMIT_CHANGE_ON_RESTART"*/
+      ) {
 
         implicit val testOwner: TestableOwner = new TestableOwner
 
@@ -30,18 +39,18 @@ class PullResetSignalSpec extends UnitSpec {
 
         val _var = Var(1)
 
-        val upSignal = _var
-          .signal
+        val upSignal = _var.signal
           .setDisplayName("varSignal")
           .map(identity)
           .setDisplayName("varSignal.map(identity)")
           .map(Calculation.log("up", calculations))
           .setDisplayName("varSignal.map(identity).map")
 
-        val changesStream = upSignal.changes //(if (EMIT_CHANGE_ON_RESTART) upSignal.changesEmitChangeOnRestart else upSignal.changes)
-          .setDisplayName("upSignal.changes")
-          .map(Calculation.log("changes", calculations))
-          .setDisplayName("upSignal.changes.map")
+        val changesStream =
+          upSignal.changes // (if (EMIT_CHANGE_ON_RESTART) upSignal.changesEmitChangeOnRestart else upSignal.changes)
+            .setDisplayName("upSignal.changes")
+            .map(Calculation.log("changes", calculations))
+            .setDisplayName("upSignal.changes.map")
 
         val downSignal = changesStream
           .startWith(downInitial, cacheInitialValue = CACHE_INITIAL_VALUE)
@@ -68,7 +77,7 @@ class PullResetSignalSpec extends UnitSpec {
         )
         effects shouldBe mutable.Buffer(
           Effect("up-obs", 1),
-          Effect("down-obs", 0),
+          Effect("down-obs", 0)
         )
         calculations.clear()
         effects.clear()
@@ -84,14 +93,14 @@ class PullResetSignalSpec extends UnitSpec {
         if (CACHE_INITIAL_VALUE) {
           calculations shouldBe mutable.Buffer()
           effects shouldBe mutable.Buffer(
-            Effect("down-obs", 0),
+            Effect("down-obs", 0)
           )
         } else {
           calculations shouldBe mutable.Buffer(
             Calculation("down", 10)
           )
           effects shouldBe mutable.Buffer(
-            Effect("down-obs", 10),
+            Effect("down-obs", 10)
           )
         }
 
@@ -165,7 +174,7 @@ class PullResetSignalSpec extends UnitSpec {
 
         downSignal.addObserver(downObs)
 
-        //if (EMIT_CHANGE_ON_RESTART) {
+        // if (EMIT_CHANGE_ON_RESTART) {
         //  // Emitting `2` is undesirable here, which is why `emitChangeOnRestart` is off by default.
         //  // It would be great if we could get only `3`, but it's not possible to fetch this without
         //  // processing the event through the streams, because it can have a) asynchronous and
@@ -182,20 +191,20 @@ class PullResetSignalSpec extends UnitSpec {
         //    Effect("down-obs", 2),
         //    Effect("down-obs", 3)
         //  )
-        //} else {
+        // } else {
 
-          calculations shouldBe mutable.Buffer(
-            Calculation("changes", 3),
-            Calculation("down", 3)
-          )
-          // The signal re-starts with an old value because it can't pull a fresh value from the streams,
-          // but then the .changes stream pulls the new value from its parent, and propagates it down,
-          // but that only happens in a new transaction, so we have
-          effects shouldBe mutable.Buffer(
-            Effect("down-obs", 2),
-            Effect("down-obs", 3),
-          )
-        //}
+        calculations shouldBe mutable.Buffer(
+          Calculation("changes", 3),
+          Calculation("down", 3)
+        )
+        // The signal re-starts with an old value because it can't pull a fresh value from the streams,
+        // but then the .changes stream pulls the new value from its parent, and propagates it down,
+        // but that only happens in a new transaction, so we have
+        effects shouldBe mutable.Buffer(
+          Effect("down-obs", 2),
+          Effect("down-obs", 3)
+        )
+        // }
 
         calculations.clear()
         effects.clear()
@@ -212,26 +221,33 @@ class PullResetSignalSpec extends UnitSpec {
 
     val v = Var(1)
 
-    def changes(name: String) = v
-      .signal.setDisplayName("VarSignal")
-      .changes.setDisplayName("VarSignal.changes." + name)
+    def changes(name: String) = v.signal
+      .setDisplayName("VarSignal")
+      .changes
+      .setDisplayName("VarSignal.changes." + name)
 
-    val isPositiveS = changes("IsPositive").map { num =>
-      val isPositive = num > 0
-      log += s"$num isPositive = $isPositive"
-      isPositive
-    }.setDisplayName("IsPositive")
+    val isPositiveS = changes("IsPositive")
+      .map { num =>
+        val isPositive = num > 0
+        log += s"$num isPositive = $isPositive"
+        isPositive
+      }
+      .setDisplayName("IsPositive")
 
-    val isEvenS = changes("IsEven").map { num =>
-      val isEven = num % 2 == 0
-      log += s"$num isEven = $isEven"
-      isEven
-    }.setDisplayName("IsEven")
+    val isEvenS = changes("IsEven")
+      .map { num =>
+        val isEven = num % 2 == 0
+        log += s"$num isEven = $isEven"
+        isEven
+      }
+      .setDisplayName("IsEven")
 
-    val combinedS = changes("Combined").combineWithFn(isPositiveS, isEvenS) { (num, isPositive, isEven) =>
-      log += s"$num isPositive = $isPositive, isEven = $isEven"
-      (isPositive, isEven)
-    }.setDisplayName("Combined")
+    val combinedS = changes("Combined")
+      .combineWithFn(isPositiveS, isEvenS) { (num, isPositive, isEven) =>
+        log += s"$num isPositive = $isPositive, isEven = $isEven"
+        (isPositive, isEven)
+      }
+      .setDisplayName("Combined")
 
     val resultS = combinedS.startWith((false, false)).setDisplayName("Result")
 
@@ -299,33 +315,42 @@ class PullResetSignalSpec extends UnitSpec {
 
   }
 
-  it("signal.changes sync with multiple observers (Transaction.onStart.pendingCallbacks)") {
+  it(
+    "signal.changes sync with multiple observers (Transaction.onStart.pendingCallbacks)"
+  ) {
 
     val log = mutable.Buffer[String]()
 
     val v = Var(1)
 
     // #Note: in this test the changes are shared, intentionally.
-    val changes = v
-      .signal.setDisplayName("VarSignal")
-      .changes.setDisplayName("VarSignal.changes")
+    val changes = v.signal
+      .setDisplayName("VarSignal")
+      .changes
+      .setDisplayName("VarSignal.changes")
 
-    val isPositive = changes.map { num =>
-      val isPositive = num > 0
-      log += s"$num isPositive = $isPositive"
-      isPositive
-    }.setDisplayName("IsPositive")
+    val isPositive = changes
+      .map { num =>
+        val isPositive = num > 0
+        log += s"$num isPositive = $isPositive"
+        isPositive
+      }
+      .setDisplayName("IsPositive")
 
-    val isEven = changes.map { num =>
-      val isEven = num % 2 == 0
-      log += s"$num isEven = $isEven"
-      isEven
-    }.setDisplayName("IsEven")
+    val isEven = changes
+      .map { num =>
+        val isEven = num % 2 == 0
+        log += s"$num isEven = $isEven"
+        isEven
+      }
+      .setDisplayName("IsEven")
 
-    val combined = changes.combineWithFn(isPositive, isEven) { (num, isPositive, isEven) =>
-      log += s"$num isPositive = $isPositive, isEven = $isEven"
-      (isPositive, isEven)
-    }.setDisplayName("Combined")
+    val combined = changes
+      .combineWithFn(isPositive, isEven) { (num, isPositive, isEven) =>
+        log += s"$num isPositive = $isPositive, isEven = $isEven"
+        (isPositive, isEven)
+      }
+      .setDisplayName("Combined")
 
     val owner = new TestableOwner
 
@@ -390,7 +415,9 @@ class PullResetSignalSpec extends UnitSpec {
 
     v.set(-8)
 
-    val dynOwner = new DynamicOwner(() => throw new Exception("Accessing dynamic owner after it is killed"))
+    val dynOwner = new DynamicOwner(() =>
+      throw new Exception("Accessing dynamic owner after it is killed")
+    )
     DynamicSubscription.unsafe(
       dynOwner,
       activate = { o =>
@@ -449,29 +476,36 @@ class PullResetSignalSpec extends UnitSpec {
     val v = Var(-2)
 
     // #Note: in this test the changes are shared, intentionally.
-    val changes = v
-      .signal.setDisplayName("VarSignal")
-      .changes.setDisplayName("VarSignal.changes")
+    val changes = v.signal
+      .setDisplayName("VarSignal")
+      .changes
+      .setDisplayName("VarSignal.changes")
 
-    val isPositive = changes.map { num =>
-      val isPositive = num > 0
-      log += s"$num isPositive = $isPositive"
-      isPositive
-    }.setDisplayName("IsPositive")
-
-    val isEven = changes.map { num =>
-      if (num == errorNumber) {
-        throw new Exception(errorNumberMsg)
+    val isPositive = changes
+      .map { num =>
+        val isPositive = num > 0
+        log += s"$num isPositive = $isPositive"
+        isPositive
       }
-      val isEven = num % 2 == 0
-      log += s"$num isEven = $isEven"
-      isEven
-    }.setDisplayName("IsEven")
+      .setDisplayName("IsPositive")
 
-    val combined = changes.combineWithFn(isPositive, isEven) { (num, isPositive, isEven) =>
-      log += s"$num isPositive = $isPositive, isEven = $isEven"
-      (isPositive, isEven)
-    }.setDisplayName("Combined")
+    val isEven = changes
+      .map { num =>
+        if (num == errorNumber) {
+          throw new Exception(errorNumberMsg)
+        }
+        val isEven = num % 2 == 0
+        log += s"$num isEven = $isEven"
+        isEven
+      }
+      .setDisplayName("IsEven")
+
+    val combined = changes
+      .combineWithFn(isPositive, isEven) { (num, isPositive, isEven) =>
+        log += s"$num isPositive = $isPositive, isEven = $isEven"
+        (isPositive, isEven)
+      }
+      .setDisplayName("Combined")
 
     val owner = new TestableOwner
 
@@ -536,7 +570,8 @@ class PullResetSignalSpec extends UnitSpec {
 
     v.set(-8)
 
-    val dynOwner = new DynamicOwner(() => throw new Exception(accessAfterKillErrorMsg))
+    val dynOwner =
+      new DynamicOwner(() => throw new Exception(accessAfterKillErrorMsg))
 
     var tempOwner: Owner = null
 
@@ -615,7 +650,6 @@ class PullResetSignalSpec extends UnitSpec {
     )
     log.clear()
 
-
     // --
 
     dynOwner.deactivate()
@@ -630,7 +664,9 @@ class PullResetSignalSpec extends UnitSpec {
     }
 
     AirstreamError.registerUnhandledErrorCallback(errorCallback)
-    AirstreamError.unregisterUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
+    AirstreamError.unregisterUnhandledErrorCallback(
+      AirstreamError.consoleErrorCallback
+    )
 
     try {
       Transaction { _ =>
@@ -699,12 +735,13 @@ class PullResetSignalSpec extends UnitSpec {
     } catch {
       case err: Throwable => throw err
     } finally {
-      AirstreamError.registerUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
+      AirstreamError.registerUnhandledErrorCallback(
+        AirstreamError.consoleErrorCallback
+      )
       AirstreamError.unregisterUnhandledErrorCallback(errorCallback)
     }
 
   }
-
 
   it("CombineEventStreamN") {
 
@@ -812,8 +849,7 @@ class PullResetSignalSpec extends UnitSpec {
     val var1 = Var(T1(0))
     val var2 = Var(T2(0))
 
-    val combinedSignal = var1
-      .signal
+    val combinedSignal = var1.signal
       .setDisplayName("var1.signal")
       .map { t =>
         calculations += Calculation("signal1", t.v)
@@ -821,8 +857,7 @@ class PullResetSignalSpec extends UnitSpec {
       }
       .setDisplayName("var1.signal.map")
       .combineWith(
-        var2
-          .signal
+        var2.signal
           .setDisplayName("var2.signal")
           .map { t =>
             calculations += Calculation("signal2", t.v)
@@ -845,7 +880,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     calculations.toList shouldBe List(
       Calculation("signal1", 0),
-      Calculation("signal2", 0),
+      Calculation("signal2", 0)
     )
     effects.toList shouldBe List(
       (T1(0), T2(0))
@@ -853,7 +888,6 @@ class PullResetSignalSpec extends UnitSpec {
 
     calculations.clear()
     effects.clear()
-
 
     // --
 
@@ -908,7 +942,6 @@ class PullResetSignalSpec extends UnitSpec {
 
     // --
 
-
     var1.writer.onNext(T1(10))
 
     calculations.toList shouldBe List(
@@ -932,8 +965,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     val _var = Var(1)
 
-    val signal = _var
-      .signal
+    val signal = _var.signal
       .map(Calculation.log("signal", calculations))
 
     val signal_x10 = signal
@@ -1037,13 +1069,12 @@ class PullResetSignalSpec extends UnitSpec {
       .startWith("big-0")
       .setDisplayName("BigSignal")
 
-    val flatSignal = outerBus
-      .events
+    val flatSignal = outerBus.events
       .startWith(0)
       .setDisplayName("OuterBus.startWith")
       .map {
         case i if i >= 10 => bigSignal
-        case _ => smallSignal
+        case _            => smallSignal
       }
       .setDisplayName("MetaSignal")
       .flattenSwitch
@@ -1055,11 +1086,13 @@ class PullResetSignalSpec extends UnitSpec {
 
     flatSignal.addObserver(Observer.empty)
 
-    assert(calculations.toList == List(
-      Calculation("flat", "small-0"),
-      Calculation("flat", "small-1"),
-      Calculation("flat", "small-2"),
-    ))
+    assert(
+      calculations.toList == List(
+        Calculation("flat", "small-0"),
+        Calculation("flat", "small-1"),
+        Calculation("flat", "small-2")
+      )
+    )
 
     calculations.clear()
 
@@ -1083,11 +1116,13 @@ class PullResetSignalSpec extends UnitSpec {
 
     outerBus.writer.onNext(10) // #Note switch to big
 
-    assert(calculations.toList == List(
-      Calculation("flat", "big-0"),
-      Calculation("flat", "big-1"),
-      Calculation("flat", "big-2")
-    ))
+    assert(
+      calculations.toList == List(
+        Calculation("flat", "big-0"),
+        Calculation("flat", "big-1"),
+        Calculation("flat", "big-2")
+      )
+    )
 
     calculations.clear()
 
@@ -1103,9 +1138,11 @@ class PullResetSignalSpec extends UnitSpec {
 
     outerBus.writer.onNext(5) // #Note switch back to small
 
-    assert(calculations.toList == List(
-      Calculation("flat", "small-2") // Restore current value of small signal
-    ))
+    assert(
+      calculations.toList == List(
+        Calculation("flat", "small-2") // Restore current value of small signal
+      )
+    )
 
     calculations.clear()
 
@@ -1127,30 +1164,50 @@ class PullResetSignalSpec extends UnitSpec {
 
     val bigBus = new EventBus[String].setDisplayName("BigBus")
 
-    val smallSignal = EventStream.merge(
-      smallBus.events,
-      EventStream.fromSeq("small-1" :: "small-2" :: Nil, emitOnce = true).setDisplayName("SmallSeqStream")
-    ).setDisplayName("SmallMergeStream").startWith("small-0").setDisplayName("SmallSignal")
+    val smallSignal = EventStream
+      .merge(
+        smallBus.events,
+        EventStream
+          .fromSeq("small-1" :: "small-2" :: Nil, emitOnce = true)
+          .setDisplayName("SmallSeqStream")
+      )
+      .setDisplayName("SmallMergeStream")
+      .startWith("small-0")
+      .setDisplayName("SmallSignal")
 
-    val bigSignal = EventStream.merge(
-      bigBus.events,
-      EventStream.fromSeq("big-1" :: "big-2" :: Nil, emitOnce = true).setDisplayName("BigSeqStream")
-    ).setDisplayName("BigMergeStream").startWith("big-0").setDisplayName("BigSignal")
+    val bigSignal = EventStream
+      .merge(
+        bigBus.events,
+        EventStream
+          .fromSeq("big-1" :: "big-2" :: Nil, emitOnce = true)
+          .setDisplayName("BigSeqStream")
+      )
+      .setDisplayName("BigMergeStream")
+      .startWith("big-0")
+      .setDisplayName("BigSignal")
 
-    val flatSignal = outerBus.events.startWith(0).setDisplayName("OuterBus.startWith").flatMapSwitch {
-      case i if i >= 10 => bigSignal
-      case _ => smallSignal
-    }.setDisplayName("FlatSignal").map(Calculation.log("flat", calculations)).setDisplayName("FlatSignal--LOG")
+    val flatSignal = outerBus.events
+      .startWith(0)
+      .setDisplayName("OuterBus.startWith")
+      .flatMapSwitch {
+        case i if i >= 10 => bigSignal
+        case _            => smallSignal
+      }
+      .setDisplayName("FlatSignal")
+      .map(Calculation.log("flat", calculations))
+      .setDisplayName("FlatSignal--LOG")
 
     // --
 
     flatSignal.addObserver(Observer.empty)
 
-    assert(calculations.toList == List(
-      Calculation("flat", "small-0"),
-      Calculation("flat", "small-1"),
-      Calculation("flat", "small-2"),
-    ))
+    assert(
+      calculations.toList == List(
+        Calculation("flat", "small-0"),
+        Calculation("flat", "small-1"),
+        Calculation("flat", "small-2")
+      )
+    )
 
     calculations.clear()
 
@@ -1158,9 +1215,11 @@ class PullResetSignalSpec extends UnitSpec {
 
     smallBus.writer.onNext("small-bus-0")
 
-    assert(calculations.toList == List(
-      Calculation("flat", "small-bus-0")
-    ))
+    assert(
+      calculations.toList == List(
+        Calculation("flat", "small-bus-0")
+      )
+    )
 
     calculations.clear()
 
@@ -1174,9 +1233,11 @@ class PullResetSignalSpec extends UnitSpec {
 
     smallBus.writer.onNext("small-bus-1")
 
-    assert(calculations.toList == List(
-      Calculation("flat", "small-bus-1")
-    ))
+    assert(
+      calculations.toList == List(
+        Calculation("flat", "small-bus-1")
+      )
+    )
 
     calculations.clear()
 
@@ -1190,9 +1251,11 @@ class PullResetSignalSpec extends UnitSpec {
 
     smallBus.writer.onNext("small-bus-2")
 
-    assert(calculations.toList == List(
-      Calculation("flat", "small-bus-2")
-    ))
+    assert(
+      calculations.toList == List(
+        Calculation("flat", "small-bus-2")
+      )
+    )
 
     calculations.clear()
 
@@ -1200,11 +1263,13 @@ class PullResetSignalSpec extends UnitSpec {
 
     outerBus.writer.onNext(10) // #Note switch to big
 
-    assert(calculations.toList == List(
-      Calculation("flat", "big-0"),
-      Calculation("flat", "big-1"),
-      Calculation("flat", "big-2")
-    ))
+    assert(
+      calculations.toList == List(
+        Calculation("flat", "big-0"),
+        Calculation("flat", "big-1"),
+        Calculation("flat", "big-2")
+      )
+    )
 
     calculations.clear()
 
@@ -1218,9 +1283,11 @@ class PullResetSignalSpec extends UnitSpec {
 
     bigBus.writer.onNext("big-bus-1")
 
-    assert(calculations.toList == List(
-      Calculation("flat", "big-bus-1")
-    ))
+    assert(
+      calculations.toList == List(
+        Calculation("flat", "big-bus-1")
+      )
+    )
 
     calculations.clear()
 
@@ -1234,9 +1301,11 @@ class PullResetSignalSpec extends UnitSpec {
 
     bigBus.writer.onNext("big-bus-2")
 
-    assert(calculations.toList == List(
-      Calculation("flat", "big-bus-2")
-    ))
+    assert(
+      calculations.toList == List(
+        Calculation("flat", "big-bus-2")
+      )
+    )
 
     calculations.clear()
 
@@ -1244,9 +1313,14 @@ class PullResetSignalSpec extends UnitSpec {
 
     outerBus.writer.onNext(5) // #Note switch back to small
 
-    assert(calculations.toList == List(
-      Calculation("flat", "small-bus-2") // Restore current value of small signal
-    ))
+    assert(
+      calculations.toList == List(
+        Calculation(
+          "flat",
+          "small-bus-2"
+        ) // Restore current value of small signal
+      )
+    )
 
     calculations.clear()
 
@@ -1254,9 +1328,11 @@ class PullResetSignalSpec extends UnitSpec {
 
     smallBus.writer.onNext("small-bus-3")
 
-    assert(calculations.toList == List(
-      Calculation("flat", "small-bus-3")
-    ))
+    assert(
+      calculations.toList == List(
+        Calculation("flat", "small-bus-3")
+      )
+    )
 
     calculations.clear()
 

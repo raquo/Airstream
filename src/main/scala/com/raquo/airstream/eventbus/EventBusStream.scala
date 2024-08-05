@@ -1,12 +1,18 @@
 package com.raquo.airstream.eventbus
 
 import com.raquo.airstream.common.InternalNextErrorObserver
-import com.raquo.airstream.core.{EventStream, Protected, Transaction, WritableStream}
+import com.raquo.airstream.core.{
+  EventStream,
+  Protected,
+  Transaction,
+  WritableStream
+}
 import com.raquo.ew.JsArray
 
 class EventBusStream[A] private[eventbus] (
-  parentDisplayName: => String
-) extends WritableStream[A] with InternalNextErrorObserver[A] {
+    parentDisplayName: => String
+) extends WritableStream[A]
+    with InternalNextErrorObserver[A] {
 
   private val sourceStreams: JsArray[EventStream[A]] = JsArray()
 
@@ -15,7 +21,9 @@ class EventBusStream[A] private[eventbus] (
 
   override protected val topoRank: Int = 1
 
-  @inline private[eventbus] def addSource(sourceStream: EventStream[A]): Unit = {
+  @inline private[eventbus] def addSource(
+      sourceStream: EventStream[A]
+  ): Unit = {
     sourceStreams.push(sourceStream)
     if (isStarted) {
       sourceStream.addInternalObserver(this, shouldCallMaybeWillStart = true)
@@ -32,31 +40,50 @@ class EventBusStream[A] private[eventbus] (
     }
   }
 
-  /** @param ignoredTransaction normally EventBus emits all events in a new transaction, so it ignores whatever is provided. */
-  override protected def onNext(nextValue: A, ignoredTransaction: Transaction): Unit = {
-    //dom.console.log(s">>>>WBS.onNext($nextValue): isStarted=$isStarted")
-    //dom.console.log(sources)
+  /** @param ignoredTransaction
+    *   normally EventBus emits all events in a new transaction, so it ignores
+    *   whatever is provided.
+    */
+  override protected def onNext(
+      nextValue: A,
+      ignoredTransaction: Transaction
+  ): Unit = {
+    // dom.console.log(s">>>>WBS.onNext($nextValue): isStarted=$isStarted")
+    // dom.console.log(sources)
 
     // Note: We're not checking isStarted here because if this stream wasn't started, it wouldn't have been
     // fired as an internal observer. WriteBus calls this method manually, so it checks .isStarted on its own.
     // @TODO ^^^^ We should document this contract in InternalObserver
 
-    //println(s"> init trx from EventBusStream(${nextValue})")
+    // println(s"> init trx from EventBusStream(${nextValue})")
 
     Transaction(fireValue(nextValue, _))
   }
 
-  /** Helper method to support batch emit using `WriteBus.emit` / `WriteBus.emitTry` */
-  private[eventbus] def onNextWithSharedTransaction(nextValue: A, sharedTransaction: Transaction): Unit = {
+  /** Helper method to support batch emit using `WriteBus.emit` /
+    * `WriteBus.emitTry`
+    */
+  private[eventbus] def onNextWithSharedTransaction(
+      nextValue: A,
+      sharedTransaction: Transaction
+  ): Unit = {
     fireValue(nextValue, sharedTransaction)
   }
 
-  /** Helper method to support batch emit using `WriteBus.emit` / `WriteBus.emitTry` */
-  private[eventbus] def onErrorWithSharedTransaction(nextError: Throwable, sharedTransaction: Transaction): Unit = {
+  /** Helper method to support batch emit using `WriteBus.emit` /
+    * `WriteBus.emitTry`
+    */
+  private[eventbus] def onErrorWithSharedTransaction(
+      nextError: Throwable,
+      sharedTransaction: Transaction
+  ): Unit = {
     fireError(nextError, sharedTransaction)
   }
 
-  override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
+  override protected def onError(
+      nextError: Throwable,
+      transaction: Transaction
+  ): Unit = {
     Transaction(fireError(nextError, _))
   }
 
@@ -65,7 +92,9 @@ class EventBusStream[A] private[eventbus] (
   }
 
   override protected[this] def onStart(): Unit = {
-    sourceStreams.forEach(_.addInternalObserver(this, shouldCallMaybeWillStart = false))
+    sourceStreams.forEach(
+      _.addInternalObserver(this, shouldCallMaybeWillStart = false)
+    )
     super.onStart()
   }
 
@@ -75,5 +104,6 @@ class EventBusStream[A] private[eventbus] (
     super.onStop()
   }
 
-  override protected def defaultDisplayName: String = parentDisplayName + ".events"
+  override protected def defaultDisplayName: String =
+    parentDisplayName + ".events"
 }

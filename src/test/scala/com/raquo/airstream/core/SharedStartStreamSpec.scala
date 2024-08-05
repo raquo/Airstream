@@ -2,7 +2,11 @@ package com.raquo.airstream.core
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.fixtures.Effect
-import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, Subscription}
+import com.raquo.airstream.ownership.{
+  DynamicOwner,
+  DynamicSubscription,
+  Subscription
+}
 
 import scala.collection.mutable
 
@@ -10,7 +14,9 @@ class SharedStartStreamSpec extends UnitSpec {
 
   it("EventStream.fromValue() / CustomStreamSource") {
 
-    val dynOwner = new DynamicOwner(() => throw new Exception("Accessing dynamic owner after it is killed"))
+    val dynOwner = new DynamicOwner(() =>
+      throw new Exception("Accessing dynamic owner after it is killed")
+    )
 
     val stream = EventStream.fromValue(1)
 
@@ -26,10 +32,13 @@ class SharedStartStreamSpec extends UnitSpec {
       activate = { o =>
         val sub1 = stream.addObserver(obs1)(o)
         val sub2 = stream.addObserver(obs2)(o)
-        new Subscription(o, cleanup = () => {
-          sub1.kill()
-          sub2.kill()
-        })
+        new Subscription(
+          o,
+          cleanup = () => {
+            sub1.kill()
+            sub2.kill()
+          }
+        )
       }
     )
 
@@ -39,10 +48,12 @@ class SharedStartStreamSpec extends UnitSpec {
 
     dynOwner.activate()
 
-    assert(effects.toList == List(
-      Effect("obs1", 1),
-      Effect("obs2", 1),
-    ))
+    assert(
+      effects.toList == List(
+        Effect("obs1", 1),
+        Effect("obs2", 1)
+      )
+    )
     effects.clear()
 
     // --
@@ -54,10 +65,12 @@ class SharedStartStreamSpec extends UnitSpec {
 
     dynOwner.activate()
 
-    assert(effects.toList == List(
-      Effect("obs1", 1),
-      Effect("obs2", 1),
-    ))
+    assert(
+      effects.toList == List(
+        Effect("obs1", 1),
+        Effect("obs2", 1)
+      )
+    )
     effects.clear()
 
   }

@@ -4,7 +4,11 @@ import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.{Observer, Signal, Transaction}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
-import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, ManualOwner}
+import com.raquo.airstream.ownership.{
+  DynamicOwner,
+  DynamicSubscription,
+  ManualOwner
+}
 import com.raquo.airstream.split.DuplicateKeysConfig
 import com.raquo.airstream.state.Var
 import com.raquo.ew.JsArray
@@ -45,9 +49,17 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
       val myVar = Var[List[Foo]](Foo("initial", 1) :: Nil)
 
-      val outerDynamicOwner = new DynamicOwner(() => throw new Exception("split outer dynamic owner accessed after it was killed"))
+      val outerDynamicOwner = new DynamicOwner(() =>
+        throw new Exception(
+          "split outer dynamic owner accessed after it was killed"
+        )
+      )
 
-      val innerDynamicOwner = new DynamicOwner(() => throw new Exception("split inner dynamic owner accessed after it was killed"))
+      val innerDynamicOwner = new DynamicOwner(() =>
+        throw new Exception(
+          "split inner dynamic owner accessed after it was killed"
+        )
+      )
 
       // #Note: important to activate now, we're testing this (see comments below)
       outerDynamicOwner.activate()
@@ -56,28 +68,39 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
       val signal = myVar.split(
-        key = _.id, distinctCompose = identity
-      )(
-        (key, initialFoo, fooVar) => {
-          assert(key == initialFoo.id, "Key does not match initial value")
-          effects += Effect(s"init-child-$key", key + "-" + initialFoo.version.toString)
-          // @Note keep foreach / addObserver here – this is important.
-          //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-          DynamicSubscription.subscribeCallback(
-            innerDynamicOwner,
-            owner => fooVar.signal.foreach { foo =>
-              assert(key == foo.id, "Subsequent value does not match initial key")
-              effects += Effect(s"update-child-$key", foo.id + "-" + foo.version.toString)
+        key = _.id,
+        distinctCompose = identity
+      )((key, initialFoo, fooVar) => {
+        assert(key == initialFoo.id, "Key does not match initial value")
+        effects += Effect(
+          s"init-child-$key",
+          key + "-" + initialFoo.version.toString
+        )
+        // @Note keep foreach / addObserver here – this is important.
+        //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
+        DynamicSubscription.subscribeCallback(
+          innerDynamicOwner,
+          owner =>
+            fooVar.signal.foreach { foo =>
+              assert(
+                key == foo.id,
+                "Subsequent value does not match initial key"
+              )
+              effects += Effect(
+                s"update-child-$key",
+                foo.id + "-" + foo.version.toString
+              )
             }(owner)
-          )
-          Bar(key)
-        })
+        )
+        Bar(key)
+      })
 
       DynamicSubscription.subscribeCallback(
         outerDynamicOwner,
-        owner => signal.foreach { result =>
-          effects += Effect("result", result.toString)
-        }(owner)
+        owner =>
+          signal.foreach { result =>
+            effects += Effect("result", result.toString)
+          }(owner)
       )
 
       effects shouldBe mutable.Buffer(
@@ -123,7 +146,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
         Effect("result", "List(Bar(b), Bar(a))"),
         Effect("update-child-initial", "initial-1"),
         Effect("update-child-b", "b-1"),
-        Effect("update-child-a", "a-3"),
+        Effect("update-child-a", "a-3")
       )
 
       effects.clear()
@@ -136,7 +159,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
       effects shouldBe mutable.Buffer(
         Effect("result", "List(Bar(b), Bar(a))"),
         Effect("update-child-b", "b-2"),
-        Effect("update-child-a", "a-3"),
+        Effect("update-child-a", "a-3")
       )
 
       effects.clear()
@@ -164,10 +187,10 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
       effects shouldBe mutable.Buffer(
         Effect("result", "List(Bar(a), Bar(b))"),
         Effect("update-child-b", "b-3"),
-        Effect("update-child-a", "a-4"),
+        Effect("update-child-a", "a-4")
       )
 
-      //effects.clear()
+      // effects.clear()
     }
   }
 
@@ -177,44 +200,73 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
       val myVar = Var[List[Foo]](Foo("initial", 1) :: Nil)
 
-      val outerDynamicOwner = new DynamicOwner(() => throw new Exception("split outer dynamic owner accessed after it was killed"))
+      val outerDynamicOwner = new DynamicOwner(() =>
+        throw new Exception(
+          "split outer dynamic owner accessed after it was killed"
+        )
+      )
 
-      val innerDynamicOwner = new DynamicOwner(() => throw new Exception("split inner dynamic owner accessed after it was killed"))
+      val innerDynamicOwner = new DynamicOwner(() =>
+        throw new Exception(
+          "split inner dynamic owner accessed after it was killed"
+        )
+      )
 
       // #Note: important to NOT activate the inner subscription right away, we're testing this (see comments below)
       outerDynamicOwner.activate()
-      //innerDynamicOwner.activate()
+      // innerDynamicOwner.activate()
 
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
-      val signal = myVar.signal.split(_.id, distinctCompose = identity)(project = (key, initialFoo, fooSignal) => {
-        assert(key == initialFoo.id, "Key does not match initial value")
-        effects += Effect(s"init-child-$key", key + "-" + initialFoo.version.toString)
-        DynamicSubscription.subscribeCallback(
-          innerDynamicOwner,
-          owner => fooSignal.foreach { foo =>
-            assert(key == foo.id, "Subsequent value does not match initial key")
-            effects += Effect(s"update-child-$key", foo.id + "-" + foo.version.toString)
-          }(owner)
+      val signal =
+        myVar.signal.split(_.id, distinctCompose = identity)(project =
+          (key, initialFoo, fooSignal) => {
+            assert(key == initialFoo.id, "Key does not match initial value")
+            effects += Effect(
+              s"init-child-$key",
+              key + "-" + initialFoo.version.toString
+            )
+            DynamicSubscription.subscribeCallback(
+              innerDynamicOwner,
+              owner =>
+                fooSignal.foreach { foo =>
+                  assert(
+                    key == foo.id,
+                    "Subsequent value does not match initial key"
+                  )
+                  effects += Effect(
+                    s"update-child-$key",
+                    foo.id + "-" + foo.version.toString
+                  )
+                }(owner)
+            )
+            // #Note: Test that our dropping logic works does not break events scheduled after transaction boundary
+            Transaction { _ =>
+              DynamicSubscription.subscribeCallback(
+                innerDynamicOwner,
+                owner =>
+                  fooSignal.foreach { foo =>
+                    assert(
+                      key == foo.id,
+                      "Subsequent value does not match initial key [new-trx]"
+                    )
+                    effects += Effect(
+                      s"new-trx-update-child-$key",
+                      foo.id + "-" + foo.version.toString
+                    )
+                  }(owner)
+              )
+            }
+            Bar(key)
+          }
         )
-        // #Note: Test that our dropping logic works does not break events scheduled after transaction boundary
-        Transaction { _ =>
-          DynamicSubscription.subscribeCallback(
-            innerDynamicOwner,
-            owner => fooSignal.foreach { foo =>
-              assert(key == foo.id, "Subsequent value does not match initial key [new-trx]")
-              effects += Effect(s"new-trx-update-child-$key", foo.id + "-" + foo.version.toString)
-            }(owner)
-          )
-        }
-        Bar(key)
-      })
 
       DynamicSubscription.subscribeCallback(
         outerDynamicOwner,
-        owner => signal.foreach { result =>
-          effects += Effect("result", result.toString)
-        }(owner)
+        owner =>
+          signal.foreach { result =>
+            effects += Effect("result", result.toString)
+          }(owner)
       )
 
       effects shouldBe mutable.Buffer(
@@ -230,7 +282,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
       effects shouldBe mutable.Buffer(
         Effect("update-child-initial", "initial-1"),
-        Effect("new-trx-update-child-initial", "initial-1"),
+        Effect("new-trx-update-child-initial", "initial-1")
       )
 
       effects.clear()
@@ -249,7 +301,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
         Effect("new-trx-update-child-a", "a-3")
       )
 
-      //effects.clear()
+      // effects.clear()
     }
   }
 
@@ -259,30 +311,52 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
       val myVar = Var[List[Foo]](Foo("initial", 1) :: Nil)
 
-      val outerDynamicOwner = new DynamicOwner(() => throw new Exception("split outer dynamic owner accessed after it was killed"))
+      val outerDynamicOwner = new DynamicOwner(() =>
+        throw new Exception(
+          "split outer dynamic owner accessed after it was killed"
+        )
+      )
 
-      val innerDynamicOwner = new DynamicOwner(() => throw new Exception("split inner dynamic owner accessed after it was killed"))
+      val innerDynamicOwner = new DynamicOwner(() =>
+        throw new Exception(
+          "split inner dynamic owner accessed after it was killed"
+        )
+      )
 
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
-      val signal = myVar.signal.split(_.id, distinctCompose = identity)(project = (key, initialFoo, fooSignal) => {
-        assert(key == initialFoo.id, "Key does not match initial value")
-        effects += Effect(s"init-child-$key", key + "-" + initialFoo.version.toString)
-        DynamicSubscription.subscribeCallback(
-          innerDynamicOwner,
-          owner => fooSignal.foreach { foo =>
-            assert(key == foo.id, "Subsequent value does not match initial key")
-            effects += Effect(s"update-child-$key", foo.id + "-" + foo.version.toString)
-          }(owner)
+      val signal =
+        myVar.signal.split(_.id, distinctCompose = identity)(project =
+          (key, initialFoo, fooSignal) => {
+            assert(key == initialFoo.id, "Key does not match initial value")
+            effects += Effect(
+              s"init-child-$key",
+              key + "-" + initialFoo.version.toString
+            )
+            DynamicSubscription.subscribeCallback(
+              innerDynamicOwner,
+              owner =>
+                fooSignal.foreach { foo =>
+                  assert(
+                    key == foo.id,
+                    "Subsequent value does not match initial key"
+                  )
+                  effects += Effect(
+                    s"update-child-$key",
+                    foo.id + "-" + foo.version.toString
+                  )
+                }(owner)
+            )
+            Bar(key)
+          }
         )
-        Bar(key)
-      })
 
       DynamicSubscription.subscribeCallback(
         outerDynamicOwner,
-        owner => signal.foreach { result =>
-          effects += Effect("result", result.toString)
-        }(owner)
+        owner =>
+          signal.foreach { result =>
+            effects += Effect("result", result.toString)
+          }(owner)
       )
 
       effects shouldBe mutable.Buffer()
@@ -312,7 +386,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
         Effect("result", "List(Bar(b), Bar(a))")
       )
 
-      //effects.clear()
+      // effects.clear()
     }
   }
 
@@ -322,30 +396,48 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
       val myVar = Var[List[Foo]](Foo("initial", 1) :: Nil)
 
-      val dynamicOwner = new DynamicOwner(() => throw new Exception("split outer dynamic owner accessed after it was killed"))
+      val dynamicOwner = new DynamicOwner(() =>
+        throw new Exception(
+          "split outer dynamic owner accessed after it was killed"
+        )
+      )
 
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
-      val signal = myVar.signal.split(_.id, distinctCompose = identity)(project = (key, initialFoo, fooSignal) => {
-        assert(key == initialFoo.id, "Key does not match initial value")
-        effects += Effect(s"init-child-$key", key + "-" + initialFoo.version.toString)
-        Element(key, fooSignal)
-      })
+      val signal =
+        myVar.signal.split(_.id, distinctCompose = identity)(project =
+          (key, initialFoo, fooSignal) => {
+            assert(key == initialFoo.id, "Key does not match initial value")
+            effects += Effect(
+              s"init-child-$key",
+              key + "-" + initialFoo.version.toString
+            )
+            Element(key, fooSignal)
+          }
+        )
 
       DynamicSubscription.subscribeCallback(
         dynamicOwner,
-        owner => signal.foreach { result =>
-          effects += Effect("result", result.toString)
-          result.foreach { element =>
-            DynamicSubscription.subscribeCallback(
-              dynamicOwner,
-              owner => element.fooSignal.foreach { foo =>
-                assert(element.id == foo.id, "Subsequent value does not match initial key")
-                effects += Effect(s"update-child-${element.id}", foo.id + "-" + foo.version.toString)
-              }(owner)
-            )
-          }
-        }(owner)
+        owner =>
+          signal.foreach { result =>
+            effects += Effect("result", result.toString)
+            result.foreach { element =>
+              DynamicSubscription.subscribeCallback(
+                dynamicOwner,
+                owner =>
+                  element.fooSignal.foreach { foo =>
+                    assert(
+                      element.id == foo.id,
+                      "Subsequent value does not match initial key"
+                    )
+                    effects += Effect(
+                      s"update-child-${element.id}",
+                      foo.id + "-" + foo.version.toString
+                    )
+                  }(owner)
+              )
+            }
+          }(owner)
       )
 
       effects shouldBe mutable.Buffer()
@@ -353,7 +445,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
       // --
 
       dynamicOwner.activate()
-      //innerDynamicOwner.activate()
+      // innerDynamicOwner.activate()
 
       effects shouldBe mutable.Buffer(
         Effect("init-child-initial", "initial-1"),
@@ -375,7 +467,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
         Effect("update-child-a", "a-3")
       )
 
-      //effects.clear()
+      // effects.clear()
     }
   }
 
@@ -566,7 +658,9 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
     // the child signal still picks up the most recent value,
     // and not the initial value that it was instantiated with.
     assert(fooS_B_observed_1.now() == Foo("b", 2))
-    assert(mapFooS_B_observed_1.now().isEmpty) // this is based on stream so it can't actually re-sync
+    assert(
+      mapFooS_B_observed_1.now().isEmpty
+    ) // this is based on stream so it can't actually re-sync
 
     // --
 
@@ -585,7 +679,9 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
     val mapFooS_A_observed_2 = mapFooS_A.observe(owner)
 
     assert(fooS_A_observed_2.now() == Foo("a", 4))
-    assert(mapFooS_A_observed_2.now().contains(Foo("a", 2))) // this is based on stream so it can't actually re-sync
+    assert(
+      mapFooS_A_observed_2.now().contains(Foo("a", 2))
+    ) // this is based on stream so it can't actually re-sync
 
     // --
 
@@ -611,15 +707,16 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
     val owner = new TestableOwner
 
-    val signal = myVar.signal.split(_.id)(project = (key, initialFoo, fooSignal) => {
-      assert(key == initialFoo.id, "Key does not match initial value")
-      effects += Effect("init-child", key + "-" + initialFoo.version.toString)
-      fooSignal.foreach { foo =>
-        assert(key == foo.id, "Subsequent value does not match initial key")
-        effects += Effect("update-child", foo.id + "-" + foo.version.toString)
-      }(owner)
-      Bar(key)
-    })
+    val signal =
+      myVar.signal.split(_.id)(project = (key, initialFoo, fooSignal) => {
+        assert(key == initialFoo.id, "Key does not match initial value")
+        effects += Effect("init-child", key + "-" + initialFoo.version.toString)
+        fooSignal.foreach { foo =>
+          assert(key == foo.id, "Subsequent value does not match initial key")
+          effects += Effect("update-child", foo.id + "-" + foo.version.toString)
+        }(owner)
+        Bar(key)
+      })
 
     signal.foreach { result =>
       effects += Effect("result", result.toString)
@@ -628,7 +725,10 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
     effects shouldBe mutable.Buffer(
       Effect("init-child", "initial-1"),
       Effect("update-child", "initial-1"),
-      Effect("result", "Bar(initial)") // Single item JS Array is printed this way
+      Effect(
+        "result",
+        "Bar(initial)"
+      ) // Single item JS Array is printed this way
     )
 
     effects.clear()
@@ -670,7 +770,10 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
     effects shouldBe mutable.Buffer(
       Effect("init-child", "b-1"),
       Effect("update-child", "b-1"),
-      Effect("result", "Bar(a),Bar(b)"), // Multi item JS Array is printed this way
+      Effect(
+        "result",
+        "Bar(a),Bar(b)"
+      ), // Multi item JS Array is printed this way
       Effect("update-child", "a-3")
     )
 
@@ -683,7 +786,10 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
     myVar.set(arr)
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Bar(b),Bar(a)") // Multi item JS Array is printed this way
+      Effect(
+        "result",
+        "Bar(b),Bar(a)"
+      ) // Multi item JS Array is printed this way
     )
 
     effects.clear()
@@ -710,6 +816,6 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
       Effect("result", "Bar(b)") // Single item JS Array is printed this way
     )
 
-    //effects.clear()
+    // effects.clear()
   }
 }
