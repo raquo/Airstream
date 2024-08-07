@@ -12,7 +12,13 @@ import com.raquo.ew.JsArray
 // For combine / combineWith methods on the EventStream companion object, see StaticStreamCombineOps.scala
 
 class CombinableStream[A](val stream: EventStream[A]) extends AnyVal {
-
+    /** combine streams of different types into a stream of a tuple of values
+    *
+    * dynamic semantics: similar to CombineLatest in
+    * https://reactivex.io/documentation/operators/combinelatest.html
+    * @return
+    *   EventStream of a tuple of values
+    */
   def combineWith[T1](
     s1: EventSource[T1]
   )(implicit c: Composition[A, (T1)]): EventStream[c.Composed] = {
@@ -50,6 +56,13 @@ class CombinableStream[A](val stream: EventStream[A]) extends AnyVal {
 
   // --
 
+    /** combine streams of different types into a stream of a tuple of values
+    *
+    * dynamic semantics: similar to CombineLatest in
+    * https://reactivex.io/documentation/operators/combinelatest.html
+    * @return
+    *   EventStream of a tuple of values
+    */
   def combineWith[T1, T2](
     s1: EventSource[T1], s2: EventSource[T2]
   )(implicit c: Composition[A, (T1, T2)]): EventStream[c.Composed] = {
@@ -87,6 +100,13 @@ class CombinableStream[A](val stream: EventStream[A]) extends AnyVal {
 
   // --
 
+    /** combine streams of different types into a stream of a tuple of values
+    *
+    * dynamic semantics: similar to CombineLatest in
+    * https://reactivex.io/documentation/operators/combinelatest.html
+    * @return
+    *   EventStream of a tuple of values
+    */
   def combineWith[T1, T2, T3](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3]
   )(implicit c: Composition[A, (T1, T2, T3)]): EventStream[c.Composed] = {
@@ -124,6 +144,13 @@ class CombinableStream[A](val stream: EventStream[A]) extends AnyVal {
 
   // --
 
+    /** combine streams of different types into a stream of a tuple of values
+    *
+    * dynamic semantics: similar to CombineLatest in
+    * https://reactivex.io/documentation/operators/combinelatest.html
+    * @return
+    *   EventStream of a tuple of values
+    */
   def combineWith[T1, T2, T3, T4](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4]
   )(implicit c: Composition[A, (T1, T2, T3, T4)]): EventStream[c.Composed] = {
@@ -161,6 +188,13 @@ class CombinableStream[A](val stream: EventStream[A]) extends AnyVal {
 
   // --
 
+    /** combine streams of different types into a stream of a tuple of values
+    *
+    * dynamic semantics: similar to CombineLatest in
+    * https://reactivex.io/documentation/operators/combinelatest.html
+    * @return
+    *   EventStream of a tuple of values
+    */
   def combineWith[T1, T2, T3, T4, T5](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5]
   )(implicit c: Composition[A, (T1, T2, T3, T4, T5)]): EventStream[c.Composed] = {
@@ -198,6 +232,13 @@ class CombinableStream[A](val stream: EventStream[A]) extends AnyVal {
 
   // --
 
+    /** combine streams of different types into a stream of a tuple of values
+    *
+    * dynamic semantics: similar to CombineLatest in
+    * https://reactivex.io/documentation/operators/combinelatest.html
+    * @return
+    *   EventStream of a tuple of values
+    */
   def combineWith[T1, T2, T3, T4, T5, T6](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6]
   )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6)]): EventStream[c.Composed] = {
@@ -235,6 +276,13 @@ class CombinableStream[A](val stream: EventStream[A]) extends AnyVal {
 
   // --
 
+    /** combine streams of different types into a stream of a tuple of values
+    *
+    * dynamic semantics: similar to CombineLatest in
+    * https://reactivex.io/documentation/operators/combinelatest.html
+    * @return
+    *   EventStream of a tuple of values
+    */
   def combineWith[T1, T2, T3, T4, T5, T6, T7](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7]
   )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7)]): EventStream[c.Composed] = {
@@ -272,6 +320,13 @@ class CombinableStream[A](val stream: EventStream[A]) extends AnyVal {
 
   // --
 
+    /** combine streams of different types into a stream of a tuple of values
+    *
+    * dynamic semantics: similar to CombineLatest in
+    * https://reactivex.io/documentation/operators/combinelatest.html
+    * @return
+    *   EventStream of a tuple of values
+    */
   def combineWith[T1, T2, T3, T4, T5, T6, T7, T8](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8]
   )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8)]): EventStream[c.Composed] = {
