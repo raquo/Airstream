@@ -46,8 +46,8 @@ case class GenerateCombinableStream(
         line(
           """  /** combine streams of different types into a stream of a tuple of values
     *
-    * dynamic semantics: similar to CombineLatest in
-    * https://reactivex.io/documentation/operators/combinelatest.html
+    * dynamic semantics: combines the most recently emitted items from each of the other source, similar to CombineLatest in
+    * RxJs
     * @return
     *   EventStream of a tuple of values
     */
