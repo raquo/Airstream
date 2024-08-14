@@ -68,6 +68,8 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Avoiding Glitches When Merging](#avoiding-glitches-when-merging)
     * [Scheduling of Transactions](#scheduling-of-transactions)
   * [Operators](#operators)
+    * [Combining Operators](#combining-operators) 
+    * [Merging Operators](#merging-operators) 
     * [Distinction Operators](#distinction-operators)
     * [N-arity Operators](#n-arity-operators)
     * [Compose Changes](#compose-changes)
@@ -530,6 +532,8 @@ Or you can just call `eventBus.emit(newEvent)` for the same effect.
 What sets EventBus apart from e.g. `EventStream.withObserver` is that you can also call `eventBus.addSource(otherStream)(owner)`, and the event bus will re-emit every event emitted by that stream. This is somewhat similar to adding `writer` as an observer to `otherStream`, except this will not cause `otherStream` to be started unless/until the EventBus's own stream is started (see [Laziness](#laziness)).
 
 You've probably noticed that `addSource` takes `owner` as an implicit param – this is for memory management purposes. You would typically pass a WriteBus to a child component if you want the child to send any events to the parent. Thus, we want `addSource` to be automatically undone when said child is discarded (see [Ownership](#ownership)), even if `writer.stream` is still being observed.
+
+Note: if using Laminar, you can create an EventBus and send events into it with `source --> eventBus` – that way you don't need to manage owners manually, the parent element of this `-->` call will effectively be the owner.
 
 An EventBus can have multiple sources simultaneously. In that case it will emit events from all of those sources in the order in which they come in. **EventBus always emits every event in a new [Transaction](#transactions).** Note that EventBus lets you create loops of Observables. It is up to you to make sure that a propagation of an event through such loops eventually terminates (via a proper `.filter(passes)` gate for example, or the implicit `==` equality filter in Signal).
 
@@ -1062,6 +1066,64 @@ Remember that all of this happens synchronously. There can be no async boundarie
 Airstream offers standard observables operators like `map` / `filter` / `collect` / `compose` / `combineWith` etc. You will need to read the [API doc](https://javadoc.io/doc/com.raquo/airstream_sjs1_3/latest/com/raquo/airstream/index.html) or the actual code or use IDE autocompletion to discover those that aren't documented here or in other section of the documentation. In the code, see `BaseObservable`, `Observable`, `EventStream`, and `Signal` traits and their companion objects.
 
 Some of the more interesting / non-standard operators are documented below:
+
+
+#### Combining operators
+
+These operators get current / latest values from several observables at once.
+
+##### combineWith
+
+The standard `combineWith` operator emits updates that are the tuples of the latest available values. In that sense it is quite similar to the [combineLatest](https://reactivex.io/documentation/operators/combinelatest.html) RX operator. This is the canonical way to combine two observables in Airstream ([and not flatMap](#avoid-unnecessary-flatmap)).
+
+For example, `signalA.combinewith(signalB)` emits the latest available `(A, B)` value whenever `signalA` or `signalB` emits. If both signals emit simultaneously, i.e. in the same transaction, then the combined signal will emit only once, avoiding the common [FRP glitch](#frp-glitches). See [Topological rank](#topological-rank).
+
+For streams (`streamA.combinewith(streamB)`), the combined stream emits its first event when it has observed all of its parent streams to have emitted at least one event. Since it emits `(A, B)`, it needs to wait for both `A` and `B` to become available.
+
+`combineWith` can only be used with either signals, or streams. You can't mix them. You can however convert e.g. your stream to a signal before handing it off to `signal.combineWith`, using stream operators like `toWeakSignal`, `startWith(initial)`, `scanLeft`, etc.
+
+`combineWith` has several arity helpers. See [N-arity Operators](#n-arity-operators).
+- You can combine more than two observables at once, e.g. stream1.combineWith(stream2, stream3, ...)`
+- `combinieWith` auto-flattens nested tuples, i.e. `streamA.combineWith(streamB).combineWith(streamC)` will yield events of `(A, B, C)`, not the inconvenient `(A, B), C)` 
+
+`combineWith` has several other variations:
+- `combineWithFn` lets you specify an alternative combining function instead of tupling.
+- `EventStream.combine(stream1, stream2, ...)` and `Signal.combine(signal1, signal2, ...)` helpers.
+
+#### withCurrentValueOf
+
+This operator, defined for both signals and streams, lets you get read the current value of another signal, every time a certain observable emits an update. For example, `stream.withCurrentValueOf(signal)` will emit `(event, <currentSignalValue>)` whenever `stream` emits `event`. For convenience, you can also read the current value of `Var`-s this way, although for Var-s, you can always just call `.now()`.
+
+See [Getting Signal's current value](#getting-signals-current-value).
+
+You can read the values of multiple signals and/or vars at once: `observable.withCurrentValueOf(signal1, signal2, var3)`.
+
+#### sample
+
+This operator is exactly like `withCurrentValueOf`, but it discards the `event` itself. So, `stream.withCurrentValueOf(signal)` will emit `(<currentSignalValue>)` whenever `stream` emits an event. So the `stream` is basically acting as a timing / trigger for sampling other signals and/or vars (yes, you can sample multiple at the same time, just as with `withCurrentValueOf`.
+
+See [Getting Signal's current value](#getting-signals-current-value).
+
+
+#### Merging Operators
+
+These operators re-emit events from each of their parent streams.
+
+##### mergeWith
+
+`stream1.mergewith(stream2, stream3, ...)` emits all of the events that `stream1`, `stream2`, `stream3`, etc. emit. This operator only accepts streams of the same event type, and returns a stream of that same type.
+
+Aliases / helpers:
+- `EventStream.merge(stream1, stream2, stream3, ...)`
+- `EventStream.mergeSeq(seqOfStreams)`
+
+See also:
+- [Avoiding Glitches When Merging](#avoiding-glitches-when-merging)
+- [mergeWith: loopy or flowy?](#merge-streams-special-case)
+
+##### Merging dynamic sets of streams
+
+`mergeWith` works for merging static, known-in-advance sets of streams, but if you want to merge a set of streams that varies over time, you can use [flatMapMerge](#flatmapmerge) or flattenMerge, [EventBus.addSource](#eventbus), or, in Laminar, you can create an EventBus and `-->` events into it, to avoid dealing with the owners manually with `addSource`.
 
 
 #### Distinction Operators
