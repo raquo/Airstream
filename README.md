@@ -1074,17 +1074,17 @@ These operators get current / latest values from several observables at once.
 
 ##### combineWith
 
-The standard `combineWith` operator emits updates that are the tuples of the latest available values. In that sense it is quite similar to the [combineLatest](https://reactivex.io/documentation/operators/combinelatest.html) RX operator. This is the canonical way to combine two observables in Airstream ([and not flatMap](#avoid-unnecessary-flatmap)).
+The standard `combineWith` operator emits updates that are the tuples of the latest available value from each of the parent observables. In that sense it is quite similar to the [combineLatest](https://reactivex.io/documentation/operators/combinelatest.html) RX operator. This is the canonical way to combine two observables in Airstream ([and not flatMap](#avoid-unnecessary-flatmap)).
 
-For example, `signalA.combinewith(signalB)` emits the latest available `(A, B)` value whenever `signalA` or `signalB` emits. If both signals emit simultaneously, i.e. in the same transaction, then the combined signal will emit only once, avoiding the common [FRP glitch](#frp-glitches). See [Topological rank](#topological-rank).
+For example, `signalA.combinewith(signalB)` emits the latest available `(A, B)` value whenever `signalA` or `signalB` emits. If both signals emit simultaneously, i.e. in the same [transaction](#transactions), then the combined signal will emit only once, avoiding the common [FRP glitch](#frp-glitches). See also: [Topological rank](#topological-rank).
 
 For streams (`streamA.combinewith(streamB)`), the combined stream emits its first event when it has observed all of its parent streams to have emitted at least one event. Since it emits `(A, B)`, it needs to wait for both `A` and `B` to become available.
 
 `combineWith` can only be used with either signals, or streams. You can't mix them. You can however convert e.g. your stream to a signal before handing it off to `signal.combineWith`, using stream operators like `toWeakSignal`, `startWith(initial)`, `scanLeft`, etc.
 
 `combineWith` has several arity helpers. See [N-arity Operators](#n-arity-operators).
-- You can combine more than two observables at once, e.g. stream1.combineWith(stream2, stream3, ...)`
-- `combinieWith` auto-flattens nested tuples, i.e. `streamA.combineWith(streamB).combineWith(streamC)` will yield events of `(A, B, C)`, not the inconvenient `(A, B), C)` 
+- You can combine more than two observables at once, e.g. `stream1.combineWith(stream2, stream3, ...)`
+- `combinieWith` auto-flattens nested tuples, i.e. `streamA.combineWith(streamB).combineWith(streamC)` will emit events of `(A, B, C)`, not the inconvenient `((A, B), C)` 
 
 `combineWith` has several other variations:
 - `combineWithFn` lets you specify an alternative combining function instead of tupling.
@@ -1092,15 +1092,15 @@ For streams (`streamA.combinewith(streamB)`), the combined stream emits its firs
 
 #### withCurrentValueOf
 
-This operator, defined for both signals and streams, lets you get read the current value of another signal, every time a certain observable emits an update. For example, `stream.withCurrentValueOf(signal)` will emit `(event, <currentSignalValue>)` whenever `stream` emits `event`. For convenience, you can also read the current value of `Var`-s this way, although for Var-s, you can always just call `.now()`.
+This operator, defined for both signals and streams, lets you get read the current value of another signal, every time a certain observable emits an update. For example, `stream.withCurrentValueOf(signal)` will emit `(event, <currentSignalValue>)` whenever `stream` emits `event`. For convenience, you can also read the current value of Var-s this way, although for Var-s, you can always just call `.now()`.
 
 See [Getting Signal's current value](#getting-signals-current-value).
 
-You can read the values of multiple signals and/or vars at once: `observable.withCurrentValueOf(signal1, signal2, var3)`.
+You can read the values of multiple signals and/or Vars at once: `observable.withCurrentValueOf(signal1, signal2, var3)`.
 
 #### sample
 
-This operator is exactly like `withCurrentValueOf`, but it discards the `event` itself. So, `stream.withCurrentValueOf(signal)` will emit `(<currentSignalValue>)` whenever `stream` emits an event. So the `stream` is basically acting as a timing / trigger for sampling other signals and/or vars (yes, you can sample multiple at the same time, just as with `withCurrentValueOf`.
+This operator is exactly like `withCurrentValueOf` (see right above), but it discards the `event` itself. So, `stream.withCurrentValueOf(signal)` will emit `<currentSignalValue>` whenever `stream` emits an event. So the `stream` is basically acting as a timing / trigger for sampling other signals and/or Vars (yes, you can sample multiple at the same time, similar to `withCurrentValueOf`.
 
 See [Getting Signal's current value](#getting-signals-current-value).
 
