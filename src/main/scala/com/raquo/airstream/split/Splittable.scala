@@ -36,6 +36,18 @@ trait Splittable[M[_]] {
     })
   }
 
+  def findUpdateByIndex[A](inputs: M[A], index: Int, newItem: A): M[A] = {
+    var ix = -1
+    map(inputs, (input: A) => {
+      ix += 1
+      if (ix == index) {
+        newItem
+      } else {
+        input
+      }
+    })
+  }
+
   def zipWithIndex[A](inputs: M[A]): M[(A, Int)] = {
     var ix = -1
     map(inputs, (input: A) => {
