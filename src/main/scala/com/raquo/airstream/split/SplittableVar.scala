@@ -39,6 +39,36 @@ class SplittableVar[M[_], Input](val v: Var[M[Input]]) extends AnyVal {
     )
   }
 
+  /** Like `split`, but uses index of the item in the list as the key. */
+  def splitByIndex[Output](
+    project: (Int, Input, Var[Input]) => Output
+  ) (
+    implicit splittable: Splittable[M]
+  ): Signal[M[Output]] = {
+    new SplitSignal[M, (Input, Int), Output, Int](
+      parent = v.signal.map(splittable.zipWithIndex),
+      key = _._2, // Index
+      distinctCompose = _.distinctBy(_._1),
+      project = (index: Int, initialTuple, tupleSignal) => {
+        val displayNameSuffix = s".splitByIndex(index = ${index})"
+        val childVar = new LazyDerivedVar[M[Input], Input](
+          parent = v,
+          signal = new LazyStrictSignal[Input, Input](
+            tupleSignal.map(_._1), identity, tupleSignal.displayName, displayNameSuffix + ".signal"
+          ),
+          zoomOut = (inputs, newInput) => {
+            splittable.findUpdateByIndex(inputs, index, newInput)
+          },
+          displayNameSuffix = displayNameSuffix
+        )
+        project(index, initialTuple._1, childVar)
+      },
+      splittable,
+      DuplicateKeysConfig.noWarnings,  // No need to check for duplicates – we know the keys are good.?
+      strict = true
+    )
+  }
+
   /** This variation of the `split` operator is designed for Var-s of
     * mutable collections. It works like the usual split, except that
     * it updates the mutable collection in-place instead of creating

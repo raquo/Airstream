@@ -3,6 +3,7 @@ package com.raquo.airstream.state
 import com.raquo.airstream.core.AirstreamError.VarError
 import com.raquo.airstream.core.Source.SignalSource
 import com.raquo.airstream.core.{AirstreamError, Named, Observer, Signal, Sink, Transaction}
+import com.raquo.airstream.extensions.OptionVar
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.split.SplittableVar
 import com.raquo.airstream.util.hasDuplicateTupleKeys
@@ -278,5 +279,9 @@ object Var {
 
   /** Provides methods on Var: split, splitMutate */
   implicit def toSplittableVar[M[_], Input](signal: Var[M[Input]]): SplittableVar[M, Input] = new SplittableVar(signal)
+
+  /** Provides methods on Var: splitOption */
+  implicit def toOptionVar[A](v: Var[Option[A]]): OptionVar[A] = new OptionVar(v)
+
 }
 
