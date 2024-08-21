@@ -4,7 +4,7 @@ import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.{Observer, Signal, Transaction}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
-import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, ManualOwner}
+import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, ManualOwner, Subscription}
 import com.raquo.airstream.split.DuplicateKeysConfig
 import com.raquo.airstream.state.Var
 import com.raquo.ew.JsArray
@@ -711,5 +711,247 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
     )
 
     //effects.clear()
+  }
+
+  it("splitByIndex var - quick check") {
+    withOrWithoutDuplicateKeyWarnings {
+      val effects = mutable.Buffer[Effect[String]]()
+
+      val myVar = Var[List[Foo]](Foo("initial", 1) :: Nil)
+
+      val owner = new TestableOwner
+
+      // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
+      //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
+      val signal = myVar.splitByIndex((index, initialFoo, fooVar) => {
+        effects += Effect(s"init-child-$index", initialFoo.id + "-" + initialFoo.version.toString)
+        fooVar.signal.foreach { foo =>
+          effects += Effect(s"update-child-$index", foo.id + "-" + foo.version.toString)
+        }(owner)
+        Bar(index.toString)
+      })
+
+      signal.foreach { result =>
+        effects += Effect("result", result.toString)
+      }(owner)
+
+      effects shouldBe mutable.Buffer(
+        Effect("init-child-0", "initial-1"),
+        Effect("update-child-0", "initial-1"),
+        Effect("result", "List(Bar(0))")
+      )
+
+      effects.clear()
+
+      // --
+
+      myVar.writer.onNext(Foo("a", 1) :: Nil)
+
+      effects shouldBe mutable.Buffer(
+        Effect("result", "List(Bar(0))"),
+        Effect("update-child-0", "a-1"),
+      )
+
+      effects.clear()
+
+      // --
+
+      myVar.writer.onNext(Foo("a", 2) :: Nil)
+
+      effects shouldBe mutable.Buffer(
+        Effect("result", "List(Bar(0))"),
+        Effect("update-child-0", "a-2")
+      )
+
+      effects.clear()
+
+      // --
+
+      myVar.writer.onNext(Foo("a", 3) :: Foo("b", 1) :: Nil)
+
+      effects shouldBe mutable.Buffer(
+        Effect("init-child-1", "b-1"),
+        Effect("update-child-1", "b-1"),
+        Effect("result", "List(Bar(0), Bar(1))"),
+        Effect("update-child-0", "a-3")
+      )
+
+      effects.clear()
+
+      // --
+
+      myVar.writer.onNext(Foo("b", 1) :: Foo("a", 3) :: Nil)
+
+      effects shouldBe mutable.Buffer(
+        Effect("result", "List(Bar(0), Bar(1))"),
+        Effect("update-child-0", "b-1"),
+        Effect("update-child-1", "a-3")
+      )
+
+      effects.clear()
+
+      // --
+
+      myVar.writer.onNext(Foo("b", 1) :: Foo("a", 4) :: Nil)
+
+      effects shouldBe mutable.Buffer(
+        Effect("result", "List(Bar(0), Bar(1))"),
+        Effect("update-child-1", "a-4")
+      )
+
+      effects.clear()
+
+      // --
+
+      myVar.writer.onNext(Foo("b", 2) :: Foo("a", 4) :: Nil)
+
+      effects shouldBe mutable.Buffer(
+        Effect("result", "List(Bar(0), Bar(1))"),
+        Effect("update-child-0", "b-2")
+      )
+
+      effects.clear()
+
+      // --
+
+      myVar.writer.onNext(Foo("b", 3) :: Foo("a", 5) :: Nil)
+
+      effects shouldBe mutable.Buffer(
+        Effect("result", "List(Bar(0), Bar(1))"),
+        Effect("update-child-0", "b-3"),
+        Effect("update-child-1", "a-5")
+      )
+
+      effects.clear()
+
+      // --
+
+      myVar.writer.onNext(Foo("b", 4) :: Nil)
+
+      effects shouldBe mutable.Buffer(
+        Effect("result", "List(Bar(0))"),
+        Effect("update-child-0", "b-4")
+      )
+
+      effects.clear()
+
+      // --
+
+      myVar.writer.onNext(Foo("b", 4) :: Nil)
+
+      effects shouldBe mutable.Buffer(
+        Effect("result", "List(Bar(0))")
+      )
+
+      //effects.clear()
+    }
+  }
+
+  it("splitOption var") {
+    withOrWithoutDuplicateKeyWarnings {
+      val effects = mutable.Buffer[Effect[String]]()
+
+      val myVar = Var[Option[Foo]](Some(Foo("initial", 1)))
+
+      val owner = new TestableOwner
+
+      var maybeLastSub: Option[Subscription] = None
+
+      // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
+      //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
+      val signal = myVar.splitOption(
+        (initialFoo, fooVar) => {
+          val initialKey = s"${initialFoo.id}-${initialFoo.version}"
+          effects += Effect(s"init-child-$initialKey", initialKey)
+          // #Note: this manual management isn't great, but we don't have Laminar's mounting system here
+          maybeLastSub.foreach(_.kill())
+          maybeLastSub = Some(fooVar.signal.foreach { foo =>
+            val updatedKey = s"${foo.id}-${foo.version}"
+            effects += Effect(s"update-child-$updatedKey", updatedKey)
+          }(owner))
+          Bar(initialKey)
+        },
+        ifEmpty = {
+          effects += Effect("ifEmpty-eval", "")
+          Bar("empty")
+        }
+      )
+
+      // --
+
+      signal.foreach { result =>
+        effects += Effect("result", result.toString)
+      }(owner)
+
+      effects shouldBe mutable.Buffer(
+        Effect("init-child-initial-1", "initial-1"),
+        Effect("update-child-initial-1", "initial-1"),
+        Effect("result", "Bar(initial-1)")
+      )
+
+      effects.clear()
+
+      // --
+
+      myVar.writer.onNext(Some(Foo("a", 1)))
+
+      effects shouldBe mutable.Buffer(
+        Effect("result", "Bar(initial-1)"), // we use initialKey when returning Bar, so it's `initial-1`, not `a-1`
+        Effect("update-child-a-1", "a-1")
+      )
+
+      effects.clear()
+
+      // --
+
+      myVar.writer.onNext(Some(Foo("a", 2)))
+
+      effects shouldBe mutable.Buffer(
+        Effect("result", "Bar(initial-1)"), // we use initialKey when returning Bar, so it's `initial-1`, not `a-2`
+        Effect("update-child-a-2", "a-2")
+      )
+
+      effects.clear()
+
+      // --
+
+      myVar.writer.onNext(None)
+
+      effects shouldBe mutable.Buffer(
+        Effect("ifEmpty-eval", ""),
+        Effect("result", "Bar(empty)")
+      )
+
+      effects.clear()
+
+      // --
+
+      myVar.writer.onNext(None)
+
+      effects shouldBe mutable.Buffer()
+
+      // --
+
+      myVar.writer.onNext(Some(Foo("c", 1)))
+
+      effects shouldBe mutable.Buffer(
+        Effect("init-child-c-1", "c-1"),
+        Effect("update-child-c-1", "c-1"),
+        Effect("result", "Bar(c-1)")
+      )
+
+      effects.clear()
+
+      // --
+
+      myVar.writer.onNext(Some(Foo("c", 2)))
+
+      effects shouldBe mutable.Buffer(
+        Effect("result", "Bar(c-1)"), // we use initialKey when returning Bar, so it's `c-1`, not `c-2`
+        Effect("update-child-c-2", "c-2")
+      )
+
+      // effects.clear()
+    }
   }
 }
