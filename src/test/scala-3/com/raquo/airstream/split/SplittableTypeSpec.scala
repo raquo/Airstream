@@ -4,7 +4,7 @@ import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.state.Var
-import com.raquo.airstream.split.SplittableTypeMacros.{splitMatch, handleCase, toSignal, toStream}
+import com.raquo.airstream.split.SplittableTypeMacros.*
 
 import scala.collection.{immutable, mutable}
 import scala.scalajs.js
@@ -44,7 +44,7 @@ class SplittableTypeSpec extends UnitSpec {
 
         Res(str)
       }
-      .handleCase { case baz: Baz => baz } { case (baz, bazSignal) =>
+      .handleType[Baz] { case (baz, bazSignal) =>
         effects += Effect("init-child", s"Baz-${baz.ordinal}-${baz.toString}")
         // @Note keep foreach or addObserver here – this is important.
         //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
@@ -276,7 +276,7 @@ class SplittableTypeSpec extends UnitSpec {
 
         Res(str)
       }
-      .handleCase { case baz: Baz => baz } { case (baz, bazSignal) =>
+      .handleType[Baz] { case (baz, bazSignal) =>
         effects += Effect("init-child", s"Baz-${baz.ordinal}-${baz.toString}")
         // @Note keep foreach or addObserver here – this is important.
         //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.

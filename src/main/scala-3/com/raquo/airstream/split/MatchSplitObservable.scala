@@ -5,15 +5,15 @@ import scala.annotation.compileTimeOnly
 
 /**
  * `MatchSplitObservable` served as macro's data holder for macro expansion.
- * 
+ *
  * For example:
  *
  * ```scala
- *  fooSignal.splitMatch
- *    .handleCase { case Bar(Some(str)) => str } { (str, strSignal) => renderStrNode(str, strSignal) }
+ * fooSignal.splitMatch
+ *  .handleCase { case Bar(Some(str)) => str } { (str, strSignal) => renderStrNode(str, strSignal) }
  *    .handleCase { case baz: Baz => baz } { (baz, bazSignal) => renderBazNode(baz, bazSignal) }
  * ```
- * 
+ *
  * will be expanded sematically into:
  *
  * ```scala
@@ -24,7 +24,7 @@ import scala.annotation.compileTimeOnly
 opaque type MatchSplitObservable[Self[+_] <: Observable[_] , I, O] = Unit
 
 object MatchSplitObservable {
-  
+
   @compileTimeOnly("splitMatch without toSignal/toStream is illegal")
   def build[Self[+_] <: Observable[_] , I, O](
     observable: BaseObservable[Self, I],
