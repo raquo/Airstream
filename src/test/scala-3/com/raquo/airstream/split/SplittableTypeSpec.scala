@@ -42,7 +42,7 @@ class SplittableTypeSpec extends UnitSpec {
           effects += Effect("update-child", s"Bar-$str")
         }(owner)
 
-        Res(str)
+        Res("Bar")
       }
       .handleType[Baz] { case (baz, bazSignal) =>
         effects += Effect("init-child", s"Baz-${baz.ordinal}-${baz.toString}")
@@ -52,7 +52,7 @@ class SplittableTypeSpec extends UnitSpec {
           effects += Effect("update-child", s"Baz-${baz.ordinal}-${baz.toString}")
         }(owner)
 
-        Res(baz)
+        Res("Baz")
       }
       .handleCase { case Tar => 10 } { case (int, intSignal) =>
         effects += Effect("init-child", s"Tar-${int}")
@@ -62,7 +62,7 @@ class SplittableTypeSpec extends UnitSpec {
           effects += Effect("update-child", s"Tar-${int}")
         }(owner)
 
-        Res(int)
+        Res("Tar")
       }
       .toSignal
     
@@ -73,7 +73,7 @@ class SplittableTypeSpec extends UnitSpec {
     effects shouldBe mutable.Buffer(
       Effect("init-child", "Bar-initial"),
       Effect("update-child", "Bar-initial"),
-      Effect("result", "Res(initial)")
+      Effect("result", "Res(Bar)")
     )
 
     effects.clear()
@@ -81,7 +81,7 @@ class SplittableTypeSpec extends UnitSpec {
     myVar.writer.onNext(Bar(None))
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(initial)"),
+      Effect("result", "Res(Bar)"),
       Effect("update-child", "Bar-null")
     )
 
@@ -90,7 +90,7 @@ class SplittableTypeSpec extends UnitSpec {
     myVar.writer.onNext(Bar(None))
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(initial)"), // sematically, splitMatch/handleCase/toSignal use splitOne underlying, so this is the same as splitOne spec
+      Effect("result", "Res(Bar)"), // sematically, splitMatch/handleCase/toSignal use splitOne underlying, so this is the same as splitOne spec
       Effect("update-child", "Bar-null")
     )
 
@@ -99,7 +99,7 @@ class SplittableTypeSpec extends UnitSpec {
     myVar.writer.onNext(Bar(Some("other")))
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(initial)"),
+      Effect("result", "Res(Bar)"),
       Effect("update-child", "Bar-other")
     )
 
@@ -112,7 +112,7 @@ class SplittableTypeSpec extends UnitSpec {
     effects shouldBe mutable.Buffer(
       Effect("init-child", "Baz-0-Baz1"),
       Effect("update-child", "Baz-0-Baz1"),
-      Effect("result", "Res(Baz1)")
+      Effect("result", "Res(Baz)")
     )
 
     effects.clear()
@@ -120,7 +120,7 @@ class SplittableTypeSpec extends UnitSpec {
     myVar.writer.onNext(Baz.Baz2)
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(Baz1)"),
+      Effect("result", "Res(Baz)"),
       Effect("update-child", "Baz-1-Baz2")
     )
 
@@ -129,7 +129,7 @@ class SplittableTypeSpec extends UnitSpec {
     myVar.writer.onNext(Baz.Baz2)
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(Baz1)"),
+      Effect("result", "Res(Baz)"),
       Effect("update-child", "Baz-1-Baz2")
     )
 
@@ -140,7 +140,7 @@ class SplittableTypeSpec extends UnitSpec {
     effects shouldBe mutable.Buffer(
       Effect("init-child", "Tar-10"),
       Effect("update-child", "Tar-10"),
-      Effect("result", "Res(10)")
+      Effect("result", "Res(Tar)")
     )
 
     effects.clear()
@@ -148,7 +148,7 @@ class SplittableTypeSpec extends UnitSpec {
     myVar.writer.onNext(Tar)
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(10)"),
+      Effect("result", "Res(Tar)"),
       Effect("update-child", "Tar-10")
     )
 
@@ -176,7 +176,7 @@ class SplittableTypeSpec extends UnitSpec {
           effects += Effect("update-child", s"Bar-$str")
         }(owner)
 
-        Res(str)
+        Res("Bar")
       }
       .handleCase { case baz: Baz.Baz1.type => baz } { case (baz, bazSignal) =>
         effects += Effect("init-child", s"Baz-${baz.ordinal}-${baz.toString}")
@@ -186,7 +186,7 @@ class SplittableTypeSpec extends UnitSpec {
           effects += Effect("update-child", s"Baz-${baz.ordinal}-${baz.toString}")
         }(owner)
 
-        Res(baz)
+        Res("Baz1")
       }
       .handleCase { case Tar => 10 } { case (int, intSignal) =>
         effects += Effect("init-child", s"Tar-${int}")
@@ -196,7 +196,7 @@ class SplittableTypeSpec extends UnitSpec {
           effects += Effect("update-child", s"Tar-${int}")
         }(owner)
 
-        Res(int)
+        Res("Tar")
       }
       .toSignal
     
@@ -207,7 +207,7 @@ class SplittableTypeSpec extends UnitSpec {
     effects shouldBe mutable.Buffer(
       Effect("init-child", "Bar-initial"),
       Effect("update-child", "Bar-initial"),
-      Effect("result", "Res(initial)")
+      Effect("result", "Res(Bar)")
     )
 
     effects.clear()
@@ -215,7 +215,7 @@ class SplittableTypeSpec extends UnitSpec {
     myVar.writer.onNext(Bar(Some("other")))
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(initial)"),
+      Effect("result", "Res(Bar)"),
       Effect("update-child", "Bar-other")
     )
 
@@ -238,7 +238,7 @@ class SplittableTypeSpec extends UnitSpec {
     effects shouldBe mutable.Buffer(
       Effect("init-child", "Tar-10"),
       Effect("update-child", "Tar-10"),
-      Effect("result", "Res(10)")
+      Effect("result", "Res(Tar)")
     )
 
     effects.clear()
@@ -246,7 +246,7 @@ class SplittableTypeSpec extends UnitSpec {
     myVar.writer.onNext(Tar)
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(10)"),
+      Effect("result", "Res(Tar)"),
       Effect("update-child", "Tar-10")
     )
 
@@ -274,7 +274,7 @@ class SplittableTypeSpec extends UnitSpec {
           effects += Effect("update-child", s"Bar-$str")
         }(owner)
 
-        Res(str)
+        Res("Bar")
       }
       .handleType[Baz] { case (baz, bazSignal) =>
         effects += Effect("init-child", s"Baz-${baz.ordinal}-${baz.toString}")
@@ -284,7 +284,7 @@ class SplittableTypeSpec extends UnitSpec {
           effects += Effect("update-child", s"Baz-${baz.ordinal}-${baz.toString}")
         }(owner)
 
-        Res(baz)
+        Res("Baz")
       }
       .handleCase { case Tar => 10 } { case (int, intSignal) =>
         effects += Effect("init-child", s"Tar-${int}")
@@ -294,7 +294,7 @@ class SplittableTypeSpec extends UnitSpec {
           effects += Effect("update-child", s"Tar-${int}")
         }(owner)
 
-        Res(int)
+        Res("Tar")
       }
       .toStream
     
@@ -307,7 +307,7 @@ class SplittableTypeSpec extends UnitSpec {
     effects shouldBe mutable.Buffer(
       Effect("init-child", "Bar-null"),
       Effect("update-child", "Bar-null"),
-      Effect("result", "Res(null)")
+      Effect("result", "Res(Bar)")
     )
 
     effects.clear()
@@ -315,7 +315,7 @@ class SplittableTypeSpec extends UnitSpec {
     myEventBus.writer.onNext(Bar(None))
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(null)"), // sematically, splitMatch/handleCase/toStream use splitOne underlying, so this is the same as splitOne spec
+      Effect("result", "Res(Bar)"), // sematically, splitMatch/handleCase/toStream use splitOne underlying, so this is the same as splitOne spec
       Effect("update-child", "Bar-null")
     )
 
@@ -324,7 +324,7 @@ class SplittableTypeSpec extends UnitSpec {
     myEventBus.writer.onNext(Bar(Some("other")))
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(null)"),
+      Effect("result", "Res(Bar)"),
       Effect("update-child", "Bar-other")
     )
 
@@ -337,7 +337,7 @@ class SplittableTypeSpec extends UnitSpec {
     effects shouldBe mutable.Buffer(
       Effect("init-child", "Baz-0-Baz1"),
       Effect("update-child", "Baz-0-Baz1"),
-      Effect("result", "Res(Baz1)")
+      Effect("result", "Res(Baz)")
     )
 
     effects.clear()
@@ -345,7 +345,7 @@ class SplittableTypeSpec extends UnitSpec {
     myEventBus.writer.onNext(Baz.Baz2)
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(Baz1)"),
+      Effect("result", "Res(Baz)"),
       Effect("update-child", "Baz-1-Baz2")
     )
 
@@ -354,7 +354,7 @@ class SplittableTypeSpec extends UnitSpec {
     myEventBus.writer.onNext(Baz.Baz2)
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(Baz1)"),
+      Effect("result", "Res(Baz)"),
       Effect("update-child", "Baz-1-Baz2")
     )
 
@@ -365,7 +365,7 @@ class SplittableTypeSpec extends UnitSpec {
     effects shouldBe mutable.Buffer(
       Effect("init-child", "Tar-10"),
       Effect("update-child", "Tar-10"),
-      Effect("result", "Res(10)")
+      Effect("result", "Res(Tar)")
     )
 
     effects.clear()
@@ -373,7 +373,7 @@ class SplittableTypeSpec extends UnitSpec {
     myEventBus.writer.onNext(Tar)
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(10)"),
+      Effect("result", "Res(Tar)"),
       Effect("update-child", "Tar-10")
     )
 
@@ -402,9 +402,9 @@ class SplittableTypeSpec extends UnitSpec {
           effects += Effect("update-child", s"Bar-$str")
         }(owner)
 
-        Res(str)
+        Res("Bar")
       }
-      .handleCase { case baz: Baz => baz } { case (baz, bazSignal) =>
+      .handleType[Baz] { case (baz, bazSignal) =>
         effects += Effect("init-child", s"Baz-${baz.ordinal}-${baz.toString}")
         // @Note keep foreach or addObserver here – this is important.
         //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
@@ -412,7 +412,7 @@ class SplittableTypeSpec extends UnitSpec {
           effects += Effect("update-child", s"Baz-${baz.ordinal}-${baz.toString}")
         }(owner)
 
-        Res(baz)
+        Res("Baz")
       }
       .toStream
     
@@ -425,7 +425,7 @@ class SplittableTypeSpec extends UnitSpec {
     effects shouldBe mutable.Buffer(
       Effect("init-child", "Bar-null"),
       Effect("update-child", "Bar-null"),
-      Effect("result", "Res(null)")
+      Effect("result", "Res(Bar)")
     )
 
     effects.clear()
@@ -433,7 +433,7 @@ class SplittableTypeSpec extends UnitSpec {
     myEventBus.writer.onNext(Bar(None))
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(null)"), // sematically, splitMatch/handleCase/toStream use splitOne underlying, so this is the same as splitOne spec
+      Effect("result", "Res(Bar)"), // sematically, splitMatch/handleCase/toStream use splitOne underlying, so this is the same as splitOne spec
       Effect("update-child", "Bar-null")
     )
 
@@ -446,7 +446,7 @@ class SplittableTypeSpec extends UnitSpec {
     effects shouldBe mutable.Buffer(
       Effect("init-child", "Baz-0-Baz1"),
       Effect("update-child", "Baz-0-Baz1"),
-      Effect("result", "Res(Baz1)")
+      Effect("result", "Res(Baz)")
     )
 
     effects.clear()
@@ -454,7 +454,7 @@ class SplittableTypeSpec extends UnitSpec {
     myEventBus.writer.onNext(Baz.Baz2)
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(Baz1)"),
+      Effect("result", "Res(Baz)"),
       Effect("update-child", "Baz-1-Baz2")
     )
 
@@ -463,7 +463,7 @@ class SplittableTypeSpec extends UnitSpec {
     myEventBus.writer.onNext(Baz.Baz2)
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(Baz1)"),
+      Effect("result", "Res(Baz)"),
       Effect("update-child", "Baz-1-Baz2")
     )
 

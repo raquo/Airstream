@@ -196,8 +196,6 @@ object SplittableTypeMacros {
   ): Expr[MatchSplitObservable[Self, I, O1]] = {
     import quotes.reflect.*
 
-    report.info(Printer.TreeCode.show(casePfExpr.asTerm))
-
     val caseExprList = exprOfListToListOfExpr(caseListExpr)
 
     val nextCaseExprList =
