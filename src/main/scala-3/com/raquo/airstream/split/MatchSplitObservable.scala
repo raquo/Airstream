@@ -29,7 +29,7 @@ object MatchSplitObservable {
   def build[Self[+_] <: Observable[_] , I, O](
     observable: BaseObservable[Self, I],
     caseList: List[PartialFunction[Any, Any]],
-    handlerMap: Map[Int, Function[Any, O]]
+    handlerMap: Map[Int, Function2[Any, Any, O]]
   ): MatchSplitObservable[Self, I, O] = throw new UnsupportedOperationException("splitMatch without toSignal/toStream is illegal")
 
 }

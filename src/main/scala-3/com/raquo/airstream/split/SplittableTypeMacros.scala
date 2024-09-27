@@ -58,14 +58,14 @@ object SplittableTypeMacros {
       MatchSplitObservable.build(
         observable,
         Nil,
-        Map.empty[Int, Function[Any, Nothing]]
+        Map.empty[Int, Function2[Any, Any, Nothing]]
       )
   }
 
   extension [Self[+_] <: Observable[_], I, O](
     inline matchSplitObservable: MatchSplitObservable[Self, I, O]
   ) {
-    inline def handleCase[A, B, O1 >: O](inline casePf: PartialFunction[A, B])(inline handleFn: ((B, Signal[B])) => O1) = ${
+    inline def handleCase[A, B, O1 >: O](inline casePf: PartialFunction[A, B])(inline handleFn: (B, Signal[B]) => O1) = ${
       handleCaseImpl('{ matchSplitObservable }, '{ casePf }, '{ handleFn })
     }
 
@@ -83,17 +83,17 @@ object SplittableTypeMacros {
   }
 
   extension [Self[+_] <: Observable[_], I, O, T](inline matchTypeObserver: MatchTypeObservable[Self, I, O, T]) {
-    inline def apply[O1 >: O](inline handleFn: ((T, Signal[T])) => O1): MatchSplitObservable[Self, I, O1] = ${
+    inline def apply[O1 >: O](inline handleFn: (T, Signal[T]) => O1): MatchSplitObservable[Self, I, O1] = ${
       handleTypeApplyImpl('{ matchTypeObserver }, '{ handleFn })
     }
   }
 
   extension [Self[+_] <: Observable[_], I, O, V0, V1](inline matchValueObservable: MatchValueObservable[Self, I, O, V0, V1]) {
-    inline private def deglate[O1 >: O](inline handleFn: ((V1, Signal[V1])) => O1) = ${
+    inline private def deglate[O1 >: O](inline handleFn: (V1, Signal[V1]) => O1) = ${
       handleValueApplyImpl('{ matchValueObservable }, '{ handleFn })
     }
 
-    inline def apply[O1 >: O](inline handleFn: Signal[V1] => O1): MatchSplitObservable[Self, I, O1] = deglate { case (_, vSignal) => handleFn(vSignal) }
+    inline def apply[O1 >: O](inline handleFn: Signal[V1] => O1): MatchSplitObservable[Self, I, O1] = deglate { (_, vSignal) => handleFn(vSignal) }
   }
 
   extension [I, O](inline matchSplitObservable: MatchSplitObservable[Signal, I, O]) {
@@ -111,7 +111,7 @@ object SplittableTypeMacros {
   private def handleCaseImpl[Self[+_] <: Observable[_]: Type, I: Type, O: Type, O1 >: O: Type, A: Type, B: Type](
     matchSplitObservableExpr: Expr[MatchSplitObservable[Self, I, O]],
     casePfExpr: Expr[PartialFunction[A, B]],
-    handleFnExpr: Expr[Function[(B, Signal[B]), O1]]
+    handleFnExpr: Expr[Function2[B, Signal[B], O1]]
   )(
     using quotes: Quotes
   ): Expr[MatchSplitObservable[Self, I, O1]] = {
@@ -172,7 +172,7 @@ object SplittableTypeMacros {
 
   private def handleTypeApplyImpl[Self[+_] <: Observable[_]: Type, I: Type, O: Type, O1 >: O: Type, T: Type](
     matchSplitObservableExpr: Expr[MatchTypeObservable[Self, I, O, T]],
-    handleFnExpr: Expr[Function[(T, Signal[T]), O1]]
+    handleFnExpr: Expr[Function2[T, Signal[T], O1]]
   )(
     using quotes: Quotes
   ): Expr[MatchSplitObservable[Self, I, O1]] = {
@@ -234,7 +234,7 @@ object SplittableTypeMacros {
 
   private def handleValueApplyImpl[Self[+_] <: Observable[_]: Type, I: Type, O: Type, O1 >: O: Type, V0: Type, V1: Type](
     matchValueObservableExpr: Expr[MatchValueObservable[Self, I, O, V0, V1]],
-    handleFnExpr: Expr[Function[(V1, Signal[V1]), O1]]
+    handleFnExpr: Expr[Function2[V1, Signal[V1], O1]]
   )(
     using quotes: Quotes
   ): Expr[MatchSplitObservable[Self, I, O1]] = {
@@ -266,9 +266,9 @@ object SplittableTypeMacros {
   private def innerHandleCaseImpl[Self[+_] <: Observable[_]: Type, I: Type, O: Type, O1 >: O: Type, A: Type, B: Type](
     observableExpr: Expr[BaseObservable[Self, I]],
     caseListExpr: Expr[List[PartialFunction[Any, Any]]],
-    handlerMapExpr: Expr[Map[Int, Function[Any, O]]],
+    handlerMapExpr: Expr[Map[Int, Function2[Any, Any, O]]],
     casePfExpr: Expr[PartialFunction[A, B]],
-    handleFnExpr: Expr[Function[(B, Signal[B]), O1]]
+    handleFnExpr: Expr[Function2[B, Signal[B], O1]]
   )(
     using quotes: Quotes
   ): Expr[MatchSplitObservable[Self, I, O1]] = {
@@ -286,7 +286,7 @@ object SplittableTypeMacros {
         $observableExpr,
         $nextCaseListExpr,
         ($handlerMapExpr + ($handlerMapExpr.size -> $handleFnExpr
-          .asInstanceOf[Function[Any, O1]]))
+          .asInstanceOf[Function2[Any, Any, O1]]))
       )
     }
   }
@@ -324,17 +324,17 @@ object SplittableTypeMacros {
 
   private inline def toSplittableOneObservable[Self[+_] <: Observable[_], O](
     parentObservable: BaseObservable[Self, (Int, Any)],
-    handlerMap: Map[Int, Function[Any, O]]
+    handlerMap: Map[Int, Function2[Any, Any, O]]
   ): Self[O] = {
     parentObservable
       .matchStreamOrSignal(
         ifStream = _.splitOne(_._1) { case (idx, (_, b), dataSignal) =>
           val bSignal = dataSignal.map(_._2)
-          handlerMap.apply(idx).apply(b -> bSignal)
+          handlerMap.apply(idx).apply(b, bSignal)
         },
         ifSignal = _.splitOne(_._1) { case (idx, (_, b), dataSignal) =>
           val bSignal = dataSignal.map(_._2)
-          handlerMap.apply(idx).apply(b -> bSignal)
+          handlerMap.apply(idx).apply(b, bSignal)
         }
       )
       .asInstanceOf[Self[O]] // #TODO[Integrity] Same as FlatMap/AsyncStatusObservable, how to type this properly?

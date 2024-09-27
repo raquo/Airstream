@@ -42,7 +42,7 @@ object MatchValueObservable {
   def build[Self[+_] <: Observable[_], I, O, V0, V1](
       observable: BaseObservable[Self, I],
       caseList: List[PartialFunction[Any, Any]],
-      handlerMap: Map[Int, Function[Any, O]],
+      handlerMap: Map[Int, Function2[Any, Any, O]],
       vCast: PartialFunction[V0, V1]
   ): MatchValueObservable[Self, I, O, V0, V1] =
     throw new UnsupportedOperationException(

@@ -42,7 +42,7 @@ object MatchTypeObservable {
   def build[Self[+_] <: Observable[_], I, O, T](
       observable: BaseObservable[Self, I],
       caseList: List[PartialFunction[Any, Any]],
-      handlerMap: Map[Int, Function[Any, O]],
+      handlerMap: Map[Int, Function2[Any, Any, O]],
       tCast: PartialFunction[T, T]
   ): MatchTypeObservable[Self, I, O, T] =
     throw new UnsupportedOperationException(
