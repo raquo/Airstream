@@ -54,12 +54,12 @@ class SplittableTypeSpec extends UnitSpec {
 
         Res("Baz")
       }
-      .handleCase { case Tar => 10 } { case (int, intSignal) =>
-        effects += Effect("init-child", s"Tar-${int}")
+      .handleValue(Tar) { tarSignal =>
+        effects += Effect("init-child", s"Tar-${10}")
         // @Note keep foreach or addObserver here – this is important.
         //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-        intSignal.foreach { int =>
-          effects += Effect("update-child", s"Tar-${int}")
+        tarSignal.foreach { _ =>
+          effects += Effect("update-child", s"Tar-${10}")
         }(owner)
 
         Res("Tar")
