@@ -34,7 +34,7 @@ import scala.annotation.compileTimeOnly
  * ```
  */
 
-opaque type MatchTypeObservable[Self[+_] <: Observable[_], I, O, T] = Unit
+final case class MatchTypeObservable[Self[+_] <: Observable[_], I, O, T] private (private val underlying: Unit) extends AnyVal
 
 object MatchTypeObservable {
 

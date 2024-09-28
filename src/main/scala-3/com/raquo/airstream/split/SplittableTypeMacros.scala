@@ -79,7 +79,7 @@ object SplittableTypeMacros {
       handleValueImpl[Self, I, O, V]('{ matchSplitObservable }, '{ casePf })
     }
 
-    inline def handleValue[V](inline v: V)(using inline valueOf: ValueOf[V]): MatchValueObservable[Self, I, O, V, V] = handlePfValue[V] { case _: V => v }
+    inline def handleValue[V](inline v: V)(using inline valueOf: ValueOf[V]): MatchValueObservable[Self, I, O, V] = handlePfValue[V] { case _: V => v }
   }
 
   extension [Self[+_] <: Observable[_], I, O, T](inline matchTypeObserver: MatchTypeObservable[Self, I, O, T]) {
@@ -88,12 +88,12 @@ object SplittableTypeMacros {
     }
   }
 
-  extension [Self[+_] <: Observable[_], I, O, V0, V1](inline matchValueObservable: MatchValueObservable[Self, I, O, V0, V1]) {
-    inline private def deglate[O1 >: O](inline handleFn: (V1, Signal[V1]) => O1) = ${
+  extension [Self[+_] <: Observable[_], I, O, V](inline matchValueObservable: MatchValueObservable[Self, I, O, V]) {
+    inline private def deglate[O1 >: O](inline handleFn: (V, Signal[V]) => O1) = ${
       handleValueApplyImpl('{ matchValueObservable }, '{ handleFn })
     }
 
-    inline def apply[O1 >: O](inline handleFn: Signal[V1] => O1): MatchSplitObservable[Self, I, O1] = deglate { (_, vSignal) => handleFn(vSignal) }
+    inline def apply[O1 >: O](inline handleFn: Signal[V] => O1): MatchSplitObservable[Self, I, O1] = deglate { (_, vSignal) => handleFn(vSignal) }
   }
 
   extension [I, O](inline matchSplitObservable: MatchSplitObservable[Signal, I, O]) {
@@ -206,7 +206,7 @@ object SplittableTypeMacros {
     casePfExpr: Expr[PartialFunction[V, V]]
   )(
     using quotes: Quotes
-  ): Expr[MatchValueObservable[Self, I, O, V, V]] = {
+  ): Expr[MatchValueObservable[Self, I, O, V]] = {
     import quotes.reflect.*
 
     matchSplitObservableExpr match {
@@ -218,7 +218,7 @@ object SplittableTypeMacros {
             )
           } =>
         '{
-          MatchValueObservable.build[Self, I, O, V, V](
+          MatchValueObservable.build[Self, I, O, V](
             $observableExpr,
             $caseListExpr,
             $handlerMapExpr,
@@ -232,9 +232,9 @@ object SplittableTypeMacros {
     }
   }
 
-  private def handleValueApplyImpl[Self[+_] <: Observable[_]: Type, I: Type, O: Type, O1 >: O: Type, V0: Type, V1: Type](
-    matchValueObservableExpr: Expr[MatchValueObservable[Self, I, O, V0, V1]],
-    handleFnExpr: Expr[Function2[V1, Signal[V1], O1]]
+  private def handleValueApplyImpl[Self[+_] <: Observable[_]: Type, I: Type, O: Type, O1 >: O: Type, V: Type](
+    matchValueObservableExpr: Expr[MatchValueObservable[Self, I, O, V]],
+    handleFnExpr: Expr[Function2[V, Signal[V], O1]]
   )(
     using quotes: Quotes
   ): Expr[MatchSplitObservable[Self, I, O1]] = {
@@ -242,14 +242,14 @@ object SplittableTypeMacros {
 
     matchValueObservableExpr match {
       case '{
-            MatchValueObservable.build[Self, I, O, V0, V1](
+            MatchValueObservable.build[Self, I, O, V](
               $observableExpr,
               $caseListExpr,
               $handlerMapExpr,
               $tCaseExpr
             )
           } =>
-        innerHandleCaseImpl[Self, I, O, O1, V0, V1](
+        innerHandleCaseImpl[Self, I, O, O1, V, V](
           observableExpr,
           caseListExpr,
           handlerMapExpr,

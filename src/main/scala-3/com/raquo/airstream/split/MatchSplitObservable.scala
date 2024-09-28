@@ -21,7 +21,7 @@ import scala.annotation.compileTimeOnly
  * ```
  */
 
-opaque type MatchSplitObservable[Self[+_] <: Observable[_] , I, O] = Unit
+final case class MatchSplitObservable[Self[+_] <: Observable[_] , I, O] private (private val underlying: Unit) extends AnyVal
 
 object MatchSplitObservable {
 
