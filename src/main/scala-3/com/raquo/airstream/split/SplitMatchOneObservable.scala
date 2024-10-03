@@ -21,15 +21,15 @@ import scala.annotation.compileTimeOnly
  * ```
  */
 
-final case class MatchSplitObservable[Self[+_] <: Observable[_] , I, O] private (private val underlying: Unit) extends AnyVal
+final case class SplitMatchOneObservable[Self[+_] <: Observable[_] , I, O] private (private val underlying: Unit) extends AnyVal
 
-object MatchSplitObservable {
+object SplitMatchOneObservable {
 
   @compileTimeOnly("splitMatch without toSignal/toStream is illegal")
   def build[Self[+_] <: Observable[_] , I, O](
     observable: BaseObservable[Self, I],
     caseList: List[PartialFunction[Any, Any]],
     handlerMap: Map[Int, Function2[Any, Any, O]]
-  ): MatchSplitObservable[Self, I, O] = throw new UnsupportedOperationException("splitMatch without toSignal/toStream is illegal")
+  ): SplitMatchOneObservable[Self, I, O] = throw new UnsupportedOperationException("splitMatch without toSignal/toStream is illegal")
 
 }

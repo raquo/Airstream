@@ -4,13 +4,13 @@ import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.state.Var
-import com.raquo.airstream.split.SplittableTypeMacros.*
+import com.raquo.airstream.split.SplitMatchOneMacros.*
 
 import scala.collection.{immutable, mutable}
 import scala.scalajs.js
 import com.raquo.airstream.ShouldSyntax.shouldBeEmpty
 
-class SplittableTypeSpec extends UnitSpec {
+class SplitMatchOneSpec extends UnitSpec {
 
   sealed trait Foo
 
@@ -30,7 +30,7 @@ class SplittableTypeSpec extends UnitSpec {
     val owner = new TestableOwner
 
     val signal = myVar.signal
-      .splitMatch
+      .splitMatchOne
       .handleCase {
         case Bar(Some(str)) => str
         case Bar(None) => "null"
@@ -165,7 +165,7 @@ class SplittableTypeSpec extends UnitSpec {
 
     // This should warn "match may not be exhaustive" with mising cases, and some idea can also flag it
     val signal = myVar.signal
-      .splitMatch
+      .splitMatchOne
       .handleCase {
         case Bar(Some(str)) => str
       } { (str, strSignal) =>
@@ -262,7 +262,7 @@ class SplittableTypeSpec extends UnitSpec {
     val owner = new TestableOwner
 
     val stream = myEventBus.events
-      .splitMatch
+      .splitMatchOne
       .handleCase {
         case Bar(Some(str)) => str
         case Bar(None) => "null"
@@ -391,7 +391,7 @@ class SplittableTypeSpec extends UnitSpec {
     // This should warn "match may not be exhaustive" with mising cases, and some idea can also flag it
     // Compiler only flag the first warning in some case, so it's best to comment out first warning test for this to flag the warning
     val stream = myEventBus.events
-      .splitMatch
+      .splitMatchOne
       .handleCase {
         case Bar(None) => "null"
       } { (str, strSignal) =>
