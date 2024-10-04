@@ -19,7 +19,8 @@ import scala.compiletime.summonInline
   *   case Baz1, Baz2
   * }
   * case object Tar extends Foo
-  * val splitter = fooSignal.splitMatch
+  * val splitter = fooSignal
+  *   .splitMatchOne
   *   .handleCase { case Bar(Some(str)) => str } { (str, strSignal) =>
   *     renderStrNode(str, strSignal)
   *   }
@@ -134,7 +135,7 @@ object SplitMatchOneMacros {
         )
       case other =>
         report.errorAndAbort(
-          "Macro expansion failed, please use `splitMatch` instead of creating new MatchSplitObservable explicitly"
+          "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
         )
     }
   }
@@ -156,7 +157,7 @@ object SplitMatchOneMacros {
             )
           } =>
         '{
-          MatchTypeObservable.build[Self, I, O, T](
+          SplitMatchOneTypeObservable.build[Self, I, O, T](
             $observableExpr,
             $caseListExpr,
             $handlerMapExpr,
@@ -165,7 +166,7 @@ object SplitMatchOneMacros {
         }
       case other =>
         report.errorAndAbort(
-          "Macro expansion failed, please use `splitMatch` instead of creating new MatchSplitObservable explicitly"
+          "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
         )
     }
   }
@@ -180,7 +181,7 @@ object SplitMatchOneMacros {
 
     matchSplitObservableExpr match {
       case '{
-            MatchTypeObservable.build[Self, I, O, T](
+            SplitMatchOneTypeObservable.build[Self, I, O, T](
               $observableExpr,
               $caseListExpr,
               $handlerMapExpr,
@@ -196,7 +197,7 @@ object SplitMatchOneMacros {
         )
       case other =>
         report.errorAndAbort(
-          "Macro expansion failed, please use `splitMatch` instead of creating new MatchSplitObservable explicitly"
+          "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
         )
     }
   }
@@ -227,7 +228,7 @@ object SplitMatchOneMacros {
         }
       case other =>
         report.errorAndAbort(
-          "Macro expansion failed, please use `splitMatch` instead of creating new MatchSplitObservable explicitly"
+          "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
         )
     }
   }
@@ -258,7 +259,7 @@ object SplitMatchOneMacros {
         )
       case other =>
         report.errorAndAbort(
-          "Macro expansion failed, please use `splitMatch` instead of creating new MatchSplitObservable explicitly"
+          "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
         )
     }
   }
@@ -274,12 +275,12 @@ object SplitMatchOneMacros {
   ): Expr[SplitMatchOneObservable[Self, I, O1]] = {
     import quotes.reflect.*
 
-    val caseExprList = exprOfListToListOfExpr(caseListExpr)
+    val caseExprList = MacrosUtilities.exprOfListToListOfExpr(caseListExpr)
 
     val nextCaseExprList =
       casePfExpr.asExprOf[PartialFunction[Any, Any]] :: caseExprList
 
-    val nextCaseListExpr = listOfExprToExprOfList(nextCaseExprList)
+    val nextCaseListExpr = MacrosUtilities.listOfExprToExprOfList(nextCaseExprList)
 
     '{
       SplitMatchOneObservable.build[Self, I, O1](
@@ -289,37 +290,6 @@ object SplitMatchOneMacros {
           .asInstanceOf[Function2[Any, Any, O1]]))
       )
     }
-  }
-
-  private def exprOfListToListOfExpr(
-    pfListExpr: Expr[List[PartialFunction[Any, Any]]]
-  )(
-    using quotes: Quotes
-  ): List[Expr[PartialFunction[Any, Any]]] = {
-    import quotes.reflect.*
-
-    pfListExpr match {
-      case '{ $headExpr :: (${ tailExpr }: List[PartialFunction[Any, Any]]) } =>
-        headExpr :: exprOfListToListOfExpr(tailExpr)
-      case '{ Nil } => Nil
-      case _ =>
-        report.errorAndAbort(
-          "Macro expansion failed, please use `handleCase` instead of modify MatchSplitObservable explicitly"
-        )
-    }
-
-  }
-
-  private def listOfExprToExprOfList(
-    pfExprList: List[Expr[PartialFunction[Any, Any]]]
-  )(
-    using quotes: Quotes
-  ): Expr[List[PartialFunction[Any, Any]]] = {
-    import quotes.reflect.*
-
-    pfExprList match
-      case head :: tail => '{ $head :: ${ listOfExprToExprOfList(tail) } }
-      case Nil          => '{ Nil }
   }
 
   private inline def toSplittableOneObservable[Self[+_] <: Observable[_], O](
@@ -362,56 +332,16 @@ object SplitMatchOneMacros {
         '{
           toSplittableOneObservable(
             $observableExpr
-              .map(i => ${ innerObservableImpl('i, caseListExpr) })
+              .map(i => ${ MacrosUtilities.innerObservableImpl('i, caseListExpr) })
               .asInstanceOf[BaseObservable[Self, (Int, Any)]],
             $handlerMapExpr
           )
         }
       case _ =>
         report.errorAndAbort(
-          "Macro expansion failed, please use `splitMatch` instead of creating new MatchSplitObservable explicitly"
+          "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
         )
     }
-  }
-
-  private def innerObservableImpl[I: Type](
-    iExpr: Expr[I],
-    caseListExpr: Expr[List[PartialFunction[Any, Any]]]
-  )(
-    using quotes: Quotes
-  ): Expr[(Int, Any)] = {
-    import quotes.reflect.*
-
-    val caseExprList = exprOfListToListOfExpr(caseListExpr)
-
-    val allCaseDefLists = caseExprList.reverse.zipWithIndex
-      .flatMap { case (caseExpr, idx) =>
-        caseExpr.asTerm match {
-          case Lambda(_, Match(_, caseDefList)) => {
-            caseDefList.map { caseDef =>
-              val idxExpr = Expr.apply(idx)
-              val newRhsExpr = '{
-                val res = ${ caseDef.rhs.asExprOf[Any] }; ($idxExpr, res)
-              }
-              CaseDef.copy(caseDef)(
-                caseDef.pattern,
-                caseDef.guard,
-                newRhsExpr.asTerm
-              )
-            }
-          }
-          case _ =>
-            report.errorAndAbort(
-              "Macro expansion failed, please use `handleCase` with annonymous partial function"
-            )
-        }
-      }
-      .map(_.changeOwner(Symbol.spliceOwner))
-
-    // val matchExpr = Match(iExpr.asTerm, allCaseDefLists).asExprOf[(Int, Any)]
-    // report.info(matchExpr.show)
-    // matchExpr
-    Match(iExpr.asTerm, allCaseDefLists).asExprOf[(Int, Any)]
   }
 
 }

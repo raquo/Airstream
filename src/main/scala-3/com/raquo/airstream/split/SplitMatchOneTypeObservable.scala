@@ -36,9 +36,9 @@ import scala.annotation.compileTimeOnly
 
 final case class SplitMatchOneTypeObservable[Self[+_] <: Observable[_], I, O, T] private (private val underlying: Unit) extends AnyVal
 
-object MatchTypeObservable {
+object SplitMatchOneTypeObservable {
 
-  @compileTimeOnly("splitMatch without toSignal/toStream is illegal")
+  @compileTimeOnly("`splitMatchOne` without `toSignal`/`toStream` is illegal")
   def build[Self[+_] <: Observable[_], I, O, T](
       observable: BaseObservable[Self, I],
       caseList: List[PartialFunction[Any, Any]],
@@ -46,7 +46,7 @@ object MatchTypeObservable {
       tCast: PartialFunction[T, T]
   ): SplitMatchOneTypeObservable[Self, I, O, T] =
     throw new UnsupportedOperationException(
-      "splitMatch without toSignal/toStream is illegal"
+      "`splitMatchOne` without `toSignal`/`toStream` is illegal"
     )
 
 }

@@ -38,7 +38,7 @@ final case class SplitMatchOneValueObservable[Self[+_] <: Observable[_], I, O, V
 
 object SplitMatchOneValueObservable {
 
-  @compileTimeOnly("splitMatch without toSignal/toStream is illegal")
+  @compileTimeOnly("`splitMatchOne` without `toSignal`/`toStream` is illegal")
   def build[Self[+_] <: Observable[_], I, O, V](
       observable: BaseObservable[Self, I],
       caseList: List[PartialFunction[Any, Any]],
@@ -46,7 +46,7 @@ object SplitMatchOneValueObservable {
       vCast: PartialFunction[V, V]
   ): SplitMatchOneValueObservable[Self, I, O, V] =
     throw new UnsupportedOperationException(
-      "splitMatch without toSignal/toStream is illegal"
+      "`splitMatchOne` without `toSignal`/`toStream` is illegal"
     )
 
 }
