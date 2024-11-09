@@ -1,6 +1,6 @@
 object Versions {
 
-  val Scala_2_13 = "2.13.14"
+  val Scala_2_13 = "2.13.15"
 
   val Scala_3 = "3.3.3"
 
@@ -16,10 +16,10 @@ object Versions {
 
   val ScalaTest = "3.2.14"
 
-  val JsDom = "20.0.3"
+  val JsDom = "25.0.1"
 
-  val Webpack = "5.75.0"
+  val Webpack = "5.96.1"
 
-  val WebpackDevServer = "4.11.1"
+  val WebpackDevServer = "5.1.0"
 
 }
