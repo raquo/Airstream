@@ -9,7 +9,7 @@ import scala.util.Try
   * See also DerivedVar, created with `myVar.zoom(a => b)((a, b) => a)(owner)`,
   * and LazyDerivedVar, created with `myVar.zoomLazy(a => b)((a, b) => a)`
   */
-class SourceVar[A] private[state](initial: Try[A]) extends Var[A] {
+class SourceVar[A](initial: Try[A]) extends Var[A] {
 
   private[this] var currentValue: Try[A] = initial
 

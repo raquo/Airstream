@@ -342,4 +342,12 @@ object BaseObservable {
   @inline private[airstream] def maybeWillStart[O[+_] <: Observable[_]](observable: BaseObservable[O, _]): Unit = {
     observable.maybeWillStart()
   }
+
+  @inline def numAllObservers[O[+_] <: Observable[_]](observable: BaseObservable[O, _]): Int = {
+    observable.numAllObservers
+  }
+
+  @inline def isStarted[O[+_] <: Observable[_]](observable: BaseObservable[O, _]): Boolean = {
+    observable.isStarted
+  }
 }
