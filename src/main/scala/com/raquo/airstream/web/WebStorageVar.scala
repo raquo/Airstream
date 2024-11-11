@@ -1,6 +1,6 @@
 package com.raquo.airstream.web
 
-import com.raquo.airstream.core.{BaseObservable, EventStream, Observer}
+import com.raquo.airstream.core.{BaseObservable, EventStream, Observer, Signal}
 import com.raquo.airstream.ownership.{ManualOwner, Owner}
 import com.raquo.airstream.state.SourceVar
 import org.scalajs.dom
@@ -51,7 +51,7 @@ class WebStorageVar[A] private[web] (
   /** Stream of updates of this sessionStorage/localStorage value
     * from other browser tabs and frames that have shared access to it.
     */
-  val externalUpdates: EventStream[dom.StorageEvent] =
+  lazy val externalUpdates: EventStream[dom.StorageEvent] =
     DomEventStream[dom.StorageEvent](
       eventTarget = dom.window,
       eventKey = "storage"
@@ -61,6 +61,12 @@ class WebStorageVar[A] private[web] (
       // filter by storageArea.
       maybeStorage().contains(ev.storageArea) && ev.key == key
     }
+
+  /** Signal of raw values in the browser storage.
+    * Note: Updates are triggered only when this Var is updated.
+    */
+  lazy val rawStorageValues: Signal[Option[String]] =
+    signal.mapTo(maybeStorage().flatMap(s => Option(s.getItem(key))))
 
   // When user writes to this var, update the value in web storage
   // #Note we filter out duplicate values not here, but when we
@@ -203,7 +209,7 @@ object WebStorageVar {
     key: String,
     syncOwner: Option[Owner]
   ): WebStorageBuilder = {
-    val maybeStorage = () => Try(dom.window.localStorage).toOption
+    val maybeStorage = () => Try(dom.window.sessionStorage).toOption
     new WebStorageBuilder(maybeStorage, key, syncOwner)
   }
 

@@ -42,6 +42,8 @@ class WebStorageVarSpec extends UnitSpec with BeforeAndAfter {
 
   it("localStorage basics") {
 
+    assertEquals(WebStorageVar.localStorageIsAvailable(), true)
+
     val fooVar = WebStorageVar
       .localStorage(key = "foo", syncOwner = None)
       .withCodec[Foo](
@@ -92,6 +94,8 @@ class WebStorageVarSpec extends UnitSpec with BeforeAndAfter {
 
   it("sessionStorage basics") {
 
+    assertEquals(WebStorageVar.sessionStorageIsAvailable(), true)
+
     val fooVar = WebStorageVar
       .sessionStorage(key = "foo", syncOwner = None)
       .withCodec[Foo](
@@ -100,21 +104,21 @@ class WebStorageVarSpec extends UnitSpec with BeforeAndAfter {
         default = Success(Foo(-1))
       )
 
-    assertEquals(dom.window.localStorage.getItem("foo"), "-1")
+    assertEquals(dom.window.sessionStorage.getItem("foo"), "-1")
     assertEquals(fooVar.tryNow(), Success(Foo(-1)))
 
     // --
 
     fooVar.update(_.copy(id = 2))
 
-    assertEquals(dom.window.localStorage.getItem("foo"), "2")
+    assertEquals(dom.window.sessionStorage.getItem("foo"), "2")
     assertEquals(fooVar.tryNow(), Success(Foo(2)))
 
     // --
 
     fooVar.set(Foo(id = 3))
 
-    assertEquals(dom.window.localStorage.getItem("foo"), "3")
+    assertEquals(dom.window.sessionStorage.getItem("foo"), "3")
     assertEquals(fooVar.tryNow(), Success(Foo(3)))
 
     assertEquals(errorEffects.toList, Nil)
@@ -123,7 +127,7 @@ class WebStorageVarSpec extends UnitSpec with BeforeAndAfter {
 
     fooVar.setTry(Failure(err1))
 
-    assertEquals(dom.window.localStorage.getItem("foo"), "3")
+    assertEquals(dom.window.sessionStorage.getItem("foo"), "3")
     assertEquals(fooVar.tryNow(), Failure(err1))
 
     assertEquals(errorEffects.toList, List(
@@ -135,7 +139,7 @@ class WebStorageVarSpec extends UnitSpec with BeforeAndAfter {
 
     fooVar.pullOnce()
 
-    assertEquals(dom.window.localStorage.getItem("foo"), "3")
+    assertEquals(dom.window.sessionStorage.getItem("foo"), "3")
     assertEquals(fooVar.tryNow(), Success(Foo(3)))
 
   }
