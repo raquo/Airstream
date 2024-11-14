@@ -9,6 +9,8 @@ import com.raquo.airstream.core.{
 import scala.quoted.{Expr, Quotes, Type}
 import scala.annotation.{unused, targetName}
 import scala.compiletime.summonInline
+import scala.quoted.Varargs
+import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, innerObservableImpl}
 
 object SplitMatchSeqMacros {
   
@@ -18,14 +20,7 @@ object SplitMatchSeqMacros {
       inline distinctCompose: Function1[Signal[I], Signal[I]] = (iSignal: Signal[I]) => iSignal.distinct,
       inline duplicateKeysConfig: DuplicateKeysConfig = DuplicateKeysConfig.default,
     ) = {
-      SplitMatchSeqObservable.build(
-        keyFn,
-        distinctCompose,
-        duplicateKeysConfig,
-        observable,
-        Nil,
-        Map.empty[Int, Function2[Any, Any, Nothing]]
-      )
+      SplitMatchSeqObservable.build(keyFn, distinctCompose, duplicateKeysConfig, observable)()()
     }
   }
 
@@ -80,21 +75,39 @@ object SplitMatchSeqMacros {
               $keyFnExpr,
               $distinctComposeExpr,
               $duplicateKeysConfigExpr,
-              $observableExpr,
-              $caseListExpr,
-              $handlerMapExpr
+              $observableExpr
+            )(
+              ${caseExpr}*
+            )(
+              ${handlerExpr}*
             )
-          } =>
-        innerHandleCaseImpl(
-          keyFnExpr,
-          distinctComposeExpr,
-          duplicateKeysConfigExpr,
-          observableExpr,
-          caseListExpr,
-          handlerMapExpr,
-          casePfExpr,
-          handleFnExpr
-        )
+          } => {
+
+            val caseExprSeq = caseExpr match {
+              case Varargs(caseExprSeq) => caseExprSeq
+              case _ => report.errorAndAbort(
+                "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
+              )
+            }
+
+            val handlerExprSeq = handlerExpr match {
+              case Varargs(handlerExprSeq) => handlerExprSeq
+              case _ => report.errorAndAbort(
+                "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
+              )
+            }
+
+            innerHandleCaseImpl(
+              keyFnExpr,
+              distinctComposeExpr,
+              duplicateKeysConfigExpr,
+              observableExpr,
+              caseExprSeq,
+              handlerExprSeq,
+              casePfExpr,
+              handleFnExpr
+            )
+          }
       case other =>
         report.errorAndAbort(
           "Macro expansion failed, please use `splitMatchSeq` instead of creating new SplitMatchSeqObservable explicitly"
@@ -116,9 +129,11 @@ object SplitMatchSeqMacros {
               $keyFnExpr,
               $distinctComposeExpr,
               $duplicateKeysConfigExpr,
-              $observableExpr,
-              $caseListExpr,
-              $handlerMapExpr
+              $observableExpr
+            )(
+              ${caseExpr}*
+            )(
+              ${handlerExpr}*
             )
           } =>
         '{
@@ -126,9 +141,12 @@ object SplitMatchSeqMacros {
             $keyFnExpr,
             $distinctComposeExpr,
             $duplicateKeysConfigExpr,
-            $observableExpr,
-            $caseListExpr,
-            $handlerMapExpr,
+            $observableExpr
+          )(
+            ${caseExpr}*
+          )(
+            ${handlerExpr}*
+          )(
             $casePfExpr
           )
         }
@@ -153,22 +171,41 @@ object SplitMatchSeqMacros {
               $keyFnExpr,
               $distinctComposeExpr,
               $duplicateKeysConfigExpr,
-              $observableExpr,
-              $caseListExpr,
-              $handlerMapExpr,
+              $observableExpr
+            )(
+              ${caseExpr}*
+            )(
+              ${handlerExpr}*
+            )(
               $tCaseExpr
             )
-          } =>
-        innerHandleCaseImpl(
-          keyFnExpr,
-          distinctComposeExpr,
-          duplicateKeysConfigExpr,
-          observableExpr,
-          caseListExpr,
-          handlerMapExpr,
-          tCaseExpr,
-          handleFnExpr
-        )
+          } => {
+
+            val caseExprSeq = caseExpr match {
+              case Varargs(caseExprSeq) => caseExprSeq
+              case _ => report.errorAndAbort(
+                "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
+              )
+            }
+
+            val handlerExprSeq = handlerExpr match {
+              case Varargs(handlerExprSeq) => handlerExprSeq
+              case _ => report.errorAndAbort(
+                "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
+              )
+            }
+
+            innerHandleCaseImpl(
+              keyFnExpr,
+              distinctComposeExpr,
+              duplicateKeysConfigExpr,
+              observableExpr,
+              caseExprSeq,
+              handlerExprSeq,
+              tCaseExpr,
+              handleFnExpr
+            )
+          }
       case other =>
         report.errorAndAbort(
           "Macro expansion failed, please use `splitMatchSeq` instead of creating new SplitMatchSeqObservable explicitly"
@@ -190,9 +227,11 @@ object SplitMatchSeqMacros {
               $keyFnExpr,
               $distinctComposeExpr,
               $duplicateKeysConfigExpr,
-              $observableExpr,
-              $caseListExpr,
-              $handlerMapExpr
+              $observableExpr
+            )(
+              ${caseExpr}*
+            )(
+              ${handlerExpr}*
             )
           } =>
         '{
@@ -200,9 +239,12 @@ object SplitMatchSeqMacros {
             $keyFnExpr,
             $distinctComposeExpr,
             $duplicateKeysConfigExpr,
-            $observableExpr,
-            $caseListExpr,
-            $handlerMapExpr,
+            $observableExpr
+          )(
+            ${caseExpr}*
+          )(
+            ${handlerExpr}*
+          )(
             $casePfExpr
           )
         }
@@ -227,22 +269,41 @@ object SplitMatchSeqMacros {
               $keyFnExpr,
               $distinctComposeExpr,
               $duplicateKeysConfigExpr,
-              $observableExpr,
-              $caseListExpr,
-              $handlerMapExpr,
+              $observableExpr
+            )(
+              ${caseExpr}*
+            )(
+              ${handlerExpr}*
+            )(
               $tCaseExpr
             )
-          } =>
-        innerHandleCaseImpl(
-          keyFnExpr,
-          distinctComposeExpr,
-          duplicateKeysConfigExpr,
-          observableExpr,
-          caseListExpr,
-          handlerMapExpr,
-          tCaseExpr,
-          handleFnExpr
-        )
+          } => {
+
+            val caseExprSeq = caseExpr match {
+              case Varargs(caseExprSeq) => caseExprSeq
+              case _ => report.errorAndAbort(
+                "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
+              )
+            }
+
+            val handlerExprSeq = handlerExpr match {
+              case Varargs(handlerExprSeq) => handlerExprSeq
+              case _ => report.errorAndAbort(
+                "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
+              )
+            }
+
+            innerHandleCaseImpl(
+              keyFnExpr,
+              distinctComposeExpr,
+              duplicateKeysConfigExpr,
+              observableExpr,
+              caseExprSeq,
+              handlerExprSeq,
+              tCaseExpr,
+              handleFnExpr
+            )
+          }
       case other =>
         report.errorAndAbort(
           "Macro expansion failed, please use `splitMatchSeq` instead of creating new SplitMatchSeqObservable explicitly"
@@ -255,21 +316,13 @@ object SplitMatchSeqMacros {
     distinctComposeExpr: Expr[Function1[Signal[I], Signal[I]]],
     duplicateKeysConfigExpr: Expr[DuplicateKeysConfig],
     observableExpr: Expr[BaseObservable[Self, CC[I]]],
-    caseListExpr: Expr[List[PartialFunction[Any, Any]]],
-    handlerMapExpr: Expr[Map[Int, Function2[Any, Any, O]]],
+    caseExprSeq: Seq[Expr[CaseAny]],
+    handlerExprSeq: Seq[Expr[HandlerAny[O]]],
     casePfExpr: Expr[PartialFunction[A, B]],
     handleFnExpr: Expr[Function2[B, Signal[B], O1]]
   )(
     using quotes: Quotes
   ): Expr[SplitMatchSeqObservable[Self, I, K, O1, CC]] = {
-    import quotes.reflect.*
-
-    val caseExprList = MacrosUtilities.exprOfListToListOfExpr(caseListExpr)
-
-    val nextCaseExprList =
-      casePfExpr.asExprOf[PartialFunction[Any, Any]] :: caseExprList
-
-    val nextCaseListExpr = MacrosUtilities.listOfExprToExprOfList(nextCaseExprList)
 
     '{
       SplitMatchSeqObservable.build[Self, I, K, O1, CC](
@@ -277,9 +330,10 @@ object SplitMatchSeqMacros {
         $distinctComposeExpr,
         $duplicateKeysConfigExpr,
         $observableExpr,
-        $nextCaseListExpr,
-        ($handlerMapExpr + ($handlerMapExpr.size -> $handleFnExpr
-          .asInstanceOf[Function2[Any, Any, O1]]))
+      )(
+        ${ Varargs(caseExprSeq :+ casePfExpr.asExprOf[CaseAny]) }*
+      )(
+        ${ Varargs(handlerExprSeq :+ handleFnExpr.asExprOf[HandlerAny[O1]]) }*
       )
     }
   }
@@ -291,6 +345,7 @@ object SplitMatchSeqMacros {
   ): Signal[(I, Int, Any)] = {
     val iSignal = dataSignal.map(_._1)
     val otherSignal = dataSignal.map(data => data._2 -> data._3)
+    // TODO: We are unnecessary sufferring from `otherSignal.distinct`'s cost here
     distinctCompose(iSignal).combineWith(otherSignal.distinct)
   }
 
@@ -303,13 +358,13 @@ object SplitMatchSeqMacros {
     idx -> keyFn(i)
   }
 
-  private inline def toSplittableSeqObservable[Self[+_] <: Observable[_], I, K, O, CC[_]](
+  private def toSplittableSeqObservable[Self[+_] <: Observable[_], I, K, O, CC[_]](
     parentObservable: BaseObservable[Self, CC[(I, Int, Any)]],
     keyFn: I => K,
     distinctCompose: Signal[I] => Signal[I],
     duplicateKeysConfig: DuplicateKeysConfig,
-    handlerMap: Map[Int, Function2[Any, Any, O]],
-    splittable: Splittable[CC]
+    splittable: Splittable[CC],
+    handlers: HandlerAny[O]*,
   ): Signal[CC[O]] = {
     parentObservable
       .matchStreamOrSignal(
@@ -319,7 +374,10 @@ object SplitMatchSeqMacros {
           duplicateKeys = duplicateKeysConfig
         ) { case ((idx, _), (_, _, b), dataSignal) =>
           val bSignal = dataSignal.map(_._3)
-          handlerMap.apply(idx).apply(b, bSignal)
+          handlers.view.zipWithIndex.map(_.swap).toMap
+            .getOrElse(idx, IllegalStateException("Illegal SplitMatchSeq state. This is a bug in Airstream."))
+            .asInstanceOf[Function2[Any, Any, O]]
+            .apply(b, bSignal)
         }(splittable),
         ifSignal = _.split(
           key = customKey(keyFn),
@@ -327,7 +385,10 @@ object SplitMatchSeqMacros {
           duplicateKeys = duplicateKeysConfig
         ) { case ((idx, _), (_, _, b), dataSignal) =>
           val bSignal = dataSignal.map(_._3)
-          handlerMap.apply(idx).apply(b, bSignal)
+          handlers.view.zipWithIndex.map(_.swap).toMap
+            .getOrElse(idx, IllegalStateException("Illegal SplitMatchSeq state. This is a bug in Airstream."))
+            .asInstanceOf[Function2[Any, Any, O]]
+            .apply(b, bSignal)
         }(splittable)
       )
   }
@@ -340,33 +401,43 @@ object SplitMatchSeqMacros {
     import quotes.reflect.*
 
     matchSplitObservableExpr match {
-      case '{ SplitMatchSeqObservable.build[Self, I, K, O, CC]($_, $_, $_, $_, Nil, $_) } =>
-        report.errorAndAbort(
-          "Macro expansion failed, need at least one handleCase"
-        )
       case '{
             SplitMatchSeqObservable.build[Self, I, K, O, CC](
               $keyFnExpr,
               $distinctComposeExpr,
               $duplicateKeysConfigExpr,
-              $observableExpr,
-              $caseListExpr,
-              $handlerMapExpr
+              $observableExpr
+            )(
+              ${caseExpr}*
+            )(
+              ${handlerExpr}*
             )
           } =>
         Expr.summon[Splittable[CC]] match {
           case None => report.errorAndAbort(
             "Macro expansion failed, cannot find Splittable instance of " + MacrosUtilities.ShowType.nameOf[CC]
           )
-          case Some(splittableExpr) =>
-            '{
+          case Some(splittableExpr) => {    
+            val caseExprSeq = caseExpr match {
+              case Varargs(caseExprSeq) => caseExprSeq
+              case _ => report.errorAndAbort(
+                "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
+              )
+            }
+
+            if (caseExprSeq.isEmpty) {
+              report.errorAndAbort(
+                "Macro expansion failed, need at least one handleCase"
+              )
+            } else {
+              '{
               toSplittableSeqObservable(
                 $observableExpr
                   .map { icc =>
                     $splittableExpr.map(
                       icc,
                       i => {
-                        val (idx, b) = ${ MacrosUtilities.innerObservableImpl('i, caseListExpr) }
+                        val (idx, b) = ${ innerObservableImpl('i, caseExprSeq) }
                         (i, idx, b)
                       }
                     )
@@ -375,10 +446,12 @@ object SplitMatchSeqMacros {
                 $keyFnExpr,
                 $distinctComposeExpr,
                 $duplicateKeysConfigExpr,
-                $handlerMapExpr,
-                $splittableExpr
+                $splittableExpr,
+                ${handlerExpr}*,
               )
             }
+            }
+          }
         }
       case _ =>
         report.errorAndAbort(

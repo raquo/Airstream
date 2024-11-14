@@ -2,6 +2,7 @@ package com.raquo.airstream.split
 
 import com.raquo.airstream.core.{Observable, BaseObservable}
 import scala.annotation.compileTimeOnly
+import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny}
 
 /** `MatchSingletonObservable` served as macro's data holder for macro expansion.
  *
@@ -15,22 +16,13 @@ import scala.annotation.compileTimeOnly
  * will be expanded sematically into:
  *
  * ```scala
- * MatchTypeObservable.build[*, *, *, Baz](
- *   fooSignal,
- *   Nil,
- *   handlerMap,
- *   ({ case Tar => Tar })
- * )
+ * MatchTypeObservable.build[*, *, *, Baz](fooSignal)()(???)({ case Tar => Tar })
  * ```
  *
  * and then into:
  *
  * ```scala
- * MatchSplitObservable.build(
- *   fooSignal,
- *   ({ case Tar => Tar }) :: Nil,
- *   handlerMap
- * )
+ * MatchSplitObservable.build(fooSignal)({ case Tar => Tar })(???)
  * ```
  */
 
@@ -40,10 +32,13 @@ object SplitMatchOneValueObservable {
 
   @compileTimeOnly("`splitMatchOne` without `toSignal`/`toStream` is illegal")
   def build[Self[+_] <: Observable[_], I, O, V](
-      observable: BaseObservable[Self, I],
-      caseList: List[PartialFunction[Any, Any]],
-      handlerMap: Map[Int, Function2[Any, Any, O]],
-      vCast: PartialFunction[V, V]
+    observable: BaseObservable[Self, I]
+  )(
+    caseList: CaseAny*
+  )(
+    handleList: HandlerAny[O]*
+  )(
+    vCast: PartialFunction[V, V]
   ): SplitMatchOneValueObservable[Self, I, O, V] =
     throw new UnsupportedOperationException(
       "`splitMatchOne` without `toSignal`/`toStream` is illegal"
