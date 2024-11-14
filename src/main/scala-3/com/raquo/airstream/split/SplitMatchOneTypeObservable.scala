@@ -2,7 +2,7 @@ package com.raquo.airstream.split
 
 import com.raquo.airstream.core.{Observable, BaseObservable}
 import scala.annotation.compileTimeOnly
-import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny}
+import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchTypeHandler}
 
 /** `MatchTypeObservable` served as macro's data holder for macro expansion.
  *
@@ -38,7 +38,7 @@ object SplitMatchOneTypeObservable {
   )(
     handleList: HandlerAny[O]*
   )(
-    tCast: PartialFunction[T, T]
+    tHandler: MatchTypeHandler[T]
   ): SplitMatchOneTypeObservable[Self, I, O, T] =
     throw new UnsupportedOperationException(
       "`splitMatchOne` without `toSignal`/`toStream` is illegal"

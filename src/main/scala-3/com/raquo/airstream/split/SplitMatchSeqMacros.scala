@@ -10,7 +10,7 @@ import scala.quoted.{Expr, Quotes, Type}
 import scala.annotation.{unused, targetName}
 import scala.compiletime.summonInline
 import scala.quoted.Varargs
-import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, innerObservableImpl}
+import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchTypeHandler, MatchValueHandler, innerObservableImpl}
 
 object SplitMatchSeqMacros {
   
@@ -31,17 +31,13 @@ object SplitMatchSeqMacros {
       handleCaseImpl('{ matchSplitObservable }, '{ casePf }, '{ handleFn })
     }
 
-    inline private def handlePfType[T](inline casePf: PartialFunction[Any, T]) = ${
-      handleTypeImpl('{ matchSplitObservable }, '{ casePf })
+    inline def handleType[T]: SplitMatchSeqTypeObservable[Self, I, K, O, CC, T] = ${
+      handleTypeImpl('{ matchSplitObservable })
     }
 
-    inline def handleType[T]: SplitMatchSeqTypeObservable[Self, I, K, O, CC, T] = handlePfType[T] { case t: T => t }
-
-    inline private def handlePfValue[V](inline casePf: PartialFunction[Any, V]) = ${
-      handleValueImpl('{ matchSplitObservable }, '{ casePf })
+    inline def handleValue[V](inline v: V)(using inline valueOf: ValueOf[V]): SplitMatchSeqValueObservable[Self, I, K, O, CC, V] = ${
+      handleValueImpl('{ matchSplitObservable }, '{ v })
     }
-
-    inline def handleValue[V](inline v: V)(using inline valueOf: ValueOf[V]): SplitMatchSeqValueObservable[Self, I, K, O, CC, V] = handlePfValue[V] { case _: V => v }
 
     inline def toSignal: Signal[CC[O]] = ${ observableImpl('{ matchSplitObservable }) }
   }
@@ -116,8 +112,7 @@ object SplitMatchSeqMacros {
   }
 
   private def handleTypeImpl[Self[+_] <: Observable[_]: Type, I: Type, K: Type, O: Type, CC[_]: Type, T: Type](
-    matchSplitObservableExpr: Expr[SplitMatchSeqObservable[Self, I, K, O, CC]],
-    casePfExpr: Expr[PartialFunction[T, T]]
+    matchSplitObservableExpr: Expr[SplitMatchSeqObservable[Self, I, K, O, CC]]
   )(
     using quotes: Quotes
   ): Expr[SplitMatchSeqTypeObservable[Self, I, K, O, CC, T]] = {
@@ -147,7 +142,7 @@ object SplitMatchSeqMacros {
           )(
             ${handlerExpr}*
           )(
-            $casePfExpr
+            MatchTypeHandler.instance[T]
           )
         }
       case other =>
@@ -177,7 +172,7 @@ object SplitMatchSeqMacros {
             )(
               ${handlerExpr}*
             )(
-              $tCaseExpr
+              MatchTypeHandler.instance[T]
             )
           } => {
 
@@ -194,6 +189,8 @@ object SplitMatchSeqMacros {
                 "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
               )
             }
+
+            val tCaseExpr: Expr[PartialFunction[T, T]] = '{ { case t: T => t } }
 
             innerHandleCaseImpl(
               keyFnExpr,
@@ -215,7 +212,7 @@ object SplitMatchSeqMacros {
 
   private def handleValueImpl[Self[+_] <: Observable[_]: Type, I: Type, K: Type, O: Type, CC[_]: Type, V: Type](
     matchSplitObservableExpr: Expr[SplitMatchSeqObservable[Self, I, K, O, CC]],
-    casePfExpr: Expr[PartialFunction[V, V]]
+    vExpr: Expr[V]
   )(
     using quotes: Quotes
   ): Expr[SplitMatchSeqValueObservable[Self, I, K, O, CC, V]] = {
@@ -245,7 +242,7 @@ object SplitMatchSeqMacros {
           )(
             ${handlerExpr}*
           )(
-            $casePfExpr
+            MatchValueHandler.instance($vExpr)
           )
         }
       case other =>
@@ -275,7 +272,7 @@ object SplitMatchSeqMacros {
             )(
               ${handlerExpr}*
             )(
-              $tCaseExpr
+              MatchValueHandler.instance($vExpr)
             )
           } => {
 
@@ -293,6 +290,8 @@ object SplitMatchSeqMacros {
               )
             }
 
+            val vCaseExpr: Expr[PartialFunction[V, V]] = '{ { case _: V => $vExpr } }
+
             innerHandleCaseImpl(
               keyFnExpr,
               distinctComposeExpr,
@@ -300,7 +299,7 @@ object SplitMatchSeqMacros {
               observableExpr,
               caseExprSeq,
               handlerExprSeq,
-              tCaseExpr,
+              vCaseExpr,
               handleFnExpr
             )
           }

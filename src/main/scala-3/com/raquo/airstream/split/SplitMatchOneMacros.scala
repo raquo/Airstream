@@ -10,7 +10,8 @@ import scala.quoted.{Expr, Quotes, Type}
 import scala.annotation.{unused, targetName}
 import scala.compiletime.summonInline
 import scala.quoted.Varargs
-import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, innerObservableImpl}
+import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchTypeHandler, MatchValueHandler, innerObservableImpl}
+import scala.reflect.TypeTest
 
 /** `SplitMatchOneMacros` turns this code
   *
@@ -68,17 +69,13 @@ object SplitMatchOneMacros {
       handleCaseImpl('{ matchSplitObservable }, '{ casePf }, '{ handleFn })
     }
 
-    inline private def handlePfType[T](inline casePf: PartialFunction[Any, T]) = ${
-      handleTypeImpl[Self, I, O, T]('{ matchSplitObservable }, '{ casePf })
+    inline def handleType[T]: SplitMatchOneTypeObservable[Self, I, O, T] = ${
+      handleTypeImpl[Self, I, O, T]('{ matchSplitObservable })
     }
 
-    inline def handleType[T]: SplitMatchOneTypeObservable[Self, I, O, T] = handlePfType[T] { case t: T => t }
-
-    inline private def handlePfValue[V](inline casePf: PartialFunction[Any, V]) = ${
-      handleValueImpl[Self, I, O, V]('{ matchSplitObservable }, '{ casePf })
+    inline def handleValue[V](inline v: V)(using inline valueOf: ValueOf[V]): SplitMatchOneValueObservable[Self, I, O, V] = ${
+      handleValueImpl[Self, I, O, V]('{ matchSplitObservable }, '{ v })
     }
-
-    inline def handleValue[V](inline v: V)(using inline valueOf: ValueOf[V]): SplitMatchOneValueObservable[Self, I, O, V] = handlePfValue[V] { case _: V => v }
   }
 
   extension [Self[+_] <: Observable[_], I, O, T](inline matchTypeObserver: SplitMatchOneTypeObservable[Self, I, O, T]) {
@@ -150,8 +147,7 @@ object SplitMatchOneMacros {
   }
 
   private def handleTypeImpl[Self[+_] <: Observable[_]: Type, I: Type, O: Type, T: Type](
-    matchSplitObservableExpr: Expr[SplitMatchOneObservable[Self, I, O]],
-    casePfExpr: Expr[PartialFunction[T, T]]
+    matchSplitObservableExpr: Expr[SplitMatchOneObservable[Self, I, O]]
   )(
     using quotes: Quotes
   ): Expr[SplitMatchOneTypeObservable[Self, I, O, T]] = {
@@ -169,7 +165,7 @@ object SplitMatchOneMacros {
           )(
             ${handlerExpr}*
           )(
-            $casePfExpr
+            MatchTypeHandler.instance[T]
           )
         }
       case other =>
@@ -189,7 +185,7 @@ object SplitMatchOneMacros {
 
     matchSplitObservableExpr match {
       case '{
-            SplitMatchOneTypeObservable.build[Self, I, O, T]($observableExpr)(${caseExpr}*)(${handlerExpr}*)($tCaseExpr)
+            SplitMatchOneTypeObservable.build[Self, I, O, T]($observableExpr)(${caseExpr}*)(${handlerExpr}*)(MatchTypeHandler.instance[T])
           } =>
         val caseExprSeq = caseExpr match {
           case Varargs(caseExprSeq) => caseExprSeq
@@ -204,6 +200,8 @@ object SplitMatchOneMacros {
             "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
           )
         }
+
+        val tCaseExpr: Expr[PartialFunction[T, T]] = '{ { case t: T => t } }
 
         innerHandleCaseImpl[Self, I, O, O1, T, T](
           observableExpr,
@@ -221,7 +219,7 @@ object SplitMatchOneMacros {
 
   private def handleValueImpl[Self[+_] <: Observable[_]: Type, I: Type, O: Type, V: Type](
     matchSplitObservableExpr: Expr[SplitMatchOneObservable[Self, I, O]],
-    casePfExpr: Expr[PartialFunction[V, V]]
+    vExpr: Expr[V]
   )(
     using quotes: Quotes
   ): Expr[SplitMatchOneValueObservable[Self, I, O, V]] = {
@@ -239,7 +237,7 @@ object SplitMatchOneMacros {
           )(
             ${handlerExpr}*
           )(
-            $casePfExpr
+            MatchValueHandler.instance[V]($vExpr)
           )
         }
       case other =>
@@ -259,7 +257,7 @@ object SplitMatchOneMacros {
 
     matchValueObservableExpr match {
       case '{
-            SplitMatchOneValueObservable.build[Self, I, O, V]($observableExpr)(${caseExpr}*)(${handlerExpr}*)($tCaseExpr)
+            SplitMatchOneValueObservable.build[Self, I, O, V]($observableExpr)(${caseExpr}*)(${handlerExpr}*)(MatchValueHandler.instance[V]($vExpr))
           } =>
         val caseExprSeq = caseExpr match {
           case Varargs(caseExprSeq) => caseExprSeq
@@ -274,11 +272,14 @@ object SplitMatchOneMacros {
             "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
           )
         }
+
+        val vCaseExpr: Expr[PartialFunction[V, V]] = '{ { case _: V => $vExpr } }
+
         innerHandleCaseImpl[Self, I, O, O1, V, V](
           observableExpr,
           caseExprSeq,
           handlerExprSeq,
-          tCaseExpr,
+          vCaseExpr,
           handleFnExpr
         )
       case other =>

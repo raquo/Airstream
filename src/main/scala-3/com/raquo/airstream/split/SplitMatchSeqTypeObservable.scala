@@ -3,7 +3,7 @@ package com.raquo.airstream.split
 import com.raquo.airstream.core.{Observable, BaseObservable}
 import scala.annotation.compileTimeOnly
 import com.raquo.airstream.core.Signal
-import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny}
+import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchTypeHandler}
 
 final case class SplitMatchSeqTypeObservable[Self[+_] <: Observable[_] , I, K, O, CC[_], T] private (private val underlying: Unit) extends AnyVal
 
@@ -20,7 +20,7 @@ object SplitMatchSeqTypeObservable {
   )(
     handleList: HandlerAny[O]*
   )(
-    tCast: PartialFunction[T, T]
+    tHandler: MatchTypeHandler[T]
   ): SplitMatchSeqTypeObservable[Self, I, K, O, CC, T] = throw new UnsupportedOperationException("`splitMatchSeq` without `toSignal` is illegal")
 
 }

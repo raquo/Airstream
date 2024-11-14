@@ -2,11 +2,26 @@ package com.raquo.airstream.split
 
 import scala.quoted.{Expr, Quotes, Type}
 import scala.annotation.tailrec
+import scala.annotation.compileTimeOnly
 
 private[split] object MacrosUtilities {
 
   type CaseAny = Any
   type HandlerAny[+O] = Any
+
+  final case class MatchTypeHandler[T] private (private val underlying: Unit) extends AnyVal
+
+  object MatchTypeHandler {
+    @compileTimeOnly("MatchTypeHandler[T] cannot be used at runtime")
+    def instance[T]: MatchTypeHandler[T] = throw new UnsupportedOperationException("MatchTypeHandler[T] cannot be used at runtime")
+  }
+
+  final case class MatchValueHandler[V] private (private val underlying: Unit) extends AnyVal
+
+  object MatchValueHandler {
+    @compileTimeOnly("MatchValueHandler[V] cannot be used at runtime")
+    def instance[V](v: V): MatchValueHandler[V] = throw new UnsupportedOperationException("MatchValueHandler[V] cannot be used at runtime")
+  }
 
   def innerObservableImpl[I: Type](
     iExpr: Expr[I],
