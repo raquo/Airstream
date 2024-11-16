@@ -89,7 +89,7 @@ object SplitMatchOneMacros {
       handleValueApplyImpl('{ matchValueObservable }, '{ handleFn })
     }
 
-    inline def apply[O1 >: O](inline handleFn: Signal[V] => O1): SplitMatchOneObservable[Self, I, O1] = deglate { (_, vSignal) => handleFn(vSignal) }
+    inline def apply[O1 >: O](inline handle: => O1): SplitMatchOneObservable[Self, I, O1] = deglate { (_, _) => handle }
   }
 
   extension [I, O](inline matchSplitObservable: SplitMatchOneObservable[Signal, I, O]) {
@@ -130,7 +130,7 @@ object SplitMatchOneMacros {
                 "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
               )
             }
-              
+
             innerHandleCaseImpl(
               observableExpr,
               caseExprSeq,

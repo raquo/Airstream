@@ -92,14 +92,8 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
           }(owner)
           Bar(initialFooC.id)
         }
-        .handleValue(FooO) { fooOSignal =>
+        .handleValue(FooO) {
           effects += Effect("init-child", s"FooO(${FooO.id})")
-          // @Note keep foreach or addObserver here – this is important.
-          //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-          fooOSignal.foreach { fooO =>
-            assert(FooO.id == fooO.id, "Subsequent value does not match initial key")
-            effects += Effect("update-child", s"FooO(${fooO.id})")
-          }(owner)
           Bar(FooO.id)
         }
         .toSignal
@@ -151,7 +145,6 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
         Effect("init-child", "FooC(b-1)"),
         Effect("update-child", "FooC(b-1)"),
         Effect("init-child", "FooO(object)"),
-        Effect("update-child", "FooO(object)"),
         Effect("result", "List(Bar(1), Bar(a), Bar(b), Bar(object))"),
         Effect("update-child", "FooC(a-3)")
       )
@@ -221,14 +214,8 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
           }(owner)
           Bar(initialFooC.id)
         }
-        .handleValue(FooO) { fooOSignal =>
+        .handleValue(FooO) {
           effects += Effect("init-child", s"FooO(${FooO.id})")
-          // @Note keep foreach or addObserver here – this is important.
-          //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-          fooOSignal.foreach { fooO =>
-            assert(FooO.id == fooO.id, "Subsequent value does not match initial key")
-            effects += Effect("update-child", s"FooO(${fooO.id})")
-          }(owner)
           Bar(FooO.id)
         }
         .toSignal
@@ -243,7 +230,6 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
         Effect("init-child", "FooE(0)"),
         Effect("update-child", "FooE(0)"),
         Effect("init-child", "FooO(object)"),
-        Effect("update-child", "FooO(object)"),
         Effect("result", "List(Bar(initial), Bar(0), Bar(object))")
       )
 
@@ -321,7 +307,7 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
       //effects.clear()
     }
   }
-  
+
   it("split signal - raw semantics") {
     withOrWithoutDuplicateKeyWarnings {
       val effects = mutable.Buffer[Effect[String]]()
@@ -356,14 +342,8 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
           }(owner)
           Bar(initialFooC.id)
         }
-        .handleValue(FooO) { fooOSignal =>
+        .handleValue(FooO) {
           effects += Effect(s"init-child-${FooO.id}", s"FooO(${FooO.id})")
-          // @Note keep foreach or addObserver here – this is important.
-          //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-          fooOSignal.foreach { fooO =>
-            assert(FooO.id == fooO.id, "Subsequent value does not match initial key")
-            effects += Effect(s"update-child-${fooO.id}", s"FooO(${fooO.id})")
-          }(owner)
           Bar(FooO.id)
         }
         .toSignal
@@ -378,7 +358,6 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
         Effect("init-child-0", "FooE(0)"),
         Effect("update-child-0", "FooE(0)"),
         Effect("init-child-object", "FooO(object)"),
-        Effect("update-child-object", "FooO(object)"),
         Effect("result", "List(Bar(initial), Bar(0), Bar(object))")
       )
 
@@ -391,8 +370,7 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
       effects shouldBe mutable.Buffer(
         Effect("init-child-a", "FooC(a-1)"),
         Effect("update-child-a", "FooC(a-1)"),
-        Effect("result", "List(Bar(object), Bar(a))"),
-        Effect("update-child-object", "FooO(object)")
+        Effect("result", "List(Bar(object), Bar(a))")
       )
 
       effects.clear()
@@ -403,7 +381,6 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
 
       effects shouldBe mutable.Buffer(
         Effect("result", "List(Bar(a), Bar(object))"),
-        Effect("update-child-object", "FooO(object)"),
         Effect("update-child-a", "FooC(a-2)")
       )
 
@@ -553,17 +530,8 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
           )
           Bar(initialFooC.id)
         }
-        .handleValue(FooO) { fooOSignal =>
+        .handleValue(FooO) {
           effects += Effect(s"init-child-${FooO.id}", s"FooO(${FooO.id})")
-          // @Note keep foreach or addObserver here – this is important.
-          //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-          DynamicSubscription.subscribeCallback(
-            innerDynamicOwnerO,
-            owner => fooOSignal.foreach { fooO =>
-              assert(FooO.id == fooO.id, "Subsequent value does not match initial key")
-              effects += Effect(s"update-child-${fooO.id}", s"FooO(${fooO.id})")
-            }(owner)
-          )
           Bar(FooO.id)
         }
         .toSignal
@@ -579,7 +547,6 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
         Effect("init-child-initial", "FooC(initial-1)"),
         Effect("update-child-initial", "FooC(initial-1)"),
         Effect("init-child-object", "FooO(object)"),
-        Effect("update-child-object", "FooO(object)"),
         Effect("init-child-0", "FooE(0)"),
         Effect("result", "List(Bar(initial), Bar(object), Bar(0))"),
         Effect("update-child-0", "FooE(0)")
@@ -597,7 +564,6 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
         Effect("init-child-a", "FooC(a-3)"),
         Effect("update-child-a", "FooC(a-3)"),
         Effect("result", "List(Bar(0), Bar(b), Bar(object), Bar(a))"),
-        Effect("update-child-object", "FooO(object)"),
         Effect("update-child-0", "FooE(0)")
       )
 
@@ -635,11 +601,7 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
 
       innerDynamicOwnerO.activate()
 
-      effects shouldBe mutable.Buffer(
-        Effect("update-child-object", "FooO(object)")
-      )
-
-      effects.clear()
+      effects shouldBe mutable.Buffer()
 
       // --
 
@@ -659,8 +621,7 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
       effects shouldBe mutable.Buffer(
         Effect("result", "List(Bar(b), Bar(a), Bar(object))"),
         Effect("update-child-b", "FooC(b-2)"),
-        Effect("update-child-a", "FooC(a-3)"),
-        Effect("update-child-object", "FooO(object)")
+        Effect("update-child-a", "FooC(a-3)")
       )
 
       effects.clear()
@@ -715,7 +676,7 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
         .handleType[FooC] { (initialFooC, _) =>
           Bar(initialFooC.id)
         }
-        .handleValue(FooO) { _ =>
+        .handleValue(FooO) {
           Bar(FooO.id)
         }
         .toSignal
@@ -750,23 +711,23 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
   it("split list / vector / set / js.array / immutable.seq / collection.seq / option compiles") {
     // Having this test pass on all supported Scala versions is important to ensure that the implicits are actually usable.
     {
-      (new EventBus[List[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(_ => 30).toSignal
-      (new EventBus[Vector[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(_ => 30).toSignal
-      (new EventBus[Set[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(_ => 30).toSignal
-      (new EventBus[js.Array[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(_ => 30).toSignal
-      (new EventBus[immutable.Seq[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(_ => 30).toSignal
-      (new EventBus[collection.Seq[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(_ => 30).toSignal
-      (new EventBus[collection.Seq[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(_ => 30).toSignal
+      (new EventBus[List[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
+      (new EventBus[Vector[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
+      (new EventBus[Set[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
+      (new EventBus[js.Array[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
+      (new EventBus[immutable.Seq[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
+      (new EventBus[collection.Seq[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
+      (new EventBus[collection.Seq[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
     }
     // And now the same, but with `distinctCompose = identity`, because that somehow affects implicit resolution in Scala 3.0.0
     {
-      (new EventBus[List[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(_ => 30).toSignal
-      (new EventBus[Vector[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(_ => 30).toSignal
-      (new EventBus[Set[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(_ => 30).toSignal
-      (new EventBus[js.Array[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(_ => 30).toSignal
-      (new EventBus[immutable.Seq[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(_ => 30).toSignal
-      (new EventBus[collection.Seq[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(_ => 30).toSignal
-      (new EventBus[collection.Seq[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(_ => 30).toSignal
+      (new EventBus[List[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
+      (new EventBus[Vector[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
+      (new EventBus[Set[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
+      (new EventBus[js.Array[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
+      (new EventBus[immutable.Seq[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
+      (new EventBus[collection.Seq[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
+      (new EventBus[collection.Seq[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
     }
   }
 

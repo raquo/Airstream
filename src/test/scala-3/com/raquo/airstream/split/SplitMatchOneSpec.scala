@@ -54,14 +54,8 @@ class SplitMatchOneSpec extends UnitSpec {
 
         Res("Baz")
       }
-      .handleValue(Tar) { tarSignal =>
+      .handleValue(Tar) {
         effects += Effect("init-child", s"Tar-${10}")
-        // @Note keep foreach or addObserver here – this is important.
-        //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-        tarSignal.foreach { _ =>
-          effects += Effect("update-child", s"Tar-${10}")
-        }(owner)
-
         Res("Tar")
       }
       .toSignal
@@ -139,7 +133,6 @@ class SplitMatchOneSpec extends UnitSpec {
 
     effects shouldBe mutable.Buffer(
       Effect("init-child", "Tar-10"),
-      Effect("update-child", "Tar-10"),
       Effect("result", "Res(Tar)")
     )
 
@@ -148,8 +141,7 @@ class SplitMatchOneSpec extends UnitSpec {
     myVar.writer.onNext(Tar)
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(Tar)"),
-      Effect("update-child", "Tar-10")
+      Effect("result", "Res(Tar)")
     )
 
     effects.clear()
@@ -189,14 +181,8 @@ class SplitMatchOneSpec extends UnitSpec {
 
         Res("Baz1")
       }
-      .handleValue(Tar) { tarSignal =>
+      .handleValue(Tar) {
         effects += Effect("init-child", s"Tar-${10}")
-        // @Note keep foreach or addObserver here – this is important.
-        //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-        tarSignal.foreach { _ =>
-          effects += Effect("update-child", s"Tar-${10}")
-        }(owner)
-
         Res("Tar")
       }
       .toSignal
@@ -238,7 +224,6 @@ class SplitMatchOneSpec extends UnitSpec {
 
     effects shouldBe mutable.Buffer(
       Effect("init-child", "Tar-10"),
-      Effect("update-child", "Tar-10"),
       Effect("result", "Res(Tar)")
     )
 
@@ -247,8 +232,7 @@ class SplitMatchOneSpec extends UnitSpec {
     myVar.writer.onNext(Tar)
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(Tar)"),
-      Effect("update-child", "Tar-10")
+      Effect("result", "Res(Tar)")
     )
 
     effects.clear()
@@ -287,14 +271,8 @@ class SplitMatchOneSpec extends UnitSpec {
 
         Res("Baz")
       }
-      .handleValue(Tar){ tarSignal =>
+      .handleValue(Tar) {
         effects += Effect("init-child", s"Tar-${10}")
-        // @Note keep foreach or addObserver here – this is important.
-        //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-        tarSignal.foreach { _ =>
-          effects += Effect("update-child", s"Tar-${10}")
-        }(owner)
-
         Res("Tar")
       }
       .toStream
@@ -365,7 +343,6 @@ class SplitMatchOneSpec extends UnitSpec {
 
     effects shouldBe mutable.Buffer(
       Effect("init-child", "Tar-10"),
-      Effect("update-child", "Tar-10"),
       Effect("result", "Res(Tar)")
     )
 
@@ -374,8 +351,7 @@ class SplitMatchOneSpec extends UnitSpec {
     myEventBus.writer.onNext(Tar)
 
     effects shouldBe mutable.Buffer(
-      Effect("result", "Res(Tar)"),
-      Effect("update-child", "Tar-10")
+      Effect("result", "Res(Tar)")
     )
 
     effects.clear()

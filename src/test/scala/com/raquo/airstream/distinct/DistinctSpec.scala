@@ -221,7 +221,7 @@ class DistinctSpec extends UnitSpec {
     effects.clear()
 
     // --
-    
+
     sub3.kill()
 
     _var.writer.onNext(3)
@@ -248,7 +248,7 @@ class DistinctSpec extends UnitSpec {
 
     calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer()
-    
+
     // --
 
     _var.writer.onNext(4)

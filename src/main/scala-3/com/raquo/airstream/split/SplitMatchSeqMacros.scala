@@ -13,7 +13,7 @@ import scala.quoted.Varargs
 import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchTypeHandler, MatchValueHandler, innerObservableImpl}
 
 object SplitMatchSeqMacros {
-  
+
   extension [Self[+_] <: Observable[_], I, K, CC[_]](inline observable: BaseObservable[Self, CC[I]]) {
     inline def splitMatchSeq(
       inline keyFn: Function1[I, K],
@@ -53,7 +53,7 @@ object SplitMatchSeqMacros {
       handleValueApplyImpl('{ matchValueObservable }, '{ handleFn })
     }
 
-    inline def apply[O1 >: O](inline handleFn: Signal[V] => O1): SplitMatchSeqObservable[Self, I, K, O1, CC] = deglate { (_, vSignal) => handleFn(vSignal) }
+    inline def apply[O1 >: O](inline handle: => O1): SplitMatchSeqObservable[Self, I, K, O1, CC] = deglate { (_, _) => handle }
   }
 
   private def handleCaseImpl[Self[+_] <: Observable[_]: Type, I: Type, K: Type, O: Type, O1 >: O: Type, CC[_]: Type, A: Type, B: Type](
@@ -416,7 +416,7 @@ object SplitMatchSeqMacros {
           case None => report.errorAndAbort(
             "Macro expansion failed, cannot find Splittable instance of " + MacrosUtilities.ShowType.nameOf[CC]
           )
-          case Some(splittableExpr) => {    
+          case Some(splittableExpr) => {
             val caseExprSeq = caseExpr match {
               case Varargs(caseExprSeq) => caseExprSeq
               case _ => report.errorAndAbort(
