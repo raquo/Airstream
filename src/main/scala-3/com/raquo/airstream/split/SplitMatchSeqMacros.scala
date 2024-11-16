@@ -49,11 +49,11 @@ object SplitMatchSeqMacros {
   }
 
   extension [Self[+_] <: Observable[_], I, K, O, CC[_], V](inline matchValueObservable: SplitMatchSeqValueObservable[Self, I, K, O, CC, V]) {
-    inline private def deglate[O1 >: O](inline handleFn: (V, Signal[V]) => O1) = ${
+    inline private def delegate[O1 >: O](inline handleFn: (V, Signal[V]) => O1) = ${
       handleValueApplyImpl('{ matchValueObservable }, '{ handleFn })
     }
 
-    inline def apply[O1 >: O](inline handle: => O1): SplitMatchSeqObservable[Self, I, K, O1, CC] = deglate { (_, _) => handle }
+    inline def apply[O1 >: O](inline handle: => O1): SplitMatchSeqObservable[Self, I, K, O1, CC] = delegate { (_, _) => handle }
   }
 
   private def handleCaseImpl[Self[+_] <: Observable[_]: Type, I: Type, K: Type, O: Type, O1 >: O: Type, CC[_]: Type, A: Type, B: Type](

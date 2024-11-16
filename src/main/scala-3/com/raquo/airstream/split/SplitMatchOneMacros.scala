@@ -85,11 +85,11 @@ object SplitMatchOneMacros {
   }
 
   extension [Self[+_] <: Observable[_], I, O, V](inline matchValueObservable: SplitMatchOneValueObservable[Self, I, O, V]) {
-    inline private def deglate[O1 >: O](inline handleFn: (V, Signal[V]) => O1) = ${
+    inline private def delegate[O1 >: O](inline handleFn: (V, Signal[V]) => O1) = ${
       handleValueApplyImpl('{ matchValueObservable }, '{ handleFn })
     }
 
-    inline def apply[O1 >: O](inline handle: => O1): SplitMatchOneObservable[Self, I, O1] = deglate { (_, _) => handle }
+    inline def apply[O1 >: O](inline handle: => O1): SplitMatchOneObservable[Self, I, O1] = delegate { (_, _) => handle }
   }
 
   extension [I, O](inline matchSplitObservable: SplitMatchOneObservable[Signal, I, O]) {
