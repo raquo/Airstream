@@ -44,7 +44,6 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
     fireTry(Failure(nextError), transaction)
   }
 
-  /** Signal propagates only if its value has changed */
   override protected def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
     // println(s"$this > FIRE > $nextValue")
 

@@ -61,7 +61,6 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
                 VarError("Unable to update a failed Var. Consider Var#tryUpdater instead.", cause = Some(err))
               )
           }
-
         case Failure(err) =>
           setCurrentValue(Failure[A](err), trx)
       }
@@ -88,9 +87,21 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
     new DerivedVar[A, B](this, in, out, owner, displayNameSuffix = ".zoom")
   }
 
-  /** Create a lazily evaluated derived Var.
+  /** Use this to create a Var that zooms into a field of a class stored
+    * in the parent Var, for example:
     *
-    * Its value will be evaluated only if it has subscribers,
+    * ```scala
+    * val fieldVar = formStateVar.zoomLazy(_.field1) {
+    *   (formState, newFieldValue) => formState.copy(field1 = newFieldValue)
+    * }
+    * fieldVar.set(newFieldValue) // updates both fieldVar and formStateVar
+    * ```
+    *
+    * The vars become bidirectionally linked, with the underlying state stored
+    * in the parent var, and the derived var providing a read-write lens view
+    * into it.
+    *
+    * The new Var's value will be evaluated only if it has subscribers,
     * or when you get its value with methods like .now(). Its value
     * will not be re-evaluated unnecessarily.
     *
@@ -102,12 +113,67 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
     * as they may not get called if the Var's value is not observed.
     */
   def zoomLazy[B](in: A => B)(out: (A, B) => A): Var[B] = {
-    val zoomedSignal = new LazyStrictSignal(signal, in, displayName, displayNameSuffix = ".zoomLazy.signal")
+    val zoomedSignal = new LazyStrictSignal(
+      signal, in, displayName, displayNameSuffix = ".zoomLazy.signal"
+    )
     new LazyDerivedVar[A, B](
       parent = this,
       signal = zoomedSignal,
       zoomOut = (currValue, nextZoomedValue) => out(currValue, nextZoomedValue),
       displayNameSuffix = ".zoomLazy")
+    // #nc Use this new impl in 18.0
+    // new LazyDerivedVar2[A, B](
+    //   parent = this,
+    //   signal = zoomedSignal,
+    //   zoomOut = (currValueTry, nextZoomedValueTry) => {
+    //     currValueTry.fold(
+    //       err => {
+    //         // If parent value is error-ed, we can't update with the `out` fn.
+    //         AirstreamError.sendUnhandledError(
+    //           VarError(s"Unable to zoom out of lazy derived var when the parent var is failed.", cause = Some(err))
+    //         )
+    //         None
+    //       },
+    //       currValue =>
+    //         // Note: setting the derived var to a failed state writes that failure to the parent var
+    //         Some(nextZoomedValueTry.map(out(currValue, _)))
+    //     )
+    //   },
+    //   displayNameSuffix = ".zoomLazy"
+    // )
+  }
+
+  /** Create a derived Var with an isomorphic transformation, for example
+    * by transforming the value in the parent var with a codec.
+    *
+    * ```scala
+    * val personVar = jsonVar.bimap(decodeJsonIntoPerson)(encodePersonToJson)
+    * ```
+    *
+    * The two vars become bidirectionally linked, with the underlying state
+    * stored in the parent var, and the derived var providing a transformed
+    * read-write view into it.
+    *
+    * Make sure that round-tripping the values through your `getThis` and
+    * `getParent` functions results in an equivalent value, otherwise the
+    * derived Var will give you different values than what you may expect.
+    *
+    * Ideally, `getThis` and `getParent` should not throw, but if they do,
+    * both the parent and the derived var will be set into error state with
+    * the thrown error.
+    */
+  def bimap[B](getThis: A => B)(getParent: B => A): Var[B] = {
+    val zoomedSignal = new LazyStrictSignal(
+      signal, getThis, displayName, displayNameSuffix = ".bimap.signal"
+    )
+    new LazyDerivedVar2[A, B](
+      parent = this,
+      signal = zoomedSignal,
+      updateParent = (_, nextZoomedValueTry) => {
+        Some(nextZoomedValueTry.map(getParent))
+      },
+      displayNameSuffix = ".bimap"
+    )
   }
 
   def setTry(tryValue: Try[A]): Unit = writer.onTry(tryValue)

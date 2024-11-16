@@ -23,7 +23,7 @@ class LazyStrictSignal[I, O](
   displayNameSuffix: String
 ) extends MapSignal[I, O](parentSignal, project = zoomIn, recover = None) with StrictSignal[O] { self =>
 
-  override protected def defaultDisplayName: String = parentDisplayName + displayNameSuffix
+  override protected def defaultDisplayName: String = parentDisplayName + displayNameSuffix + s"@${hashCode()}"
 
   override def tryNow(): Try[O] = {
     val newParentLastUpdateId = Protected.lastUpdateId(parentSignal)
