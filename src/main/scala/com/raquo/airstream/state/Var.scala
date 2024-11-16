@@ -176,6 +176,47 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
     )
   }
 
+  /** Distinct events (but keep all errors) by == (equals) comparison */
+  def distinct: Var[A] = distinctByFn(_ == _)
+
+  /** Distinct events (but keep all errors) by matching key
+    * Note: `key(event)` might be evaluated more than once for each event
+    */
+  def distinctBy(key: A => Any): Var[A] = distinctByFn(key(_) == key(_))
+
+  /** Distinct events (but keep all errors) by reference equality (eq) */
+  def distinctByRef(implicit ev: A <:< AnyRef): Var[A] = distinctByFn(ev(_) eq ev(_))
+
+  /** Distinct events (but keep all errors) using a comparison function */
+  def distinctByFn(isSame: (A, A) => Boolean): Var[A] = distinctTry {
+    case (Success(prev), Success(next)) => isSame(prev, next)
+    case _ => false
+  }
+
+  /** Distinct errors only (but keep all events) using a comparison function */
+  def distinctErrors(isSame: (Throwable, Throwable) => Boolean): Var[A] = distinctTry {
+    case (Failure(prevErr), Failure(nextErr)) => isSame(prevErr, nextErr)
+    case _ => false
+  }
+
+  /** Distinct all values (both events and errors) using a comparison function */
+  def distinctTry(isSame: (Try[A], Try[A]) => Boolean): Var[A] = {
+    val distinctSignal = new LazyStrictSignal[A, A](
+      signal.distinctTry(isSame), identity, displayName, displayNameSuffix = ".distinct*.signal"
+    )
+    new LazyDerivedVar2[A, A](
+      parent = this,
+      signal = distinctSignal,
+      updateParent = (currValue, nextValue) =>
+        if (isSame(currValue, nextValue)) {
+          None
+        } else {
+          Some(nextValue)
+        },
+      displayNameSuffix = ".distinct*"
+    )
+  }
+
   def setTry(tryValue: Try[A]): Unit = writer.onTry(tryValue)
 
   final def set(value: A): Unit = setTry(Success(value))
