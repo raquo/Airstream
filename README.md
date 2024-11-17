@@ -56,6 +56,8 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Val](#val)
     * [FetchStream](#fetchstream)
     * [Ajax](#ajax)
+    * [LocalStorage](#localstorage)
+    * [SessionStorage](#sessionstorage)
     * [Websockets](#websockets)
     * [DOM Events](#dom-events)
     * [Custom Event Sources](#custom-event-sources)
@@ -795,6 +797,109 @@ val bytesLoadedS = progressS.mapN((xhr, ev) => ev.loaded)
 In a similar manner, you can pass a `requestObserver` that will be called with the newly created `dom.XMLHttpRequest` just before the request is sent. This way you can save the pending request into a Var and e.g. `abort()` it if needed.
 
 Warning: dom.XmlHttpRequest is an ugly, imperative JS construct. We set event callbacks for `onload`, `onerror`, `onabort`, `ontimeout`, and if requested, also for `onprogress` and `onreadystatechange`. Make sure you don't override Airstream's listeners in your own code, or this stream will not work properly.
+
+
+#### LocalStorage
+
+[Local Storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) is a browser API that lets you persist data to a key-value client-side storage. This storage is shared between and is available to all tabs and frames from the same [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) within the same browser. 
+
+Airstream offers persistent Vars backed by LocalStorage, accessed via `WebStorageVar.localStorage`:
+
+```scala
+val themeVar: WebStorageVar[String] = WebStorageVar
+  .localStorage(key = "themeName", syncOwner = None)
+  .text(default = "light")
+
+val tabIxVar: WebStorageVar[Int] = WebStorageVar
+  .localStorage(key = "selectedTabIndex", syncOwner = None)
+  .int(default = 0)
+
+val showSidebarVar: WebStorageVar[Boolean] = WebStorageVar
+  .localStorage(key = "showSidebar", syncOwner = None)
+  .bool(default = true)
+```
+
+**See [live LocalStorage Var demo](https://demo.laminar.dev/app/integrations/localstorage) in the laminar demo project.**
+
+##### Web storage codecs
+
+As the underlying LocalStorage API can only store string values, Airstream Vars offer an easy way to specify custom encoding/decoding functions, so that you can e.g. JSON-encode your case classes:
+
+```scala
+val fooVar: WebStorageVar[Foo] = WebStorageVar
+  .localStorage(key = "foo", syncOwner = None)
+  .withCodec(
+    encode = Foo.toJson,
+    decode = Foo.fromJson,
+    default = Success(Foo(1, "name"))
+  )
+```
+
+**With JSON encoding, be careful to keep the schema compatible over time.** As your code evolves, at a minimum, your new code should always be able to parse JSON strings written to LocalStorage by your old code. Your JSON library may help with that, with optional field encodings etc. You can also amend your `decode` function to reset the user to the `default` value instead of returning a Failure – rough as that would be, it often would be better than breaking the app with a failed Var.
+
+##### Syncing LocalStorage Var-s
+
+Please note that you should only have at most one Var managing a given localStorage key in a given document. If you have multiple instances of Var in the same document / browser tab, both looking at the same e.g. `key = "foo"`, they will go out of sync – updates to one of these Var-s will not propagate to the other Var.
+
+However! It is perfectly fine to have two documents in separate browser tabs managing the same LocalStorage key, using one Var each, if you specify some `syncOwner`. In most cases, you will want to make those Var-s global in your code, such that they never need to be garbage collected (until the tab is closed). In such cases, simply specify `syncOwner = Some(unsafeWindowOwner)` (from Laminar), and **your Var-s will magically sync across the tabs** – you update the Var in one tab, and the Var in the other tab will immediately update as well. For example, switching theme from light to dark across multiple tabs can work this way.
+
+When do you need to use a different, non-global `syncOwner`? In short – when you're creating ephemeral Var-s that need to be garbage-collected at some point. For example, if you are rendering a list of items, and for each item, you want to remember its `isExpanded` state in a separate LocalStorage key (e.g. `item_<id>_isExpanded`) – then you will want to use an element-specific `owner` provided by Laminar's `onMount*` callbacks, so that the Var's syncing resources are released when you unmount the element that the Var is related to (e.g. because you stopped rendering that particular item).
+
+This may be inconvenient, as you may not have the owner by the time you need the Var, so you can specify `syncOwner = None` to create the Var, and then call `syncFromExternalUpdates` on it from inside `onMountCallback`:
+
+```scala
+def renderItem(item: Item): Div = {
+  val isExpandedVar = WebStorageVar
+    .localStorage(key = s"item_${id}_isExpanded", syncOwner = None)
+    .bool(default = false) 
+  div(
+    onMountCallback { ctx => isExpandedVar.syncFromExternalUpdates(ctx.owner) },
+    div(
+      onClick.mapToUnit --> isExpandedVar.invertWriter,
+      s"Item ${item.id}: ${item.label}"
+    ),
+    div(
+      cls("-details"),
+      display <-- isExpandedVar.signal.map(if (_) "block" else "hidden"),
+      "..."
+    )
+  )
+}
+```
+
+As always, needing to mess with custom owners manually should give you a hint that there is likely a better way to accomplishing your goal. Consider that instead of having N local Var-s (one for each item id) that need their lifetime individually managed like in the snippet the above, you could just have one global LocalStorage Var for `key = "isExpanded"`, containing a **list** of item IDs that were expanded – that one you could just use with `unsafeWindowOwner`.
+
+To be extra clear about memory management – just as with the usual Var-s, creating a `WebStorageVar` with `syncOwner = None` does not require cleanup – such a Var would be garbage-collected when it goes out of scope. It's the syncing part that needs cleanup, if you want to discard the Var before the user closes the browser tab. 
+
+##### Misc WebStorageVar notes
+
+* When creating the Var, it will try to read the current value from the underlying LocalStorage key. If the key was not yet set, it will initialize to the provided `default` value, and write that to LocalStorage as well.
+* `encode` and `decode` functions must not throw. If the `decode` function returns a `Failure`, the Var will be set to its error value. But:
+* Whenever the Var is set to an error value, the underlying LocalStorage will **not** be updated, as we have no way to encode arbitrary exceptions. Thus, error states are not synced between tabs.
+* When using `withCodec` with `syncOwner`, we de-duplicate Var updates coming from the other tabs using `==` to prevent an infinite loop of two tabs re-sending the same update to each other. You can specify a custom `isSame(v1, v2)` function by passing it as `syncDistinctByFn` param to `withCodec`.
+* Additional values and methods on WebStorageVar for more complex use cases: `externalUpdates` stream, `rawStorageValues` signal, `pullOnce` and `setFromStoredValue`. See scaladoc for those. 
+
+
+
+#### SessionStorage
+
+[Session Storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) is a data persistence API that is very similar to [Local Storage](#localstorage), but is more ephemeral. Its data is only available within one tab's session (roughly speaking, each tab gets its own session storage), so typically you would use it without syncing – just with `syncOwner = None`.
+
+How is SessionStorage Var different from a regular Airstream Var? Unlike simple JS variables that are discarded when you close or reload the current document, a SessionStorage Var's value survives page reloads, browser navigation, etc. One real life example of such persistence you can see on Github, when entering a PR comment. If you accidentally navigate away from that page, you can press the browser's back button, and your comment draft will still be there.
+
+Airstream's SessionStorage Vars have exactly the same API as LocalStorage Vars:
+
+```scala
+val themeVar: WebStorageVar[String] = WebStorageVar
+  .sessionStorage(key = "comment", syncOwner = None)
+  .text(default = "")
+```
+
+**See [live SessionStorage Var demo](https://demo.laminar.dev/app/integrations/localstorage) in the laminar demo project.**
+
+While SessionStorage is not shared across multiple tabs, it _is_ still shared across multiple frames of the same origin within one tab, so if some of your web app's content is isolated in an `<iframe>`, and that iframe runs its own JS script with its own instance of Airstream, you can use the syncing functionality to sync the SessionStorage Vars across that boundary.
+
+For more details on using the WebStorageVar, see [LocalStorage](#localstorage) section right above.
 
 
 #### Websockets
