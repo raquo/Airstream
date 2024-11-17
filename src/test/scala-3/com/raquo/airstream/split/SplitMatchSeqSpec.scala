@@ -8,7 +8,7 @@ import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, ManualO
 import com.raquo.airstream.split.DuplicateKeysConfig
 import com.raquo.airstream.split.SplitMatchSeqMacros.*
 import com.raquo.airstream.state.Var
-import com.raquo.ew.JsArray
+import com.raquo.ew.{JsArray, JsVector}
 import org.scalatest.{Assertion, BeforeAndAfter}
 
 import scala.collection.{immutable, mutable}
@@ -715,6 +715,8 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
       (new EventBus[Vector[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
       (new EventBus[Set[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
       (new EventBus[js.Array[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
+      (new EventBus[JsArray[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
+      (new EventBus[JsVector[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
       (new EventBus[immutable.Seq[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
       (new EventBus[collection.Seq[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
       (new EventBus[collection.Seq[Foo]]).events.splitMatchSeq(_.id).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
@@ -725,6 +727,8 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
       (new EventBus[Vector[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
       (new EventBus[Set[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
       (new EventBus[js.Array[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
+      (new EventBus[JsArray[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
+      (new EventBus[JsVector[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
       (new EventBus[immutable.Seq[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
       (new EventBus[collection.Seq[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
       (new EventBus[collection.Seq[Foo]]).events.splitMatchSeq(_.id, identity).handleCase{ case e: FooE => e }((_, _) => 10).handleType[FooC]((_, _) => 20).handleValue(FooO)(30).toSignal
