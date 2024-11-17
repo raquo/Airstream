@@ -61,6 +61,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Websockets](#websockets)
     * [DOM Events](#dom-events)
     * [Custom Event Sources](#custom-event-sources)
+    * [Custom Vars](#custom-vars)
     * [Extending Observables](#extending-observables)
   * [Sources & Sinks](#sources--sinks)
   * [FRP Glitches](#frp-glitches)
@@ -990,6 +991,17 @@ class CustomSignalSource[A] (
 `fireValue` and `fireError` are merged into one `setCurrentValue` callback that expects a `Try[A]`, and this being a Signal, we also provide a `getCurrentValue` param to check the custom signal's current value.
 
 Generally signals need to be started in order for their current value to update. Stopped signals generally don't update without listeners, unless they are a `StrictSignal` like `Var#signal`. `CustomSignalSource` is not a `StrictSignal` so there is no expectation for it to keep updating its value when it's stopped. Users should keep listening to signals that they care about.
+
+
+#### Custom Vars
+
+Your use case and stylistic preferences may call for creating a bona fide `Var` rather than a `CustomSignalSource` as shown above. In those cases, you can simply subclass `SourceVar` – all you need is to provide the initial value to its constructor. You can add your own methods that update the Var's value in special ways, or provide custom streams / signals, etc.
+
+For inspiration, see Airstream's own [WebStorageVar](#localstorage) – it's a Var backed by LocalStorage.
+
+If you don't want to expose the underlying Var, you can also try to create a derived Var – see how Var's `zoomLazy` / `bimap` / `distinct` methods work, for example. But that requires some understanding of Airstream internals.
+
+Alternatively, you could also create a custom class that hides the underlying Var, and only exposes custom signals / observers / etc. For a nicer integration with Laminar and Airstream, such a class could extend `SignalSource` and `Sink` Airstream traits (see [Sources & Sinks](#sources--sinks)).
 
 
 #### Extending Observables
