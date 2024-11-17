@@ -721,6 +721,31 @@ Var.set(
 We may optimize this in the future to avoid calling `Foo.toJson`, but for now this is the simplest implementation using the same mechanism that we used for `zoomLazy`. This indirection should not be observable in practice – as long as your `getThis` / `getParent` callbacks are pure and don't throw. If they do throw, errors will be propagated as expected, given the indirection.
 
 
+##### Var.distinct
+
+Just as we can filter values emitted by observables by [distinct-ness](#distinction-operators) (from the last emitted value), we can filter Vars in a similar manner:
+
+```scala
+case class Foo(id: Int, label: String)
+val fooVar: Var[Foo] = Var(Foo(1, "hello"))
+val distinctFooVar: Var[Foo] = fooVar.distinct
+```
+
+In this code snippet, `distinctFooVar` is derived from `fooVar`, and matches its value exactly (much like `Var.bimap(identity)(identity)` would), **unless** `fooVar` emits a value that is _not_ distinct from its current value – in that case, only `fooVar` emits the update event, and `distinctFooVar` does not emit – it retains its previous value.
+
+The default `.distinct` filter uses a `==` check, but other operators like `.distinctBy(_.id)` are also available.
+
+So far this works just like these [distinction operators](#distinction-operators) would work on signals – you could achieve the same with e.g. `fooVar.signal.distinct`. What's special about `distinctFooVar` is that you can also **write** into it, and the writes are also filtered for distinctness. For example, if you try to write `Foo(1, "hello")` into `distinctFooVar` (same as its current value), it will not emit anything, and neither will this update be propagated to `fooVar`. On the other hand, if you write `Foo(2, "bye")` (different value), then both vars would get updated.
+
+Distinct Vars may be useful when you're working with state that you always want `distinct`-ed – then you simply discard the original Var, and always use the distinct Var, e.g.:
+
+```scala
+val selectedId = Var(1).distinct
+selectedId.set(2) // new value – updated
+selectedId.set(2) // value same as current – ignored
+```
+
+
 ##### Batch Updates
 
 Similar to EventBus, Var emits each event in a new [transaction](#transactions). And, similar to `EventBus.emit`, you can put values into multiple Vars "at the same time", in the same transaction, to avoid [glitches](#frp-glitches) downstream. To do that, use the `set` / `setTry` / `update` / `tryUpdate` methods on the Var **companion object**. For example:
