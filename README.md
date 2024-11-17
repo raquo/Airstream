@@ -697,6 +697,29 @@ As the name implies, `LazyDerivedVar` is evaluated lazily, unlike other Vars. Th
 
 Before the introduction of `zoomLazy`, Airstream also offered a strict `zoom` method, which is now considered inferior, because it requires an `Owner`. Note that derived vars created with the old `zoom` method could only be updated if their owner remained active, or if they had any other subscribers. Otherwise, attempting to update the var would cause Airstream to emit an unhandled error. The old `zoom` method will be deprecated in 18.0.0.
 
+// TODO[18.0.0] - Reorganize this section, split out for every operator.
+
+##### Var.bimap
+
+`bimap` is an isomorphic (one-to-one, reversible) transformation of Var. For example, if you have `val fooVar: Var[Foo]`, you could create a Var with the JSON representation of the Foo in that Var, and as any other derived Var, the values in these two vars would stay synced:
+
+```scala
+val jsonVar: Var[String] = fooVar.bimap(getThis = Foo.toJson)(getParent = Foo.fromJson)
+```
+
+Remember that updates to derived vars such as this `jsonVar` are routed via the parent Var. So, if you say `jsonVar.set(newJsonStr)`, we don't directly set this value to `jsonVar`, we do more or less the following: 
+
+```scala
+// Real implementation does proper error handling 
+val newFoo = Foo.fromJson(newJsonStr)
+Var.set(
+  fooVar -> newFoo,
+  jsonVar -> Foo.toJson(newFoo)
+)
+```
+
+We may optimize this in the future to avoid calling `Foo.toJson`, but for now this is the simplest implementation using the same mechanism that we used for `zoomLazy`. This indirection should not be observable in practice – as long as your `getThis` / `getParent` callbacks are pure and don't throw. If they do throw, errors will be propagated as expected, given the indirection.
+
 
 ##### Batch Updates
 
