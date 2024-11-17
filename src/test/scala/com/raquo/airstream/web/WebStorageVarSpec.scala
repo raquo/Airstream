@@ -42,7 +42,7 @@ class WebStorageVarSpec extends UnitSpec with BeforeAndAfter {
 
   it("localStorage basics") {
 
-    assertEquals(WebStorageVar.localStorageIsAvailable(), true)
+    assertEquals(WebStorageVar.isLocalStorageAvailable(), true)
 
     val fooVar = WebStorageVar
       .localStorage(key = "foo", syncOwner = None)
@@ -94,7 +94,7 @@ class WebStorageVarSpec extends UnitSpec with BeforeAndAfter {
 
   it("sessionStorage basics") {
 
-    assertEquals(WebStorageVar.sessionStorageIsAvailable(), true)
+    assertEquals(WebStorageVar.isSessionStorageAvailable(), true)
 
     val fooVar = WebStorageVar
       .sessionStorage(key = "foo", syncOwner = None)

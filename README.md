@@ -871,6 +871,14 @@ As always, needing to mess with custom owners manually should give you a hint th
 
 To be extra clear about memory management – just as with the usual Var-s, creating a `WebStorageVar` with `syncOwner = None` does not require cleanup – such a Var would be garbage-collected when it goes out of scope. It's the syncing part that needs cleanup, if you want to discard the Var before the user closes the browser tab. 
 
+##### Availability of LocalStorage
+
+**The user's browser configuration may not allow you to use LocalStorage and SessionStorage.** For example, if the user disabled cookies and site data, you will not be able to read or write to LocalStorage.
+
+In such cases, the WebStorageVar will not throw an error, but **will default to working as a regular non-persisted Var.**
+
+If you _need_ the storage to work, you can check whether LocalStorage is enabled with `WebStorageVar.isLocalStorageAvailable()` and similar methods, and ask the user to enable it if it's disabled. This method will attempt to write-then-delete a small piece of data to LocalStorage, and will report whether that succeeds.
+
 ##### Misc WebStorageVar notes
 
 * When creating the Var, it will try to read the current value from the underlying LocalStorage key. If the key was not yet set, it will initialize to the provided `default` value, and write that to LocalStorage as well.

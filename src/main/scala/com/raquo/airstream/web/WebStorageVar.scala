@@ -76,7 +76,15 @@ class WebStorageVar[A] private[web] (
     onNext = { newValue =>
       maybeStorage().foreach { storage =>
         val newValueStr = encode(newValue)
-        storage.setItem(key, newValueStr)
+        try {
+          storage.setItem(key, newValueStr)
+        } catch {
+          // In some browsers in some cases, storage may not allow
+          // writes even if the storage object is available.
+          // See webStorageError method at the bottom of the file.
+          // #TODO[API] Should we report this error somehow?
+          case _: js.JavaScriptException => ()
+        }
       }
     },
     onError = {
@@ -213,28 +221,28 @@ object WebStorageVar {
     new WebStorageBuilder(maybeStorage, key, syncOwner)
   }
 
-  /** Users may have disabled site data (incl. LocalStorage) in browser settings.
-    * In those cases, accessing dom.window.localStorage fails with a JS Error like
-    * "SecurityError: Failed to read the 'localStorage' property from 'Window'".
-    * - Note: The Var would keep working, but without persistence to localStorage.
+  /** Users may disable site data (incl. LocalStorage) in browser settings.
+    * This checks whether you can actually write to LocalStorage.
+    * - Note: If this returns false, Airstream's local storage Var would keep
+    *   working as a regular Var, but without persistence to localStorage.
     *
     * See [[localStorageError]]
     */
-  def localStorageIsAvailable(): Boolean = localStorageError().isEmpty
+  def isLocalStorageAvailable(): Boolean = localStorageError().isEmpty
 
-  /** Users may have disabled site data (incl. SessionStorage) in browser settings.
-    * In those cases, accessing dom.window.sessionStorage fails with a JS Error like
-    * "SecurityError: Failed to read the 'sessionStorage' property from 'Window'".
-    * - Note: The Var would keep working, but without persistence to sessionStorage.
+  /** Users may disable site data (incl. SessionStorage) in browser settings.
+    * This checks whether you can actually write to SessionStorage.
+    * - Note: If this returns false, Airstream's session storage Var would keep
+    *   working as a regular Var, but without persistence to sessionStorage.
     *
     * See [[sessionStorageError]]
     */
-  def sessionStorageIsAvailable(): Boolean = sessionStorageError().isEmpty
+  def isSessionStorageAvailable(): Boolean = sessionStorageError().isEmpty
 
   /** If this method returns an error, you won't be able to save data to LocalStorage.
     * - Note: the Airstream LocalStorage Var will continue working as an ephemeral Var.
     *
-    * See [[localStorageIsAvailable]]
+    * See [[isLocalStorageAvailable]]
     */
   def localStorageError(): Option[dom.DOMException] = {
     webStorageError(Try(dom.window.localStorage))
@@ -243,16 +251,27 @@ object WebStorageVar {
   /** If this method returns an error, you won't be able to save data to SessionStorage,
     * - Note: the Airstream SessionStorage Var will continue working as an ephemeral Var.
     *
-    * See [[sessionStorageIsAvailable]]
+    * See [[isSessionStorageAvailable]]
     */
   def sessionStorageError(): Option[dom.DOMException] = {
     webStorageError(Try(dom.window.sessionStorage))
   }
 
+  private val testKey = s"test_16417602047200375"
+
   private def webStorageError(storage: Try[dom.Storage]): Option[dom.DOMException] = {
-    storage.fold(
+    // https://stackoverflow.com/a/16427747/2601788
+    storage.map { s =>
+      s.setItem(testKey, "test")
+      s.removeItem(testKey)
+    }.fold(
       {
-        case js.JavaScriptException(ex: dom.DOMException) => Some(ex)
+        case err: js.JavaScriptException =>
+          // I'm pretty sure that we can only get DOMException here, but if we
+          // get a different kind of JS exception, we're probably better off
+          // pretending that it's a DOMException – their public members
+          // (name and message) should be the same anyway.
+          Some(err.exception.asInstanceOf[dom.DOMException])
         case err => throw err // Should not happen. Report bug if you see this.
       },
       _ => None
