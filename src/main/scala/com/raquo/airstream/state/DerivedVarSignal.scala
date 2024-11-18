@@ -10,10 +10,10 @@ class DerivedVarSignal[A, B](
   owner: Owner,
   parentDisplayName: => String
 ) extends MapSignal[A, B](
-    parent.signal,
-    project = zoomIn,
-    recover = None
-  ) with OwnedSignal[B] {
+  parent.signal,
+  project = zoomIn,
+  recover = None
+) with OwnedSignal[B] {
 
   // Note that even if owner kills subscription, this signal might remain due to other listeners
   override protected[state] def isStarted: Boolean = super.isStarted

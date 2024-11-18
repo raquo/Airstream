@@ -35,7 +35,7 @@ object AirstreamError {
   }
 
   case class VarError(message: String, cause: Option[Throwable])
-    extends AirstreamError(s"$message; cause: ${cause.map(getFullMessage)}") {
+  extends AirstreamError(s"$message; cause: ${cause.map(getFullMessage)}") {
 
     cause.foreach(initCause)
 
@@ -43,7 +43,7 @@ object AirstreamError {
   }
 
   case class ErrorHandlingError(error: Throwable, cause: Throwable)
-    extends AirstreamError(s"ErrorHandlingError: ${getFullMessage(error)}; cause: ${getFullMessage(cause)}") {
+  extends AirstreamError(s"ErrorHandlingError: ${getFullMessage(error)}; cause: ${getFullMessage(cause)}") {
 
     initCause(cause)
 
@@ -51,7 +51,7 @@ object AirstreamError {
   }
 
   case class CombinedError(causes: Seq[Option[Throwable]])
-    extends AirstreamError(s"CombinedError: ${causes.flatten.map(getFullMessage).mkString("; ")}") {
+  extends AirstreamError(s"CombinedError: ${causes.flatten.map(getFullMessage).mkString("; ")}") {
 
     causes.flatten.headOption.foreach(initCause) // Just get the first cause – better than nothing I guess?
 
@@ -64,7 +64,7 @@ object AirstreamError {
   }
 
   case class ObserverErrorHandlingError(error: Throwable, cause: Throwable)
-    extends AirstreamError(s"ObserverErrorHandlingError: ${getFullMessage(error)}; cause: ${getFullMessage(cause)}") {
+  extends AirstreamError(s"ObserverErrorHandlingError: ${getFullMessage(error)}; cause: ${getFullMessage(cause)}") {
 
     initCause(cause)
 
@@ -72,13 +72,13 @@ object AirstreamError {
   }
 
   case class DebugError(error: Throwable, cause: Option[Throwable])
-    extends AirstreamError(s"DebugError: ${getFullMessage(error)}; cause: ${cause.map(getFullMessage)}") {
+  extends AirstreamError(s"DebugError: ${getFullMessage(error)}; cause: ${cause.map(getFullMessage)}") {
 
     override def toString: String = s"DebugError: $error; cause: $cause"
   }
 
   case class TransactionDepthExceeded(trx: Transaction, depth: Int)
-    extends AirstreamError(s"Transaction depth exceeded maxDepth = $depth: Execution of $trx aborted. See `Transaction.maxDepth`.") {
+  extends AirstreamError(s"Transaction depth exceeded maxDepth = $depth: Execution of $trx aborted. See `Transaction.maxDepth`.") {
 
     override def toString: String = s"TransactionDepthExceeded: $trx; maxDepth: $depth"
   }
