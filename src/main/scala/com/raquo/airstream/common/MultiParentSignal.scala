@@ -22,14 +22,14 @@ trait MultiParentSignal[I, O] extends WritableSignal[O] {
   /** @return Whether parent has emitted since last time we checked */
   protected[this] def updateParentLastUpdateIds(): Boolean = {
     var parentHasUpdated = false
-    parents.forEachWithIndex { (parent, ix) => {
+    parents.forEachWithIndex { (parent, ix) =>
       val newLastUpdateId = Protected.lastUpdateId(parent)
       val lastSeenParentUpdateId = _parentLastUpdateIds(ix)
       if (newLastUpdateId != lastSeenParentUpdateId) {
         _parentLastUpdateIds.update(ix, newLastUpdateId)
         parentHasUpdated = true
       }
-    }}
+    }
     parentHasUpdated
   }
 

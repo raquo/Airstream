@@ -34,14 +34,14 @@ class EventBusStream[A] private[eventbus] (
 
   /** @param ignoredTransaction normally EventBus emits all events in a new transaction, so it ignores whatever is provided. */
   override protected def onNext(nextValue: A, ignoredTransaction: Transaction): Unit = {
-    //dom.console.log(s">>>>WBS.onNext($nextValue): isStarted=$isStarted")
-    //dom.console.log(sources)
+    // dom.console.log(s">>>>WBS.onNext($nextValue): isStarted=$isStarted")
+    // dom.console.log(sources)
 
     // Note: We're not checking isStarted here because if this stream wasn't started, it wouldn't have been
     // fired as an internal observer. WriteBus calls this method manually, so it checks .isStarted on its own.
     // @TODO ^^^^ We should document this contract in InternalObserver
 
-    //println(s"> init trx from EventBusStream(${nextValue})")
+    // println(s"> init trx from EventBusStream(${nextValue})")
 
     Transaction(fireValue(nextValue, _))
   }

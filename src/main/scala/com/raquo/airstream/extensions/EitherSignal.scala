@@ -21,16 +21,15 @@ class EitherSignal[A, B](val signal: Signal[Either[A, B]]) extends AnyVal {
     left: (A, Signal[A]) => C,
     right: (B, Signal[B]) => C
   ): Signal[C] = {
-    new SplittableOneSignal(signal).splitOne(
-      key = _.isRight
-    )(
-      (_, initial, signal) => initial match {
-        case Right(v) =>
-          right(v, signal.map(e => e.getOrElse(throw new Exception(s"splitEither: `${signal}` bad right value: $e"))))
-        case Left(v) =>
-          left(v, signal.map(e => e.left.getOrElse(throw new Exception(s"splitEither: `${signal}` bad left value: $e"))))
-      }
-    )
+    new SplittableOneSignal(signal).splitOne(key = _.isRight) {
+      (_, initial, signal) =>
+        initial match {
+          case Right(v) =>
+            right(v, signal.map(e => e.getOrElse(throw new Exception(s"splitEither: `${signal}` bad right value: $e"))))
+          case Left(v) =>
+            left(v, signal.map(e => e.left.getOrElse(throw new Exception(s"splitEither: `${signal}` bad left value: $e"))))
+        }
+    }
   }
 
 }

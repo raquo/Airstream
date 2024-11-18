@@ -18,7 +18,6 @@ trait Sink[-A] {
   def toObserver: Observer[A]
 }
 
-
 object Sink {
 
   // @TODO[Scala3]
@@ -27,9 +26,9 @@ object Sink {
   //    a Sink[String] is expected.
   //  - Check this again in Scala 3
 
-  //implicit def callbackToSink[A](callback: A => Unit): Sink[A] = new Sink[A] {
+  // implicit def callbackToSink[A](callback: A => Unit): Sink[A] = new Sink[A] {
   //  override def toObserver: Observer[A] = Observer(callback)
-  //}
+  // }
 
   implicit def jsCallbackToSink[A](callback: js.Function1[A, Unit]): Sink[A] = new Sink[A] {
     override def toObserver: Observer[A] = Observer(callback)

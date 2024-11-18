@@ -10,9 +10,9 @@ class JsPriorityQueue[A](getRank: A => Int) {
     val itemRank = getRank(item)
     var insertAtIndex = 0
     var foundHigherRank = false
-    while (
+    while ({
       insertAtIndex < queue.length && !foundHigherRank
-    ) {
+    }) {
       if (getRank(queue(insertAtIndex)) > itemRank) {
         foundHigherRank = true
       } else {

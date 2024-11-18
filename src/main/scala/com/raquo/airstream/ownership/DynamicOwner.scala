@@ -61,18 +61,18 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
         numPrependedSubs = 0
         var i = 0;
         val originalNumSubs = subscriptions.length // avoid double-starting subs added during the loop. See the big comment above
-        //println("    - start iteration of " + this)
+        // println("    - start iteration of " + this)
         while (i < originalNumSubs) {
           // Prepending a sub while iterating shifts array indices, so we account for that
           //  - Use case for this: in Laminar controlled inputs logic, we create a prepend sub
           //    inside another dynamic subscription's activate callback
           val ix = i + numPrependedSubs
           val sub = subscriptions(ix)
-          //println(s"    - activating ${sub} from iteration (ix = ${ix}, i = ${i}")
+          // println(s"    - activating ${sub} from iteration (ix = ${ix}, i = ${i}")
           sub.onActivate(newOwner)
           i += 1
         }
-        //println(s"    - stop iteration of $this. numPrependedSubs = $numPrependedSubs")
+        // println(s"    - stop iteration of $this. numPrependedSubs = $numPrependedSubs")
         removePendingSubscriptionsNow()
         isSafeToRemoveSubscription = true
         numPrependedSubs = 0
@@ -83,7 +83,7 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
   }
 
   def deactivate(): Unit = {
-    //println(s"    - deactivating $this (numSubs=${subscriptions.length})")
+    // println(s"    - deactivating $this (numSubs=${subscriptions.length})")
     if (isActive) {
       // We need to first deactivate all dynamic subscriptions.
       // If we killed the current owner's subscriptions first instead,
@@ -122,7 +122,7 @@ class DynamicOwner(onAccessAfterKilled: () => Unit) {
       subscriptions.push(subscription)
     }
     _maybeCurrentOwner.foreach { o =>
-      //println(s"    - activating ${subscription} after adding it to $this")
+      // println(s"    - activating ${subscription} after adding it to $this")
       subscription.onActivate(o)
     }
   }

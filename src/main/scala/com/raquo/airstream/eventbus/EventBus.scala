@@ -1,7 +1,7 @@
 package com.raquo.airstream.eventbus
 
-import com.raquo.airstream.core.Source.EventSource
 import com.raquo.airstream.core.{EventStream, Named, Observer, Sink}
+import com.raquo.airstream.core.Source.EventSource
 
 import scala.util.Try
 

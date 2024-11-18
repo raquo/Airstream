@@ -1,10 +1,10 @@
 package com.raquo.airstream.core
 
-import com.raquo.airstream.combine.generated._
 import com.raquo.airstream.combine.{CombineStreamN, MergeStream}
+import com.raquo.airstream.combine.generated._
 import com.raquo.airstream.core.Source.{EventSource, SignalSource}
-import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
+import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.debug.{DebuggableStream, Debugger, DebuggerStream}
 import com.raquo.airstream.distinct.DistinctStream
 import com.raquo.airstream.eventbus.EventBus
@@ -420,15 +420,15 @@ object EventStream {
     start: (FireValue[A], FireError, GetStartIndex, GetIsStarted) => Unit,
     stop: StartIndex => Unit
   ): EventStream[A] = {
-    new CustomStreamSource[A](
+    new CustomStreamSource[A]({
       (fireValue, fireError, getStartIndex, getIsStarted) =>
-      CustomSource.Config(
-        onStart = () => start(fireValue, fireError, getStartIndex, getIsStarted),
-        onStop = () => stop(getStartIndex())
-      ).when {
-        () => shouldStart(getStartIndex())
-      }
-    )
+        CustomSource.Config(
+          onStart = () => start(fireValue, fireError, getStartIndex, getIsStarted),
+          onStop = () => stop(getStartIndex())
+        ).when {
+          () => shouldStart(getStartIndex())
+        }
+    })
   }
 
   /** Create a stream and a callback that, when fired, makes that stream emit. */

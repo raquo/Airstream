@@ -11,7 +11,7 @@ import scala.util.{Success, Try}
   *
   * See docs on custom sources, and [[CustomSource.Config]]
   */
-class CustomSignalSource[A] (
+class CustomSignalSource[A](
   getInitialValue: => Try[A],
   makeConfig: (SetCurrentValue[A], GetCurrentValue[A], GetStartIndex, GetIsStarted) => CustomSource.Config
 ) extends WritableSignal[A] with CustomSource[A] {

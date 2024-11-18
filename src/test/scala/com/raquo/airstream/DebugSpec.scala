@@ -1,7 +1,7 @@
 package com.raquo.airstream
 
-import com.raquo.airstream.core.AirstreamError.DebugError
 import com.raquo.airstream.core.{AirstreamError, EventStream, Observable, Observer, Signal}
+import com.raquo.airstream.core.AirstreamError.DebugError
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import com.raquo.airstream.state.{Val, Var}
@@ -612,14 +612,14 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
     // --
 
     assert(obs
-      //.debugWithName("debugEvents")
+      // .debugWithName("debugEvents")
       .debugLog()
       .setDisplayName("debugLog")
       .displayName == "debugLog"
     )
 
     assert(obs
-      //.debugWithName("debugEvents")
+      // .debugWithName("debugEvents")
       .debugLog()
       .setDisplayName("debugLog")
       .toString == "debugLog"
@@ -627,7 +627,7 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
 
     assert(
       obs
-        //.debugWithName("debugEvents")
+        // .debugWithName("debugEvents")
         .debugLog()
         .setDisplayName("debugLog")
         .debugSpy(_ => ())
@@ -637,7 +637,7 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
 
     assert(
       obs
-        //.debugWithName("debugEvents")
+        // .debugWithName("debugEvents")
         .debugLog()
         .setDisplayName("debugLog")
         .debugSpy(_ => ())

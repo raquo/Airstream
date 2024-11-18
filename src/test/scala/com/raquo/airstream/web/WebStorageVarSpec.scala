@@ -78,9 +78,10 @@ class WebStorageVarSpec extends UnitSpec with BeforeAndAfter {
     assertEquals(dom.window.localStorage.getItem("foo"), "3")
     assertEquals(fooVar.tryNow(), Failure(err1))
 
-    assertEquals(errorEffects.toList, List(
-      Effect("unhandled", err1)
-    ))
+    assertEquals(errorEffects.toList,
+      List(
+        Effect("unhandled", err1)
+      ))
     errorEffects.clear()
 
     // --
@@ -130,9 +131,10 @@ class WebStorageVarSpec extends UnitSpec with BeforeAndAfter {
     assertEquals(dom.window.sessionStorage.getItem("foo"), "3")
     assertEquals(fooVar.tryNow(), Failure(err1))
 
-    assertEquals(errorEffects.toList, List(
-      Effect("unhandled", err1)
-    ))
+    assertEquals(errorEffects.toList,
+      List(
+        Effect("unhandled", err1)
+      ))
     errorEffects.clear()
 
     // --

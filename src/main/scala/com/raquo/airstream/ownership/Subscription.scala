@@ -10,7 +10,7 @@ package com.raquo.airstream.ownership
   *
   * @param cleanup Note: Must not throw!
   */
-class Subscription (
+class Subscription(
   private[ownership] val owner: Owner,
   cleanup: () => Unit
 ) {
@@ -18,7 +18,7 @@ class Subscription (
   /** Make sure we only kill any given Subscription once. Just a sanity check against bad user logic,
     * e.g. calling .kill() manually when `owner` has already killed this subscription.
     */
-  private[this] final var _isKilled = false
+  final private[this] var _isKilled = false
 
   owner.own(this)
 

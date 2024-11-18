@@ -10,8 +10,7 @@ class SplittableStream[M[_], Input](val stream: EventStream[M[Input]]) extends A
     duplicateKeys: DuplicateKeysConfig = DuplicateKeysConfig.default
   )(
     project: (Key, Input, Signal[Input]) => Output
-  )(
-    implicit splittable: Splittable[M]
+  )(implicit splittable: Splittable[M]
   ): Signal[M[Output]] = {
     new SplitSignal[M, Input, Output, Key](
       parent = stream.startWith(splittable.empty, cacheInitialValue = true),
@@ -26,8 +25,7 @@ class SplittableStream[M[_], Input](val stream: EventStream[M[Input]]) extends A
   /** Like `split`, but uses index of the item in the list as the key. */
   def splitByIndex[Output](
     project: (Int, Input, Signal[Input]) => Output
-  )(
-    implicit splittable: Splittable[M]
+  )(implicit splittable: Splittable[M]
   ): Signal[M[Output]] = {
     new SplitSignal[M, (Input, Int), Output, Int](
       parent = stream.map(splittable.zipWithIndex).startWith(splittable.empty, cacheInitialValue = true),
@@ -37,7 +35,7 @@ class SplittableStream[M[_], Input](val stream: EventStream[M[Input]]) extends A
         project(index, initialTuple._1, tupleSignal.map(_._1))
       },
       splittable,
-      DuplicateKeysConfig.noWarnings  // No need to check for duplicates – we know the keys are good.
+      DuplicateKeysConfig.noWarnings // No need to check for duplicates – we know the keys are good.
     )
   }
 }

@@ -13,13 +13,14 @@ object AirstreamError {
     // getMessage can have a custom implementation, and thus can throw
     // Also, currently, MatchError.getMessage throws an NPE
     // if the object being matched is a native JS type.
-    val errorMessage = try {
-      e.getMessage
-    } catch {
-      case err: Throwable =>
-        // Don't try to read anything from `err` here, things are f*cked as they are already.
-        "(Unable to get the message for this error - exception occurred in its getMessage)"
-    }
+    val errorMessage =
+      try {
+        e.getMessage
+      } catch {
+        case err: Throwable =>
+          // Don't try to read anything from `err` here, things are f*cked as they are already.
+          "(Unable to get the message for this error - exception occurred in its getMessage)"
+      }
     e.getClass.getSimpleName + ": " + errorMessage
   }
 
@@ -97,7 +98,7 @@ object AirstreamError {
   private[this] val unhandledErrorCallbacks = mutable.Buffer[Throwable => Unit]()
 
   /** Note: In IE, console is not defined unless the developer tools console is actually open.
-    *       Some test environments might be lacking the console as well (e.g. node.js without jsdom).
+    * Some test environments might be lacking the console as well (e.g. node.js without jsdom).
     */
   val consoleErrorCallback: Throwable => Unit = { err =>
     try {
@@ -144,16 +145,18 @@ object AirstreamError {
 
   // @TODO[API,Integrity] How should we report errors here? Must make sure to not induce an infinite loop. Throw an error in a setTimeout?
   def sendUnhandledError(err: Throwable): Unit = {
-    unhandledErrorCallbacks.foreach(fn => try {
-      fn(err)
-    } catch {
-      case err: Throwable if fn == unsafeRethrowErrorCallback =>
-        // Note: this does not let other error callbacks execute
-        throw err
-      case err: Throwable =>
-        dom.console.warn("Error processing an unhandled error callback:")
-        js.timers.setTimeout(0)(throw err)
-    })
+    unhandledErrorCallbacks.foreach { fn =>
+      try {
+        fn(err)
+      } catch {
+        case err: Throwable if fn == unsafeRethrowErrorCallback =>
+          // Note: this does not let other error callbacks execute
+          throw err
+        case err: Throwable =>
+          dom.console.warn("Error processing an unhandled error callback:")
+          js.timers.setTimeout(0)(throw err)
+      }
+    }
   }
 
   /** To remove console logger, call .unregisterUnhandledErrorCallback(consoleErrorCallback) */

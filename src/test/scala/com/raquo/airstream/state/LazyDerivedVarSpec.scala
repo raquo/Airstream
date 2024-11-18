@@ -1,8 +1,8 @@
 package com.raquo.airstream.state
 
 import com.raquo.airstream.UnitSpec
-import com.raquo.airstream.core.AirstreamError.VarError
 import com.raquo.airstream.core.{AirstreamError, Observer}
+import com.raquo.airstream.core.AirstreamError.VarError
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import org.scalatest.BeforeAndAfter
 
@@ -601,7 +601,7 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d2.now() == 20)
     assert(d2.signal.now() == 20)
 
-    assert(effects.toList ==  Nil)
+    assert(effects.toList == Nil)
 
     // --
 
@@ -714,7 +714,7 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     assert(d2.now() == 20)
     assert(d2.signal.now() == 20)
 
-    assert(effects.toList ==  List(
+    assert(effects.toList == List(
       "d2.zoomIn-20"
     ))
     effects.clear()

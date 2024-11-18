@@ -38,9 +38,12 @@ class StatusSpec extends AsyncUnitSpec with BeforeAndAfter {
 
     bus.emit(1)
 
-    assertEquals(effects.toList, List(
-      Effect("obs1", Pending(1))
-    ))
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("obs1", Pending(1))
+      )
+    )
     effects.clear()
 
     for {
@@ -49,25 +52,34 @@ class StatusSpec extends AsyncUnitSpec with BeforeAndAfter {
       }
 
       _ <- delay(30) {
-        assertEquals(effects.toList, List(
-          Effect("obs1", Resolved(1, "1", 1))
-        ))
+        assertEquals(
+          effects.toList,
+          List(
+            Effect("obs1", Resolved(1, "1", 1))
+          )
+        )
         effects.clear()
 
         // --
 
         bus.emit(2)
 
-        assertEquals(effects.toList, List(
-          Effect("obs1", Pending(2))
-        ))
+        assertEquals(
+          effects.toList,
+          List(
+            Effect("obs1", Pending(2))
+          )
+        )
         effects.clear()
       }
 
       _ <- delay(30) {
-        assertEquals(effects.toList, List(
-          Effect("obs1", Resolved(2, "2", 1))
-        ))
+        assertEquals(
+          effects.toList,
+          List(
+            Effect("obs1", Resolved(2, "2", 1))
+          )
+        )
         effects.clear()
       }
     } yield {

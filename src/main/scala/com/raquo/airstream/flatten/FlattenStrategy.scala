@@ -4,6 +4,8 @@ import com.raquo.airstream.core.{EventStream, Observable, Signal}
 
 import scala.annotation.implicitNotFound
 
+// format: off
+
 /** Specifies how to flatten observables of observables. */
 trait FlattenStrategy[
   -Outer[+_] <: Observable[_],
@@ -27,6 +29,8 @@ trait MergingStrategy[
   -Inner[_],
   +Output[+_] <: Observable[_]
 ] extends FlattenStrategy[Outer, Inner, Output]
+
+// format: on
 
 @implicitNotFound("\nYou are trying to use Airstream's flatMap operator.\nIt was renamed to flatMapSwitch / flatMapMerge to discourage incorrect usage, especially in for-comprehensions.\nSee https://github.com/raquo/Airstream/#avoid-unnecessary-flatmap")
 trait AllowFlatMap

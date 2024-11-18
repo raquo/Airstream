@@ -1,7 +1,7 @@
 package com.raquo.airstream.state
 
-import com.raquo.airstream.core.AirstreamError.VarError
 import com.raquo.airstream.core.{AirstreamError, Transaction}
+import com.raquo.airstream.core.AirstreamError.VarError
 
 import scala.util.{Failure, Success, Try}
 

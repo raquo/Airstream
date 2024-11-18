@@ -21,16 +21,16 @@ import scala.util.{Failure, Success, Try}
   *
   * Basic idea: Lazy Observable only holds references to those children that have any observers
   * (either directly on themselves, or on any of their descendants). What this achieves:
-  * - Stream only propagates its value to children that (directly or not) have observers
-  * - Stream calculates its value only once regardless of how many observers / children it has)
-  *   (so, all streams are "hot" observables)
-  * - Stream doesn't hold references to Streams that no one observes, allowing those Streams
-  *   to be garbage collected if they are otherwise unreachable (which they should become
-  *   when their subscriptions are killed by their owners)
+  *  - Stream only propagates its value to children that (directly or not) have observers
+  *  - Stream calculates its value only once regardless of how many observers / children it has)
+  *    (so, all streams are "hot" observables)
+  *  - Stream doesn't hold references to Streams that no one observes, allowing those Streams
+  *    to be garbage collected if they are otherwise unreachable (which they should become
+  *    when their subscriptions are killed by their owners)
   */
 trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Named {
 
-  @inline protected implicit def protectedAccessEvidence: Protected = Protected.protectedAccessEvidence
+  @inline implicit protected def protectedAccessEvidence: Protected = Protected.protectedAccessEvidence
 
   /** Note: Use Protected.topoRank(observable) to read another observable's topoRank if needed */
   protected val topoRank: Int
@@ -60,8 +60,8 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
     */
   @inline def flatMap[B, Inner[_], Output[+_] <: Observable[_]](
     project: A => Inner[B]
-  )(
-    implicit strategy: SwitchingStrategy[Self, Inner, Output],
+  )(implicit
+    strategy: SwitchingStrategy[Self, Inner, Output],
     @unused allowFlatMap: AllowFlatMap
   ): Output[B] = {
     strategy.flatten(map(project))
@@ -70,28 +70,31 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
   /** Alias to flatMapSwitch(_ => s) */
   @inline def flatMapTo[B, Inner[_], Output[+_] <: Observable[_]](
     s: => Inner[B]
-  )(
-    implicit strategy: SwitchingStrategy[Self, Inner, Output]
+  )(implicit strategy: SwitchingStrategy[Self, Inner, Output]
   ): Output[B] = {
     strategy.flatten(map(_ => s))
   }
 
   /** @param project Note: guarded against exceptions */
-  @inline def flatMapSwitch[B, Inner[_], Output[+_] <: Observable[_]](project: A => Inner[B])(
-    implicit strategy: SwitchingStrategy[Self, Inner, Output]
+  @inline def flatMapSwitch[B, Inner[_], Output[+_] <: Observable[_]](
+    project: A => Inner[B]
+  )(implicit strategy: SwitchingStrategy[Self, Inner, Output]
   ): Output[B] = {
     strategy.flatten(map(project))
   }
 
   /** @param project Note: guarded against exceptions */
-  @inline def flatMapMerge[B, Inner[_], Output[+_] <: Observable[_]](project: A => Inner[B])(
-    implicit strategy: MergingStrategy[Self, Inner, Output]
+  @inline def flatMapMerge[B, Inner[_], Output[+_] <: Observable[_]](
+    project: A => Inner[B]
+  )(implicit strategy: MergingStrategy[Self, Inner, Output]
   ): Output[B] = {
     strategy.flatten(map(project))
   }
 
   /** @param project Note: guarded against exceptions */
-  @inline def flatMapCustom[B, Inner[_], Output[+_] <: Observable[_]](project: A => Inner[B])(
+  @inline def flatMapCustom[B, Inner[_], Output[+_] <: Observable[_]](
+    project: A => Inner[B]
+  )(
     strategy: FlattenStrategy[Self, Inner, Output]
   ): Output[B] = {
     strategy.flatten(map(project))

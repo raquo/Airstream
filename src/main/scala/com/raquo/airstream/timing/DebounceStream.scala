@@ -34,7 +34,7 @@ class DebounceStream[A](
   override protected def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
     maybeLastTimeoutHandle.foreach(js.timers.clearTimeout)
     maybeLastTimeoutHandle = js.timers.setTimeout(intervalMs.toDouble) {
-      //println(s"> init trx from DebounceEventStream.onTry($nextValue)")
+      // println(s"> init trx from DebounceEventStream.onTry($nextValue)")
       Transaction(fireTry(nextValue, _))
     }
   }

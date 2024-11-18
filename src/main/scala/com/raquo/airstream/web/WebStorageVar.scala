@@ -44,8 +44,9 @@ class WebStorageVar[A] private[web] (
   default: => Try[A],
   syncDistinctByFn: (A, A) => Boolean
 ) extends SourceVar[A](
-  initial = maybeStorage().flatMap(s => Option(s.getItem(key)).map(decode)).getOrElse(default)
-) {
+    initial = maybeStorage().flatMap(s => Option(s.getItem(key)).map(decode)).getOrElse(default)
+  ) {
+
   private[web] val owner = new ManualOwner
 
   /** Stream of updates of this sessionStorage/localStorage value

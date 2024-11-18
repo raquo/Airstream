@@ -11,7 +11,7 @@ import scala.util.Try
   * - if `parent` is a Signal, this stream mirrors `parent.changes`, not `parent`.
   * - if `after` is a Signal, this stream ignores its initial value
   */
-class SyncDelayStream[A] (
+class SyncDelayStream[A](
   override protected[this] val parent: Observable[A],
   after: Observable[_]
 ) extends SingleParentStream[A, A] with InternalTryObserver[A] with SyncObservable[A] {

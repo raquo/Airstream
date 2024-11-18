@@ -1,8 +1,8 @@
 package com.raquo.airstream.combine
 
 import com.raquo.airstream.common.InternalParentObserver
-import com.raquo.airstream.core.AirstreamError.CombinedError
 import com.raquo.airstream.core.{SyncObservable, Transaction, WritableObservable}
+import com.raquo.airstream.core.AirstreamError.CombinedError
 import com.raquo.ew.JsArray
 import org.scalajs.dom
 

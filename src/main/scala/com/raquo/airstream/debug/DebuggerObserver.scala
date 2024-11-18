@@ -1,7 +1,7 @@
 package com.raquo.airstream.debug
 
-import com.raquo.airstream.core.AirstreamError.DebugError
 import com.raquo.airstream.core.{AirstreamError, Observer}
+import com.raquo.airstream.core.AirstreamError.DebugError
 
 import scala.util.{Failure, Success, Try}
 

@@ -17,13 +17,13 @@ class BooleanSignal(val signal: Signal[Boolean]) extends AnyVal {
     whenTrue: Signal[Unit] => C,
     whenFalse: Signal[Unit] => C
   ): Signal[C] = {
-    new SplittableOneSignal(signal).splitOne(identity)(
+    new SplittableOneSignal(signal).splitOne(identity) {
       (_, initial, signal) =>
         if (initial)
           whenTrue(signal.mapToUnit)
         else
           whenFalse(signal.mapToUnit)
-    )
+    }
   }
 
 }

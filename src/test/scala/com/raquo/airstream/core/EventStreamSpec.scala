@@ -134,9 +134,9 @@ class EventStreamSpec extends UnitSpec {
 
   it("collectOpt") {
 
-    //def NonEmptyList[A](list: List[A]): Option[List[A]] = {
+    // def NonEmptyList[A](list: List[A]): Option[List[A]] = {
     //  if (list.nonEmpty) Some(list) else None
-    //}
+    // }
 
     implicit val owner: Owner = new TestableOwner
 

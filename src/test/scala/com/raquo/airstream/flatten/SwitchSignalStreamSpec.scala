@@ -8,7 +8,6 @@ import com.raquo.airstream.state.Var
 
 import scala.collection.mutable
 
-
 class SwitchSignalStreamSpec extends UnitSpec {
 
   it("mirrors last emitted signal, but only if subscribed") {
@@ -235,12 +234,12 @@ class SwitchSignalStreamSpec extends UnitSpec {
     metaBus.emit(source0)
 
     calculations shouldBe mutable.Buffer(
-      Calculation("signal-0",0),
-      Calculation("flattened",0),
-      Calculation("signal-0",11),
-      Calculation("flattened",11),
-      Calculation("signal-0",12),
-      Calculation("flattened",12)
+      Calculation("signal-0", 0),
+      Calculation("flattened", 0),
+      Calculation("signal-0", 11),
+      Calculation("flattened", 11),
+      Calculation("signal-0", 12),
+      Calculation("flattened", 12)
     )
     effects shouldBe mutable.Buffer(
       Effect("flattened-obs", 0),

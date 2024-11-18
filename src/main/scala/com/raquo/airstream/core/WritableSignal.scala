@@ -36,11 +36,11 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
     }
   }
 
-  override protected final def fireValue(nextValue: A, transaction: Transaction): Unit = {
+  final override protected def fireValue(nextValue: A, transaction: Transaction): Unit = {
     fireTry(Success(nextValue), transaction)
   }
 
-  override protected final def fireError(nextError: Throwable, transaction: Transaction): Unit = {
+  final override protected def fireError(nextError: Throwable, transaction: Transaction): Unit = {
     fireTry(Failure(nextError), transaction)
   }
 

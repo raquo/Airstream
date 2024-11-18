@@ -123,10 +123,11 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
     when: A => Boolean = always,
     useJsLogger: Boolean = false
   ): Self[A] = {
-    val whenEvent = (value: Try[A]) => value match {
-      case Success(ev) if when(ev) => true
-      case _ => false
-    }
+    val whenEvent = (value: Try[A]) =>
+      value match {
+        case Success(ev) if when(ev) => true
+        case _ => false
+      }
     debugLog(whenEvent, useJsLogger)
   }
 
@@ -136,10 +137,11 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
   def debugLogErrors(
     when: Throwable => Boolean = always
   ): Self[A] = {
-    val whenEvent = (value: Try[A]) => value match {
-      case Failure(err) if when(err) => true
-      case _ => false
-    }
+    val whenEvent = (value: Try[A]) =>
+      value match {
+        case Failure(err) if when(err) => true
+        case _ => false
+      }
     debugLog(whenEvent, useJsLogger = false)
   }
 

@@ -63,7 +63,7 @@ class WriteBus[A](
     }
   }
 
-  override final def onTry(nextValue: Try[A]): Unit = {
+  final override def onTry(nextValue: Try[A]): Unit = {
     nextValue.fold(onError, onNext)
   }
 
@@ -99,7 +99,7 @@ object WriteBus {
     * Example usage: emitTry(writeBus1 -> value1, writeBus2 -> value2)
     */
   def emit(values: BusTuple[_]*): Unit = {
-    //println(s"> init trx from WriteBus.emit($values)")
+    // println(s"> init trx from WriteBus.emit($values)")
     if (hasDuplicateTupleKeys(values.map(_.tuple))) {
       throw new Exception("Unable to {EventBus,WriteBus}.emit: the provided list of event buses has duplicates. You can't make an observable emit more than one event per transaction.")
     }
@@ -110,7 +110,7 @@ object WriteBus {
     * Example usage: emitTry(writeBus1 -> Success(value1), writeBus2 -> Failure(error2))
     */
   def emitTry(values: BusTryTuple[_]*): Unit = {
-    //println(s"> init trx from WriteBus.emitTry($values)")
+    // println(s"> init trx from WriteBus.emitTry($values)")
     if (hasDuplicateTupleKeys(values.map(_.tuple))) {
       throw new Exception("Unable to {EventBus,WriteBus}.emitTry: the provided list of event buses has duplicates. You can't make an observable emit more than one event per transaction.")
     }

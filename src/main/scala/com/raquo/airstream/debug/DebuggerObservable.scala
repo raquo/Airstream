@@ -1,8 +1,8 @@
 package com.raquo.airstream.debug
 
 import com.raquo.airstream.common.InternalTryObserver
-import com.raquo.airstream.core.AirstreamError.DebugError
 import com.raquo.airstream.core.{AirstreamError, Observable}
+import com.raquo.airstream.core.AirstreamError.DebugError
 
 import scala.util.Try
 

@@ -1,8 +1,8 @@
 package com.raquo.airstream.extensions
 
 import com.raquo.airstream.core.Signal
-import com.raquo.airstream.state.{LazyDerivedVar, LazyStrictSignal, Var}
 import com.raquo.airstream.split.DuplicateKeysConfig
+import com.raquo.airstream.state.{LazyDerivedVar, LazyStrictSignal, Var}
 
 class OptionVar[A](val v: Var[Option[A]]) extends AnyVal {
 
@@ -29,22 +29,20 @@ class OptionVar[A](val v: Var[Option[A]]) extends AnyVal {
       .split(
         key = _ => (),
         duplicateKeys = DuplicateKeysConfig.noWarnings
-      )(
-        (_, initial, signal) => {
-          val displayNameSuffix = s".splitOption(Some)"
-          val childVar = new LazyDerivedVar[Option[A], A](
-            parent = v,
-            signal = new LazyStrictSignal[A, A](
-              signal, identity, signal.displayName, displayNameSuffix + ".signal"
-            ),
-            zoomOut = (inputs, newInput) => {
-              Some(newInput)
-            },
-            displayNameSuffix = displayNameSuffix
-          )
-          project(initial, childVar)
-        }
-      )
+      ) { (_, initial, signal) =>
+        val displayNameSuffix = s".splitOption(Some)"
+        val childVar = new LazyDerivedVar[Option[A], A](
+          parent = v,
+          signal = new LazyStrictSignal[A, A](
+            signal, identity, signal.displayName, displayNameSuffix + ".signal"
+          ),
+          zoomOut = (inputs, newInput) => {
+            Some(newInput)
+          },
+          displayNameSuffix = displayNameSuffix
+        )
+        project(initial, childVar)
+      }
       .map(_.getOrElse(ifEmpty))
   }
 

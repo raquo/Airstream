@@ -57,9 +57,9 @@ trait Observer[-A] extends Sink[A] with Named {
   }
 
   // #TODO[API] Does this operator even make sense?
-  //def contracollectSome: Observer[Option[A]] = {
+  // def contracollectSome: Observer[Option[A]] = {
   //  contracollectOpt[Option[A]](identity)
-  //}
+  // }
 
   /** Like [[contramap]], but original observer only fires if `project` returns Some(value)
     *
@@ -80,9 +80,11 @@ trait Observer[-A] extends Sink[A] with Named {
     * @param passes Note: guarded against exceptions
     */
   def filter[B <: A](passes: B => Boolean): Observer[B] = {
-    Observer.withRecover(nextValue => if (passes(nextValue)) onNext(nextValue), {
-      case nextError => onError(nextError)
-    })
+    // #Note[Format] case function newlines
+    Observer.withRecover(
+      nextValue => if (passes(nextValue)) onNext(nextValue),
+      onError = { case nextError => onError(nextError) }
+    )
   }
 
   /** Creates another Observer such that calling it calls the original observer after the specified delay.

@@ -25,15 +25,15 @@ object InternalObserver {
 
     new InternalObserver[A] {
 
-      override final def onNext(nextValue: A, transaction: Transaction): Unit = {
+      final override def onNext(nextValue: A, transaction: Transaction): Unit = {
         onNextParam(nextValue, transaction)
       }
 
-      override final def onError(nextError: Throwable, transaction: Transaction): Unit = {
+      final override def onError(nextError: Throwable, transaction: Transaction): Unit = {
         onErrorParam(nextError, transaction)
       }
 
-      override final def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
+      final override def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
         nextValue.fold(onError(_, transaction), onNext(_, transaction))
       }
     }
@@ -44,15 +44,15 @@ object InternalObserver {
 
     new InternalObserver[A] {
 
-      override final def onNext(nextValue: A, transaction: Transaction): Unit = {
+      final override def onNext(nextValue: A, transaction: Transaction): Unit = {
         onTry(Success(nextValue), transaction)
       }
 
-      override final def onError(nextError: Throwable, transaction: Transaction): Unit = {
+      final override def onError(nextError: Throwable, transaction: Transaction): Unit = {
         onTry(Failure(nextError), transaction)
       }
 
-      override final def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
+      final override def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
         onTryParam(nextValue, transaction)
       }
     }

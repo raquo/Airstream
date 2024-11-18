@@ -14,7 +14,7 @@ import scala.util.Try
   *                            should match, at least if parent signal is always used via its debug signal,
   *                            but to be honest I'm not really sure.
   */
-case class Debugger[-A] (
+case class Debugger[-A](
   onStart: () => Unit = () => (),
   onStop: () => Unit = () => (),
   onFire: Try[A] => Unit = (_: Try[A]) => (),

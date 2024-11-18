@@ -130,7 +130,6 @@ class AjaxStream(
       }
     }
 
-
     if (readyStateChangeObserver != Observer.empty) {
       request.onreadystatechange = (_: dom.Event) => {
         if (maybePendingRequest.contains(request)) {

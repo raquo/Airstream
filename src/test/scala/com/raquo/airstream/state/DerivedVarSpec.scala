@@ -1,8 +1,8 @@
 package com.raquo.airstream.state
 
 import com.raquo.airstream.UnitSpec
-import com.raquo.airstream.core.AirstreamError.VarError
 import com.raquo.airstream.core.{AirstreamError, Observer}
+import com.raquo.airstream.core.AirstreamError.VarError
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import org.scalatest.BeforeAndAfter
 
@@ -246,7 +246,6 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     errorEffects.clear()
   }
-
 
   it("signal does not glitch") {
 

@@ -68,74 +68,77 @@ class SplitSignal[M[_], Input, Output, Key](
 
     val duplicateKeys = if (duplicateKeysConfig.shouldWarn) js.Array[Key]() else null
 
-    val nextOutputs = splittable.map(nextInputs, { (nextInput: Input) =>
-      val memoizedKey = key(nextInput)
+    val nextOutputs = splittable.map(
+      nextInputs,
+      (nextInput: Input) => {
+        val memoizedKey = key(nextInput)
 
-      if (duplicateKeysConfig.shouldWarn && nextKeys.contains(memoizedKey)) {
-        if (!duplicateKeys.contains(memoizedKey)) { // #Note: this uses scala == key comparison here, as desired
-          duplicateKeys.push(memoizedKey)
+        if (duplicateKeysConfig.shouldWarn && nextKeys.contains(memoizedKey)) {
+          if (!duplicateKeys.contains(memoizedKey)) { // #Note: this uses scala == key comparison here, as desired
+            duplicateKeys.push(memoizedKey)
+          }
         }
-      }
 
-      nextKeys += memoizedKey
+        nextKeys += memoizedKey
 
-      val cachedSignalAndOutput = memoized.get(memoizedKey).map(t => (t._2, t._3))
+        val cachedSignalAndOutput = memoized.get(memoizedKey).map(t => (t._2, t._3))
 
-      val nextSignalAndOutput = cachedSignalAndOutput.getOrElse {
-        val initialInput = nextInput
+        val nextSignalAndOutput = cachedSignalAndOutput.getOrElse {
+          val initialInput = nextInput
 
-        // @warning !!! DANGER ZONE !!!
-        // - We must avoid mapping over this signal itself here to avoid infinite loop (this function calling `initialValue`)
-        // - We must avoid looking at `memoized.get(key)` before `memoized` is populated with that key a few lines below
-        // = Therefore, we derive the child signal from the parent stream and a known initial value
-        //   - Using this signal's own changes instead won't work, because if the user calls `addObserver` or `foreach`
-        //     in the `project` callback, this will evaluate `initialValue`, causing an infinite loop.
-        //   - @TODO[Integrity] Moreover, it seems that such an infinite loop won't be detected.
-        //      Not sure why. I'm guessing must be one of our guards being excessive, but I can't find it.
+          // @warning !!! DANGER ZONE !!!
+          // - We must avoid mapping over this signal itself here to avoid infinite loop (this function calling `initialValue`)
+          // - We must avoid looking at `memoized.get(key)` before `memoized` is populated with that key a few lines below
+          // = Therefore, we derive the child signal from the parent stream and a known initial value
+          //   - Using this signal's own changes instead won't work, because if the user calls `addObserver` or `foreach`
+          //     in the `project` callback, this will evaluate `initialValue`, causing an infinite loop.
+          //   - @TODO[Integrity] Moreover, it seems that such an infinite loop won't be detected.
+          //      Not sure why. I'm guessing must be one of our guards being excessive, but I can't find it.
 
-        // Potential problem:
-        // - calling `project` calls `inputSignal.foreach` in user code (e.g.)
-        // - the result of `project` is needed to build output, to memoize it
-        // - `inputSignal.foreach` in user code triggers `inputSignal.onAddedExternalObserver`
-        // - that calls for `inputSignal.tryNow` to send the value to the new observer
-        // - that calls `parent.tryNow.map(memoizedProject)`
-        // - at this point, we still haven't obtained the output of `project` because we're still
-        //   running inside of it
-        // - so the code of memoizedProject goes into the same branch and into the `else` branch of `cachedOutput.getOrElse`
-        // - which is where the flow started, so that's a loop
-        // = I've been in this mess for so long, I forgot how exactly I fixed this. Tests will catch that if this happens again.
+          // Potential problem:
+          // - calling `project` calls `inputSignal.foreach` in user code (e.g.)
+          // - the result of `project` is needed to build output, to memoize it
+          // - `inputSignal.foreach` in user code triggers `inputSignal.onAddedExternalObserver`
+          // - that calls for `inputSignal.tryNow` to send the value to the new observer
+          // - that calls `parent.tryNow.map(memoizedProject)`
+          // - at this point, we still haven't obtained the output of `project` because we're still
+          //   running inside of it
+          // - so the code of memoizedProject goes into the same branch and into the `else` branch of `cachedOutput.getOrElse`
+          // - which is where the flow started, so that's a loop
+          // = I've been in this mess for so long, I forgot how exactly I fixed this. Tests will catch that if this happens again.
 
-        // - `inputSignal` fetches the latest input from `memoized` and emits that, subject to `compose`,
-        //   which by default applies the `distinct` operator to filter out changes to OTHER keys.
-        // - Without this default, each inputSignal would receive updates whenever any other unrelated key
-        //   was updated in the parent list of inputs. We do have a test to check that behaviour too.
+          // - `inputSignal` fetches the latest input from `memoized` and emits that, subject to `compose`,
+          //   which by default applies the `distinct` operator to filter out changes to OTHER keys.
+          // - Without this default, each inputSignal would receive updates whenever any other unrelated key
+          //   was updated in the parent list of inputs. We do have a test to check that behaviour too.
 
-        val inputSignal = distinctCompose(
-          new SplitChildSignal[M, Input](
-            sharedDelayedParent,
-            initialValue = Some((initialInput, Protected.lastUpdateId(parent))),
-            () => memoized.get(memoizedKey).map(t => (t._1, t._4))
+          val inputSignal = distinctCompose(
+            new SplitChildSignal[M, Input](
+              sharedDelayedParent,
+              initialValue = Some((initialInput, Protected.lastUpdateId(parent))),
+              () => memoized.get(memoizedKey).map(t => (t._1, t._4))
+            )
           )
-        )
 
-        if (isStarted && strict) {
-          inputSignal.addInternalObserver(emptyObserver, shouldCallMaybeWillStart = true)
+          if (isStarted && strict) {
+            inputSignal.addInternalObserver(emptyObserver, shouldCallMaybeWillStart = true)
+          }
+
+          val newOutput = project(memoizedKey, initialInput, inputSignal)
+
+          (inputSignal, newOutput)
         }
 
-        val newOutput = project(memoizedKey, initialInput, inputSignal)
+        val inputSignal = nextSignalAndOutput._1
+        val nextOutput = nextSignalAndOutput._2
 
-        (inputSignal, newOutput)
+        // Cache this key for the first time, or update the input so that inputSignal can fetch it
+        // dom.console.log(s"${this} memoized.update ${memoizedKey} -> ${nextInput}")
+        memoized.update(memoizedKey, (nextInput, inputSignal, nextOutput, Protected.lastUpdateId(parent)))
+
+        nextOutput
       }
-
-      val inputSignal = nextSignalAndOutput._1
-      val nextOutput = nextSignalAndOutput._2
-
-      // Cache this key for the first time, or update the input so that inputSignal can fetch it
-      // dom.console.log(s"${this} memoized.update ${memoizedKey} -> ${nextInput}")
-      memoized.update(memoizedKey, (nextInput, inputSignal, nextOutput, Protected.lastUpdateId(parent)))
-
-      nextOutput
-    })
+    )
 
     memoized.keys.foreach { memoizedKey =>
       if (!nextKeys.contains(memoizedKey)) {

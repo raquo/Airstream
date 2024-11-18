@@ -17,12 +17,12 @@ class BooleanStream(val stream: EventStream[Boolean]) extends AnyVal {
     trueF: Signal[Unit] => C,
     falseF: Signal[Unit] => C
   ): EventStream[C] = {
-    new SplittableOneStream(stream).splitOne(identity)(
+    new SplittableOneStream(stream).splitOne(identity) {
       (_, initial, signal) =>
         if (initial)
           trueF(signal.mapToUnit)
         else
           falseF(signal.mapToUnit)
-    )
+    }
   }
 }

@@ -125,7 +125,6 @@ class EventStreamFlattenSpec extends AsyncUnitSpec with Matchers {
         range2.map(j =>
           Effect("obs0", i * j)
         )
-
       )
     }
   }
@@ -227,7 +226,6 @@ class EventStreamFlattenSpec extends AsyncUnitSpec with Matchers {
         range2.map(j =>
           Effect("obs0", i * j)
         )
-
       )
     }
   }

@@ -23,13 +23,13 @@ class SwitchSignalStream[A](
 
   private[this] val internalEventObserver: InternalObserver[A] = InternalObserver.fromTry[A](
     onTry = (nextTry, _) => {
-      //println(s"> init trx from SwitchSignalStream.onValue($nextTry)")
+      // println(s"> init trx from SwitchSignalStream.onValue($nextTry)")
       Transaction { trx =>
         if (isStarted) {
           fireTry(nextTry, trx)
-          maybeCurrentSignalTry.foreach { _.foreach { currentSignal =>
+          maybeCurrentSignalTry.foreach(_.foreach { currentSignal =>
             lastSeenSignalUpdateId = Protected.lastUpdateId(currentSignal)
-          }}
+          })
         }
       }
     }
@@ -37,9 +37,9 @@ class SwitchSignalStream[A](
 
   override protected def onWillStart(): Unit = {
     Protected.maybeWillStart(parent)
-    maybeCurrentSignalTry.foreach { _.foreach { currentSignal =>
+    maybeCurrentSignalTry.foreach(_.foreach { currentSignal =>
       Protected.maybeWillStart(currentSignal)
-    }}
+    })
   }
 
   override protected def onTry(nextSignalTry: Try[Signal[A]], transaction: Transaction): Unit = {
@@ -69,7 +69,7 @@ class SwitchSignalStream[A](
       // we set this in case the transaction does not execute (not sure how this could happen though).
       lastSeenSignalUpdateId = -1
 
-      //println(s"> init trx from SwitchSignalStream.onTry (new signal)")
+      // println(s"> init trx from SwitchSignalStream.onTry (new signal)")
       Transaction { trx =>
         if (isStarted) {
           // #Note: Timing is important here.
@@ -102,7 +102,7 @@ class SwitchSignalStream[A](
     maybeCurrentSignalTry.foreach(_.foreach { currentSignal =>
       val newSignalLastUpdateId = Protected.lastUpdateId(currentSignal)
       if (newSignalLastUpdateId != lastSeenSignalUpdateId) {
-        //println(s"> init trx from SwitchSignalStream.onTry (same signal)")
+        // println(s"> init trx from SwitchSignalStream.onTry (same signal)")
         Transaction { trx =>
           if (isStarted) {
             fireTry(currentSignal.tryNow(), trx) // #Note[onStart,trx,loop]
@@ -121,8 +121,8 @@ class SwitchSignalStream[A](
   }
 
   private def removeInternalObserverFromCurrentSignal(): Unit = {
-    maybeCurrentSignalTry.foreach { _.foreach { currentSignal =>
+    maybeCurrentSignalTry.foreach(_.foreach { currentSignal =>
       currentSignal.removeInternalObserver(internalEventObserver)
-    }}
+    })
   }
 }

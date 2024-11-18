@@ -73,12 +73,12 @@ class TryObservableSpec extends UnitSpec {
 
     bus
       .events
-      .collectSuccess { case x if x >= 10 => x.toString}
+      .collectSuccess { case x if x >= 10 => x.toString }
       .foreach(v => effects += Effect("obs-success", v))
 
     bus
       .events
-      .collectFailure { case TryError(msg) => msg}
+      .collectFailure { case TryError(msg) => msg }
       .foreach(v => effects += Effect("obs-failure", v))
 
     effects shouldBe mutable.Buffer()

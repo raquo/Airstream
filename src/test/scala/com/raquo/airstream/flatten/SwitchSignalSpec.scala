@@ -132,7 +132,6 @@ class SwitchSignalSpec extends UnitSpec {
 
     subFlatten2.kill()
 
-
     // --
 
     sourceVars(2).writer.onNext(2)
@@ -376,7 +375,7 @@ class SwitchSignalSpec extends UnitSpec {
         .flatMapSwitch { num =>
           if (num < 1000) {
             smallI += 1
-            intSignal.map("small: " + _).setDisplayName(s"small-$smallI") //.debugLogLifecycle()
+            intSignal.map("small: " + _).setDisplayName(s"small-$smallI") // .debugLogLifecycle()
           } else {
             bigI += 1
             Val("big").setDisplayName(s"val-$bigI")

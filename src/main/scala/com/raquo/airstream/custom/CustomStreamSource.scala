@@ -7,7 +7,7 @@ import com.raquo.airstream.custom.CustomSource._
   *
   * See docs on custom sources, and [[CustomSource.Config]]
   */
-class CustomStreamSource[A] (
+class CustomStreamSource[A](
   makeConfig: (FireValue[A], FireError, GetStartIndex, GetIsStarted) => CustomSource.Config,
 ) extends WritableStream[A] with CustomSource[A] {
 

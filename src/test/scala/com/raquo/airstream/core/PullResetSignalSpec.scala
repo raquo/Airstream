@@ -12,14 +12,14 @@ class PullResetSignalSpec extends UnitSpec {
 
   it("signal.changes & startWith") {
 
-    test(CACHE_INITIAL_VALUE = false/*, EMIT_CHANGE_ON_RESTART = true*/)
-    //test(CACHE_INITIAL_VALUE = false, EMIT_CHANGE_ON_RESTART = false)
-    //test(CACHE_INITIAL_VALUE = true, EMIT_CHANGE_ON_RESTART = true)
-    test(CACHE_INITIAL_VALUE = true/*, EMIT_CHANGE_ON_RESTART = false*/)
+    test(CACHE_INITIAL_VALUE = false /*, EMIT_CHANGE_ON_RESTART = true*/ )
+    // test(CACHE_INITIAL_VALUE = false, EMIT_CHANGE_ON_RESTART = false)
+    // test(CACHE_INITIAL_VALUE = true, EMIT_CHANGE_ON_RESTART = true)
+    test(CACHE_INITIAL_VALUE = true /*, EMIT_CHANGE_ON_RESTART = false*/ )
 
-    def test(CACHE_INITIAL_VALUE: Boolean/*, EMIT_CHANGE_ON_RESTART: Boolean*/): Unit = {
+    def test(CACHE_INITIAL_VALUE: Boolean /*, EMIT_CHANGE_ON_RESTART: Boolean*/ ): Unit = {
 
-      withClue(s"Test with cacheInitialValue=$CACHE_INITIAL_VALUE" /* + s"emitChangeOnRestart=$EMIT_CHANGE_ON_RESTART"*/) {
+      withClue(s"Test with cacheInitialValue=$CACHE_INITIAL_VALUE" /* + s"emitChangeOnRestart=$EMIT_CHANGE_ON_RESTART"*/ ) {
 
         implicit val testOwner: TestableOwner = new TestableOwner
 
@@ -38,7 +38,7 @@ class PullResetSignalSpec extends UnitSpec {
           .map(Calculation.log("up", calculations))
           .setDisplayName("varSignal.map(identity).map")
 
-        val changesStream = upSignal.changes //(if (EMIT_CHANGE_ON_RESTART) upSignal.changesEmitChangeOnRestart else upSignal.changes)
+        val changesStream = upSignal.changes // (if (EMIT_CHANGE_ON_RESTART) upSignal.changesEmitChangeOnRestart else upSignal.changes)
           .setDisplayName("upSignal.changes")
           .map(Calculation.log("changes", calculations))
           .setDisplayName("upSignal.changes.map")
@@ -165,7 +165,7 @@ class PullResetSignalSpec extends UnitSpec {
 
         downSignal.addObserver(downObs)
 
-        //if (EMIT_CHANGE_ON_RESTART) {
+        // if (EMIT_CHANGE_ON_RESTART) {
         //  // Emitting `2` is undesirable here, which is why `emitChangeOnRestart` is off by default.
         //  // It would be great if we could get only `3`, but it's not possible to fetch this without
         //  // processing the event through the streams, because it can have a) asynchronous and
@@ -182,20 +182,20 @@ class PullResetSignalSpec extends UnitSpec {
         //    Effect("down-obs", 2),
         //    Effect("down-obs", 3)
         //  )
-        //} else {
+        // } else {
 
-          calculations shouldBe mutable.Buffer(
-            Calculation("changes", 3),
-            Calculation("down", 3)
-          )
-          // The signal re-starts with an old value because it can't pull a fresh value from the streams,
-          // but then the .changes stream pulls the new value from its parent, and propagates it down,
-          // but that only happens in a new transaction, so we have
-          effects shouldBe mutable.Buffer(
-            Effect("down-obs", 2),
-            Effect("down-obs", 3),
-          )
-        //}
+        calculations shouldBe mutable.Buffer(
+          Calculation("changes", 3),
+          Calculation("down", 3)
+        )
+        // The signal re-starts with an old value because it can't pull a fresh value from the streams,
+        // but then the .changes stream pulls the new value from its parent, and propagates it down,
+        // but that only happens in a new transaction, so we have
+        effects shouldBe mutable.Buffer(
+          Effect("down-obs", 2),
+          Effect("down-obs", 3),
+        )
+        // }
 
         calculations.clear()
         effects.clear()
@@ -615,7 +615,6 @@ class PullResetSignalSpec extends UnitSpec {
     )
     log.clear()
 
-
     // --
 
     dynOwner.deactivate()
@@ -704,7 +703,6 @@ class PullResetSignalSpec extends UnitSpec {
     }
 
   }
-
 
   it("CombineEventStreamN") {
 
@@ -854,7 +852,6 @@ class PullResetSignalSpec extends UnitSpec {
     calculations.clear()
     effects.clear()
 
-
     // --
 
     var1.writer.onNext(T1(1))
@@ -907,7 +904,6 @@ class PullResetSignalSpec extends UnitSpec {
     effects.clear()
 
     // --
-
 
     var1.writer.onNext(T1(10))
 

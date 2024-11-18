@@ -1,8 +1,8 @@
 package com.raquo.airstream.misc
 
 import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentStream}
-import com.raquo.airstream.core.AirstreamError.ErrorHandlingError
 import com.raquo.airstream.core.{Observable, Protected, Transaction}
+import com.raquo.airstream.core.AirstreamError.ErrorHandlingError
 
 import scala.util.Try
 
@@ -38,8 +38,9 @@ class MapStream[I, O](
   override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
     recover.fold(
       // if no `recover` specified, fire original error
-      fireError(nextError, transaction))(
-      pf => Try(pf.applyOrElse(nextError, (_: Throwable) => null)).fold(
+      ifEmpty = fireError(nextError, transaction)
+    ) { pf =>
+      Try(pf.applyOrElse(nextError, (_: Throwable) => null)).fold(
         tryError => {
           // if recover throws error, fire a wrapped error
           fireError(ErrorHandlingError(error = tryError, cause = nextError), transaction)
@@ -54,6 +55,6 @@ class MapStream[I, O](
           }
         }
       )
-    )
+    }
   }
 }

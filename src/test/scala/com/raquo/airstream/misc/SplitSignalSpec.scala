@@ -234,7 +234,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
         Effect("result", "List(Bar(b))")
       )
 
-      //effects.clear()
+      // effects.clear()
     }
   }
 
@@ -306,7 +306,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
         Effect("update-child", "b-2")
       )
 
-      //effects.clear()
+      // effects.clear()
     }
   }
 
@@ -384,7 +384,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
         Effect("update-child-b", "b-2")
       )
 
-      //effects.clear()
+      // effects.clear()
     }
   }
 
@@ -526,7 +526,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
         Effect("update-child-b", "b-4")
       )
 
-      //effects.clear()
+      // effects.clear()
     }
   }
 
@@ -553,19 +553,21 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
         //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
         DynamicSubscription.subscribeCallback(
           innerDynamicOwner,
-          owner => fooSignal.foreach { foo =>
-            assert(key == foo.id, "Subsequent value does not match initial key")
-            effects += Effect(s"update-child-$key", foo.id + "-" + foo.version.toString)
-          }(owner)
+          owner =>
+            fooSignal.foreach { foo =>
+              assert(key == foo.id, "Subsequent value does not match initial key")
+              effects += Effect(s"update-child-$key", foo.id + "-" + foo.version.toString)
+            }(owner)
         )
         Bar(key)
       })
 
       DynamicSubscription.subscribeCallback(
         outerDynamicOwner,
-        owner => signal.foreach { result =>
-          effects += Effect("result", result.toString)
-        }(owner)
+        owner =>
+          signal.foreach { result =>
+            effects += Effect("result", result.toString)
+          }(owner)
       )
 
       effects shouldBe mutable.Buffer(
@@ -655,7 +657,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
         Effect("update-child-a", "a-4"),
       )
 
-      //effects.clear()
+      // effects.clear()
     }
   }
 
@@ -671,7 +673,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
 
       // #Note: important to NOT activate the inner subscription right away, we're testing this (see comments below)
       outerDynamicOwner.activate()
-      //innerDynamicOwner.activate()
+      // innerDynamicOwner.activate()
 
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
@@ -680,19 +682,21 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
         effects += Effect(s"init-child-$key", key + "-" + initialFoo.version.toString)
         DynamicSubscription.subscribeCallback(
           innerDynamicOwner,
-          owner => fooSignal.foreach { foo =>
-            assert(key == foo.id, "Subsequent value does not match initial key")
-            effects += Effect(s"update-child-$key", foo.id + "-" + foo.version.toString)
-          }(owner)
+          owner =>
+            fooSignal.foreach { foo =>
+              assert(key == foo.id, "Subsequent value does not match initial key")
+              effects += Effect(s"update-child-$key", foo.id + "-" + foo.version.toString)
+            }(owner)
         )
         // #Note: Test that our dropping logic works does not break events scheduled after transaction boundary
         Transaction { _ =>
           DynamicSubscription.subscribeCallback(
             innerDynamicOwner,
-            owner => fooSignal.foreach { foo =>
-              assert(key == foo.id, "Subsequent value does not match initial key [new-trx]")
-              effects += Effect(s"new-trx-update-child-$key", foo.id + "-" + foo.version.toString)
-            }(owner)
+            owner =>
+              fooSignal.foreach { foo =>
+                assert(key == foo.id, "Subsequent value does not match initial key [new-trx]")
+                effects += Effect(s"new-trx-update-child-$key", foo.id + "-" + foo.version.toString)
+              }(owner)
           )
         }
         Bar(key)
@@ -700,9 +704,10 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
 
       DynamicSubscription.subscribeCallback(
         outerDynamicOwner,
-        owner => signal.foreach { result =>
-          effects += Effect("result", result.toString)
-        }(owner)
+        owner =>
+          signal.foreach { result =>
+            effects += Effect("result", result.toString)
+          }(owner)
       )
 
       effects shouldBe mutable.Buffer(
@@ -737,7 +742,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
         Effect("new-trx-update-child-a", "a-3")
       )
 
-      //effects.clear()
+      // effects.clear()
     }
   }
 
@@ -758,19 +763,21 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
         effects += Effect(s"init-child-$key", key + "-" + initialFoo.version.toString)
         DynamicSubscription.subscribeCallback(
           innerDynamicOwner,
-          owner => fooSignal.foreach { foo =>
-            assert(key == foo.id, "Subsequent value does not match initial key")
-            effects += Effect(s"update-child-$key", foo.id + "-" + foo.version.toString)
-          }(owner)
+          owner =>
+            fooSignal.foreach { foo =>
+              assert(key == foo.id, "Subsequent value does not match initial key")
+              effects += Effect(s"update-child-$key", foo.id + "-" + foo.version.toString)
+            }(owner)
         )
         Bar(key)
       })
 
       DynamicSubscription.subscribeCallback(
         outerDynamicOwner,
-        owner => signal.foreach { result =>
-          effects += Effect("result", result.toString)
-        }(owner)
+        owner =>
+          signal.foreach { result =>
+            effects += Effect("result", result.toString)
+          }(owner)
       )
 
       effects shouldBe mutable.Buffer()
@@ -800,7 +807,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
         Effect("result", "List(Bar(b), Bar(a))")
       )
 
-      //effects.clear()
+      // effects.clear()
     }
   }
 
@@ -822,18 +829,20 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
 
       DynamicSubscription.subscribeCallback(
         dynamicOwner,
-        owner => signal.foreach { result =>
-          effects += Effect("result", result.toString)
-          result.foreach { element =>
-            DynamicSubscription.subscribeCallback(
-              dynamicOwner,
-              owner => element.fooSignal.foreach { foo =>
-                assert(element.id == foo.id, "Subsequent value does not match initial key")
-                effects += Effect(s"update-child-${element.id}", foo.id + "-" + foo.version.toString)
-              }(owner)
-            )
-          }
-        }(owner)
+        owner =>
+          signal.foreach { result =>
+            effects += Effect("result", result.toString)
+            result.foreach { element =>
+              DynamicSubscription.subscribeCallback(
+                dynamicOwner,
+                owner =>
+                  element.fooSignal.foreach { foo =>
+                    assert(element.id == foo.id, "Subsequent value does not match initial key")
+                    effects += Effect(s"update-child-${element.id}", foo.id + "-" + foo.version.toString)
+                  }(owner)
+              )
+            }
+          }(owner)
       )
 
       effects shouldBe mutable.Buffer()
@@ -841,7 +850,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
       // --
 
       dynamicOwner.activate()
-      //innerDynamicOwner.activate()
+      // innerDynamicOwner.activate()
 
       effects shouldBe mutable.Buffer(
         Effect("init-child-initial", "initial-1"),
@@ -863,7 +872,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
         Effect("update-child-a", "a-3")
       )
 
-      //effects.clear()
+      // effects.clear()
     }
   }
 
@@ -1105,7 +1114,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
         Effect("result", "List(Bar(0))")
       )
 
-      //effects.clear()
+      // effects.clear()
     }
   }
 
@@ -1493,7 +1502,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
       Effect("result", "List(Bar(b))")
     )
 
-    //effects.clear()
+    // effects.clear()
   }
 
   it("split mutable array") {
@@ -1607,6 +1616,6 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
       Effect("result", "Bar(b)") // Single item JS Array is printed this way
     )
 
-    //effects.clear()
+    // effects.clear()
   }
 }

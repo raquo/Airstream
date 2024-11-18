@@ -2,8 +2,8 @@ package com.raquo.airstream.core
 
 import com.raquo.airstream.debug.DebuggableObservable
 import com.raquo.airstream.extensions._
-import com.raquo.airstream.flatten.FlattenStrategy._
 import com.raquo.airstream.flatten.{MergingStrategy, SwitchingStrategy}
+import com.raquo.airstream.flatten.FlattenStrategy._
 import com.raquo.airstream.status.Status
 
 import scala.util.Try

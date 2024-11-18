@@ -11,7 +11,7 @@ import scala.util.Try
   * Consequently, we expose its current value with now() / tryNow() methods
   * (see StrictSignal).
   */
-private[state] class VarSignal[A] private[state](
+private[state] class VarSignal[A] private[state] (
   initial: Try[A],
   parentDisplayName: => String
 ) extends WritableSignal[A] with StrictSignal[A] {

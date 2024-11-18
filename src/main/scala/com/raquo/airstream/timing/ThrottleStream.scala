@@ -39,12 +39,11 @@ class ThrottleStream[A](
 
     val remainingMs = lastEmittedEventMs.fold(
       ifEmpty = if (leading) 0 else intervalMs
-    )(
-      lastEventMs => {
+    ) {
+      lastEventMs =>
         val msSinceLastEvent = nowMs - lastEventMs
         js.Math.max(intervalMs - msSinceLastEvent.toInt, 0)
-      }
-    )
+    }
 
     if (leading && lastEmittedEventMs.isEmpty) {
       // #Note lastEmittedEventMs is an approximation (compare to the `else` case), I hope that doesn't bite us
@@ -52,7 +51,7 @@ class ThrottleStream[A](
 
       maybeFirstTimeoutHandle = js.timers.setTimeout(0) {
         maybeFirstTimeoutHandle = js.undefined
-        //println(s"> init trx from leading ThrottleEventStream.onTry($nextValue)")
+        // println(s"> init trx from leading ThrottleEventStream.onTry($nextValue)")
         Transaction(fireTry(nextValue, _))
       }
 
@@ -61,7 +60,7 @@ class ThrottleStream[A](
 
       maybeLastTimeoutHandle = js.timers.setTimeout(remainingMs.toDouble) {
         lastEmittedEventMs = js.Date.now() // @TODO Should this fire now, or inside the transaction below?
-        //println(s"> init trx from ThrottleEventStream.onTry($nextValue)")
+        // println(s"> init trx from ThrottleEventStream.onTry($nextValue)")
         Transaction(fireTry(nextValue, _))
       }
     }

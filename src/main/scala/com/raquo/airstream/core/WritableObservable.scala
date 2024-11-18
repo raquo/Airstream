@@ -42,7 +42,6 @@ trait WritableObservable[A] extends Observable[A] {
 
   protected def fireTry(nextValue: Try[A], transaction: Transaction): Unit
 
-
   /** Note: Observer can be added more than once to an Observable.
     * If so, it will observe each event as many times as it was added.
     */
@@ -70,7 +69,7 @@ trait WritableObservable[A] extends Observable[A] {
   override protected[this] def addExternalObserver(observer: Observer[A], owner: Owner): Subscription = {
     val subscription = new Subscription(owner, () => removeExternalObserver(observer))
     externalObservers.push(observer)
-    //dom.console.log(s"Adding subscription: $subscription")
+    // dom.console.log(s"Adding subscription: $subscription")
     subscription
   }
 
@@ -78,12 +77,12 @@ trait WritableObservable[A] extends Observable[A] {
     * This observable calls [[onStart]] if this action has given it its first observer (internal or external).
     */
   override protected[airstream] def addInternalObserver(observer: InternalObserver[A], shouldCallMaybeWillStart: Boolean): Unit = {
-    //println(s"$this > aio   shouldCallMaybeWillStart=$shouldCallMaybeWillStart")
+    // println(s"$this > aio   shouldCallMaybeWillStart=$shouldCallMaybeWillStart")
     Transaction.onStart.shared({
       if (!isStarted && shouldCallMaybeWillStart) {
         maybeWillStart()
       }
-      //println(s"$this < aio")
+      // println(s"$this < aio")
       internalObservers.push(observer)
       maybeStart()
     }, when = !isStarted)

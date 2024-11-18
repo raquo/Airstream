@@ -8,7 +8,7 @@ import scala.util.Try
 
 abstract class AsyncUnitSpec extends AsyncFunSpec with Matchers {
 
-  implicit override def executionContext: ExecutionContext = scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+  override implicit def executionContext: ExecutionContext = scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
   def delay[V](value: => V): Future[V] = {
     delay(0)(value)

@@ -32,20 +32,20 @@ class JsPromiseStream[A](promise: js.Promise[A], emitOnce: Boolean) extends Writ
       promise.`then`[Unit](
         (nextValue: A) => {
           isPending = false
-          //println(s"> init trx from FutureEventStream.init($nextValue)")
+          // println(s"> init trx from FutureEventStream.init($nextValue)")
           Transaction(fireValue(nextValue, _))
           (): Unit | js.Thenable[Unit]
         },
-        js.defined { (rawException: Any) => {
+        js.defined { (rawException: Any) =>
           isPending = false
           val nextError = rawException match {
             case th: Throwable => th
             case _ => js.JavaScriptException(rawException)
           }
-          //println(s"> init trx from JsPromiseEventStream.init($nextError)")
+          // println(s"> init trx from JsPromiseEventStream.init($nextError)")
           Transaction(fireError(nextError, _))
           (): Unit | js.Thenable[Unit]
-        }}
+        }
       )
     }
   }

@@ -42,7 +42,7 @@ class SwitchStream[I, O](
   // @TODO[Elegance] Maybe we should abstract away this kind of internal observer
   private[this] val internalEventObserver: InternalObserver[O] = InternalObserver[O](
     onNext = (nextEvent, _) => {
-      //println(s"> init trx from SwitchEventStream.onValue(${nextEvent})")
+      // println(s"> init trx from SwitchEventStream.onValue(${nextEvent})")
       Transaction(fireValue(nextEvent, _))
     },
     onError = (nextError, _) => {
@@ -82,9 +82,9 @@ class SwitchStream[I, O](
       }
       maybeNextEventStreamTry = js.undefined
     } else {
-      maybeCurrentEventStreamTry.foreach { _.foreach { currentStream =>
+      maybeCurrentEventStreamTry.foreach(_.foreach { currentStream =>
         currentStream.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false)
-      }}
+      })
     }
 
     super.onStart()
@@ -117,9 +117,9 @@ class SwitchStream[I, O](
   }
 
   private def removeInternalObserverFromCurrentEventStream(): Unit = {
-    maybeCurrentEventStreamTry.foreach { _.foreach { currentStream =>
+    maybeCurrentEventStreamTry.foreach(_.foreach { currentStream =>
       currentStream.removeInternalObserver(internalEventObserver)
-    }}
+    })
   }
 
 }

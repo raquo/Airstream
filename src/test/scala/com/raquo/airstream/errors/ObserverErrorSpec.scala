@@ -1,15 +1,14 @@
 package com.raquo.airstream.errors
 
 import com.raquo.airstream.UnitSpec
-import com.raquo.airstream.core.AirstreamError.{ObserverError, ObserverErrorHandlingError}
 import com.raquo.airstream.core.{AirstreamError, Observer}
+import com.raquo.airstream.core.AirstreamError.{ObserverError, ObserverErrorHandlingError}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, ExpectedError, TestableOwner}
 import org.scalatest.BeforeAndAfter
 
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
-
 
 class ObserverErrorSpec extends UnitSpec with BeforeAndAfter {
 
@@ -70,7 +69,6 @@ class ObserverErrorSpec extends UnitSpec with BeforeAndAfter {
       err => errorEffects += Effect("sub4-err", err)
     ))
 
-
     // Initial value triggers observer error
 
     assert(calculations.toList == Nil)
@@ -85,7 +83,6 @@ class ObserverErrorSpec extends UnitSpec with BeforeAndAfter {
 
     effects.clear()
     errorEffects.clear()
-
 
     // Next value triggers an observer error where onError is also defined
 
@@ -103,7 +100,6 @@ class ObserverErrorSpec extends UnitSpec with BeforeAndAfter {
 
     effects.clear()
     errorEffects.clear()
-
 
     // Error value triggers an error in observer's onError
 

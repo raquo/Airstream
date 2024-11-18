@@ -21,20 +21,20 @@ class StatusStream[In, Out](val stream: EventStream[Status[In, Out]]) extends An
 
   /** Emit `pf(Resolved(...))` if parent stream emits Resolved(...), do nothing otherwise */
   def collectResolved: EventStream[Resolved[In, Out]] = stream.collect {
-    case r: Resolved[In@unchecked, Out@unchecked] => r
+    case r: Resolved[In @unchecked, Out @unchecked] => r
   }
 
   /** Emit `pf(Resolved(...))` if parent stream emits Resolved(...) and `pf` is defined for it, do nothing otherwise */
   def collectResolved[Out2](pf: PartialFunction[Resolved[In, Out], Out2]): EventStream[Out2] = {
     stream.collectOpt {
-      case r: Resolved[In@unchecked, Out@unchecked] => pf.lift(r)
+      case r: Resolved[In @unchecked, Out @unchecked] => pf.lift(r)
       case _ => None
     }
   }
 
   /** Emit `Pending(input)` if parent stream emits that, do nothing otherwise */
   def collectPending: EventStream[Pending[In]] = stream.collect {
-    case p: Pending[In@unchecked] => p
+    case p: Pending[In @unchecked] => p
   }
 
   /** Emit `input` if parent stream emits `Pending(input)`, do nothing otherwise */
@@ -60,14 +60,13 @@ class StatusStream[In, Out](val stream: EventStream[Status[In, Out]]) extends An
     resolved: (Resolved[In, Out], Signal[Resolved[In, Out]]) => A,
     pending: (Pending[In], Signal[Pending[In]]) => A
   ): EventStream[A] = {
-    new SplittableOneStream(stream).splitOne(
-      key = _.isResolved
-    )(
-      (_, initial, signal) => initial.fold(
-        resolved(_, signal.asInstanceOf[Signal[Resolved[In, Out]]]),
-        pending(_, signal.asInstanceOf[Signal[Pending[In]]])
-      )
-    )
+    new SplittableOneStream(stream).splitOne(key = _.isResolved) {
+      (_, initial, signal) =>
+        initial.fold(
+          resolved(_, signal.asInstanceOf[Signal[Resolved[In, Out]]]),
+          pending(_, signal.asInstanceOf[Signal[Pending[In]]])
+        )
+    }
   }
 
 }

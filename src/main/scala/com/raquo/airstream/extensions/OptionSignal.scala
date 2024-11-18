@@ -28,9 +28,9 @@ class OptionSignal[A](val signal: Signal[Option[A]]) extends AnyVal {
       .split(
         key = _ => (),
         duplicateKeys = DuplicateKeysConfig.noWarnings
-      )(
-        (_, initial, signal) => project(initial, signal)
-      )
+      ) { (_, initial, signal) =>
+        project(initial, signal)
+      }
       .map(_.getOrElse(ifEmpty))
   }
 

@@ -38,16 +38,15 @@ class EitherStream[A, B](val stream: EventStream[Either[A, B]]) extends AnyVal {
     left: (A, Signal[A]) => C,
     right: (B, Signal[B]) => C
   ): EventStream[C] = {
-    new SplittableOneStream(stream).splitOne(
-      key = _.isRight
-    )(
-      (_, initial, signal) => initial match {
-        case Right(v) =>
-          right(v, signal.map(e => e.getOrElse(throw new Exception(s"splitEither: `${stream}` bad right value: $e"))))
-        case Left(v) =>
-          left(v, signal.map(e => e.left.getOrElse(throw new Exception(s"splitEither: `${stream}` bad left value: $e"))))
-      }
-    )
+    new SplittableOneStream(stream).splitOne(key = _.isRight) {
+      (_, initial, signal) =>
+        initial match {
+          case Right(v) =>
+            right(v, signal.map(e => e.getOrElse(throw new Exception(s"splitEither: `${stream}` bad right value: $e"))))
+          case Left(v) =>
+            left(v, signal.map(e => e.left.getOrElse(throw new Exception(s"splitEither: `${stream}` bad left value: $e"))))
+        }
+    }
   }
 
 }

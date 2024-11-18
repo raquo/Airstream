@@ -1,8 +1,8 @@
 package com.raquo.airstream.errors
 
 import com.raquo.airstream.UnitSpec
-import com.raquo.airstream.core.AirstreamError.{CombinedError, ErrorHandlingError}
 import com.raquo.airstream.core.{AirstreamError, EventStream, Observer}
+import com.raquo.airstream.core.AirstreamError.{CombinedError, ErrorHandlingError}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import com.raquo.airstream.state.Var
@@ -90,7 +90,6 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     errorEffects.clear()
 
-
     bus1.writer.onNext(1)
 
     calculations shouldBe mutable.Buffer(
@@ -122,7 +121,6 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     errorEffects.clear()
 
-
     // sub2 does handle errors, but sub1 is independent, so it still sends errors to unhandled
 
     stream1.addObserver(Observer.withRecover(
@@ -137,7 +135,6 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
     errorEffects shouldBe mutable.Buffer(Effect("unhandled", err2), Effect("sub2-err", err2))
 
     errorEffects.clear()
-
 
     // Errors do not perma-break observables
 
@@ -186,7 +183,6 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     errorEffects.clear()
 
-
     // These signals do handle errors, but the initial ones are independent, so they still send errors to unhandled
 
     signal1.addObserver(Observer.withRecover(
@@ -219,7 +215,6 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
     )
 
     errorEffects.clear()
-
 
     // Errors do not perma-break observables
 
@@ -257,7 +252,6 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
       err => errorEffects += Effect("sub-err", err)
     ))
 
-
     // Should recover from err1 into a value
 
     bus.writer.onError(err1)
@@ -271,7 +265,6 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
     calculations.clear()
     effects.clear()
 
-
     // Should recover from err2 by skipping value
 
     bus.writer.onError(err2)
@@ -279,7 +272,6 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
     calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer()
     errorEffects shouldBe mutable.Buffer()
-
 
     // Should fail to recover from err3 with a wrapped error
 
@@ -345,7 +337,7 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     val err = new Exception("No stream")
 
-    val bus  = new EventBus[Int]
+    val bus = new EventBus[Int]
 
     val stream = bus.events.flatMapSwitch(EventStream.fromValue(_, emitOnce = true))
 
@@ -385,7 +377,7 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     val err = new Exception("No stream")
 
-    val myVar  = Var.fromTry[Int](Failure(err))
+    val myVar = Var.fromTry[Int](Failure(err))
 
     val stream = myVar.signal.flatMapSwitch(EventStream.fromValue(_, emitOnce = true))
 

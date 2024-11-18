@@ -335,7 +335,6 @@ class GlitchSpec extends UnitSpec {
     calculations.clear()
     effects.clear()
 
-
     // >> create two event buses that depend on each other's streams
     // >> add some filter to make sure the loop terminates
     // >> fire event on one bus, expect certain events on the output stream,
@@ -500,36 +499,45 @@ class GlitchSpec extends UnitSpec {
       })
       .foreach(v => effects += Effect("obs", v))(owner)
 
-    assertEquals(effects.toList, List(
-      Effect("eval-init", 0),
-      Effect("tap", 0),
-      Effect("inner-init", true),
-      Effect("inner-signal-true", 0),
-      Effect("obs", true)
-    ))
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("eval-init", 0),
+        Effect("tap", 0),
+        Effect("inner-init", true),
+        Effect("inner-signal-true", 0),
+        Effect("obs", true)
+      )
+    )
     effects.clear()
 
     // --
 
     bus.emit(2)
 
-    assertEquals(effects.toList, List(
-      Effect("tap", 2),
-      Effect("obs", true),
-      Effect("inner-signal-true", 2)
-    ))
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("tap", 2),
+        Effect("obs", true),
+        Effect("inner-signal-true", 2)
+      )
+    )
     effects.clear()
 
     // --
 
     bus.emit(3)
 
-    assertEquals(effects.toList, List(
-      Effect("tap", 3),
-      Effect("inner-init", false),
-      Effect("inner-signal-false", 3),
-      Effect("obs", false)
-    ))
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("tap", 3),
+        Effect("inner-init", false),
+        Effect("inner-signal-false", 3),
+        Effect("obs", false)
+      )
+    )
     effects.clear()
   }
 }

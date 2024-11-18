@@ -27,8 +27,8 @@ object DomEventStream {
     eventKey: String,
     useCapture: Boolean = false
   ): EventStream[Ev] = {
-    new CustomStreamSource[Ev](
-      (fireValue, _, _, _) => {
+    new CustomStreamSource[Ev]({
+      (fireValue, _, _, _) =>
         // Wrap scala.Function into js.Function only once,
         // ensuring that the same function reference is passed to
         // removeEventListener as was given to addEventListener.
@@ -38,7 +38,6 @@ object DomEventStream {
           onStart = () => eventTarget.addEventListener(eventKey, eventHandler, useCapture),
           onStop = () => eventTarget.removeEventListener(eventKey, eventHandler, useCapture)
         )
-      }
-    )
+    })
   }
 }

@@ -117,9 +117,12 @@ class BimapVarSpec extends UnitSpec with BeforeAndAfter {
     assertEquals(fooVar.tryNow(), Failure(err_x5))
     assertEquals(intVar.tryNow(), Failure(err_x5))
 
-    assertEquals(errorEffects.toList, List(
-      Effect("unhandled", err_x5)
-    ))
+    assertEquals(
+      errorEffects.toList,
+      List(
+        Effect("unhandled", err_x5)
+      )
+    )
     errorEffects.clear()
 
     // --
@@ -136,9 +139,12 @@ class BimapVarSpec extends UnitSpec with BeforeAndAfter {
     assertEquals(fooVar.tryNow(), Failure(err1))
     assertEquals(intVar.tryNow(), Failure(err1))
 
-    assertEquals(errorEffects.toList, List(
-      Effect("unhandled", err1)
-    ))
+    assertEquals(
+      errorEffects.toList,
+      List(
+        Effect("unhandled", err1)
+      )
+    )
     errorEffects.clear()
 
     // --
@@ -148,9 +154,12 @@ class BimapVarSpec extends UnitSpec with BeforeAndAfter {
     assertEquals(fooVar.tryNow(), Failure(err2))
     assertEquals(intVar.tryNow(), Failure(err2))
 
-    assertEquals(errorEffects.toList, List(
-      Effect("unhandled", err2)
-    ))
+    assertEquals(
+      errorEffects.toList,
+      List(
+        Effect("unhandled", err2)
+      )
+    )
     errorEffects.clear()
 
   }

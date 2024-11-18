@@ -3,9 +3,9 @@ package com.raquo.airstream.syntax
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.{EventStream, Observable, Signal}
 import com.raquo.airstream.eventbus.EventBus
+import scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 import scala.concurrent.Future
-import scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 class SyntaxSpec extends UnitSpec {
 

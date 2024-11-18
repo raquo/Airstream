@@ -1,6 +1,6 @@
 package com.raquo.airstream
 
-import org.scalactic.{Prettifier, source}
+import org.scalactic.{source, Prettifier}
 import org.scalatest.Assertion
 import org.scalatest.enablers.Emptiness
 import org.scalatest.matchers.should
@@ -12,15 +12,15 @@ class ShouldSyntax[A](val actual: A) extends AnyVal {
 
   def shouldBe(
     expected: scala.Any
-  )(
-    implicit pos: source.Position,
+  )(implicit
+    pos: source.Position,
     prettifier: Prettifier
   ): Assertion = {
     ShouldSyntax.shouldBe(actual, expected)(pos, prettifier)
   }
 
-  def shouldBeEmpty(
-    implicit pos: source.Position,
+  def shouldBeEmpty(implicit
+    pos: source.Position,
     prettifier: Prettifier,
     emptiness: Emptiness[A]
   ): Assertion = {
@@ -29,8 +29,8 @@ class ShouldSyntax[A](val actual: A) extends AnyVal {
 
   def shouldNotBe(
     expected: scala.Any
-  )(
-    implicit pos: source.Position,
+  )(implicit
+    pos: source.Position,
     prettifier: Prettifier
   ): Assertion = {
     ShouldSyntax.shouldNotBe(actual, expected)(pos, prettifier)
@@ -47,8 +47,8 @@ object ShouldSyntax extends should.Matchers {
   def shouldBe[A](
     actual: A,
     expected: scala.Any
-  )(
-    implicit pos: source.Position,
+  )(implicit
+    pos: source.Position,
     prettifier: Prettifier
   ): Assertion = {
     actual shouldBe expected
@@ -56,8 +56,8 @@ object ShouldSyntax extends should.Matchers {
 
   def shouldBeEmpty[A](
     actual: A
-  )(
-    implicit pos: source.Position,
+  )(implicit
+    pos: source.Position,
     prettifier: Prettifier,
     emptiness: Emptiness[A]
   ): Assertion = {
@@ -67,8 +67,8 @@ object ShouldSyntax extends should.Matchers {
   def shouldNotBe[A](
     actual: A,
     expected: scala.Any
-  )(
-    implicit pos: source.Position,
+  )(implicit
+    pos: source.Position,
     prettifier: Prettifier
   ): Assertion = {
     actual shouldNot be(expected)

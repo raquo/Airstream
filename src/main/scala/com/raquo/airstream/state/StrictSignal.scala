@@ -17,5 +17,5 @@ trait StrictSignal[+A] extends Signal[A] {
     */
   override def now(): A = super.now()
 
-  abstract override def tryNow(): Try[A] = super.tryNow()
+  override abstract def tryNow(): Try[A] = super.tryNow()
 }

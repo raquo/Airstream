@@ -69,19 +69,21 @@ class DebuggableObserver[A](val observer: Observer[A]) extends AnyVal {
 
   /** Log emitted events (but not errors) if `when` condition passes, using dom.console.log if `useJsLogger` is true. */
   def debugLogEvents(when: A => Boolean = always, useJsLogger: Boolean = false): Observer[A] = {
-    val whenEvent = (value: Try[A]) => value match {
-      case Success(ev) if when(ev) => true
-      case _ => false
-    }
+    val whenEvent = (value: Try[A]) =>
+      value match {
+        case Success(ev) if when(ev) => true
+        case _ => false
+      }
     debugLog(whenEvent, useJsLogger)
   }
 
   /** Log emitted errors (but not regular events) if `when` condition passes */
   def debugLogErrors(when: Throwable => Boolean = always): Observer[A] = {
-    val whenEvent = (value: Try[A]) => value match {
-      case Failure(err) if when(err) => true
-      case _ => false
-    }
+    val whenEvent = (value: Try[A]) =>
+      value match {
+        case Failure(err) if when(err) => true
+        case _ => false
+      }
     debugLog(whenEvent, useJsLogger = false)
   }
 

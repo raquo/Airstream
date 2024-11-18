@@ -1,8 +1,8 @@
 package com.raquo.airstream.state
 
+import com.raquo.airstream.core.{AirstreamError, Named, Observer, Signal, Sink, Transaction}
 import com.raquo.airstream.core.AirstreamError.VarError
 import com.raquo.airstream.core.Source.SignalSource
-import com.raquo.airstream.core.{AirstreamError, Named, Observer, Signal, Sink, Transaction}
 import com.raquo.airstream.extensions.OptionVar
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.split.SplittableVar
@@ -29,7 +29,7 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
   // --
 
   val writer: Observer[A] = Observer.fromTry { nextTry =>
-    //println(s"> init trx from Var.writer(${nextTry})")
+    // println(s"> init trx from Var.writer(${nextTry})")
     Transaction(setCurrentValue(nextTry, _))
   }
 
@@ -120,7 +120,8 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
       parent = this,
       signal = zoomedSignal,
       zoomOut = (currValue, nextZoomedValue) => out(currValue, nextZoomedValue),
-      displayNameSuffix = ".zoomLazy")
+      displayNameSuffix = ".zoomLazy"
+    )
     // #nc Use this new impl in 18.0
     // new LazyDerivedVar2[A, B](
     //   parent = this,
@@ -243,7 +244,7 @@ trait Var[A] extends SignalSource[A] with Sink[A] with Named {
 
   /** @param mod Note: must not throw */
   def tryUpdate(mod: Try[A] => Try[A]): Unit = {
-    //println(s"> init trx from Var.tryUpdate")
+    // println(s"> init trx from Var.tryUpdate")
     Transaction { trx =>
       val nextValue = mod(getCurrentValue)
       setCurrentValue(nextValue, trx)
@@ -302,7 +303,7 @@ object Var {
     * Airstream allows a maximum of one event per observable per transaction.
     */
   def setTry(values: VarTryTuple[_]*): Unit = {
-    //println(s"> init trx from Var.set/setTry")
+    // println(s"> init trx from Var.set/setTry")
     Transaction { trx =>
       if (hasDuplicateVars(values.map(_.tuple))) {
         throw VarError("Unable to Var.{set,setTry}: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None)
@@ -327,7 +328,7 @@ object Var {
     * Airstream allows a maximum of one event per observable per transaction.
     */
   def update(mods: VarModTuple[_]*): Unit = {
-    //println(s"> init trx from Var.update")
+    // println(s"> init trx from Var.update")
     Transaction { trx =>
       if (hasDuplicateVars(mods.map(_.tuple))) {
         throw VarError("Unable to Var.update: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None)
@@ -354,7 +355,7 @@ object Var {
     * Airstream allows a maximum of one event per observable per transaction.
     */
   def tryUpdate(mods: VarTryModTuple[_]*): Unit = {
-    //println(s"> init trx from Var.tryUpdate")
+    // println(s"> init trx from Var.tryUpdate")
     Transaction { trx =>
       if (hasDuplicateVars(mods.map(_.tuple))) {
         throw VarError("Unable to Var.tryUpdate: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None)
@@ -391,4 +392,3 @@ object Var {
   implicit def toOptionVar[A](v: Var[Option[A]]): OptionVar[A] = new OptionVar(v)
 
 }
-

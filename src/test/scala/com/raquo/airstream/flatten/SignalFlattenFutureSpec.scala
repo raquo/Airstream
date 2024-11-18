@@ -23,7 +23,6 @@ class SignalFlattenFutureSpec extends AsyncUnitSpec {
 
       def makePromise() = Promise[Int]()
 
-
       def clearLogs(): Assertion = {
         effects.clear()
         assert(true)

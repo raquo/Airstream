@@ -48,10 +48,13 @@ class DistinctVarSpec extends UnitSpec with BeforeAndAfter {
       effects += Effect("distinct", v)
     }(owner)
 
-    assertEquals(effects.toList, List(
-      Effect("source", Foo(1)),
-      Effect("distinct", Foo(1))
-    ))
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("source", Foo(1)),
+        Effect("distinct", Foo(1))
+      )
+    )
     effects.clear()
 
     // --
@@ -68,10 +71,13 @@ class DistinctVarSpec extends UnitSpec with BeforeAndAfter {
     assertEquals(sourceVar.now(), Foo(2))
     assertEquals(distinctVar.now(), Foo(2))
 
-    assertEquals(effects.toList, List(
-      Effect("source", Foo(2)),
-      Effect("distinct", Foo(2))
-    ))
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("source", Foo(2)),
+        Effect("distinct", Foo(2))
+      )
+    )
     effects.clear()
 
     // --
@@ -81,9 +87,12 @@ class DistinctVarSpec extends UnitSpec with BeforeAndAfter {
     assertEquals(sourceVar.now(), Foo(2))
     assertEquals(distinctVar.now(), Foo(2))
 
-    assertEquals(effects.toList, List(
-      Effect("source", Foo(2))
-    ))
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("source", Foo(2))
+      )
+    )
     effects.clear()
 
     // --
@@ -93,9 +102,12 @@ class DistinctVarSpec extends UnitSpec with BeforeAndAfter {
     assertEquals(sourceVar.now(), Foo(2))
     assertEquals(distinctVar.now(), Foo(2))
 
-    assertEquals(effects.toList, List(
-      Effect("source", Foo(2)),
-    ))
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("source", Foo(2)),
+      )
+    )
     effects.clear()
 
     // --
@@ -105,10 +117,13 @@ class DistinctVarSpec extends UnitSpec with BeforeAndAfter {
     assertEquals(sourceVar.now(), Foo(3))
     assertEquals(distinctVar.now(), Foo(3))
 
-    assertEquals(effects.toList, List(
-      Effect("source", Foo(3)),
-      Effect("distinct", Foo(3))
-    ))
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("source", Foo(3)),
+        Effect("distinct", Foo(3))
+      )
+    )
     effects.clear()
 
     // --
@@ -127,10 +142,12 @@ class DistinctVarSpec extends UnitSpec with BeforeAndAfter {
     assertEquals(sourceVar.now(), Foo(3))
     assertEquals(distinctVar.now(), Foo(3))
 
-    assertEquals(effects.toList, List(
-      Effect("source", Foo(3)),
-    ))
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("source", Foo(3)),
+      )
+    )
     effects.clear()
   }
 }
-

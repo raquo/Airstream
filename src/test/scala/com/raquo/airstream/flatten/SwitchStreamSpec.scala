@@ -600,7 +600,7 @@ class SwitchStreamSpec extends UnitSpec {
         .flatMapSwitch { num =>
           if (num < 1000) {
             smallI += 1
-            intStream.map("small: " + _).setDisplayName(s"small-$smallI") //.debugLogLifecycle()
+            intStream.map("small: " + _).setDisplayName(s"small-$smallI") // .debugLogLifecycle()
           } else {
             bigI += 1
             EventStream.fromValue("big").setDisplayName(s"inner-$bigI")

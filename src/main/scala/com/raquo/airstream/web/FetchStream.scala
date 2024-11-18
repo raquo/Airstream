@@ -9,9 +9,9 @@ import scala.scalajs.js
   * and some other Javascript-specific data types.
   */
 object FetchStream extends FetchBuilder[dom.BodyInit, String](
-  encodeRequest = identity,
-  decodeResponse = response => EventStream.fromJsPromise(response.text())
-) {
+    encodeRequest = identity,
+    decodeResponse = response => EventStream.fromJsPromise(response.text())
+  ) {
 
   lazy val raw: FetchBuilder[dom.BodyInit, dom.Response] = {
     new FetchBuilder(identity, EventStream.fromValue(_))

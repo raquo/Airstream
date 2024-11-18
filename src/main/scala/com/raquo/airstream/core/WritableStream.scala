@@ -35,7 +35,7 @@ trait WritableStream[A] extends EventStream[A] with WritableObservable[A] {
   }
 
   override protected[this] def fireError(nextError: Throwable, transaction: Transaction): Unit = {
-    //println(s"$this > FIRE > $nextError")
+    // println(s"$this > FIRE > $nextError")
 
     // === CAUTION ===
     // The following logic must match Signal's fireTry! It is separated here for performance.
@@ -58,7 +58,7 @@ trait WritableStream[A] extends EventStream[A] with WritableObservable[A] {
     }
   }
 
-  override protected[this] final def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
+  final override protected[this] def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
     nextValue.fold(
       fireError(_, transaction),
       fireValue(_, transaction)

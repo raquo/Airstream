@@ -3,8 +3,8 @@ package com.raquo.airstream.core
 import com.raquo.airstream.combine.CombineSignalN
 import com.raquo.airstream.combine.generated.{CombinableSignal, StaticSignalCombineOps}
 import com.raquo.airstream.core.Source.SignalSource
-import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
+import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.debug.{DebuggableSignal, Debugger, DebuggerSignal}
 import com.raquo.airstream.distinct.DistinctSignal
 import com.raquo.airstream.extensions._
@@ -251,8 +251,6 @@ object Signal {
   //   new JsPromiseSignal(promise).changes.map(_.get)
   // }
 
-
-
   /** Easy helper for custom signals. See [[CustomSignalSource]] for docs.
     *
     * Provide `start` and `stop` callbacks that will be called when the signal
@@ -277,10 +275,11 @@ object Signal {
   ): Signal[A] = {
     new CustomSignalSource[A](
       getInitialValue = initial,
-      makeConfig = (setValue, getValue, getStartIndex, getIsStarted) => CustomSource.Config(
-        onStart = () => start(setValue, getValue, getStartIndex, getIsStarted),
-        onStop = () => stop(getStartIndex())
-      )
+      makeConfig = (setValue, getValue, getStartIndex, getIsStarted) =>
+        CustomSource.Config(
+          onStart = () => start(setValue, getValue, getStartIndex, getIsStarted),
+          onStop = () => stop(getStartIndex())
+        )
     )
   }
 

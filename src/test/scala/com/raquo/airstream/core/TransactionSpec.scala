@@ -241,7 +241,6 @@ class TransactionSpec extends UnitSpec with BeforeAndAfter {
 
     assert(Transaction.maxDepth < maxNum, "defaultMaxDepth is weirdly high... all ok?")
 
-
     bus.events.filter(_ < maxNum).map { n =>
       ix = n + 1
       // dom.console.log(ix)

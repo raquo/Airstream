@@ -12,8 +12,7 @@ class SplittableVar[M[_], Input](val v: Var[M[Input]]) extends AnyVal {
     duplicateKeys: DuplicateKeysConfig = DuplicateKeysConfig.default
   )(
     project: (Key, Input, Var[Input]) => Output
-  )(
-    implicit splittable: Splittable[M]
+  )(implicit splittable: Splittable[M]
   ): Signal[M[Output]] = {
     new SplitSignal[M, Input, Output, Key](
       parent = v.signal,
@@ -42,8 +41,7 @@ class SplittableVar[M[_], Input](val v: Var[M[Input]]) extends AnyVal {
   /** Like `split`, but uses index of the item in the list as the key. */
   def splitByIndex[Output](
     project: (Int, Input, Var[Input]) => Output
-  ) (
-    implicit splittable: Splittable[M]
+  )(implicit splittable: Splittable[M]
   ): Signal[M[Output]] = {
     new SplitSignal[M, (Input, Int), Output, Int](
       parent = v.signal.map(splittable.zipWithIndex),
@@ -64,7 +62,7 @@ class SplittableVar[M[_], Input](val v: Var[M[Input]]) extends AnyVal {
         project(index, initialTuple._1, childVar)
       },
       splittable,
-      DuplicateKeysConfig.noWarnings,  // No need to check for duplicates – we know the keys are good.?
+      DuplicateKeysConfig.noWarnings, // No need to check for duplicates – we know the keys are good.?
       strict = true
     )
   }
@@ -83,8 +81,7 @@ class SplittableVar[M[_], Input](val v: Var[M[Input]]) extends AnyVal {
     duplicateKeys: DuplicateKeysConfig = DuplicateKeysConfig.default
   )(
     project: (Key, Input, Var[Input]) => Output
-  )(
-    implicit splittable: MutableSplittable[M]
+  )(implicit splittable: MutableSplittable[M]
   ): Signal[M[Output]] = {
     new SplitSignal[M, Input, Output, Key](
       parent = v.signal,
@@ -99,7 +96,7 @@ class SplittableVar[M[_], Input](val v: Var[M[Input]]) extends AnyVal {
           ),
           zoomOut = (inputs, newInput) => {
             splittable.findUpdateInPlace[Input](inputs, key(_) == thisKey, newInput)
-              inputs
+            inputs
           },
           displayNameSuffix = displayNameSuffix
         )

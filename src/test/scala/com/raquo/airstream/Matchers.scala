@@ -1,8 +1,8 @@
 package com.raquo.airstream
 
-import org.scalactic.{Prettifier, source}
-import org.scalatest.matchers.should
+import org.scalactic.{source, Prettifier}
 import org.scalatest.{Assertion, Assertions}
+import org.scalatest.matchers.should
 
 trait Matchers { this: Assertions =>
 
@@ -11,8 +11,8 @@ trait Matchers { this: Assertions =>
   def assertEquals(
     actual: scala.Any,
     expected: scala.Any
-  )(
-    implicit prettifier: org.scalactic.Prettifier,
+  )(implicit
+    prettifier: org.scalactic.Prettifier,
     pos: org.scalactic.source.Position
   ): Assertion = {
     assertResult(expected = expected)(actual = actual)
@@ -22,8 +22,8 @@ trait Matchers { this: Assertions =>
     actual: scala.Any,
     expected: scala.Any,
     clue: scala.Any
-  )(
-    implicit prettifier: Prettifier,
+  )(implicit
+    prettifier: Prettifier,
     pos: source.Position
   ): Assertion = {
     assertResult(expected = expected, clue = clue)(actual = actual)

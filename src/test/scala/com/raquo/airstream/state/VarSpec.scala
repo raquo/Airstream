@@ -1,8 +1,8 @@
 package com.raquo.airstream.state
 
 import com.raquo.airstream.UnitSpec
-import com.raquo.airstream.core.AirstreamError.VarError
 import com.raquo.airstream.core.{AirstreamError, Observer}
+import com.raquo.airstream.core.AirstreamError.VarError
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import org.scalatest.BeforeAndAfter
 
@@ -144,9 +144,10 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     val calculations = mutable.Buffer[Calculation[Int]]()
     val effects = mutable.Buffer[Effect[Int]]()
 
-    val obs = Observer.withRecover[Int](effects += Effect("obs", _), {
-      case err => errorEffects += Effect("signal-err", err)
-    })
+    val obs = Observer.withRecover[Int](
+      onNext = effects += Effect("obs", _),
+      onError = { case err => errorEffects += Effect("signal-err", err) }
+    )
 
     val x = Var(1)
 

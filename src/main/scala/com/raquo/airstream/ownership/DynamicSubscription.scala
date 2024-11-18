@@ -42,7 +42,7 @@ class DynamicSubscription private (
   def kill(): Unit = dynamicOwner.removeSubscription(this)
 
   private[ownership] def onActivate(owner: Owner): Unit = {
-    //println(s"    - activating $this")
+    // println(s"    - activating $this")
     Transaction.onStart.shared {
       maybeCurrentSubscription = activate(owner)
     }

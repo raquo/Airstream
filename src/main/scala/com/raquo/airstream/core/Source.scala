@@ -29,12 +29,12 @@ object Source {
 
   // #TODO[API] Disabled integrations, let's see if anyone complains. These conversions are unfortunately not smooth enough to be implicit.
 
-  //implicit def futureToEventSource[A](future: Future[A]): EventSource[A] = EventStream.fromFuture(future)
+  // implicit def futureToEventSource[A](future: Future[A]): EventSource[A] = EventStream.fromFuture(future)
   //
-  //implicit def futureToSignalSource[A](future: Future[A]): SignalSource[Option[A]] = Signal.fromFuture(future)
+  // implicit def futureToSignalSource[A](future: Future[A]): SignalSource[Option[A]] = Signal.fromFuture(future)
   //
-  //implicit def jsPromiseToEventSource[A](promise: js.Promise[A]): EventSource[A] = EventStream.fromJsPromise(promise)
+  // implicit def jsPromiseToEventSource[A](promise: js.Promise[A]): EventSource[A] = EventStream.fromJsPromise(promise)
   //
-  //implicit def jsPromiseToSignalSource[A](promise: js.Promise[A]): SignalSource[Option[A]] = Signal.fromJsPromise(promise)
+  // implicit def jsPromiseToSignalSource[A](promise: js.Promise[A]): SignalSource[Option[A]] = Signal.fromJsPromise(promise)
 
 }

@@ -26,12 +26,12 @@ class StatusSignal[In, Out](val signal: Signal[Status[In, Out]]) extends AnyVal 
   ): Signal[A] = {
     new SplittableOneSignal(signal).splitOne(
       key = _.isResolved
-    )(
-      (_, initial, signal) => initial.fold(
+    ) { (_, initial, signal) =>
+      initial.fold(
         resolved(_, signal.asInstanceOf[Signal[Resolved[In, Out]]]),
         pending(_, signal.asInstanceOf[Signal[Pending[In]]])
       )
-    )
+    }
   }
 
 }

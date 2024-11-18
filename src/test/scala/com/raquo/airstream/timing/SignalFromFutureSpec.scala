@@ -32,12 +32,10 @@ class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
       .map(Calculation.log("signal", calculations))
   }
 
-
   before {
     owner.killSubscriptions()
     clearLogs()
   }
-
 
   it("asynchronously emits a future value") {
     val promise = makePromise()

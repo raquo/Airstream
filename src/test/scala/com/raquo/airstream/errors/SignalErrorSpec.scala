@@ -51,7 +51,6 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
       err => errorEffects += Effect("sub-err", err)
     ))
 
-
     // Initial value should be evaluated and propagated to observer
 
     calculations shouldBe mutable.Buffer(
@@ -65,7 +64,6 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     calculations.clear()
     effects.clear()
 
-
     // Current value should be set to initial value
 
     signal.now() shouldBe 1
@@ -74,7 +72,6 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer()
     errorEffects shouldBe mutable.Buffer()
-
 
     // Error value should propagate
 
@@ -88,7 +85,6 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
 
     errorEffects.clear()
 
-
     // Current value should be exposed as a Failure
 
     Try(signal.now()) shouldBe Failure(err1)
@@ -97,7 +93,6 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer()
     errorEffects shouldBe mutable.Buffer()
-
 
     // Encountering the same error should trigger it again (because we didn't apply `distinctTry`)
 
@@ -125,7 +120,6 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
       err => errorEffects += Effect("sub-err", err)
     ))
 
-
     // Initial value should be evaluated and propagated to observer
 
     calculations shouldBe mutable.Buffer()
@@ -136,7 +130,6 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
 
     errorEffects.clear()
 
-
     // Current error value should be set to initial value
 
     Try(signal.now()) shouldBe Failure(err1)
@@ -145,7 +138,6 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer()
     errorEffects shouldBe mutable.Buffer()
-
 
     // Success value should propagate
 
@@ -176,7 +168,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     calculations shouldBe mutable.Buffer()
     effects shouldBe mutable.Buffer()
     errorEffects shouldBe mutable.Buffer(
-      //Effect("sub-err", err1)
+      // Effect("sub-err", err1)
     )
 
     // Success value should propagate
@@ -242,7 +234,6 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
       err => errorEffects += Effect("sub-err", err)
     ))
 
-
     // Error when calculating initial value should be recovered from
 
     calculations shouldBe mutable.Buffer(
@@ -256,12 +247,10 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     calculations.clear()
     effects.clear()
 
-
     // Current value is set to the initial error upstream but is recovered downstream
 
     signalUp.tryNow() shouldBe Failure(err1)
     signalDown.tryNow() shouldBe Success(-123)
-
 
     // Fold is now broken because it needs previous state, which it doesn't have. This is unlike other operators.
 
@@ -271,7 +260,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     signalDown.tryNow() shouldBe Success(-123)
 
     calculations shouldBe mutable.Buffer(
-      Calculation("signalDown",-123)
+      Calculation("signalDown", -123)
     )
     effects shouldBe mutable.Buffer(
       Effect("sub", -123)
@@ -282,16 +271,17 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     effects.clear()
   }
 
-
   it("foldRecover recovers from error") {
 
     val bus = new EventBus[Int]
 
-    val signalUp = bus.events.startWith(-1).scanLeftRecover(tryNum => tryNum.map { num =>
-      if (num < 0) {
-        throw err1
-      } else num
-    })((tryAcc, tryNextValue) => {
+    val signalUp = bus.events.startWith(-1).scanLeftRecover(tryNum =>
+      tryNum.map { num =>
+        if (num < 0) {
+          throw err1
+        } else num
+      }
+    )((tryAcc, tryNextValue) => {
       tryNextValue.map(tryAcc.getOrElse(-100) + _)
     }).map(Calculation.log("signalUp", calculations))
 
@@ -304,7 +294,6 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
       err => errorEffects += Effect("sub-err", err)
     ))
 
-
     // Error when calculating initial value should be recovered from
 
     calculations shouldBe mutable.Buffer(
@@ -316,7 +305,6 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     calculations.clear()
     effects.clear()
 
-
     // Current value is set to the initial error upstream but is recovered downstream
 
     Try(signalUp.now()) shouldBe Failure(err1)
@@ -324,7 +312,6 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
 
     Try(signalDown.now()) shouldBe Success(-123)
     signalDown.tryNow() shouldBe Success(-123)
-
 
     // foldRecover recovers from an error state
 

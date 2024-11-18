@@ -38,7 +38,7 @@ class TakeStream[A](
     if (shouldTakeNextValue) {
       fireValue(nextValue, transaction)
     } else {
-      //println(s"!!! DROPPED event `$nextParentValue` from ${this}. Total drops: $numDropped")
+      // println(s"!!! DROPPED event `$nextParentValue` from ${this}. Total drops: $numDropped")
     }
   }
 

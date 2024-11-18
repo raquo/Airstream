@@ -20,7 +20,7 @@ class DelayStream[A](
   override protected def onNext(nextValue: A, transaction: Transaction): Unit = {
     var timerHandle: SetTimeoutHandle = null
     timerHandle = js.timers.setTimeout(delayMs.toDouble) {
-      //println(s"> init trx from DelayEventStream.onNext($nextValue)")
+      // println(s"> init trx from DelayEventStream.onNext($nextValue)")
       timerHandles.splice(timerHandles.indexOf(timerHandle), deleteCount = 1) // Remove handle
       Transaction(fireValue(nextValue, _))
       ()

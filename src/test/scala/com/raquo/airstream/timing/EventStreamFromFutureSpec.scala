@@ -30,12 +30,10 @@ class EventStreamFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
     .fromFuture(promise.future)
     .map(Calculation.log("stream", calculations))
 
-
   before {
     owner.killSubscriptions()
     clearLogs()
   }
-
 
   it("asynchronously emits a future value") {
     val promise = makePromise()
