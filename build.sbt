@@ -1,3 +1,4 @@
+import com.raquo.buildkit.SourceDownloader
 import VersionHelper.{versionFmt, fallbackVersion}
 
 // Lets me depend on Maven Central artifacts immediately without waiting
@@ -6,6 +7,26 @@ resolvers ++= Resolver.sonatypeOssRepos("public")
 enablePlugins(ScalaJSPlugin)
 
 enablePlugins(ScalaJSBundlerPlugin)
+
+lazy val preload = taskKey[Unit]("runs Laminar-specific pre-load tasks")
+
+preload := {
+  val projectDir = (ThisBuild / baseDirectory).value
+  // TODO Move code generators here as well?
+
+  SourceDownloader.downloadVersionedFile(
+    name = "scalafmt-shared-conf",
+    version = "v0.1.0",
+    urlPattern = version => s"https://raw.githubusercontent.com/raquo/scalafmt-config/refs/tags/$version/.scalafmt.shared.conf",
+    versionFile = projectDir / ".downloads" / ".scalafmt.shared.conf.version",
+    outputFile = projectDir / ".downloads" / ".scalafmt.shared.conf",
+    processOutput = "#\n# DO NOT EDIT. See SourceDownloader in build.sbt\n" + _
+  )
+}
+
+Global / onLoad := {
+  (Global / onLoad).value andThen { state => preload.key.label :: state }
+}
 
 libraryDependencies ++= Seq(
   "org.scala-js" %%% "scalajs-dom" % Versions.ScalaJsDom,
@@ -155,3 +176,9 @@ Test / sourceGenerators += Def.task {
     ).run
   )
 }.taskValue
+
+// https://github.com/JetBrains/sbt-ide-settings
+SettingKey[Seq[File]]("ide-excluded-directories").withRank(KeyRanks.Invisible) := Seq(
+  ".downloads", ".idea", ".metals", ".bloop", ".bsp",
+  "target", "project/target", "project/project/target", "project/project/project/target"
+).map(file)

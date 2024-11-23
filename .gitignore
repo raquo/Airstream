@@ -1,15 +1,25 @@
-target
 .idea
-.bsp
 .vscode
 *.code-workspace
-.bloop
-.metals
-project/metals.sbt
-project/project
 
 .DS_Store
 
-yarn.lock
+target
 
-/.bsp
+.metals
+.bloop
+.bsp
+
+project/metals.sbt
+project/.bloop
+
+yarn.lock
+!website/yarn.lock
+
+.downloads
+
+website/node_modules
+website/build
+website/i18n/*
+
+websiteJS/package-lock.json

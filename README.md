@@ -30,6 +30,7 @@ I created Airstream because I found existing solutions were not suitable for bui
 ## Table of Contents
 
 * [Community](#community)
+* [Contributing](#contributing)
 * [Documentation](#documentation)
   * [EventStream](#eventstream)
   * [Laziness](#laziness)
@@ -107,6 +108,10 @@ I created Airstream because I found existing solutions were not suitable for bui
 * [Github discussions](https://github.com/raquo/Airstream/discussions) for more in-depth discussions
 * [Github issues](https://github.com/raquo/Airstream/issues) for bugs, feature requests
 
+
+## Contributing
+
+Please run `sbt +test` and `sbt scalafmtAll` locally before submitting the PR.
 
 
 ## Documentation
