@@ -1,7 +1,7 @@
 package com.raquo.airstream.split
 
 import com.raquo.airstream.UnitSpec
-import com.raquo.airstream.core.{Observer, Signal, Transaction}
+import com.raquo.airstream.core.{AirstreamError, Observer, Signal, Transaction}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, ManualOwner, Subscription}
@@ -45,10 +45,27 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
     override def toString: String = s"Element($id, fooSignal)"
   }
 
+  private val errorEffects = mutable.Buffer[Effect[Throwable]]()
+
+  private val errorCallback = (err: Throwable) => {
+    errorEffects += Effect("unhandled", err)
+    ()
+  }
+
   private val originalDuplicateKeysConfig = DuplicateKeysConfig.default
+
+  before {
+    errorEffects.clear()
+    AirstreamError.registerUnhandledErrorCallback(errorCallback)
+    AirstreamError.unregisterUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
+  }
 
   after {
     DuplicateKeysConfig.setDefault(originalDuplicateKeysConfig)
+
+    AirstreamError.registerUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
+    AirstreamError.unregisterUnhandledErrorCallback(errorCallback)
+    assert(errorEffects.isEmpty) // #Note this fails the test rather inelegantly
   }
 
   def withOrWithoutDuplicateKeyWarnings(code: => Assertion): Assertion = {
@@ -695,17 +712,24 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
 
     myVar.writer.onNext(FooC("object", 1) :: FooC("object", 1) :: FooC("int_", 1) :: FooO :: FooE.FooE2 :: FooO :: Nil)
 
-    // This should warn, but not throw
-
-    // #TODO[Test] we aren't actually testing that this is logging to the console.
-    //  I'm not sure how to do this without over-complicating things.
-    //  The console warning is printed into the test output, we can at least see it there if / when we look
+    // This should send errors into `unhandled`, but not throw
 
     DuplicateKeysConfig.setDefault(DuplicateKeysConfig.warnings)
 
     myVar.writer.onNext(FooC("object", 1) :: FooC("int_", 1) :: FooO :: FooE.FooE2 :: Nil)
 
     myVar.writer.onNext(FooC("object", 1) :: FooC("object", 1) :: FooC("int_", 1) :: FooO :: FooE.FooE2 :: FooO :: Nil)
+
+    // Foo0 is the duplicate. Key is (matchCaseIndex, Foo0.id)
+    assert(errorEffects.exists { eff =>
+      (
+        eff.name == "unhandled"
+          && eff.value.getMessage.contains("Duplicate keys detected")
+          && eff.value.getMessage.contains(": `(1,object)`, `(2,object)`.")
+        )
+    })
+    errorEffects.size shouldBe 1
+    errorEffects.clear()
   }
 
   it("split list / vector / set / js.array / immutable.seq / collection.seq / option compiles") {

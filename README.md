@@ -113,6 +113,10 @@ I created Airstream because I found existing solutions were not suitable for bui
 
 Please run `sbt +test` and `sbt scalafmtAll` locally before submitting the PR.
 
+Note that existing tests print this compiler warning in Scala 3:
+- [E029] Pattern Match Exhaustivity Warning: /Users/raquo/code/scala/airstream/src/test/scala-3/com/raquo/airstream/split/SplitMatchOneSpec.scala
+
+This is expected. Ideally I would assert that this warning exists instead of printing it, but I don't think that's possible. I don't want to hide such warnings wholesale, but suggestions for improvement are welcome.
 
 ## Documentation
 
@@ -1612,7 +1616,7 @@ Aside from `splitEither`, we also have `splitOption`, `splitTry`, `splitStatus`,
 
 The `split` operator does not tolerate items with non-unique keys – this is simply invalid input for it, and it will crash and burn if provided such bad data.
 
-Therefore, Airstream offers duplicate key warnings by default. **Your code will still break** if the `split` operator encounters duplicate keys, but Airstream will first print a warning in the browser console listing the duplicate keys at fault.
+Therefore, Airstream offers duplicate key warnings by default. **Your code will still break** if the `split` operator encounters duplicate keys, but Airstream will first report the error as [unhandled](#unhandled-errors-do-not-terminate-the-program) to Airstream, which by default prints it as an error in the browser console, listing the duplicate keys at fault.
 
 Thus, these new warnings do not affect the execution of your code, and can be safely turned on for debugging or turned off for performance. You can adjust this setting both for your entire application, and for individual usages of `split`:
 
@@ -2325,7 +2329,7 @@ Remember, this is just for observers. We have a better way for observables, read
 
 ##### Unhandled Errors Do Not Terminate The Program
 
-In Airstream, unhandled errors do not result in the program terminating. By default they are reported to the console. You can specify different or additional handlers such as `AirstreamError.debuggerErrorCallback` or even a custom handler that effectively terminates your program.
+In Airstream, unhandled errors do not result in the program terminating. By default, they are reported to the console. You can specify different or additional handlers such as `AirstreamError.debuggerErrorCallback` or even a custom handler that effectively terminates your program.
 
 Regardless of this seeming leniency, you should still handle all of your errors at some point before they become _unhandled_. In a good Airstream codebase every _unhandled_ error must be treated as a bug.
 

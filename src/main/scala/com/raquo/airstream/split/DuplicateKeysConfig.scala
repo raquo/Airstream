@@ -10,15 +10,14 @@ package com.raquo.airstream.split
   *
   * When warnings are enabled, YOUR CODE WILL STILL BREAK if the
   * .split() operator encounters duplicate keys, but it will
-  * first print a warning in the browser console listing the
-  * duplicate keys at fault.
+  * first report an error as `unhandled` in Airstream, which by
+  * default will print it as an error in the browser console,
+  * listing the duplicate keys at fault.
   *
   * We enable this setting by default to aid in debugging. As the
   * end user, you might want to disable this either globally or
   * for specific .split() usages to improve performance on very
   * large lists.
-  *
-  * #TODO[Docs]: Add a short section to the docs about this.
   *
   * #TODO: Add more granular control later, if there is demand for that.
   *  For example, we could instruct Airstream to skip duplicate keys, or
