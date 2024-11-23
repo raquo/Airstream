@@ -1,11 +1,6 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.core.{
-  EventStream,
-  Signal,
-  Observable,
-  BaseObservable
-}
+import com.raquo.airstream.core.{EventStream, Signal, Observable, BaseObservable}
 import scala.quoted.{Expr, Quotes, Type}
 import scala.annotation.{unused, targetName}
 import scala.compiletime.summonInline
@@ -56,11 +51,6 @@ import scala.reflect.TypeTest
   * exhaustive" and "unreachable case" as expected.
   */
 object SplitMatchOneMacros {
-
-  extension [Self[+_] <: Observable[_], I](inline observable: BaseObservable[Self, I]) {
-    inline def splitMatchOne: SplitMatchOneObservable[Self, I, Nothing] =
-      SplitMatchOneObservable.build(observable)()()
-  }
 
   extension [Self[+_] <: Observable[_], I, O](
     inline matchSplitObservable: SplitMatchOneObservable[Self, I, O]

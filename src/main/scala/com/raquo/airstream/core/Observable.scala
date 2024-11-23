@@ -16,7 +16,9 @@ import scala.util.Try
   */
 trait Observable[+A] extends BaseObservable[Observable, A] {}
 
-object Observable extends ObservableLowPriorityImplicits {
+object Observable
+extends ObservableMacroImplicits
+with ObservableLowPriorityImplicits {
 
   /** Provides debug* methods on Observable: debugSpy, debugLogEvents, debugBreakErrors, etc. */
   implicit def toDebuggableObservable[A](observable: Observable[A]): DebuggableObservable[Observable, A] = new DebuggableObservable[Observable, A](observable)

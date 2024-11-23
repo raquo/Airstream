@@ -14,16 +14,6 @@ import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchType
 
 object SplitMatchSeqMacros {
 
-  extension [Self[+_] <: Observable[_], I, K, CC[_]](inline observable: BaseObservable[Self, CC[I]]) {
-    inline def splitMatchSeq(
-      inline keyFn: Function1[I, K],
-      inline distinctCompose: Function1[Signal[I], Signal[I]] = (iSignal: Signal[I]) => iSignal.distinct,
-      inline duplicateKeysConfig: DuplicateKeysConfig = DuplicateKeysConfig.default,
-    ) = {
-      SplitMatchSeqObservable.build(keyFn, distinctCompose, duplicateKeysConfig, observable)()()
-    }
-  }
-
   extension [Self[+_] <: Observable[_], I, K, O, CC[_]](
     inline matchSplitObservable: SplitMatchSeqObservable[Self, I, K, O, CC]
   ) {
