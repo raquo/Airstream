@@ -80,6 +80,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Sync Delay](#sync-delay)
     * [Splitting Observables](#splitting-observables)
     * [Splitting Vars](#splitting-vars)
+    * [Splitting By Type](#splitting-by-type)
     * [Async Status Operators](#async-status-operators)
     * [Specialized Type Operators](#specialized-type-operators) for Option-s, Either-s, Try-s, etc.
     * [Flattening Observables](#flattening-observables)
@@ -1661,6 +1662,165 @@ These individual child Var-s provided by `split` work similarly to lazy derived 
 ##### Splitting Vars with in-place mutations
 
 Vars that contain mutable collections such as `mutable.Buffer` or `js.Array` also offer a `splitMutate` method. It works just like their regular `split` method, except that when you update one of the individual child Var-s, the `splitMutate` operator **mutates** the contents of the splittable Var with the new child data, instead of creating an updated copy of it. For large collections this could be more efficient.
+
+
+
+#### Splitting By Type
+
+Regular splitting of observables works with _value_ keys (e.g. `_.id`), but when our observables contain ADT-s whose branches need to be handled differently, you may want to split by _type_ instead.
+
+**This feature is Scala 3 only.**
+
+**You NEED to understand regular observable splitting (both [`split`](#splitting-observables) and especially [`splitOne`](#splitone)) before you can make sense of splitting by type.**
+
+Suppose you have this data type, representing which page your app is supposed to render:
+
+```scala
+sealed trait Page
+object HomePage extends Page
+object LoginPage extends Page
+case class UserPage(userId: Int) extends Page
+```
+
+A URL routing library like [Waypoint](https://github.com/raquo/Waypoint) may provide you a `Signal[Page]` representing what the user wants rendered, and so you want to translate this `Signal[Page]` into `Signal[HtmlElement]`, so that [Laminar](https://github.com/raquo/laminar) can render it with `child <-- ...`.
+
+Here's how you should do it, and we'll explain why in a moment:
+
+```scala
+val pageSignal: Signal[Page] = router.currentPageSignal
+
+val elementSignal: Signal[HtmlElement] =
+  pageSignal
+    .splitMatchOne
+    .handleValue(HomePage) {
+      div(h1("Home page"))
+    }
+    .handleValue(LoginPage) {
+      div(h1("Login page"))
+    }
+    .handleType[UserPage] { (initialUserPage, userPageSignal) =>
+      div(
+        h1("User #", text <-- userPageSignal.map(_.id))
+      )
+    }
+    .toSignal // or .toStream, if pageSignal was a stream instead
+```
+
+What's going on here? `.splitMatchOne` opens a macro that lets you make subsequent `handle*` calls to define a series of type-specific handlers. Then, once all the handlers are defined, the macro is closed with `.toSignal`, and you can use regular Airstream operators from there on.
+
+At a high level, the macro uses the regular `splitOne` operator under the hood, with the handler, or rather, its index, as the key, and some type magic to provide your handler callbacks with type-specific values and signals (e.g. `userPageSignal` is `Signal[User]`, not `Signal[Page]`). Roughly speaking, after macro expansion, this is what you get:
+
+```scala
+val elementSignal: Signal[HtmlElement] =
+  pageSignal
+    .map {
+      // condition => (handlerIndex, handlerInput)
+      case HomePage => (0, ())
+      case LoginPage => (1, ())
+      case up: UserPage => (2, up)
+    }
+    .splitOne(key = _._1) {
+      (
+        handlerIndex: Int,
+        handlerIndexAndInput: (Int, Page | Unit),
+        signalOfIndexAndInput: Signal[(Int, Page | Unit)]
+      ) =>
+        if (handlerIndex == 0) {
+          // handleValue(HomePage)
+          div(h1("Home page"))
+        } else if (handlerIndex == 1) {
+          // handleValue(LoginPage)
+          div(h1("Login page"))
+        } else if (handlerIndex == 2) {
+          // handleType[UserPage] { ... }
+          val initialUserPage: UserPage = handlerIndexAndInput._2.asInstanceOf[UserPage]
+          val userPageSignal: Signal[UserPage] = signalOfIndexAndInput.map(_._2.asInstanceOf[UserPage]) 
+          div(
+            h1("User #", text <-- userPageSignal.map(_.id))
+          )
+        }
+    }
+
+child <-- elementSignal // in Laminar
+```
+
+If you understand how `splitOne` works, this should hopefully be self-explanatory, and the reason why `.asInstanceOf`-s are safe should be obvious. But let's do a quick recap:
+
+- The first time `pageSignal` emits `LoginPage`, that complicated `splitOne` callback will be called, and will return `div(h1("Login page"))`.
+- If `pageSignal` then emits `LoginPage` again (consecutively), that `splitOne` callback will not be fired, because the key (handlerIndex) has not changed, it's still `1`. Instead, `signalOfIndexAndInput` will emit `(1, ())`, but because the `handleValue` handler is intended for static pages, this event is ignored. We will continue rendering the same login page element that `elementSignal` emitted before.
+- Suppose `pageSignal` then emits `UserPage(100)`. This is a different handler (`handlerIndex == 2`), so the big `splitOne` callback will be called again for the new key, and will return `div(h1("User #", text <-- userPageSignal.map(_.id)))`.
+- Notice that in this case, we do listen for `signalOfIndexAndInput`, and the macro transforms it into `Signal[UserPage]` that our UserPage-specific handler needs. It uses `asInstanceof` to safely achieve this, using its knowledge that `handlerIndex == 2` is only true when `signalOfIndexAndInput` contains `(2, up: UserPage)`, and that `splitOne` will discard this signal as soon as `handlerIndex` changes.
+- If `pageSignal` subsequently emits `UserPage(200)`, the `splitOne` callback is _not_ called (because the `handlerIndex` has not changed), but `signalOfIndexAndInput` will emit `(2, UserPage(200))`, and so `userPageSignal` will emit `UserPage(200)`.
+- This lets Laminar update the user id efficiently using `text <-- `, without re-creating the entire `div` element. This efficiency is the whole reason why we're doing all these various types of splitting in the first place.
+
+**A few more notes on splitMatch macros:**
+- Because the macros compile all cases into a single pattern matching block, you get exhaustivity warnings, e.g. in our example, if you forgot to handle `LoginPage`, the compiler would give you a warning.
+- `handleValue` only works with singleton values (e.g. `object`-s), for which Scala can synthesize [ValueOf](https://scala-lang.org/api/3.x/scala/ValueOf.html).
+- For `splitMatchSeq`, you need to call `.toSignal` after all the handlers if the parent observable (`pageSignal`) is a Signal, and `.toStream`, if the parent observable is an `EventStream`.
+
+
+##### handleCase
+
+`handleValue` and `handleType` are both simple aliases for common use cases of `handleCase`:
+
+```scala
+// handleValue(LoginPage)(div(...))
+handleCase { case LoginPage => () } { (_, _) => div(...) }
+
+// handleType[UserPage] {
+//   (initialUserPage, userPageSignal) => div(...)
+// }
+handleCase { case up: UserPage => up } {
+  (initialUserPage, userPageSignal) => div(...)
+}
+```
+
+Using `handleCase` directly, you can specify arbitrary pattern matching, for example you could select `userId` right away:
+
+```scala
+handleCase { case UserPage(userId) => userId } {
+  (initialUserId, userIdSignal) => div(...)
+}
+```
+
+So, as you see, under the hood, "splitting by type" is just one use case of this very powerful operator, you can in fact split by any pattern, and narrow both types and values in whatever way makes sense.
+
+
+##### splitMatchSeq
+
+In addition to `splitMatchOne`, which is a pattern-match equivalent to `splitOne`, we also have `splitMatchSeq`, which is a similar equivalent to `split`, i.e. it works on observables of sequences, and lets you handle each item in the sequence differently based on its type:
+
+```scala
+trait Item { val id: String }
+case class Stock(ticker: String, currency: String, value: Double) {
+  override val id: String = ticker
+}
+case class FxRate(currency1: String, currency2: String, rate: Double) {
+  override val id: String = currency1 + "-" + currency2 
+}
+
+val itemsSignal: Signal[Seq[Item]] = ???
+val elementsSignal: Signal[Seq[HtmlElement]] =
+  modelsSignal
+    .splitMatchSeq(_.id)
+    .handleType[Stock] { (initialStock, stockSignal) =>
+      div(
+        initialStock.id + ": ",
+        text <-- stockSignal.map(_.value),
+        " " + initialStock.currency
+      )
+    }
+    .handleType[FxRate] { (initialRate, rateSignal) =>
+      div(initialRate.id, ": ", text <-- rateSignal.map(_.rate))
+    }
+    .toSignal
+
+children <-- elementsSignal // in Laminar
+```
+
+In this example, we will render each item in the collection differently based on whether it's a `Stock` or an `FxRate`. It's basically like having multiple type-specific callbacks to the `split` operator.
+
+Under the hood, the `key` used by `splitMatchSeq` is not just the `_.id` that the user provided explicitly, but a composite value of `(handlerIndex, item.id)` – so the mechanism is similar to `splitMatchOne`, but of course it's also specific to each item in the collection.
 
 
 
