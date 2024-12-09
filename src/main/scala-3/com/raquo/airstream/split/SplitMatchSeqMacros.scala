@@ -14,7 +14,7 @@ import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchType
 
 object SplitMatchSeqMacros {
 
-  private[airstream] inline def deglateHandleCase[Self[+_] <: Observable[_], I, K, O, CC[_], A, B, O1 >: O](
+  private[airstream] inline def delegateHandleCase[Self[+_] <: Observable[_], I, K, O, CC[_], A, B, O1 >: O](
     inline matchSplitObservable: SplitMatchSeqObservable[Self, I, K, O, CC],
     inline casePf: PartialFunction[A, B],
     inline handleFn: (B, Signal[B]) => O1
@@ -22,13 +22,13 @@ object SplitMatchSeqMacros {
     handleCaseImpl('{ matchSplitObservable }, '{ casePf }, '{ handleFn })
   }
 
-  private[airstream] inline def deglateHandleType[Self[+_] <: Observable[_], I, K, O, CC[_], T](
+  private[airstream] inline def delegateHandleType[Self[+_] <: Observable[_], I, K, O, CC[_], T](
     inline matchSplitObservable: SplitMatchSeqObservable[Self, I, K, O, CC]
   ) = ${
     handleTypeImpl[Self, I, K, O, CC, T]('{ matchSplitObservable })
   }
 
-  private[airstream] inline def deglateHandleValue[Self[+_] <: Observable[_], I, K, O, CC[_], V](
+  private[airstream] inline def delegateHandleValue[Self[+_] <: Observable[_], I, K, O, CC[_], V](
     inline matchSplitObservable: SplitMatchSeqObservable[Self, I, K, O, CC],
     inline v: V
   )(
@@ -37,21 +37,21 @@ object SplitMatchSeqMacros {
     handleValueImpl('{ matchSplitObservable }, '{ v })
   }
 
-  private[airstream] inline def deglateHandleTypeApply[Self[+_] <: Observable[_], I, K, O, CC[_], T, O1 >: O](
+  private[airstream] inline def delegateHandleTypeApply[Self[+_] <: Observable[_], I, K, O, CC[_], T, O1 >: O](
     inline matchTypeObserver: SplitMatchSeqTypeObservable[Self, I, K, O, CC, T],
     inline handleFn: (T, Signal[T]) => O1
   ) = ${
     handleTypeApplyImpl('{ matchTypeObserver }, '{ handleFn })
   }
 
-  private[airstream] inline def deglateHandleValueApply[Self[+_] <: Observable[_], I, K, O, CC[_], V, O1 >: O](
+  private[airstream] inline def delegateHandleValueApply[Self[+_] <: Observable[_], I, K, O, CC[_], V, O1 >: O](
     inline matchValueObservable: SplitMatchSeqValueObservable[Self, I, K, O, CC, V],
     inline handleFn: (V, Signal[V]) => O1
   ) = ${
     handleValueApplyImpl('{ matchValueObservable }, '{ handleFn })
   }
 
-  private[airstream] inline def deglateToSignal[Self[+_] <: Observable[_], I, K, O, CC[_]](
+  private[airstream] inline def delegateToSignal[Self[+_] <: Observable[_], I, K, O, CC[_]](
     inline matchSplitObservable: SplitMatchSeqObservable[Self, I, K, O, CC]
   ) = ${ observableImpl('{ matchSplitObservable }) }
 

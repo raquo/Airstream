@@ -9,7 +9,7 @@ import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchType
  * For example:
  *
  * ```scala
- * fooSignal.splitMatch
+ * fooSignal.splitMatchOne
  *   .splitType[Baz] { (baz, bazSignal) => renderBazNode(baz, bazSignal) }
  * ```
  *

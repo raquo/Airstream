@@ -19,7 +19,7 @@ object SplitMatchSeqValueObservable {
   )(
     handleList: HandlerAny[O]*
   )(
-    vHandler: MatchValueHandler[V]
+    valueHandler: MatchValueHandler[V]
   ): SplitMatchSeqValueObservable[Self, I, K, O, CC, V] = throw new UnsupportedOperationException("`splitMatchSeq` without `toSignal` is illegal")
 
 }

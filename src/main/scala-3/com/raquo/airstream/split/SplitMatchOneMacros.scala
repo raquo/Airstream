@@ -35,7 +35,7 @@ import scala.reflect.TypeTest
   * into this code:
   *
   * ```scala
-  * val splitter = fooSignal.
+  * val splitter = fooSignal
   *  .map { i =>
   *    i match {
   *      case Bar(Some(str)) => (0, str)
@@ -52,7 +52,7 @@ import scala.reflect.TypeTest
   */
 object SplitMatchOneMacros {
 
-  private[airstream] inline def deglateHandleCase[Self[+_] <: Observable[_], I, O, A, B, O1 >: O](
+  private[airstream] inline def delegateHandleCase[Self[+_] <: Observable[_], I, O, A, B, O1 >: O](
     inline matchSplitObservable: SplitMatchOneObservable[Self, I, O],
     inline casePf: PartialFunction[A, B],
     inline handleFn: (B, Signal[B]) => O1
@@ -60,13 +60,13 @@ object SplitMatchOneMacros {
     handleCaseImpl('{ matchSplitObservable }, '{ casePf }, '{ handleFn })
   }
 
-  private[airstream] inline def deglateHandleType[Self[+_] <: Observable[_], I, O, T](
+  private[airstream] inline def delegateHandleType[Self[+_] <: Observable[_], I, O, T](
     inline matchSplitObservable: SplitMatchOneObservable[Self, I, O]
   ) = ${
     handleTypeImpl[Self, I, O, T]('{ matchSplitObservable })
   }
 
-  private[airstream] inline def deglateHandleValue[Self[+_] <: Observable[_], I, O, V](
+  private[airstream] inline def delegateHandleValue[Self[+_] <: Observable[_], I, O, V](
     inline matchSplitObservable: SplitMatchOneObservable[Self, I, O],
     inline v: V
   )(
@@ -75,27 +75,27 @@ object SplitMatchOneMacros {
     handleValueImpl[Self, I, O, V]('{ matchSplitObservable }, '{ v })
   }
 
-  private[airstream] inline def deglateHandleTypeApply[Self[+_] <: Observable[_], I, O, T, O1 >: O](
+  private[airstream] inline def delegateHandleTypeApply[Self[+_] <: Observable[_], I, O, T, O1 >: O](
     inline matchTypeObserver: SplitMatchOneTypeObservable[Self, I, O, T],
     inline handleFn: (T, Signal[T]) => O1
   ) = ${
     handleTypeApplyImpl('{ matchTypeObserver }, '{ handleFn })
   }
 
-  private[airstream] inline def deglateHandleValueApply[Self[+_] <: Observable[_], I, O, V, O1 >: O](
+  private[airstream] inline def delegateHandleValueApply[Self[+_] <: Observable[_], I, O, V, O1 >: O](
     inline matchValueObservable: SplitMatchOneValueObservable[Self, I, O, V],
     inline handleFn: (V, Signal[V]) => O1
   ) = ${
     handleValueApplyImpl('{ matchValueObservable }, '{ handleFn })
   }
 
-  private[airstream] inline def deglateToSignal[I, O](
+  private[airstream] inline def delegateToSignal[I, O](
     inline matchSplitObservable: SplitMatchOneObservable[Signal, I, O]
   ) = ${
     observableImpl('{ matchSplitObservable })
   }
 
-  private[airstream] inline def deglateToStream[I, O](
+  private[airstream] inline def delegateToStream[I, O](
     inline matchSplitObservable: SplitMatchOneObservable[EventStream, I, O]
   ) = ${
     observableImpl('{ matchSplitObservable })

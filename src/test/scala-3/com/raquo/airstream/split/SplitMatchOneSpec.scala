@@ -184,7 +184,7 @@ class SplitMatchOneSpec extends UnitSpec {
         effects += Effect("init-child", s"Tar-${10}")
         Res("Tar")
       }
-      .toSignal
+      .toSignal // !!! Yes, this is expected to warn about non-exhaustive match in tests: "It would fail on pattern case: Bar(None), Baz2"
 
     signal.foreach { result =>
       effects += Effect("result", result.toString)

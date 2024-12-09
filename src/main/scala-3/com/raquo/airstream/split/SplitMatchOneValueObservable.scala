@@ -9,10 +9,10 @@ import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchValu
  * For example:
  *
  * ```scala
- * fooSignal.splitMatch
+ * fooSignal.splitMatchOne
  *   .splitValue(Tar)(tarSignal => renderTarNode(tarSignal))
  * ```
- * 
+ *
  * will be expanded sematically into:
  *
  * ```scala
@@ -38,7 +38,7 @@ object SplitMatchOneValueObservable {
   )(
     handleList: HandlerAny[O]*
   )(
-    vHandler: MatchValueHandler[V]
+    valueHandler: MatchValueHandler[V]
   ): SplitMatchOneValueObservable[Self, I, O, V] =
     throw new UnsupportedOperationException(
       "`splitMatchOne` without `toSignal`/`toStream` is illegal"
