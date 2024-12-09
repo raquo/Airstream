@@ -4,7 +4,6 @@ import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.state.Var
-import com.raquo.airstream.split.SplitMatchOneMacros.*
 
 import scala.collection.{immutable, mutable}
 import scala.scalajs.js
