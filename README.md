@@ -80,7 +80,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Sync Delay](#sync-delay)
     * [Splitting Observables](#splitting-observables)
     * [Splitting Vars](#splitting-vars)
-    * [Splitting By Type](#splitting-by-type)
+    * [Splitting With Pattern Match](#splitting-with-pattern-match)
     * [Async Status Operators](#async-status-operators)
     * [Specialized Type Operators](#specialized-type-operators) for Option-s, Either-s, Try-s, etc.
     * [Flattening Observables](#flattening-observables)
@@ -94,7 +94,7 @@ I created Airstream because I found existing solutions were not suitable for bui
     * [Restarting Streams](#restarting-streams)
     * [Restarting Streams That Depend on Signals (signal.changes)](#restarting-streams-that-depend-on-signals-signalchanges)
     * [Restarting Signals That Depend on Streams](#restarting-signals-that-depend-on-streams)
-    * [Stopping is Actually Pausing](#stopping-is-actually-pausing)
+    * [Stopping Is Actually Pausing](#stopping-is-actually-pausing)
     * [Signals That Keep Updating When Stopped](#signals-that-keep-updating-when-stopped)
   * [Debugging](#debugging)
   * [Error Handling](#error-handling)
@@ -112,12 +112,8 @@ I created Airstream because I found existing solutions were not suitable for bui
 
 ## Contributing
 
-Please run `sbt +test` and `sbt scalafmtAll` locally before submitting the PR.
+Please see [CONTRIBUTING.md](https://github.com/raquo/Airstream/blob/master/CONTRIBUTING.md)
 
-Note that existing tests print this compiler warning in Scala 3:
-- [E029] Pattern Match Exhaustivity Warning: /Users/raquo/code/scala/airstream/src/test/scala-3/com/raquo/airstream/split/SplitMatchOneSpec.scala
-
-This is expected. Ideally I would assert that this warning exists instead of printing it, but I don't think that's possible. I don't want to hide such warnings wholesale, but suggestions for improvement are welcome.
 
 ## Documentation
 
@@ -1656,7 +1652,9 @@ div(
 )
 ```
 
-These individual child Var-s provided by `split` work similarly to lazy derived vars created with the Var's `zoomLazy` method. Their state is always derived from the state of the splittable parent var (`usersVar` in this case). The `zoomIn` function selects the item by the split key (`_.id` in this case), and the `zoomOut` function updates the item in the parent var, finding it by matching the split key (`_.id == userId`). 
+These individual child Var-s provided by `split` work similarly to lazy derived vars created with the Var's `zoomLazy` method. Their state is always derived from the state of the splittable parent var (`usersVar` in this case). The `zoomIn` function selects the item by the split key (`_.id` in this case), and the `zoomOut` function updates the item in the parent var, finding it by matching the split key (`_.id == userId`).
+
+In addition to the standard `split` method, Vars also offer Var-specific variations of `splitByIndex` and `splitOption`. Eventually they should offer all the same `split*` operators that observables do. 
 
 
 ##### Splitting Vars with in-place mutations
@@ -1665,9 +1663,9 @@ Vars that contain mutable collections such as `mutable.Buffer` or `js.Array` als
 
 
 
-#### Splitting By Type
+#### Splitting With Pattern Match
 
-Regular splitting of observables works with _value_ keys (e.g. `_.id`), but when our observables contain ADT-s whose branches need to be handled differently, you may want to split by _type_ instead.
+Regular splitting of observables works with _value_ keys (e.g. `_.id`), but when our observables contain ADT-s whose branches need to be handled differently, you may want to split by _type_ or by an _arbitrary pattern match case_ instead.
 
 **This feature is Scala 3 only.**
 
@@ -1782,8 +1780,6 @@ handleCase { case UserPage(userId) => userId } {
   (initialUserId, userIdSignal) => div(...)
 }
 ```
-
-So, as you see, under the hood, "splitting by type" is just one use case of this very powerful operator, you can in fact split by any pattern, and narrow both types and values in whatever way makes sense.
 
 
 ##### splitMatchSeq

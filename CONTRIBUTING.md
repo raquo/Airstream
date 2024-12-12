@@ -10,9 +10,19 @@ When making PRs, please allow Airstream maintainers to make changes to your bran
 
 ## Code style
 
-Please try to match the existing code style, including naming conventions and formatting. I might fix up such things to my liking before merging.
+Please run `sbt scalafmtAll` before submitting the PR.
 
-We don't have scalafmt set up at the moment. It's just not flexible enough to support my preferred style.
+This only sets the ground rules, so please try to maintain the general style of the codebase.
+
+
+## Tests
+
+Please run `sbt +test` locally before submitting the PR.
+
+Note that existing tests print this compiler warning in Scala 3:
+- [E029] Pattern Match Exhaustivity Warning: .../src/test/scala-3/com/raquo/airstream/split/SplitMatchOneSpec.scala
+
+This is expected. Ideally I would assert that this warning exists instead of printing it, but I don't think that's possible. I don't want to hide such warnings wholesale, but suggestions for improvement are welcome.
 
 
 ## N-Generators
