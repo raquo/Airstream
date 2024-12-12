@@ -253,6 +253,8 @@ Note: `withCurrentValueOf` and `sample` operators are also available on signals,
 
 If you want to get a Signal's current value without the complications of sampling, or even if you just want to make sure that a Signal is started, just call `observe` on it. That will add a noop observer to the signal, and return an `OwnedSignal` instance which being a `StrictSignal`, does expose `now()` and `tryNow()` methods that safely provide you with its current value. However, you will need to provide an `Owner` to do that. More on those later.
 
+If you already have a `StrictSignal`, you can map over it with `mapLazy` to get another `StrictSignal` (#TODO: Move this doc elsewhere).
+
 
 ### Relationship between EventStream and Signal
 
@@ -702,6 +704,8 @@ strVar.set("c")
 As the name implies, `LazyDerivedVar` is evaluated lazily, unlike other Vars. That is, the `zoomIn` function you provide (`A => B`) will not be called until and unless you actually read the value from this Var (whether by calling `.now()` or subscribing to its signal). Generally it's not a problem as `zoomIn` is usually just a pure field selection function (e.g. it's just `_.str` in the example above).
 
 Before the introduction of `zoomLazy`, Airstream also offered a strict `zoom` method, which is now considered inferior, because it requires an `Owner`. Note that derived vars created with the old `zoom` method could only be updated if their owner remained active, or if they had any other subscribers. Otherwise, attempting to update the var would cause Airstream to emit an unhandled error. The old `zoom` method will be deprecated in 18.0.0.
+
+The Signal-only companion to `zoomLazy` is `mapLazy`, available on any `StrictSignal`.
 
 // TODO[18.0.0] - Reorganize this section, split out for every operator.
 

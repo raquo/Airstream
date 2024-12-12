@@ -11,6 +11,21 @@ import scala.util.Try
   */
 trait StrictSignal[+A] extends Signal[A] {
 
+  /** Map StrictSignal to get another StrictSignal, without requiring an Owner.
+    *
+    * The mechanism is similar to Var.zoomLazy.
+    *
+    * Just as `zoomLazy`, this method will be renamed in the next major Airstream release.
+    */
+  def mapLazy[B](project: A => B): StrictSignal[B] = {
+    new LazyStrictSignal(
+      parentSignal = this,
+      zoomIn = project,
+      parentDisplayName = displayName,
+      displayNameSuffix = ".mapLazy"
+    )
+  }
+
   /** Get the signal's current value
     *
     * @throws Throwable the error from the current value's Failure
