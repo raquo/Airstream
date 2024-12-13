@@ -8,7 +8,7 @@ enablePlugins(ScalaJSPlugin)
 
 enablePlugins(ScalaJSBundlerPlugin)
 
-lazy val preload = taskKey[Unit]("runs Laminar-specific pre-load tasks")
+lazy val preload = taskKey[Unit]("runs Airstream-specific pre-load tasks")
 
 preload := {
   val projectDir = (ThisBuild / baseDirectory).value
@@ -27,6 +27,9 @@ preload := {
 Global / onLoad := {
   (Global / onLoad).value andThen { state => preload.key.label :: state }
 }
+
+mimaPreviousArtifacts := Set("com.raquo" %%% "airstream" % "17.1.0")
+
 
 libraryDependencies ++= Seq(
   "org.scala-js" %%% "scalajs-dom" % Versions.ScalaJsDom,
