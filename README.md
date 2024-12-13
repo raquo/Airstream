@@ -117,7 +117,7 @@ Please see [CONTRIBUTING.md](https://github.com/raquo/Airstream/blob/master/CONT
 
 ## Documentation
 
-[API doc](https://javadoc.io/doc/com.raquo/airstream_sjs1_3/latest/com/raquo/airstream/index.html)
+[API doc](https://javadoc.io/doc/com.raquo/airstream_sjs1_2.13/latest/com/raquo/airstream/index.html)
 
 This documentation explains not only the functionality that _Airstream_ offers, but also how it works, and the design tradeoffs involved. Nevertheless, if you need a primer on reactive programming using streams, consider [this guide](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754) by André Staltz or its [video adaptation](https://egghead.io/courses/introduction-to-reactive-programming).
 
