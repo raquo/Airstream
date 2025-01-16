@@ -27,14 +27,14 @@ import scala.util.{Success, Try}
   * and SessionStorage) in browser settings. In those cases, the
   * Var will still work as a normal Airstream Var, but its value
   * will not be persisted in the browser.
-  * - To detect this condition, see helpers on the companion object.
+  *  - To detect this condition, see helpers on the companion object.
   *
   * See https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage
   * See https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage
   *
   * For constructor params doc, see scaladoc for:
-  * - [[WebStorageVar.localStorage]]
-  * - [[WebStorageVar.sessionStorage]]
+  *  - [[WebStorageVar.localStorage]]
+  *  - [[WebStorageVar.sessionStorage]]
   */
 class WebStorageVar[A] private[web] (
   private[web] val maybeStorage: () => Option[dom.Storage],
@@ -224,8 +224,8 @@ object WebStorageVar {
 
   /** Users may disable site data (incl. LocalStorage) in browser settings.
     * This checks whether you can actually write to LocalStorage.
-    * - Note: If this returns false, Airstream's local storage Var would keep
-    *   working as a regular Var, but without persistence to localStorage.
+    *  - Note: If this returns false, Airstream's local storage Var would keep
+    *    working as a regular Var, but without persistence to localStorage.
     *
     * See [[localStorageError]]
     */
@@ -233,15 +233,15 @@ object WebStorageVar {
 
   /** Users may disable site data (incl. SessionStorage) in browser settings.
     * This checks whether you can actually write to SessionStorage.
-    * - Note: If this returns false, Airstream's session storage Var would keep
-    *   working as a regular Var, but without persistence to sessionStorage.
+    *  - Note: If this returns false, Airstream's session storage Var would keep
+    *    working as a regular Var, but without persistence to sessionStorage.
     *
     * See [[sessionStorageError]]
     */
   def isSessionStorageAvailable(): Boolean = sessionStorageError().isEmpty
 
   /** If this method returns an error, you won't be able to save data to LocalStorage.
-    * - Note: the Airstream LocalStorage Var will continue working as an ephemeral Var.
+    *  - Note: the Airstream LocalStorage Var will continue working as an ephemeral Var.
     *
     * See [[isLocalStorageAvailable]]
     */
@@ -250,7 +250,7 @@ object WebStorageVar {
   }
 
   /** If this method returns an error, you won't be able to save data to SessionStorage,
-    * - Note: the Airstream SessionStorage Var will continue working as an ephemeral Var.
+    *  - Note: the Airstream SessionStorage Var will continue working as an ephemeral Var.
     *
     * See [[isSessionStorageAvailable]]
     */

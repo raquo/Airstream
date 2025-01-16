@@ -5,14 +5,14 @@ import com.raquo.ew.JsArray
 import scala.annotation.unused
 
 /** Owner decides when to kill its subscriptions.
-  * - Ownership is defined at creation of the [[Subscription]]
-  * - Ownership is non-transferable
-  * - There is no way to unkill a Subscription
-  * - In other words: Owner can only own a Subscription once,
-  *   and a Subscription can only ever be owned by its initial owner
-  * - Owner can still be used after calling killPossessions, but the canonical
-  *   use case is for the Owner to kill its possessions when the owner itself
-  *   is discarded (e.g. a UI component is unmounted).
+  *  - Ownership is defined at creation of the [[Subscription]]
+  *  - Ownership is non-transferable
+  *  - There is no way to unkill a Subscription
+  *  - In other words: Owner can only own a Subscription once,
+  *    and a Subscription can only ever be owned by its initial owner
+  *  - Owner can still be used after calling killPossessions, but the canonical
+  *    use case is for the Owner to kill its possessions when the owner itself
+  *    is discarded (e.g. a UI component is unmounted).
   *
   * If you need something more flexible, use [[DynamicOwner]],
   * or build your own custom logic on top of this in a similar manner.

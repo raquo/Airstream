@@ -11,9 +11,9 @@ import scala.util.Try
   * This stream emits an error if the parent observable emits an error or if `project` throws
   *
   * If `recover` is defined and needs to be called, it can do the following:
-  * - Return Some(value) to make this stream emit value
-  * - Return None to make this stream ignore (swallow) this error
-  * - Not handle the error (meaning .isDefinedAt(error) must be false) to emit the original error
+  *  - Return Some(value) to make this stream emit value
+  *  - Return None to make this stream ignore (swallow) this error
+  *  - Not handle the error (meaning .isDefinedAt(error) must be false) to emit the original error
   *
   * If `recover` throws an exception, it will be wrapped in `ErrorHandlingError` and propagated.
   *

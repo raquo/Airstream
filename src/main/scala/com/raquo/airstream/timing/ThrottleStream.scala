@@ -8,13 +8,13 @@ import scala.scalajs.js.timers.SetTimeoutHandle
 import scala.util.Try
 
 /** [[ThrottleStream]] emits at most one event per `intervalMs`.
-  * - All events are emitted in a new transaction, after an async delay, even if the delay is zero ms
-  * - Any incoming event is scheduled to be emitted as soon as possible, but no sooner than `intervalMs`
-  *   after the last event that was actually emitted by the throttled stream
-  * - When an event is scheduled to be emitted, any event that was previously scheduled is cancelled
-  *   (that's the nature of throttling, you only get at most one event within `intervalMs`)
-  * - Errors are propagated in the same manner
-  * - Stopping the stream cancels scheduled events and makes it forget everything that happened before.
+  *  - All events are emitted in a new transaction, after an async delay, even if the delay is zero ms
+  *  - Any incoming event is scheduled to be emitted as soon as possible, but no sooner than `intervalMs`
+  *    after the last event that was actually emitted by the throttled stream
+  *  - When an event is scheduled to be emitted, any event that was previously scheduled is cancelled
+  *    (that's the nature of throttling, you only get at most one event within `intervalMs`)
+  *  - Errors are propagated in the same manner
+  *  - Stopping the stream cancels scheduled events and makes it forget everything that happened before.
   *
   * See also See also [[DebounceStream]]
   */

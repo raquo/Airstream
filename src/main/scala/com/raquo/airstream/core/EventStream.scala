@@ -391,8 +391,8 @@ object EventStream {
   }
 
   /** Create a stream from a [[java.util.concurrent.Flow.Publisher]]
-    * - Use this to bring in events from other streaming libraries
-    * that can provide a `Flow.Publisher`, such as FS2 an Monix.
+    *  - Use this to bring in events from other streaming libraries
+    *    that can provide a `Flow.Publisher`, such as FS2 an Monix.
     */
   def fromPublisher[A](publisher: Flow.Publisher[A], emitOnce: Boolean = false): EventStream[A] = {
     FlowPublisherStream(publisher, emitOnce)

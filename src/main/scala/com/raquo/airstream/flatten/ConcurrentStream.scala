@@ -7,11 +7,11 @@ import com.raquo.ew.JsArray
 import scala.util.{Failure, Success}
 
 /** This is essentially a dynamic version of `EventStream.merge`.
-  * - The resulting stream re-emits all the events emitted by all of the streams
-  *   previously emitted by the input observable.
-  * - If you restart the resulting stream, it will remember and resubscribe to all of the
-  *   streams it previously listened to.
-  * - If the input observable emits the same stream more than once, that stream will only be added once.
+  *  - The resulting stream re-emits all the events emitted by all of the streams
+  *    previously emitted by the input observable.
+  *  - If you restart the resulting stream, it will remember and resubscribe to all of the
+  *    streams it previously listened to.
+  *  - If the input observable emits the same stream more than once, that stream will only be added once.
   */
 class ConcurrentStream[A](
   parent: Observable[EventStream[A]]

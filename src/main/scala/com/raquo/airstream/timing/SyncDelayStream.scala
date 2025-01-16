@@ -8,8 +8,8 @@ import scala.util.Try
 
 /** Note: This is generally supposed to be used only with streams as inputs.
   * Make sure you know what you're doing if using signals.
-  * - if `parent` is a Signal, this stream mirrors `parent.changes`, not `parent`.
-  * - if `after` is a Signal, this stream ignores its initial value
+  *  - if `parent` is a Signal, this stream mirrors `parent.changes`, not `parent`.
+  *  - if `after` is a Signal, this stream ignores its initial value
   */
 class SyncDelayStream[A](
   override protected[this] val parent: Observable[A],

@@ -20,8 +20,8 @@ trait SingleParentSignal[I, O] extends WritableSignal[O] with InternalTryObserve
   protected[this] var _parentLastUpdateId: Int = -1
 
   /** Note: this is overriden in:
-    * - [[com.raquo.airstream.misc.SignalFromStream]] because parent can be stream, and it has cacheInitialValue logic
-    * - [[com.raquo.airstream.split.SplitChildSignal]] because its parent is a special timing stream, not the real parent
+    *  - [[com.raquo.airstream.misc.SignalFromStream]] because parent can be stream, and it has cacheInitialValue logic
+    *  - [[com.raquo.airstream.split.SplitChildSignal]] because its parent is a special timing stream, not the real parent
     */
   override protected def onWillStart(): Unit = {
     // dom.console.log(s"${this} > onWillStart (SPS)")

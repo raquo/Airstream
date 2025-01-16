@@ -10,8 +10,8 @@ import scala.util.Try
 /** Base functionality for a custom observable based on start and stop callbacks.
   *
   * See:
-  * - [[com.raquo.airstream.custom.CustomStreamSource]]
-  * - [[com.raquo.airstream.custom.CustomSignalSource]]
+  *  - [[com.raquo.airstream.custom.CustomStreamSource]]
+  *  - [[com.raquo.airstream.custom.CustomSignalSource]]
   */
 trait CustomSource[A] extends WritableObservable[A] {
 
@@ -52,10 +52,10 @@ object CustomSource {
   ) { self =>
 
     /** Create a version of a config that only runs start / stop if the predicate passes.
-      * - `start` will be run when the CustomSource is about to start
-      *   if `passes` returns true at that time
-      * - `stop` will be run when the CustomSource is about to stop
-      *   if your `start` code ran the last time CustomSource started
+      *  - `start` will be run when the CustomSource is about to start
+      *    if `passes` returns true at that time
+      *  - `stop` will be run when the CustomSource is about to stop
+      *    if your `start` code ran the last time CustomSource started
       */
     def when(passes: () => Boolean): Config = {
       var passed = false

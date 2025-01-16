@@ -12,12 +12,12 @@ import scala.scalajs.js
 /** Transaction is a moment in time during which Airstream guarantees no FRP glitches.
   *
   * Some observables need to emit their events in new transactions. Roughly speaking:
-  * - All async observables (e.g. delay(100))
-  * - All observables that can create loops in the observable graph (e.g. flatMapSwitch)
-  * - All observables that get their events from outside of Airstream (e.g. custom sources)
+  *  - All async observables (e.g. delay(100))
+  *  - All observables that can create loops in the observable graph (e.g. flatMapSwitch)
+  *  - All observables that get their events from outside of Airstream (e.g. custom sources)
   *
   * An observable can only emit once in a given transaction.
-  * - See [[MergeStream]] or [[CustomSource]] for examples of handling that.
+  *  - See [[MergeStream]] or [[CustomSource]] for examples of handling that.
   *
   * See the docs for more details.
   *
@@ -110,10 +110,10 @@ object Transaction {
     *
     * It is very hard to deliberately write valid code that would hit this
     * limit. If you are hitting this limit, most likely:
-    * - There is an (unterminated) infinite loop in your observable graph,
-    *   e.g. two Var-s updating each other recursively, or
-    * - You are doing something that looks a lot like that for the first
-    *   `maxDepth` transactions.
+    *  - There is an (unterminated) infinite loop in your observable graph,
+    *    e.g. two Var-s updating each other recursively, or
+    *  - You are doing something that looks a lot like that for the first
+    *    `maxDepth` transactions.
     *
     * You probably need to adjust your code instead of raising this limit,
     * but if you have a valid need for raising it, please let me know.

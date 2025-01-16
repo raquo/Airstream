@@ -10,7 +10,7 @@ import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchType
  *
  * ```scala
  * fooSignal.splitMatchOne
- *   .splitType[Baz] { (baz, bazSignal) => renderBazNode(baz, bazSignal) }
+ *   .handleType[Baz] { (baz, bazSignal) => renderBazNode(baz, bazSignal) }
  * ```
  *
  * will be expanded sematically into:

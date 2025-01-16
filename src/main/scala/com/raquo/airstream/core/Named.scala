@@ -24,10 +24,10 @@ trait Named {
   final def displayName: String = maybeDisplayName.getOrElse(defaultDisplayName)
 
   /** Set the display name for this instance (observable or observer).
-    * - This method modifies the instance and returns `this`. It does not create a new instance.
-    * - New name you set will override the previous name, if any.
-    *   This might change in the future. For the sake of sanity, don't call this more than once for the same instance.
-    * - If display name is set, toString will output it instead of the standard type@hashcode string
+    *  - This method modifies the instance and returns `this`. It does not create a new instance.
+    *  - New name you set will override the previous name, if any.
+    *    This might change in the future. For the sake of sanity, don't call this more than once for the same instance.
+    *  - If display name is set, toString will output it instead of the standard type@hashcode string
     */
   def setDisplayName(name: String): this.type = {
     maybeDisplayName = name // @TODO[Warn] Maybe we should emit a warning if name was already set

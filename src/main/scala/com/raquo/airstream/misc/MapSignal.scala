@@ -11,9 +11,9 @@ import scala.util.{Failure, Success, Try}
 /** This signal emits an error if the parent observable emits an error or if `project` throws
   *
   * If `recover` is defined and needs to be called, it can do the following:
-  * - Return Some(value) to make this signal emit value
-  * - Return None to make this signal ignore (swallow) this error
-  * - Not handle the error (meaning .isDefinedAt(error) must be false) to emit the original error
+  *  - Return Some(value) to make this signal emit value
+  *  - Return None to make this signal ignore (swallow) this error
+  *  - Not handle the error (meaning .isDefinedAt(error) must be false) to emit the original error
   *
   * @param project Note: guarded against exceptions
   * @param recover Note: guarded against exceptions

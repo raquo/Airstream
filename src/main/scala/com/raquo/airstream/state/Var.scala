@@ -316,9 +316,9 @@ object Var {
     * Example usage: Var.update(var1 -> value1 => value1 + 1, var2 -> value2 => value2 * 2)
     *
     * Mod functions should be PURE.
-    * - If a mod throws, the var will be set to a failed state.
-    * - If you try to update a failed Var, `Var.update` will post an error to unhandled errors,
-    * and none of the Vars will update.
+    *  - If a mod throws, the var will be set to a failed state.
+    *  - If you try to update a failed Var, `Var.update` will post an error to unhandled errors,
+    *    and none of the Vars will update.
     *
     * Reports an Airstream unhandled error:
     * 1) if currentValue of any of the vars is a Failure.

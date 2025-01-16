@@ -239,13 +239,13 @@ object Signal {
 
   // TODO[API] do we need this?
   /** A stream from js.Promise that kind-of sort-of behaves like a signal:
-    * - It only every emits once, when the promise resolves.
-    * - If you miss that event because this stream got stopped before the
-    *   promise resolved, you will receive that event when you start this
-    *   stream again
-    * - However, if this stream was not stopped, new subscribers will not
-    *   receive the event. If you need such behaviour, use a proper signal
-    *   instead.
+    *  - It only every emits once, when the promise resolves.
+    *  - If you miss that event because this stream got stopped before the
+    *    promise resolved, you will receive that event when you start this
+    *    stream again
+    *  - However, if this stream was not stopped, new subscribers will not
+    *    receive the event. If you need such behaviour, use a proper signal
+    *    instead.
     */
   // def fromJsPromiseToStream[A](promise: js.Promise[A]): EventStream[A] = {
   //   new JsPromiseSignal(promise).changes.map(_.get)
