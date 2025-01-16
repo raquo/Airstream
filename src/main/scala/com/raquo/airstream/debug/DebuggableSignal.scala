@@ -8,7 +8,9 @@ import scala.util.{Failure, Success, Try}
 
 /** This implicit class provides Signal-specific debug* methods, e.g.:
   *
-  *     signal.debugLogInitialEval().debugLog()
+  * {{{
+  * signal.debugLogInitialEval().debugLog()
+  * }}}
   *
   * See [[DebuggableObservable]] and the docs for details.
   *

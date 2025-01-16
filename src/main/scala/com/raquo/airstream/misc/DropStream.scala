@@ -9,7 +9,7 @@ import com.raquo.airstream.core.{EventStream, Protected, Transaction}
   *
   * Note: only events are dropped, not errors.
   *
-  * @param dropWhile     nextEvent => shouldDrop
+  * @param dropWhile     `nextEvent => shouldDrop`
   *                      Function which determines whether this stream should drop the given event.
   *                      Warning: MUST NOT THROW!
   *

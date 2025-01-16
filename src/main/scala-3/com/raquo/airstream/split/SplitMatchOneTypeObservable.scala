@@ -5,26 +5,26 @@ import scala.annotation.compileTimeOnly
 import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchTypeHandler}
 
 /** `MatchTypeObservable` served as macro's data holder for macro expansion.
- *
- * For example:
- *
- * ```scala
- * fooSignal.splitMatchOne
- *   .handleType[Baz] { (baz, bazSignal) => renderBazNode(baz, bazSignal) }
- * ```
- *
- * will be expanded sematically into:
- *
- * ```scala
- * MatchTypeObservable.build[*, *, *, Baz](fooSignal)()(???)({ case t: Baz => t })
- * ```
- *
- * and then into:
- *
- * ```scala
- * MatchSplitObservable.build(fooSignal)({ case baz: Baz => baz })(???)
- * ```
- */
+  *
+  * For example:
+  *
+  * {{{
+  * fooSignal.splitMatchOne
+  *   .handleType[Baz] { (baz, bazSignal) => renderBazNode(baz, bazSignal) }
+  * }}}
+  *
+  * will be expanded sematically into:
+  *
+  * {{{
+  * MatchTypeObservable.build[*, *, *, Baz](fooSignal)()(???)({ case t: Baz => t })
+  * }}}
+  *
+  * and then into:
+  *
+  * {{{
+  * MatchSplitObservable.build(fooSignal)({ case baz: Baz => baz })(???)
+  * }}}
+  */
 
 final case class SplitMatchOneTypeObservable[Self[+_] <: Observable[_], I, O, T] private (private val underlying: Unit) extends AnyVal
 

@@ -7,7 +7,7 @@ import scala.util.{Failure, Success, Try}
 
 // #TODO[API] Since this has an initial value, should this be a signal perhaps?
 
-/** @param next (currentState => (nextState, nextIntervalMs)
+/** @param next `(currentState => (nextState, nextIntervalMs)`
   *             Note: guarded against exceptions.
   *             If `next` throws, stream will emit that error
   */

@@ -8,9 +8,9 @@ import scala.quoted.Varargs
 import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchTypeHandler, MatchValueHandler, innerObservableImpl}
 import scala.reflect.TypeTest
 
-/** `SplitMatchOneMacros` turns this code
+/** `SplitMatchOneMacros` turns this code:
   *
-  * ```scala
+  * {{{
   * sealed trait Foo
   * final case class Bar(strOpt: Option[String]) extends Foo
   * enum Baz extends Foo {
@@ -30,11 +30,11 @@ import scala.reflect.TypeTest
   *     case _: Int => ()
   *   } { (_, _) => div("Taz") }
   *   .toSignal
-  * ```
+  * }}}
   *
   * into this code:
   *
-  * ```scala
+  * {{{
   * val splitter = fooSignal
   *  .map { i =>
   *    i match {
@@ -45,7 +45,7 @@ import scala.reflect.TypeTest
   *    }
   *  }
   *  .splitOne(_._1) { ??? }
-  * ```
+  * }}}
   *
   * After macros expansion, compiler will warns above code "match may not be
   * exhaustive" and "unreachable case" as expected.

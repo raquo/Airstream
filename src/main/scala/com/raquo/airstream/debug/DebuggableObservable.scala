@@ -9,7 +9,9 @@ import scala.util.{Failure, Success, Try}
 
 /** This implicit class provides debug* methods for observables, e.g.:
   *
-  *     stream.debugWithName("MyStream").debugSpyStarts().debugLogEvents()
+  * {{{
+  * stream.debugWithName("MyStream").debugSpyStarts().debugLogEvents()
+  * }}}
   *
   * The result of the chain is an observable that you should use in place
   * of the original observable (`stream` in this case).
