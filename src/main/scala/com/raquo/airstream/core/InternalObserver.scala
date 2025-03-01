@@ -16,6 +16,15 @@ trait InternalObserver[-A] {
 
 object InternalObserver {
 
+  val empty: InternalObserver[Any] = new InternalObserver[Any] {
+
+    override protected def onNext(nextValue: Any, transaction: Transaction): Unit = ()
+
+    override protected def onError(nextError: Throwable, transaction: Transaction): Unit = ()
+
+    override protected def onTry(nextValue: Try[Any], transaction: Transaction): Unit = ()
+  }
+
   def apply[A](
     onNext: (A, Transaction) => Unit,
     onError: (Throwable, Transaction) => Unit

@@ -94,7 +94,16 @@ class SwitchSignal[A](
 
     } else {
 
-      currentSignalTry.foreach(_.removeInternalObserver(internalEventObserver))
+      val prevSignalTry = currentSignalTry
+
+      // Make-before-break semantics:
+      // Before removing current observer from previous signal, we add an empty observer
+      // to keep the previous signal running until we have started the next signal.
+      // This is needed because if next and previous signals share a common ancestor signal,
+      // we don't want that common ancestor signal to be briefly stopped during the switching.
+      // Example bug (partially) caused by the previous behaviour: https://github.com/raquo/Airstream/issues/140
+      prevSignalTry.foreach(_.addInternalObserver(InternalObserver.empty, shouldCallMaybeWillStart = false))
+      prevSignalTry.foreach(_.removeInternalObserver(internalEventObserver))
       maybeCurrentSignalTry = nextSignalTry
 
       // This will be updated shortly in the transaction below
@@ -128,6 +137,9 @@ class SwitchSignal[A](
           innerSignalLastSeenUpdateId = nextSignalTry.map(Protected.lastUpdateId).getOrElse(0)
 
           nextSignalTry.foreach(_.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false))
+
+          // Remove temporary observer that we added above
+          prevSignalTry.foreach(_.removeInternalObserver(InternalObserver.empty))
         }
       }
     }

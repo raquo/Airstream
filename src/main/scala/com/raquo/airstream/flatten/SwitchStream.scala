@@ -100,13 +100,29 @@ class SwitchStream[I, O](
     val isSameStream = maybeCurrentEventStreamTry.exists { currentStream =>
       currentStream.isSuccess && (currentStream.get eq nextStream)
     }
+    val maybePrevEventStreamTry = maybeCurrentEventStreamTry
     if (!isSameStream) {
+      maybePrevEventStreamTry.foreach(_.foreach { prevStream =>
+        // Make-before-break semantics:
+        // Before removing current observer from previous stream, we add an empty observer
+        // to keep the previous stream running until we have started the next stream.
+        // This is needed because if next and previous streams share a common ancestor observable,
+        // we don't want that common ancestor observable to be briefly stopped during the switching.
+        // (This mechanism was motivated by a similar change in SwitchSignal).
+        prevStream.addInternalObserver(InternalObserver.empty, shouldCallMaybeWillStart = false)
+      })
       removeInternalObserverFromCurrentEventStream()
       maybeCurrentEventStreamTry = Success(nextStream)
     }
 
     if (!isSameStream || isStarting) {
       nextStream.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = !isStarting)
+      if (!isSameStream) {
+        maybePrevEventStreamTry.foreach(_.foreach { prevStream =>
+          // Remove temporary observer that we added above
+          prevStream.removeInternalObserver(InternalObserver.empty)
+        })
+      }
     }
   }
 

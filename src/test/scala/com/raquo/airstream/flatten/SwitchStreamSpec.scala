@@ -8,6 +8,7 @@ import com.raquo.airstream.flatten.FlattenStrategy.SwitchStreamStrategy
 import com.raquo.airstream.state.Var
 
 import scala.collection.mutable
+import scala.util.{Success, Try}
 
 class SwitchStreamSpec extends UnitSpec {
 
@@ -636,4 +637,101 @@ class SwitchStreamSpec extends UnitSpec {
     )
   }
 
+  it("Switching between two streams does not cause their common ancestor to briefly stop") {
+
+    val owner = new TestableOwner
+
+    val effects = mutable.Buffer[Effect[_]]()
+
+    var updateSource: Int => Unit = _ => throw new Exception("source signal has not been started yet")
+
+    val source = EventStream.fromCustomSource[Int](
+      start = (fireValue, fireError, getStartIx, getIsStarted) => {
+        updateSource = fireValue
+        effects += Effect("source-start", "ix-" + getStartIx())
+      },
+      stop = startIx => {
+        effects += Effect("source-stop", "ix-" + startIx)
+      }
+    )
+
+    val stream1 = source.map(_ * 10)
+    val stream2 = source.map(_ * 100)
+
+    val switch = new EventBus[Int]
+
+    switch
+      .events
+      .flatMapSwitch { v =>
+        effects += Effect("switch", v)
+        if (v % 2 == 0) stream1 else stream2
+      }
+      .foreach(v => {
+        effects += Effect("result", v)
+      })(owner)
+
+    assertEquals(
+      effects.toList,
+      Nil
+    )
+
+    switch.emit(1)
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("switch", 1),
+        Effect("source-start", "ix-1")
+      )
+    )
+    effects.clear()
+
+    // --
+
+    updateSource(2)
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("result", 200)
+      )
+    )
+    effects.clear()
+
+    // --
+
+    switch.emit(2)
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("switch", 2)
+      )
+    )
+    effects.clear()
+
+    // --
+
+    switch.emit(3)
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("switch", 3)
+      )
+    )
+    effects.clear()
+
+    // --
+
+    updateSource(4)
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("result", 400)
+      )
+    )
+    effects.clear()
+  }
 }
