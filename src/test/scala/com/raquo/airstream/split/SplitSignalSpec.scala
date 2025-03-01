@@ -1,17 +1,17 @@
-package com.raquo.airstream.misc
+package com.raquo.airstream.split
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.{AirstreamError, Observer, Signal, Transaction}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, ManualOwner, Subscription}
-import com.raquo.airstream.split.DuplicateKeysConfig
 import com.raquo.airstream.state.Var
 import com.raquo.ew.JsArray
 import org.scalatest.{Assertion, BeforeAndAfter}
 
 import scala.collection.{immutable, mutable}
 import scala.scalajs.js
+import scala.util.{Success, Try}
 
 // #Warning: this test is not in the `split` package to make sure that Scala 2.13 specific implicits
 //  in the split package will be resolved correctly even outside of that package.
@@ -1640,5 +1640,182 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
     )
 
     // effects.clear()
+  }
+
+  it("split child active while split signal is stopped") {
+
+    import com.raquo.airstream.split.SplitSignalSpec._
+
+    val outerOwner = new TestableOwner
+    val innerOwner = new TestableOwner
+
+    val effects = mutable.Buffer[Effect[_]]()
+
+    var updateSource: Try[Int] => Unit = _ => throw new Exception("source signal has not been started yet")
+
+    val source = Signal.fromCustomSource[Int](
+      initial = Success(1),
+      start = (setCurrValue, getCurrValue, getStartIx, getIsStarted) => {
+        updateSource = setCurrValue
+      },
+      stop = startIx => {
+        ()
+      }
+    )
+
+    val result = source
+      .asIdSignal
+      .setDisplayName("source")
+      .split(_ => "key", distinctCompose = identity) {
+        (_, init, signal) =>
+          effects += Effect("child-init", init)
+          signal.foreach { v =>
+            effects += Effect("child-update", v)
+          }(innerOwner)
+          init * 100
+      }
+      .setDisplayName("result")
+
+    result
+      .foreach { v =>
+        effects += Effect("result[sub1]", v)
+      }(outerOwner)
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("child-init", 1),
+        Effect("child-update", 1),
+        Effect("result[sub1]", 100)
+      )
+    )
+    effects.clear()
+
+    // --
+
+    outerOwner.killSubscriptions()
+
+    updateSource(Success(2))
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("child-update", 2)
+      )
+    )
+    effects.clear()
+
+    // --
+
+    result.foreach { v =>
+      effects += Effect("result[sub2]", v)
+    }(outerOwner)
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("result[sub2]", 100)
+      )
+    )
+    effects.clear()
+
+    // --
+
+    updateSource(Success(3))
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("result[sub2]", 100),
+        Effect("child-update", 3)
+      )
+    )
+    effects.clear()
+
+    // --
+
+    outerOwner.killSubscriptions()
+
+    updateSource(Success(4))
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("child-update", 4)
+      )
+    )
+    effects.clear()
+
+    // --
+
+    updateSource(Success(5))
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("child-update", 5)
+      )
+    )
+    effects.clear()
+
+    // --
+
+    result.foreach { v =>
+      effects += Effect("result[sub3]", v)
+    }(outerOwner)
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("result[sub3]", 100)
+      )
+    )
+    effects.clear()
+
+    // --
+
+    updateSource(Success(6))
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("result[sub3]", 100),
+        Effect("child-update", 6)
+      )
+    )
+    effects.clear()
+
+    // --
+
+    updateSource(Success(7))
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("result[sub3]", 100),
+        Effect("child-update", 7)
+      )
+    )
+    effects.clear()
+  }
+}
+
+object SplitSignalSpec {
+
+  type Id[A] = A
+
+  implicit val idSplittable: Splittable[Id] = new Splittable[Id] {
+
+    override def map[A, B](inputs: Id[A], project: A => B): Id[B] = project(inputs)
+
+    override def empty[A]: Id[A] = null.asInstanceOf[A]
+  }
+
+  implicit class IdSignal[A](val sig: Signal[A]) extends AnyVal {
+    def asIdSignal: Signal[Id[A]] = sig
+  }
+
+  implicit class NSignal[A](val sig: Signal[Id[A]]) extends AnyVal {
+    def asSignal: Signal[A] = sig
   }
 }

@@ -55,7 +55,7 @@ class SplitSignal[M[_], Input, Output, Key](
     )
   }
 
-  private[this] val sharedDelayedParent = new SyncDelayStream(parent, this)
+  private[this] val sharedDelayedParent = new SyncDelayStream(parent, after = this)
 
   private[this] val emptyObserver = new InternalTryObserver[Input] {
     override protected def onTry(nextValue: Try[Input], transaction: Transaction): Unit = ()
@@ -116,7 +116,34 @@ class SplitSignal[M[_], Input, Output, Key](
             new SplitChildSignal[M, Input](
               sharedDelayedParent,
               initialValue = Some((initialInput, Protected.lastUpdateId(parent))),
-              () => memoized.get(memoizedKey).map(t => (t._1, t._4))
+              getMemoizedValue = () => {
+                val maybeMemoizedValue = memoized.get(memoizedKey)
+                (maybeMemoizedValue match {
+                  case Some(memoizedValue) =>
+                    val memoizedParentLastUpdateId = memoizedValue._4
+                    if (Protected.lastUpdateId(parent) > memoizedParentLastUpdateId) {
+                      // memoized storage does not have the latest data
+                      //  - this can happen when individual ChildSplitSignal is active
+                      //    while the SplitSignal is stopped (has no listeners)
+                      //  - ChildSplitSignal depends on `memoized`, which is the internal
+                      //    state of SplitSignal, but it does not actually depend on
+                      //    SplitSignal itself (using an internal observer).
+                      //  - So, in that case, SplitSignal's internal state is not updated,
+                      //    and memoized contains stale data. To mitigate this, we detect
+                      //    this situation using lastUpdateId check above, and if a discrepancy
+                      //    is detected, we have SplitSignal pull fresh data before reading it again.
+                      //  – I am not sure if setting up an actual dependency (w/ observer)
+                      //    is a good idea. I tried making sharedDelayedParent depend
+                      //    on SplitSignal in addition to `parent`, but that produces weird results.
+                      currentValueFromParent() // pull fresh data
+                      memoized.get(memoizedKey) // read the latest data
+                    } else {
+                      maybeMemoizedValue
+                    }
+                  case _ =>
+                    None
+                }).map(t => (t._1, t._4))
+              }
             )
           )
 

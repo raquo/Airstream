@@ -540,4 +540,107 @@ class GlitchSpec extends UnitSpec {
     )
     effects.clear()
   }
+
+  it("Nested split + flatMapSwitch") {
+    // Test for https://github.com/raquo/Airstream/issues/140
+
+    import com.raquo.airstream.split.SplitSignalSpec._
+
+    val intVar: Var[Int] = Var(10).setDisplayName("intVar")
+
+    val owner = new TestableOwner
+
+    val effects = mutable.Buffer[Effect[_]]()
+
+    var x = 0
+
+    val resultSignal =
+      intVar
+        .signal
+        .asIdSignal
+        .split(
+          key = _ => "outer",
+          distinctCompose = identity
+        ) {
+          (_, outerInit, outerChildSignal) =>
+            effects += Effect("outer-cb", outerInit)
+            outerChildSignal
+              .setDisplayName(s"outer-child@${outerChildSignal}")
+              .foreach { v =>
+              effects += Effect("outer-child-update", v)
+            }(owner)
+
+            val splitInner = outerChildSignal
+              .asIdSignal
+              .split(
+                key = _ => "inner",
+                distinctCompose = identity
+              ) {
+                (_, innerInit, innerChildSignal) =>
+                  effects += Effect("inner-cb", innerInit)
+                  innerChildSignal
+                    .setDisplayName(s"inner-child@${innerChildSignal}")
+                    .foreach { v =>
+                      effects += Effect("inner-child-update", v)
+                    }(owner)
+                  x += 100
+                  x
+              }
+            splitInner
+              .setDisplayName(s"split-inner@${splitInner}")
+        }
+        .setDisplayName("split-outer")
+        .asSignal
+        .map { x =>
+          x.map(identity).setDisplayName(s"${x}-identity") // <<< adding this map triggers bug
+        }
+        .setDisplayName("split-outer-identity")
+        .flattenSwitch
+        .setDisplayName("result")
+
+    resultSignal.foreach(ix =>
+      effects += Effect("result", ix)
+    )(owner)
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("outer-cb", 10),
+        Effect("outer-child-update", 10),
+        Effect("inner-cb", 10),
+        Effect("inner-child-update", 10),
+        Effect("result", 100),
+      )
+    )
+    effects.clear()
+
+    // --
+
+    intVar.set(20)
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("outer-child-update", 20),
+        Effect("inner-child-update", 20),
+        Effect("result", 100)
+      )
+    )
+    effects.clear()
+
+    // --
+
+    intVar.set(30)
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("outer-child-update", 30),
+        Effect("inner-child-update", 30),
+        Effect("result", 100)
+      )
+    )
+    effects.clear()
+
+  }
 }

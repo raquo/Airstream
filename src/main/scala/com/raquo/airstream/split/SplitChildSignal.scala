@@ -44,7 +44,7 @@ private[airstream] class SplitChildSignal[M[_], A](
       case (nextValue, nextParentLastUpdateId) =>
         // Sync to parent signal. This is similar to standard SingleParentSignal logic,
         // except `val parent` is a special timing stream, not the real parent signal,
-        // so we need to ge the parent's value and lastUpdateId in a special manner.
+        // so we need to get the parent's value and lastUpdateId in a special manner.
         if (nextParentLastUpdateId != _parentLastUpdateId) {
           // Note: We only update the value and the parent update id on re-start if
           // the parent has updated while this signal was stopped.
@@ -78,7 +78,13 @@ private[airstream] class SplitChildSignal[M[_], A](
     //   example, it's not available if the child signal is
     //   started inside SplitSignal's render (`project`)
     //   callback, which is typical for Laminar use case.
-    //   - The `initialValue` actually exists for those cases.
+    // - To be more precise, the child signal is usually started
+    //   a bit later, when split signal emits the resulting
+    //   collection, and it makes its way into the DOM.
+    // - But, users could use .observe(parentCtx) in the
+    //   callback, in which case, the memoized value would not
+    //   yet be available.
+    // - The `initialValue` actually exists for those cases.
     getMemoizedValue().orElse(initialValue)
   }
 
