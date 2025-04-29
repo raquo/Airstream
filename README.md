@@ -1538,7 +1538,7 @@ def renderEditor(
 val inputSignal: Signal[Editor] = ???
  
 val outputSignal: Signal[HtmlElement] = 
-  inputSignal.split(key = _.isMultiLine)(project = renderEditor)
+  inputSignal.splitOne(key = _.isMultiLine)(project = renderEditor)
 ```
 
 The example is a bit contrived to demonstrate that `key` does not need to be a record ID but could be any property. In this case, `renderEditor` will be called only when the next emitted word's `isMultiline` value is different from that of the last emitted editor, because that is when we need to change the tag we use – it's impossible to update the tag name of an existing element.
@@ -1565,7 +1565,7 @@ def editor(
 val inputSignal: Signal[Document] = ???
  
 val outputSignal: Signal[HtmlElement] = 
-  inputSignal.split(key = _.id)(project = editor)
+  inputSignal.splitOne(key = _.id)(project = editor)
 ```
 
 In this case we don't have a strict technical constraint like changing the element type that we need to work around. In principle, we don't absolutely need `splitOne`. However, imagine that this component is rendering an editor for a complex document, similar to e.g. Google Docs. This kind of component has a lot of internal state which is all tied to a specific document, to a specific document ID. When `inputSignal` emits an update to the current document (documentId is the same), we want `documentSignal` to update as usual, but when `inputSignal` emits a new document ID... we don't want to manually clear / reset all that complex `documentId`-specific state inside `editor` – with all the redundant state / caches / etc. in it, this could easily become prone to bugs. It would be much easier to simply discard the old editor component and create a new one for the new document. And this is exactly what the code above does. Less code – fewer bugs.
