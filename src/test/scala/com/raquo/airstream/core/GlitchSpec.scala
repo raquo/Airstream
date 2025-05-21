@@ -567,8 +567,8 @@ class GlitchSpec extends UnitSpec {
             outerChildSignal
               .setDisplayName(s"outer-child@${outerChildSignal}")
               .foreach { v =>
-              effects += Effect("outer-child-update", v)
-            }(owner)
+                effects += Effect("outer-child-update", v)
+              }(owner)
 
             val splitInner = outerChildSignal
               .asIdSignal
