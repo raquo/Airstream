@@ -231,4 +231,76 @@ class BooleanObservableSpec extends UnitSpec {
     )
     effects.clear()
   }
+
+  it("BooleanObservable: mapTrueToSome") {
+
+    val owner: TestableOwner = new TestableOwner
+
+    val _var = Var(true)
+
+    val effects = mutable.Buffer[Effect[_]]()
+    _var
+      .signal
+      .mapTrueToSome("a")
+      .foreach(v => effects += Effect("obs", v))(owner)
+
+    effects shouldBe mutable.Buffer(
+      Effect("obs", Some("a"))
+    )
+    effects.clear()
+
+    // --
+
+    _var.set(true)
+
+    effects shouldBe mutable.Buffer(
+      Effect("obs", Some("a"))
+    )
+    effects.clear()
+
+    // --
+
+    _var.set(false)
+
+    effects shouldBe mutable.Buffer(
+      Effect("obs", None)
+    )
+    effects.clear()
+  }
+
+  it("BooleanObservable: mapFalseToSome") {
+
+    val owner: TestableOwner = new TestableOwner
+
+    val _var = Var(false)
+
+    val effects = mutable.Buffer[Effect[_]]()
+    _var
+      .signal
+      .mapFalseToSome("a")
+      .foreach(v => effects += Effect("obs", v))(owner)
+
+    effects shouldBe mutable.Buffer(
+      Effect("obs", Some("a"))
+    )
+    effects.clear()
+
+    // --
+
+    _var.set(true)
+
+    effects shouldBe mutable.Buffer(
+      Effect("obs", None)
+    )
+    effects.clear()
+
+    // --
+
+    _var.set(false)
+
+    effects shouldBe mutable.Buffer(
+      Effect("obs", Some("a"))
+    )
+    effects.clear()
+  }
 }
