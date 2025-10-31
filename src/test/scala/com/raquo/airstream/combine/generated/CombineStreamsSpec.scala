@@ -20,6 +20,19 @@ class CombineStreamsSpec extends UnitSpec {
   case class T7(v: Int)
   case class T8(v: Int)
   case class T9(v: Int)
+  case class T10(v: Int)
+  case class T11(v: Int)
+  case class T12(v: Int)
+  case class T13(v: Int)
+  case class T14(v: Int)
+  case class T15(v: Int)
+  case class T16(v: Int)
+  case class T17(v: Int)
+  case class T18(v: Int)
+  case class T19(v: Int)
+  case class T20(v: Int)
+  case class T21(v: Int)
+  case class T22(v: Int)
 
   it("CombineStream2 works") {
 
@@ -543,6 +556,1683 @@ class CombineStreamsSpec extends UnitSpec {
         (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1), T9(iteration - 1)),
         (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration - 1)),
         (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration))
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineStream10 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val bus1 = new EventBus[T1]()
+    val bus2 = new EventBus[T2]()
+    val bus3 = new EventBus[T3]()
+    val bus4 = new EventBus[T4]()
+    val bus5 = new EventBus[T5]()
+    val bus6 = new EventBus[T6]()
+    val bus7 = new EventBus[T7]()
+    val bus8 = new EventBus[T8]()
+    val bus9 = new EventBus[T9]()
+    val bus10 = new EventBus[T10]()
+
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9, bus10)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+    val subscription = combinedStream.addObserver(observer)
+    effects.shouldBeEmpty
+
+    // --
+
+    bus1.writer.onNext(T1(0))
+    effects.shouldBeEmpty
+
+    bus2.writer.onNext(T2(0))
+    effects.shouldBeEmpty
+
+    bus3.writer.onNext(T3(0))
+    effects.shouldBeEmpty
+
+    bus4.writer.onNext(T4(0))
+    effects.shouldBeEmpty
+
+    bus5.writer.onNext(T5(0))
+    effects.shouldBeEmpty
+
+    bus6.writer.onNext(T6(0))
+    effects.shouldBeEmpty
+
+    bus7.writer.onNext(T7(0))
+    effects.shouldBeEmpty
+
+    bus8.writer.onNext(T8(0))
+    effects.shouldBeEmpty
+
+    bus9.writer.onNext(T9(0))
+    effects.shouldBeEmpty
+
+    bus10.writer.onNext(T10(0))
+    effects.toList shouldBe List(
+      (T1(0), T2(0), T3(0), T4(0), T5(0), T6(0), T7(0), T8(0), T9(0), T10(0))
+    )
+
+    // --
+    for (iteration <- 1 to 10) {
+      effects.clear()
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
+      bus6.emit(T6(iteration))
+      bus7.emit(T7(iteration))
+      bus8.emit(T8(iteration))
+      bus9.emit(T9(iteration))
+      bus10.emit(T10(iteration))
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration - 1), T10(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration))
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineStream11 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val bus1 = new EventBus[T1]()
+    val bus2 = new EventBus[T2]()
+    val bus3 = new EventBus[T3]()
+    val bus4 = new EventBus[T4]()
+    val bus5 = new EventBus[T5]()
+    val bus6 = new EventBus[T6]()
+    val bus7 = new EventBus[T7]()
+    val bus8 = new EventBus[T8]()
+    val bus9 = new EventBus[T9]()
+    val bus10 = new EventBus[T10]()
+    val bus11 = new EventBus[T11]()
+
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9, bus10, bus11)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+    val subscription = combinedStream.addObserver(observer)
+    effects.shouldBeEmpty
+
+    // --
+
+    bus1.writer.onNext(T1(0))
+    effects.shouldBeEmpty
+
+    bus2.writer.onNext(T2(0))
+    effects.shouldBeEmpty
+
+    bus3.writer.onNext(T3(0))
+    effects.shouldBeEmpty
+
+    bus4.writer.onNext(T4(0))
+    effects.shouldBeEmpty
+
+    bus5.writer.onNext(T5(0))
+    effects.shouldBeEmpty
+
+    bus6.writer.onNext(T6(0))
+    effects.shouldBeEmpty
+
+    bus7.writer.onNext(T7(0))
+    effects.shouldBeEmpty
+
+    bus8.writer.onNext(T8(0))
+    effects.shouldBeEmpty
+
+    bus9.writer.onNext(T9(0))
+    effects.shouldBeEmpty
+
+    bus10.writer.onNext(T10(0))
+    effects.shouldBeEmpty
+
+    bus11.writer.onNext(T11(0))
+    effects.toList shouldBe List(
+      (T1(0), T2(0), T3(0), T4(0), T5(0), T6(0), T7(0), T8(0), T9(0), T10(0), T11(0))
+    )
+
+    // --
+    for (iteration <- 1 to 10) {
+      effects.clear()
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
+      bus6.emit(T6(iteration))
+      bus7.emit(T7(iteration))
+      bus8.emit(T8(iteration))
+      bus9.emit(T9(iteration))
+      bus10.emit(T10(iteration))
+      bus11.emit(T11(iteration))
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration - 1), T11(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration))
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineStream12 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val bus1 = new EventBus[T1]()
+    val bus2 = new EventBus[T2]()
+    val bus3 = new EventBus[T3]()
+    val bus4 = new EventBus[T4]()
+    val bus5 = new EventBus[T5]()
+    val bus6 = new EventBus[T6]()
+    val bus7 = new EventBus[T7]()
+    val bus8 = new EventBus[T8]()
+    val bus9 = new EventBus[T9]()
+    val bus10 = new EventBus[T10]()
+    val bus11 = new EventBus[T11]()
+    val bus12 = new EventBus[T12]()
+
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9, bus10, bus11, bus12)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+    val subscription = combinedStream.addObserver(observer)
+    effects.shouldBeEmpty
+
+    // --
+
+    bus1.writer.onNext(T1(0))
+    effects.shouldBeEmpty
+
+    bus2.writer.onNext(T2(0))
+    effects.shouldBeEmpty
+
+    bus3.writer.onNext(T3(0))
+    effects.shouldBeEmpty
+
+    bus4.writer.onNext(T4(0))
+    effects.shouldBeEmpty
+
+    bus5.writer.onNext(T5(0))
+    effects.shouldBeEmpty
+
+    bus6.writer.onNext(T6(0))
+    effects.shouldBeEmpty
+
+    bus7.writer.onNext(T7(0))
+    effects.shouldBeEmpty
+
+    bus8.writer.onNext(T8(0))
+    effects.shouldBeEmpty
+
+    bus9.writer.onNext(T9(0))
+    effects.shouldBeEmpty
+
+    bus10.writer.onNext(T10(0))
+    effects.shouldBeEmpty
+
+    bus11.writer.onNext(T11(0))
+    effects.shouldBeEmpty
+
+    bus12.writer.onNext(T12(0))
+    effects.toList shouldBe List(
+      (T1(0), T2(0), T3(0), T4(0), T5(0), T6(0), T7(0), T8(0), T9(0), T10(0), T11(0), T12(0))
+    )
+
+    // --
+    for (iteration <- 1 to 10) {
+      effects.clear()
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
+      bus6.emit(T6(iteration))
+      bus7.emit(T7(iteration))
+      bus8.emit(T8(iteration))
+      bus9.emit(T9(iteration))
+      bus10.emit(T10(iteration))
+      bus11.emit(T11(iteration))
+      bus12.emit(T12(iteration))
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration - 1), T12(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration))
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineStream13 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val bus1 = new EventBus[T1]()
+    val bus2 = new EventBus[T2]()
+    val bus3 = new EventBus[T3]()
+    val bus4 = new EventBus[T4]()
+    val bus5 = new EventBus[T5]()
+    val bus6 = new EventBus[T6]()
+    val bus7 = new EventBus[T7]()
+    val bus8 = new EventBus[T8]()
+    val bus9 = new EventBus[T9]()
+    val bus10 = new EventBus[T10]()
+    val bus11 = new EventBus[T11]()
+    val bus12 = new EventBus[T12]()
+    val bus13 = new EventBus[T13]()
+
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9, bus10, bus11, bus12, bus13)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+    val subscription = combinedStream.addObserver(observer)
+    effects.shouldBeEmpty
+
+    // --
+
+    bus1.writer.onNext(T1(0))
+    effects.shouldBeEmpty
+
+    bus2.writer.onNext(T2(0))
+    effects.shouldBeEmpty
+
+    bus3.writer.onNext(T3(0))
+    effects.shouldBeEmpty
+
+    bus4.writer.onNext(T4(0))
+    effects.shouldBeEmpty
+
+    bus5.writer.onNext(T5(0))
+    effects.shouldBeEmpty
+
+    bus6.writer.onNext(T6(0))
+    effects.shouldBeEmpty
+
+    bus7.writer.onNext(T7(0))
+    effects.shouldBeEmpty
+
+    bus8.writer.onNext(T8(0))
+    effects.shouldBeEmpty
+
+    bus9.writer.onNext(T9(0))
+    effects.shouldBeEmpty
+
+    bus10.writer.onNext(T10(0))
+    effects.shouldBeEmpty
+
+    bus11.writer.onNext(T11(0))
+    effects.shouldBeEmpty
+
+    bus12.writer.onNext(T12(0))
+    effects.shouldBeEmpty
+
+    bus13.writer.onNext(T13(0))
+    effects.toList shouldBe List(
+      (T1(0), T2(0), T3(0), T4(0), T5(0), T6(0), T7(0), T8(0), T9(0), T10(0), T11(0), T12(0), T13(0))
+    )
+
+    // --
+    for (iteration <- 1 to 10) {
+      effects.clear()
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
+      bus6.emit(T6(iteration))
+      bus7.emit(T7(iteration))
+      bus8.emit(T8(iteration))
+      bus9.emit(T9(iteration))
+      bus10.emit(T10(iteration))
+      bus11.emit(T11(iteration))
+      bus12.emit(T12(iteration))
+      bus13.emit(T13(iteration))
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration - 1), T13(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration))
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineStream14 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val bus1 = new EventBus[T1]()
+    val bus2 = new EventBus[T2]()
+    val bus3 = new EventBus[T3]()
+    val bus4 = new EventBus[T4]()
+    val bus5 = new EventBus[T5]()
+    val bus6 = new EventBus[T6]()
+    val bus7 = new EventBus[T7]()
+    val bus8 = new EventBus[T8]()
+    val bus9 = new EventBus[T9]()
+    val bus10 = new EventBus[T10]()
+    val bus11 = new EventBus[T11]()
+    val bus12 = new EventBus[T12]()
+    val bus13 = new EventBus[T13]()
+    val bus14 = new EventBus[T14]()
+
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9, bus10, bus11, bus12, bus13, bus14)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+    val subscription = combinedStream.addObserver(observer)
+    effects.shouldBeEmpty
+
+    // --
+
+    bus1.writer.onNext(T1(0))
+    effects.shouldBeEmpty
+
+    bus2.writer.onNext(T2(0))
+    effects.shouldBeEmpty
+
+    bus3.writer.onNext(T3(0))
+    effects.shouldBeEmpty
+
+    bus4.writer.onNext(T4(0))
+    effects.shouldBeEmpty
+
+    bus5.writer.onNext(T5(0))
+    effects.shouldBeEmpty
+
+    bus6.writer.onNext(T6(0))
+    effects.shouldBeEmpty
+
+    bus7.writer.onNext(T7(0))
+    effects.shouldBeEmpty
+
+    bus8.writer.onNext(T8(0))
+    effects.shouldBeEmpty
+
+    bus9.writer.onNext(T9(0))
+    effects.shouldBeEmpty
+
+    bus10.writer.onNext(T10(0))
+    effects.shouldBeEmpty
+
+    bus11.writer.onNext(T11(0))
+    effects.shouldBeEmpty
+
+    bus12.writer.onNext(T12(0))
+    effects.shouldBeEmpty
+
+    bus13.writer.onNext(T13(0))
+    effects.shouldBeEmpty
+
+    bus14.writer.onNext(T14(0))
+    effects.toList shouldBe List(
+      (T1(0), T2(0), T3(0), T4(0), T5(0), T6(0), T7(0), T8(0), T9(0), T10(0), T11(0), T12(0), T13(0), T14(0))
+    )
+
+    // --
+    for (iteration <- 1 to 10) {
+      effects.clear()
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
+      bus6.emit(T6(iteration))
+      bus7.emit(T7(iteration))
+      bus8.emit(T8(iteration))
+      bus9.emit(T9(iteration))
+      bus10.emit(T10(iteration))
+      bus11.emit(T11(iteration))
+      bus12.emit(T12(iteration))
+      bus13.emit(T13(iteration))
+      bus14.emit(T14(iteration))
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration - 1), T14(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration))
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineStream15 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val bus1 = new EventBus[T1]()
+    val bus2 = new EventBus[T2]()
+    val bus3 = new EventBus[T3]()
+    val bus4 = new EventBus[T4]()
+    val bus5 = new EventBus[T5]()
+    val bus6 = new EventBus[T6]()
+    val bus7 = new EventBus[T7]()
+    val bus8 = new EventBus[T8]()
+    val bus9 = new EventBus[T9]()
+    val bus10 = new EventBus[T10]()
+    val bus11 = new EventBus[T11]()
+    val bus12 = new EventBus[T12]()
+    val bus13 = new EventBus[T13]()
+    val bus14 = new EventBus[T14]()
+    val bus15 = new EventBus[T15]()
+
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9, bus10, bus11, bus12, bus13, bus14, bus15)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+    val subscription = combinedStream.addObserver(observer)
+    effects.shouldBeEmpty
+
+    // --
+
+    bus1.writer.onNext(T1(0))
+    effects.shouldBeEmpty
+
+    bus2.writer.onNext(T2(0))
+    effects.shouldBeEmpty
+
+    bus3.writer.onNext(T3(0))
+    effects.shouldBeEmpty
+
+    bus4.writer.onNext(T4(0))
+    effects.shouldBeEmpty
+
+    bus5.writer.onNext(T5(0))
+    effects.shouldBeEmpty
+
+    bus6.writer.onNext(T6(0))
+    effects.shouldBeEmpty
+
+    bus7.writer.onNext(T7(0))
+    effects.shouldBeEmpty
+
+    bus8.writer.onNext(T8(0))
+    effects.shouldBeEmpty
+
+    bus9.writer.onNext(T9(0))
+    effects.shouldBeEmpty
+
+    bus10.writer.onNext(T10(0))
+    effects.shouldBeEmpty
+
+    bus11.writer.onNext(T11(0))
+    effects.shouldBeEmpty
+
+    bus12.writer.onNext(T12(0))
+    effects.shouldBeEmpty
+
+    bus13.writer.onNext(T13(0))
+    effects.shouldBeEmpty
+
+    bus14.writer.onNext(T14(0))
+    effects.shouldBeEmpty
+
+    bus15.writer.onNext(T15(0))
+    effects.toList shouldBe List(
+      (T1(0), T2(0), T3(0), T4(0), T5(0), T6(0), T7(0), T8(0), T9(0), T10(0), T11(0), T12(0), T13(0), T14(0), T15(0))
+    )
+
+    // --
+    for (iteration <- 1 to 10) {
+      effects.clear()
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
+      bus6.emit(T6(iteration))
+      bus7.emit(T7(iteration))
+      bus8.emit(T8(iteration))
+      bus9.emit(T9(iteration))
+      bus10.emit(T10(iteration))
+      bus11.emit(T11(iteration))
+      bus12.emit(T12(iteration))
+      bus13.emit(T13(iteration))
+      bus14.emit(T14(iteration))
+      bus15.emit(T15(iteration))
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration - 1), T15(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration))
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineStream16 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val bus1 = new EventBus[T1]()
+    val bus2 = new EventBus[T2]()
+    val bus3 = new EventBus[T3]()
+    val bus4 = new EventBus[T4]()
+    val bus5 = new EventBus[T5]()
+    val bus6 = new EventBus[T6]()
+    val bus7 = new EventBus[T7]()
+    val bus8 = new EventBus[T8]()
+    val bus9 = new EventBus[T9]()
+    val bus10 = new EventBus[T10]()
+    val bus11 = new EventBus[T11]()
+    val bus12 = new EventBus[T12]()
+    val bus13 = new EventBus[T13]()
+    val bus14 = new EventBus[T14]()
+    val bus15 = new EventBus[T15]()
+    val bus16 = new EventBus[T16]()
+
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9, bus10, bus11, bus12, bus13, bus14, bus15, bus16)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+    val subscription = combinedStream.addObserver(observer)
+    effects.shouldBeEmpty
+
+    // --
+
+    bus1.writer.onNext(T1(0))
+    effects.shouldBeEmpty
+
+    bus2.writer.onNext(T2(0))
+    effects.shouldBeEmpty
+
+    bus3.writer.onNext(T3(0))
+    effects.shouldBeEmpty
+
+    bus4.writer.onNext(T4(0))
+    effects.shouldBeEmpty
+
+    bus5.writer.onNext(T5(0))
+    effects.shouldBeEmpty
+
+    bus6.writer.onNext(T6(0))
+    effects.shouldBeEmpty
+
+    bus7.writer.onNext(T7(0))
+    effects.shouldBeEmpty
+
+    bus8.writer.onNext(T8(0))
+    effects.shouldBeEmpty
+
+    bus9.writer.onNext(T9(0))
+    effects.shouldBeEmpty
+
+    bus10.writer.onNext(T10(0))
+    effects.shouldBeEmpty
+
+    bus11.writer.onNext(T11(0))
+    effects.shouldBeEmpty
+
+    bus12.writer.onNext(T12(0))
+    effects.shouldBeEmpty
+
+    bus13.writer.onNext(T13(0))
+    effects.shouldBeEmpty
+
+    bus14.writer.onNext(T14(0))
+    effects.shouldBeEmpty
+
+    bus15.writer.onNext(T15(0))
+    effects.shouldBeEmpty
+
+    bus16.writer.onNext(T16(0))
+    effects.toList shouldBe List(
+      (T1(0), T2(0), T3(0), T4(0), T5(0), T6(0), T7(0), T8(0), T9(0), T10(0), T11(0), T12(0), T13(0), T14(0), T15(0), T16(0))
+    )
+
+    // --
+    for (iteration <- 1 to 10) {
+      effects.clear()
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
+      bus6.emit(T6(iteration))
+      bus7.emit(T7(iteration))
+      bus8.emit(T8(iteration))
+      bus9.emit(T9(iteration))
+      bus10.emit(T10(iteration))
+      bus11.emit(T11(iteration))
+      bus12.emit(T12(iteration))
+      bus13.emit(T13(iteration))
+      bus14.emit(T14(iteration))
+      bus15.emit(T15(iteration))
+      bus16.emit(T16(iteration))
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration - 1), T16(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration))
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineStream17 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val bus1 = new EventBus[T1]()
+    val bus2 = new EventBus[T2]()
+    val bus3 = new EventBus[T3]()
+    val bus4 = new EventBus[T4]()
+    val bus5 = new EventBus[T5]()
+    val bus6 = new EventBus[T6]()
+    val bus7 = new EventBus[T7]()
+    val bus8 = new EventBus[T8]()
+    val bus9 = new EventBus[T9]()
+    val bus10 = new EventBus[T10]()
+    val bus11 = new EventBus[T11]()
+    val bus12 = new EventBus[T12]()
+    val bus13 = new EventBus[T13]()
+    val bus14 = new EventBus[T14]()
+    val bus15 = new EventBus[T15]()
+    val bus16 = new EventBus[T16]()
+    val bus17 = new EventBus[T17]()
+
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9, bus10, bus11, bus12, bus13, bus14, bus15, bus16, bus17)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+    val subscription = combinedStream.addObserver(observer)
+    effects.shouldBeEmpty
+
+    // --
+
+    bus1.writer.onNext(T1(0))
+    effects.shouldBeEmpty
+
+    bus2.writer.onNext(T2(0))
+    effects.shouldBeEmpty
+
+    bus3.writer.onNext(T3(0))
+    effects.shouldBeEmpty
+
+    bus4.writer.onNext(T4(0))
+    effects.shouldBeEmpty
+
+    bus5.writer.onNext(T5(0))
+    effects.shouldBeEmpty
+
+    bus6.writer.onNext(T6(0))
+    effects.shouldBeEmpty
+
+    bus7.writer.onNext(T7(0))
+    effects.shouldBeEmpty
+
+    bus8.writer.onNext(T8(0))
+    effects.shouldBeEmpty
+
+    bus9.writer.onNext(T9(0))
+    effects.shouldBeEmpty
+
+    bus10.writer.onNext(T10(0))
+    effects.shouldBeEmpty
+
+    bus11.writer.onNext(T11(0))
+    effects.shouldBeEmpty
+
+    bus12.writer.onNext(T12(0))
+    effects.shouldBeEmpty
+
+    bus13.writer.onNext(T13(0))
+    effects.shouldBeEmpty
+
+    bus14.writer.onNext(T14(0))
+    effects.shouldBeEmpty
+
+    bus15.writer.onNext(T15(0))
+    effects.shouldBeEmpty
+
+    bus16.writer.onNext(T16(0))
+    effects.shouldBeEmpty
+
+    bus17.writer.onNext(T17(0))
+    effects.toList shouldBe List(
+      (T1(0), T2(0), T3(0), T4(0), T5(0), T6(0), T7(0), T8(0), T9(0), T10(0), T11(0), T12(0), T13(0), T14(0), T15(0), T16(0), T17(0))
+    )
+
+    // --
+    for (iteration <- 1 to 10) {
+      effects.clear()
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
+      bus6.emit(T6(iteration))
+      bus7.emit(T7(iteration))
+      bus8.emit(T8(iteration))
+      bus9.emit(T9(iteration))
+      bus10.emit(T10(iteration))
+      bus11.emit(T11(iteration))
+      bus12.emit(T12(iteration))
+      bus13.emit(T13(iteration))
+      bus14.emit(T14(iteration))
+      bus15.emit(T15(iteration))
+      bus16.emit(T16(iteration))
+      bus17.emit(T17(iteration))
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration - 1), T17(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration))
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineStream18 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val bus1 = new EventBus[T1]()
+    val bus2 = new EventBus[T2]()
+    val bus3 = new EventBus[T3]()
+    val bus4 = new EventBus[T4]()
+    val bus5 = new EventBus[T5]()
+    val bus6 = new EventBus[T6]()
+    val bus7 = new EventBus[T7]()
+    val bus8 = new EventBus[T8]()
+    val bus9 = new EventBus[T9]()
+    val bus10 = new EventBus[T10]()
+    val bus11 = new EventBus[T11]()
+    val bus12 = new EventBus[T12]()
+    val bus13 = new EventBus[T13]()
+    val bus14 = new EventBus[T14]()
+    val bus15 = new EventBus[T15]()
+    val bus16 = new EventBus[T16]()
+    val bus17 = new EventBus[T17]()
+    val bus18 = new EventBus[T18]()
+
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9, bus10, bus11, bus12, bus13, bus14, bus15, bus16, bus17, bus18)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+    val subscription = combinedStream.addObserver(observer)
+    effects.shouldBeEmpty
+
+    // --
+
+    bus1.writer.onNext(T1(0))
+    effects.shouldBeEmpty
+
+    bus2.writer.onNext(T2(0))
+    effects.shouldBeEmpty
+
+    bus3.writer.onNext(T3(0))
+    effects.shouldBeEmpty
+
+    bus4.writer.onNext(T4(0))
+    effects.shouldBeEmpty
+
+    bus5.writer.onNext(T5(0))
+    effects.shouldBeEmpty
+
+    bus6.writer.onNext(T6(0))
+    effects.shouldBeEmpty
+
+    bus7.writer.onNext(T7(0))
+    effects.shouldBeEmpty
+
+    bus8.writer.onNext(T8(0))
+    effects.shouldBeEmpty
+
+    bus9.writer.onNext(T9(0))
+    effects.shouldBeEmpty
+
+    bus10.writer.onNext(T10(0))
+    effects.shouldBeEmpty
+
+    bus11.writer.onNext(T11(0))
+    effects.shouldBeEmpty
+
+    bus12.writer.onNext(T12(0))
+    effects.shouldBeEmpty
+
+    bus13.writer.onNext(T13(0))
+    effects.shouldBeEmpty
+
+    bus14.writer.onNext(T14(0))
+    effects.shouldBeEmpty
+
+    bus15.writer.onNext(T15(0))
+    effects.shouldBeEmpty
+
+    bus16.writer.onNext(T16(0))
+    effects.shouldBeEmpty
+
+    bus17.writer.onNext(T17(0))
+    effects.shouldBeEmpty
+
+    bus18.writer.onNext(T18(0))
+    effects.toList shouldBe List(
+      (T1(0), T2(0), T3(0), T4(0), T5(0), T6(0), T7(0), T8(0), T9(0), T10(0), T11(0), T12(0), T13(0), T14(0), T15(0), T16(0), T17(0), T18(0))
+    )
+
+    // --
+    for (iteration <- 1 to 10) {
+      effects.clear()
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
+      bus6.emit(T6(iteration))
+      bus7.emit(T7(iteration))
+      bus8.emit(T8(iteration))
+      bus9.emit(T9(iteration))
+      bus10.emit(T10(iteration))
+      bus11.emit(T11(iteration))
+      bus12.emit(T12(iteration))
+      bus13.emit(T13(iteration))
+      bus14.emit(T14(iteration))
+      bus15.emit(T15(iteration))
+      bus16.emit(T16(iteration))
+      bus17.emit(T17(iteration))
+      bus18.emit(T18(iteration))
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration - 1), T18(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration))
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineStream19 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val bus1 = new EventBus[T1]()
+    val bus2 = new EventBus[T2]()
+    val bus3 = new EventBus[T3]()
+    val bus4 = new EventBus[T4]()
+    val bus5 = new EventBus[T5]()
+    val bus6 = new EventBus[T6]()
+    val bus7 = new EventBus[T7]()
+    val bus8 = new EventBus[T8]()
+    val bus9 = new EventBus[T9]()
+    val bus10 = new EventBus[T10]()
+    val bus11 = new EventBus[T11]()
+    val bus12 = new EventBus[T12]()
+    val bus13 = new EventBus[T13]()
+    val bus14 = new EventBus[T14]()
+    val bus15 = new EventBus[T15]()
+    val bus16 = new EventBus[T16]()
+    val bus17 = new EventBus[T17]()
+    val bus18 = new EventBus[T18]()
+    val bus19 = new EventBus[T19]()
+
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9, bus10, bus11, bus12, bus13, bus14, bus15, bus16, bus17, bus18, bus19)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+    val subscription = combinedStream.addObserver(observer)
+    effects.shouldBeEmpty
+
+    // --
+
+    bus1.writer.onNext(T1(0))
+    effects.shouldBeEmpty
+
+    bus2.writer.onNext(T2(0))
+    effects.shouldBeEmpty
+
+    bus3.writer.onNext(T3(0))
+    effects.shouldBeEmpty
+
+    bus4.writer.onNext(T4(0))
+    effects.shouldBeEmpty
+
+    bus5.writer.onNext(T5(0))
+    effects.shouldBeEmpty
+
+    bus6.writer.onNext(T6(0))
+    effects.shouldBeEmpty
+
+    bus7.writer.onNext(T7(0))
+    effects.shouldBeEmpty
+
+    bus8.writer.onNext(T8(0))
+    effects.shouldBeEmpty
+
+    bus9.writer.onNext(T9(0))
+    effects.shouldBeEmpty
+
+    bus10.writer.onNext(T10(0))
+    effects.shouldBeEmpty
+
+    bus11.writer.onNext(T11(0))
+    effects.shouldBeEmpty
+
+    bus12.writer.onNext(T12(0))
+    effects.shouldBeEmpty
+
+    bus13.writer.onNext(T13(0))
+    effects.shouldBeEmpty
+
+    bus14.writer.onNext(T14(0))
+    effects.shouldBeEmpty
+
+    bus15.writer.onNext(T15(0))
+    effects.shouldBeEmpty
+
+    bus16.writer.onNext(T16(0))
+    effects.shouldBeEmpty
+
+    bus17.writer.onNext(T17(0))
+    effects.shouldBeEmpty
+
+    bus18.writer.onNext(T18(0))
+    effects.shouldBeEmpty
+
+    bus19.writer.onNext(T19(0))
+    effects.toList shouldBe List(
+      (T1(0), T2(0), T3(0), T4(0), T5(0), T6(0), T7(0), T8(0), T9(0), T10(0), T11(0), T12(0), T13(0), T14(0), T15(0), T16(0), T17(0), T18(0), T19(0))
+    )
+
+    // --
+    for (iteration <- 1 to 10) {
+      effects.clear()
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
+      bus6.emit(T6(iteration))
+      bus7.emit(T7(iteration))
+      bus8.emit(T8(iteration))
+      bus9.emit(T9(iteration))
+      bus10.emit(T10(iteration))
+      bus11.emit(T11(iteration))
+      bus12.emit(T12(iteration))
+      bus13.emit(T13(iteration))
+      bus14.emit(T14(iteration))
+      bus15.emit(T15(iteration))
+      bus16.emit(T16(iteration))
+      bus17.emit(T17(iteration))
+      bus18.emit(T18(iteration))
+      bus19.emit(T19(iteration))
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration - 1), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration), T19(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration), T19(iteration))
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineStream20 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val bus1 = new EventBus[T1]()
+    val bus2 = new EventBus[T2]()
+    val bus3 = new EventBus[T3]()
+    val bus4 = new EventBus[T4]()
+    val bus5 = new EventBus[T5]()
+    val bus6 = new EventBus[T6]()
+    val bus7 = new EventBus[T7]()
+    val bus8 = new EventBus[T8]()
+    val bus9 = new EventBus[T9]()
+    val bus10 = new EventBus[T10]()
+    val bus11 = new EventBus[T11]()
+    val bus12 = new EventBus[T12]()
+    val bus13 = new EventBus[T13]()
+    val bus14 = new EventBus[T14]()
+    val bus15 = new EventBus[T15]()
+    val bus16 = new EventBus[T16]()
+    val bus17 = new EventBus[T17]()
+    val bus18 = new EventBus[T18]()
+    val bus19 = new EventBus[T19]()
+    val bus20 = new EventBus[T20]()
+
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9, bus10, bus11, bus12, bus13, bus14, bus15, bus16, bus17, bus18, bus19, bus20)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+    val subscription = combinedStream.addObserver(observer)
+    effects.shouldBeEmpty
+
+    // --
+
+    bus1.writer.onNext(T1(0))
+    effects.shouldBeEmpty
+
+    bus2.writer.onNext(T2(0))
+    effects.shouldBeEmpty
+
+    bus3.writer.onNext(T3(0))
+    effects.shouldBeEmpty
+
+    bus4.writer.onNext(T4(0))
+    effects.shouldBeEmpty
+
+    bus5.writer.onNext(T5(0))
+    effects.shouldBeEmpty
+
+    bus6.writer.onNext(T6(0))
+    effects.shouldBeEmpty
+
+    bus7.writer.onNext(T7(0))
+    effects.shouldBeEmpty
+
+    bus8.writer.onNext(T8(0))
+    effects.shouldBeEmpty
+
+    bus9.writer.onNext(T9(0))
+    effects.shouldBeEmpty
+
+    bus10.writer.onNext(T10(0))
+    effects.shouldBeEmpty
+
+    bus11.writer.onNext(T11(0))
+    effects.shouldBeEmpty
+
+    bus12.writer.onNext(T12(0))
+    effects.shouldBeEmpty
+
+    bus13.writer.onNext(T13(0))
+    effects.shouldBeEmpty
+
+    bus14.writer.onNext(T14(0))
+    effects.shouldBeEmpty
+
+    bus15.writer.onNext(T15(0))
+    effects.shouldBeEmpty
+
+    bus16.writer.onNext(T16(0))
+    effects.shouldBeEmpty
+
+    bus17.writer.onNext(T17(0))
+    effects.shouldBeEmpty
+
+    bus18.writer.onNext(T18(0))
+    effects.shouldBeEmpty
+
+    bus19.writer.onNext(T19(0))
+    effects.shouldBeEmpty
+
+    bus20.writer.onNext(T20(0))
+    effects.toList shouldBe List(
+      (T1(0), T2(0), T3(0), T4(0), T5(0), T6(0), T7(0), T8(0), T9(0), T10(0), T11(0), T12(0), T13(0), T14(0), T15(0), T16(0), T17(0), T18(0), T19(0), T20(0))
+    )
+
+    // --
+    for (iteration <- 1 to 10) {
+      effects.clear()
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
+      bus6.emit(T6(iteration))
+      bus7.emit(T7(iteration))
+      bus8.emit(T8(iteration))
+      bus9.emit(T9(iteration))
+      bus10.emit(T10(iteration))
+      bus11.emit(T11(iteration))
+      bus12.emit(T12(iteration))
+      bus13.emit(T13(iteration))
+      bus14.emit(T14(iteration))
+      bus15.emit(T15(iteration))
+      bus16.emit(T16(iteration))
+      bus17.emit(T17(iteration))
+      bus18.emit(T18(iteration))
+      bus19.emit(T19(iteration))
+      bus20.emit(T20(iteration))
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration), T19(iteration - 1), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration), T19(iteration), T20(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration), T19(iteration), T20(iteration))
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineStream21 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val bus1 = new EventBus[T1]()
+    val bus2 = new EventBus[T2]()
+    val bus3 = new EventBus[T3]()
+    val bus4 = new EventBus[T4]()
+    val bus5 = new EventBus[T5]()
+    val bus6 = new EventBus[T6]()
+    val bus7 = new EventBus[T7]()
+    val bus8 = new EventBus[T8]()
+    val bus9 = new EventBus[T9]()
+    val bus10 = new EventBus[T10]()
+    val bus11 = new EventBus[T11]()
+    val bus12 = new EventBus[T12]()
+    val bus13 = new EventBus[T13]()
+    val bus14 = new EventBus[T14]()
+    val bus15 = new EventBus[T15]()
+    val bus16 = new EventBus[T16]()
+    val bus17 = new EventBus[T17]()
+    val bus18 = new EventBus[T18]()
+    val bus19 = new EventBus[T19]()
+    val bus20 = new EventBus[T20]()
+    val bus21 = new EventBus[T21]()
+
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9, bus10, bus11, bus12, bus13, bus14, bus15, bus16, bus17, bus18, bus19, bus20, bus21)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+    val subscription = combinedStream.addObserver(observer)
+    effects.shouldBeEmpty
+
+    // --
+
+    bus1.writer.onNext(T1(0))
+    effects.shouldBeEmpty
+
+    bus2.writer.onNext(T2(0))
+    effects.shouldBeEmpty
+
+    bus3.writer.onNext(T3(0))
+    effects.shouldBeEmpty
+
+    bus4.writer.onNext(T4(0))
+    effects.shouldBeEmpty
+
+    bus5.writer.onNext(T5(0))
+    effects.shouldBeEmpty
+
+    bus6.writer.onNext(T6(0))
+    effects.shouldBeEmpty
+
+    bus7.writer.onNext(T7(0))
+    effects.shouldBeEmpty
+
+    bus8.writer.onNext(T8(0))
+    effects.shouldBeEmpty
+
+    bus9.writer.onNext(T9(0))
+    effects.shouldBeEmpty
+
+    bus10.writer.onNext(T10(0))
+    effects.shouldBeEmpty
+
+    bus11.writer.onNext(T11(0))
+    effects.shouldBeEmpty
+
+    bus12.writer.onNext(T12(0))
+    effects.shouldBeEmpty
+
+    bus13.writer.onNext(T13(0))
+    effects.shouldBeEmpty
+
+    bus14.writer.onNext(T14(0))
+    effects.shouldBeEmpty
+
+    bus15.writer.onNext(T15(0))
+    effects.shouldBeEmpty
+
+    bus16.writer.onNext(T16(0))
+    effects.shouldBeEmpty
+
+    bus17.writer.onNext(T17(0))
+    effects.shouldBeEmpty
+
+    bus18.writer.onNext(T18(0))
+    effects.shouldBeEmpty
+
+    bus19.writer.onNext(T19(0))
+    effects.shouldBeEmpty
+
+    bus20.writer.onNext(T20(0))
+    effects.shouldBeEmpty
+
+    bus21.writer.onNext(T21(0))
+    effects.toList shouldBe List(
+      (T1(0), T2(0), T3(0), T4(0), T5(0), T6(0), T7(0), T8(0), T9(0), T10(0), T11(0), T12(0), T13(0), T14(0), T15(0), T16(0), T17(0), T18(0), T19(0), T20(0), T21(0))
+    )
+
+    // --
+    for (iteration <- 1 to 10) {
+      effects.clear()
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
+      bus6.emit(T6(iteration))
+      bus7.emit(T7(iteration))
+      bus8.emit(T8(iteration))
+      bus9.emit(T9(iteration))
+      bus10.emit(T10(iteration))
+      bus11.emit(T11(iteration))
+      bus12.emit(T12(iteration))
+      bus13.emit(T13(iteration))
+      bus14.emit(T14(iteration))
+      bus15.emit(T15(iteration))
+      bus16.emit(T16(iteration))
+      bus17.emit(T17(iteration))
+      bus18.emit(T18(iteration))
+      bus19.emit(T19(iteration))
+      bus20.emit(T20(iteration))
+      bus21.emit(T21(iteration))
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration), T19(iteration), T20(iteration - 1), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration), T19(iteration), T20(iteration), T21(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration), T19(iteration), T20(iteration), T21(iteration))
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineStream22 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val bus1 = new EventBus[T1]()
+    val bus2 = new EventBus[T2]()
+    val bus3 = new EventBus[T3]()
+    val bus4 = new EventBus[T4]()
+    val bus5 = new EventBus[T5]()
+    val bus6 = new EventBus[T6]()
+    val bus7 = new EventBus[T7]()
+    val bus8 = new EventBus[T8]()
+    val bus9 = new EventBus[T9]()
+    val bus10 = new EventBus[T10]()
+    val bus11 = new EventBus[T11]()
+    val bus12 = new EventBus[T12]()
+    val bus13 = new EventBus[T13]()
+    val bus14 = new EventBus[T14]()
+    val bus15 = new EventBus[T15]()
+    val bus16 = new EventBus[T16]()
+    val bus17 = new EventBus[T17]()
+    val bus18 = new EventBus[T18]()
+    val bus19 = new EventBus[T19]()
+    val bus20 = new EventBus[T20]()
+    val bus21 = new EventBus[T21]()
+    val bus22 = new EventBus[T22]()
+
+    val combinedStream = EventStream.combine(bus1, bus2, bus3, bus4, bus5, bus6, bus7, bus8, bus9, bus10, bus11, bus12, bus13, bus14, bus15, bus16, bus17, bus18, bus19, bus20, bus21, bus22)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+    val subscription = combinedStream.addObserver(observer)
+    effects.shouldBeEmpty
+
+    // --
+
+    bus1.writer.onNext(T1(0))
+    effects.shouldBeEmpty
+
+    bus2.writer.onNext(T2(0))
+    effects.shouldBeEmpty
+
+    bus3.writer.onNext(T3(0))
+    effects.shouldBeEmpty
+
+    bus4.writer.onNext(T4(0))
+    effects.shouldBeEmpty
+
+    bus5.writer.onNext(T5(0))
+    effects.shouldBeEmpty
+
+    bus6.writer.onNext(T6(0))
+    effects.shouldBeEmpty
+
+    bus7.writer.onNext(T7(0))
+    effects.shouldBeEmpty
+
+    bus8.writer.onNext(T8(0))
+    effects.shouldBeEmpty
+
+    bus9.writer.onNext(T9(0))
+    effects.shouldBeEmpty
+
+    bus10.writer.onNext(T10(0))
+    effects.shouldBeEmpty
+
+    bus11.writer.onNext(T11(0))
+    effects.shouldBeEmpty
+
+    bus12.writer.onNext(T12(0))
+    effects.shouldBeEmpty
+
+    bus13.writer.onNext(T13(0))
+    effects.shouldBeEmpty
+
+    bus14.writer.onNext(T14(0))
+    effects.shouldBeEmpty
+
+    bus15.writer.onNext(T15(0))
+    effects.shouldBeEmpty
+
+    bus16.writer.onNext(T16(0))
+    effects.shouldBeEmpty
+
+    bus17.writer.onNext(T17(0))
+    effects.shouldBeEmpty
+
+    bus18.writer.onNext(T18(0))
+    effects.shouldBeEmpty
+
+    bus19.writer.onNext(T19(0))
+    effects.shouldBeEmpty
+
+    bus20.writer.onNext(T20(0))
+    effects.shouldBeEmpty
+
+    bus21.writer.onNext(T21(0))
+    effects.shouldBeEmpty
+
+    bus22.writer.onNext(T22(0))
+    effects.toList shouldBe List(
+      (T1(0), T2(0), T3(0), T4(0), T5(0), T6(0), T7(0), T8(0), T9(0), T10(0), T11(0), T12(0), T13(0), T14(0), T15(0), T16(0), T17(0), T18(0), T19(0), T20(0), T21(0), T22(0))
+    )
+
+    // --
+    for (iteration <- 1 to 10) {
+      effects.clear()
+      bus1.emit(T1(iteration))
+      bus2.emit(T2(iteration))
+      bus3.emit(T3(iteration))
+      bus4.emit(T4(iteration))
+      bus5.emit(T5(iteration))
+      bus6.emit(T6(iteration))
+      bus7.emit(T7(iteration))
+      bus8.emit(T8(iteration))
+      bus9.emit(T9(iteration))
+      bus10.emit(T10(iteration))
+      bus11.emit(T11(iteration))
+      bus12.emit(T12(iteration))
+      bus13.emit(T13(iteration))
+      bus14.emit(T14(iteration))
+      bus15.emit(T15(iteration))
+      bus16.emit(T16(iteration))
+      bus17.emit(T17(iteration))
+      bus18.emit(T18(iteration))
+      bus19.emit(T19(iteration))
+      bus20.emit(T20(iteration))
+      bus21.emit(T21(iteration))
+      bus22.emit(T22(iteration))
+      effects.toList shouldBe List(
+        (T1(iteration), T2(iteration - 1), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration - 1), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration - 1), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration - 1), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration - 1), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration - 1), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration - 1), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration - 1), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration - 1), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration - 1), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration - 1), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration - 1), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration - 1), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration - 1), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration - 1), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration - 1), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration - 1), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration), T19(iteration - 1), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration), T19(iteration), T20(iteration - 1), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration), T19(iteration), T20(iteration), T21(iteration - 1), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration), T19(iteration), T20(iteration), T21(iteration), T22(iteration - 1)),
+        (T1(iteration), T2(iteration), T3(iteration), T4(iteration), T5(iteration), T6(iteration), T7(iteration), T8(iteration), T9(iteration), T10(iteration), T11(iteration), T12(iteration), T13(iteration), T14(iteration), T15(iteration), T16(iteration), T17(iteration), T18(iteration), T19(iteration), T20(iteration), T21(iteration), T22(iteration))
       )
     }
 

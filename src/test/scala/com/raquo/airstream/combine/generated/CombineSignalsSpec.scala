@@ -20,6 +20,19 @@ class CombineSignalsSpec extends UnitSpec {
   case class T7(v: Int) { def inc: T7 = T7(v+1) }
   case class T8(v: Int) { def inc: T8 = T8(v+1) }
   case class T9(v: Int) { def inc: T9 = T9(v+1) }
+  case class T10(v: Int) { def inc: T10 = T10(v+1) }
+  case class T11(v: Int) { def inc: T11 = T11(v+1) }
+  case class T12(v: Int) { def inc: T12 = T12(v+1) }
+  case class T13(v: Int) { def inc: T13 = T13(v+1) }
+  case class T14(v: Int) { def inc: T14 = T14(v+1) }
+  case class T15(v: Int) { def inc: T15 = T15(v+1) }
+  case class T16(v: Int) { def inc: T16 = T16(v+1) }
+  case class T17(v: Int) { def inc: T17 = T17(v+1) }
+  case class T18(v: Int) { def inc: T18 = T18(v+1) }
+  case class T19(v: Int) { def inc: T19 = T19(v+1) }
+  case class T20(v: Int) { def inc: T20 = T20(v+1) }
+  case class T21(v: Int) { def inc: T21 = T21(v+1) }
+  case class T22(v: Int) { def inc: T22 = T22(v+1) }
 
   it("CombineSignal2 works") {
 
@@ -450,6 +463,1124 @@ class CombineSignalsSpec extends UnitSpec {
           (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration), T9(1 + iteration)),
           (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration)),
           (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1))
+        )
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineSignal10 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val var1 = Var(T1(1))
+    val var2 = Var(T2(1))
+    val var3 = Var(T3(1))
+    val var4 = Var(T4(1))
+    val var5 = Var(T5(1))
+    val var6 = Var(T6(1))
+    val var7 = Var(T7(1))
+    val var8 = Var(T8(1))
+    val var9 = Var(T9(1))
+    val var10 = Var(T10(1))
+
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+
+    val subscription = combinedSignal.addObserver(observer)
+
+    // --
+
+    effects.toList shouldBe (List(
+      (T1(1), T2(1), T3(1), T4(1), T5(1), T6(1), T7(1), T8(1), T9(1), T10(1))
+    ))
+
+    // --
+
+    for (iteration <- 0 until 10) {
+      effects.clear()
+      var1.update(_.inc)
+      var2.update(_.inc)
+      var3.update(_.inc)
+      var4.update(_.inc)
+      var5.update(_.inc)
+      var6.update(_.inc)
+      var7.update(_.inc)
+      var8.update(_.inc)
+      var9.update(_.inc)
+      var10.update(_.inc)
+      effects.toList shouldBe (
+        List(
+          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration), T10(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1))
+        )
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineSignal11 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val var1 = Var(T1(1))
+    val var2 = Var(T2(1))
+    val var3 = Var(T3(1))
+    val var4 = Var(T4(1))
+    val var5 = Var(T5(1))
+    val var6 = Var(T6(1))
+    val var7 = Var(T7(1))
+    val var8 = Var(T8(1))
+    val var9 = Var(T9(1))
+    val var10 = Var(T10(1))
+    val var11 = Var(T11(1))
+
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+
+    val subscription = combinedSignal.addObserver(observer)
+
+    // --
+
+    effects.toList shouldBe (List(
+      (T1(1), T2(1), T3(1), T4(1), T5(1), T6(1), T7(1), T8(1), T9(1), T10(1), T11(1))
+    ))
+
+    // --
+
+    for (iteration <- 0 until 10) {
+      effects.clear()
+      var1.update(_.inc)
+      var2.update(_.inc)
+      var3.update(_.inc)
+      var4.update(_.inc)
+      var5.update(_.inc)
+      var6.update(_.inc)
+      var7.update(_.inc)
+      var8.update(_.inc)
+      var9.update(_.inc)
+      var10.update(_.inc)
+      var11.update(_.inc)
+      effects.toList shouldBe (
+        List(
+          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration), T11(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1))
+        )
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineSignal12 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val var1 = Var(T1(1))
+    val var2 = Var(T2(1))
+    val var3 = Var(T3(1))
+    val var4 = Var(T4(1))
+    val var5 = Var(T5(1))
+    val var6 = Var(T6(1))
+    val var7 = Var(T7(1))
+    val var8 = Var(T8(1))
+    val var9 = Var(T9(1))
+    val var10 = Var(T10(1))
+    val var11 = Var(T11(1))
+    val var12 = Var(T12(1))
+
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+
+    val subscription = combinedSignal.addObserver(observer)
+
+    // --
+
+    effects.toList shouldBe (List(
+      (T1(1), T2(1), T3(1), T4(1), T5(1), T6(1), T7(1), T8(1), T9(1), T10(1), T11(1), T12(1))
+    ))
+
+    // --
+
+    for (iteration <- 0 until 10) {
+      effects.clear()
+      var1.update(_.inc)
+      var2.update(_.inc)
+      var3.update(_.inc)
+      var4.update(_.inc)
+      var5.update(_.inc)
+      var6.update(_.inc)
+      var7.update(_.inc)
+      var8.update(_.inc)
+      var9.update(_.inc)
+      var10.update(_.inc)
+      var11.update(_.inc)
+      var12.update(_.inc)
+      effects.toList shouldBe (
+        List(
+          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration), T12(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1))
+        )
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineSignal13 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val var1 = Var(T1(1))
+    val var2 = Var(T2(1))
+    val var3 = Var(T3(1))
+    val var4 = Var(T4(1))
+    val var5 = Var(T5(1))
+    val var6 = Var(T6(1))
+    val var7 = Var(T7(1))
+    val var8 = Var(T8(1))
+    val var9 = Var(T9(1))
+    val var10 = Var(T10(1))
+    val var11 = Var(T11(1))
+    val var12 = Var(T12(1))
+    val var13 = Var(T13(1))
+
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, var13)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+
+    val subscription = combinedSignal.addObserver(observer)
+
+    // --
+
+    effects.toList shouldBe (List(
+      (T1(1), T2(1), T3(1), T4(1), T5(1), T6(1), T7(1), T8(1), T9(1), T10(1), T11(1), T12(1), T13(1))
+    ))
+
+    // --
+
+    for (iteration <- 0 until 10) {
+      effects.clear()
+      var1.update(_.inc)
+      var2.update(_.inc)
+      var3.update(_.inc)
+      var4.update(_.inc)
+      var5.update(_.inc)
+      var6.update(_.inc)
+      var7.update(_.inc)
+      var8.update(_.inc)
+      var9.update(_.inc)
+      var10.update(_.inc)
+      var11.update(_.inc)
+      var12.update(_.inc)
+      var13.update(_.inc)
+      effects.toList shouldBe (
+        List(
+          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration), T13(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1))
+        )
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineSignal14 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val var1 = Var(T1(1))
+    val var2 = Var(T2(1))
+    val var3 = Var(T3(1))
+    val var4 = Var(T4(1))
+    val var5 = Var(T5(1))
+    val var6 = Var(T6(1))
+    val var7 = Var(T7(1))
+    val var8 = Var(T8(1))
+    val var9 = Var(T9(1))
+    val var10 = Var(T10(1))
+    val var11 = Var(T11(1))
+    val var12 = Var(T12(1))
+    val var13 = Var(T13(1))
+    val var14 = Var(T14(1))
+
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, var13, var14)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+
+    val subscription = combinedSignal.addObserver(observer)
+
+    // --
+
+    effects.toList shouldBe (List(
+      (T1(1), T2(1), T3(1), T4(1), T5(1), T6(1), T7(1), T8(1), T9(1), T10(1), T11(1), T12(1), T13(1), T14(1))
+    ))
+
+    // --
+
+    for (iteration <- 0 until 10) {
+      effects.clear()
+      var1.update(_.inc)
+      var2.update(_.inc)
+      var3.update(_.inc)
+      var4.update(_.inc)
+      var5.update(_.inc)
+      var6.update(_.inc)
+      var7.update(_.inc)
+      var8.update(_.inc)
+      var9.update(_.inc)
+      var10.update(_.inc)
+      var11.update(_.inc)
+      var12.update(_.inc)
+      var13.update(_.inc)
+      var14.update(_.inc)
+      effects.toList shouldBe (
+        List(
+          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration), T14(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1))
+        )
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineSignal15 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val var1 = Var(T1(1))
+    val var2 = Var(T2(1))
+    val var3 = Var(T3(1))
+    val var4 = Var(T4(1))
+    val var5 = Var(T5(1))
+    val var6 = Var(T6(1))
+    val var7 = Var(T7(1))
+    val var8 = Var(T8(1))
+    val var9 = Var(T9(1))
+    val var10 = Var(T10(1))
+    val var11 = Var(T11(1))
+    val var12 = Var(T12(1))
+    val var13 = Var(T13(1))
+    val var14 = Var(T14(1))
+    val var15 = Var(T15(1))
+
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, var13, var14, var15)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+
+    val subscription = combinedSignal.addObserver(observer)
+
+    // --
+
+    effects.toList shouldBe (List(
+      (T1(1), T2(1), T3(1), T4(1), T5(1), T6(1), T7(1), T8(1), T9(1), T10(1), T11(1), T12(1), T13(1), T14(1), T15(1))
+    ))
+
+    // --
+
+    for (iteration <- 0 until 10) {
+      effects.clear()
+      var1.update(_.inc)
+      var2.update(_.inc)
+      var3.update(_.inc)
+      var4.update(_.inc)
+      var5.update(_.inc)
+      var6.update(_.inc)
+      var7.update(_.inc)
+      var8.update(_.inc)
+      var9.update(_.inc)
+      var10.update(_.inc)
+      var11.update(_.inc)
+      var12.update(_.inc)
+      var13.update(_.inc)
+      var14.update(_.inc)
+      var15.update(_.inc)
+      effects.toList shouldBe (
+        List(
+          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration), T15(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1))
+        )
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineSignal16 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val var1 = Var(T1(1))
+    val var2 = Var(T2(1))
+    val var3 = Var(T3(1))
+    val var4 = Var(T4(1))
+    val var5 = Var(T5(1))
+    val var6 = Var(T6(1))
+    val var7 = Var(T7(1))
+    val var8 = Var(T8(1))
+    val var9 = Var(T9(1))
+    val var10 = Var(T10(1))
+    val var11 = Var(T11(1))
+    val var12 = Var(T12(1))
+    val var13 = Var(T13(1))
+    val var14 = Var(T14(1))
+    val var15 = Var(T15(1))
+    val var16 = Var(T16(1))
+
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, var13, var14, var15, var16)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+
+    val subscription = combinedSignal.addObserver(observer)
+
+    // --
+
+    effects.toList shouldBe (List(
+      (T1(1), T2(1), T3(1), T4(1), T5(1), T6(1), T7(1), T8(1), T9(1), T10(1), T11(1), T12(1), T13(1), T14(1), T15(1), T16(1))
+    ))
+
+    // --
+
+    for (iteration <- 0 until 10) {
+      effects.clear()
+      var1.update(_.inc)
+      var2.update(_.inc)
+      var3.update(_.inc)
+      var4.update(_.inc)
+      var5.update(_.inc)
+      var6.update(_.inc)
+      var7.update(_.inc)
+      var8.update(_.inc)
+      var9.update(_.inc)
+      var10.update(_.inc)
+      var11.update(_.inc)
+      var12.update(_.inc)
+      var13.update(_.inc)
+      var14.update(_.inc)
+      var15.update(_.inc)
+      var16.update(_.inc)
+      effects.toList shouldBe (
+        List(
+          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration), T16(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1))
+        )
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineSignal17 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val var1 = Var(T1(1))
+    val var2 = Var(T2(1))
+    val var3 = Var(T3(1))
+    val var4 = Var(T4(1))
+    val var5 = Var(T5(1))
+    val var6 = Var(T6(1))
+    val var7 = Var(T7(1))
+    val var8 = Var(T8(1))
+    val var9 = Var(T9(1))
+    val var10 = Var(T10(1))
+    val var11 = Var(T11(1))
+    val var12 = Var(T12(1))
+    val var13 = Var(T13(1))
+    val var14 = Var(T14(1))
+    val var15 = Var(T15(1))
+    val var16 = Var(T16(1))
+    val var17 = Var(T17(1))
+
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, var13, var14, var15, var16, var17)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+
+    val subscription = combinedSignal.addObserver(observer)
+
+    // --
+
+    effects.toList shouldBe (List(
+      (T1(1), T2(1), T3(1), T4(1), T5(1), T6(1), T7(1), T8(1), T9(1), T10(1), T11(1), T12(1), T13(1), T14(1), T15(1), T16(1), T17(1))
+    ))
+
+    // --
+
+    for (iteration <- 0 until 10) {
+      effects.clear()
+      var1.update(_.inc)
+      var2.update(_.inc)
+      var3.update(_.inc)
+      var4.update(_.inc)
+      var5.update(_.inc)
+      var6.update(_.inc)
+      var7.update(_.inc)
+      var8.update(_.inc)
+      var9.update(_.inc)
+      var10.update(_.inc)
+      var11.update(_.inc)
+      var12.update(_.inc)
+      var13.update(_.inc)
+      var14.update(_.inc)
+      var15.update(_.inc)
+      var16.update(_.inc)
+      var17.update(_.inc)
+      effects.toList shouldBe (
+        List(
+          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration), T17(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1))
+        )
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineSignal18 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val var1 = Var(T1(1))
+    val var2 = Var(T2(1))
+    val var3 = Var(T3(1))
+    val var4 = Var(T4(1))
+    val var5 = Var(T5(1))
+    val var6 = Var(T6(1))
+    val var7 = Var(T7(1))
+    val var8 = Var(T8(1))
+    val var9 = Var(T9(1))
+    val var10 = Var(T10(1))
+    val var11 = Var(T11(1))
+    val var12 = Var(T12(1))
+    val var13 = Var(T13(1))
+    val var14 = Var(T14(1))
+    val var15 = Var(T15(1))
+    val var16 = Var(T16(1))
+    val var17 = Var(T17(1))
+    val var18 = Var(T18(1))
+
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, var13, var14, var15, var16, var17, var18)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+
+    val subscription = combinedSignal.addObserver(observer)
+
+    // --
+
+    effects.toList shouldBe (List(
+      (T1(1), T2(1), T3(1), T4(1), T5(1), T6(1), T7(1), T8(1), T9(1), T10(1), T11(1), T12(1), T13(1), T14(1), T15(1), T16(1), T17(1), T18(1))
+    ))
+
+    // --
+
+    for (iteration <- 0 until 10) {
+      effects.clear()
+      var1.update(_.inc)
+      var2.update(_.inc)
+      var3.update(_.inc)
+      var4.update(_.inc)
+      var5.update(_.inc)
+      var6.update(_.inc)
+      var7.update(_.inc)
+      var8.update(_.inc)
+      var9.update(_.inc)
+      var10.update(_.inc)
+      var11.update(_.inc)
+      var12.update(_.inc)
+      var13.update(_.inc)
+      var14.update(_.inc)
+      var15.update(_.inc)
+      var16.update(_.inc)
+      var17.update(_.inc)
+      var18.update(_.inc)
+      effects.toList shouldBe (
+        List(
+          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration), T18(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration + 1))
+        )
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineSignal19 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val var1 = Var(T1(1))
+    val var2 = Var(T2(1))
+    val var3 = Var(T3(1))
+    val var4 = Var(T4(1))
+    val var5 = Var(T5(1))
+    val var6 = Var(T6(1))
+    val var7 = Var(T7(1))
+    val var8 = Var(T8(1))
+    val var9 = Var(T9(1))
+    val var10 = Var(T10(1))
+    val var11 = Var(T11(1))
+    val var12 = Var(T12(1))
+    val var13 = Var(T13(1))
+    val var14 = Var(T14(1))
+    val var15 = Var(T15(1))
+    val var16 = Var(T16(1))
+    val var17 = Var(T17(1))
+    val var18 = Var(T18(1))
+    val var19 = Var(T19(1))
+
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, var13, var14, var15, var16, var17, var18, var19)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+
+    val subscription = combinedSignal.addObserver(observer)
+
+    // --
+
+    effects.toList shouldBe (List(
+      (T1(1), T2(1), T3(1), T4(1), T5(1), T6(1), T7(1), T8(1), T9(1), T10(1), T11(1), T12(1), T13(1), T14(1), T15(1), T16(1), T17(1), T18(1), T19(1))
+    ))
+
+    // --
+
+    for (iteration <- 0 until 10) {
+      effects.clear()
+      var1.update(_.inc)
+      var2.update(_.inc)
+      var3.update(_.inc)
+      var4.update(_.inc)
+      var5.update(_.inc)
+      var6.update(_.inc)
+      var7.update(_.inc)
+      var8.update(_.inc)
+      var9.update(_.inc)
+      var10.update(_.inc)
+      var11.update(_.inc)
+      var12.update(_.inc)
+      var13.update(_.inc)
+      var14.update(_.inc)
+      var15.update(_.inc)
+      var16.update(_.inc)
+      var17.update(_.inc)
+      var18.update(_.inc)
+      var19.update(_.inc)
+      effects.toList shouldBe (
+        List(
+          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration + 1), T19(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration + 1), T19(1 + iteration + 1))
+        )
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineSignal20 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val var1 = Var(T1(1))
+    val var2 = Var(T2(1))
+    val var3 = Var(T3(1))
+    val var4 = Var(T4(1))
+    val var5 = Var(T5(1))
+    val var6 = Var(T6(1))
+    val var7 = Var(T7(1))
+    val var8 = Var(T8(1))
+    val var9 = Var(T9(1))
+    val var10 = Var(T10(1))
+    val var11 = Var(T11(1))
+    val var12 = Var(T12(1))
+    val var13 = Var(T13(1))
+    val var14 = Var(T14(1))
+    val var15 = Var(T15(1))
+    val var16 = Var(T16(1))
+    val var17 = Var(T17(1))
+    val var18 = Var(T18(1))
+    val var19 = Var(T19(1))
+    val var20 = Var(T20(1))
+
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, var13, var14, var15, var16, var17, var18, var19, var20)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+
+    val subscription = combinedSignal.addObserver(observer)
+
+    // --
+
+    effects.toList shouldBe (List(
+      (T1(1), T2(1), T3(1), T4(1), T5(1), T6(1), T7(1), T8(1), T9(1), T10(1), T11(1), T12(1), T13(1), T14(1), T15(1), T16(1), T17(1), T18(1), T19(1), T20(1))
+    ))
+
+    // --
+
+    for (iteration <- 0 until 10) {
+      effects.clear()
+      var1.update(_.inc)
+      var2.update(_.inc)
+      var3.update(_.inc)
+      var4.update(_.inc)
+      var5.update(_.inc)
+      var6.update(_.inc)
+      var7.update(_.inc)
+      var8.update(_.inc)
+      var9.update(_.inc)
+      var10.update(_.inc)
+      var11.update(_.inc)
+      var12.update(_.inc)
+      var13.update(_.inc)
+      var14.update(_.inc)
+      var15.update(_.inc)
+      var16.update(_.inc)
+      var17.update(_.inc)
+      var18.update(_.inc)
+      var19.update(_.inc)
+      var20.update(_.inc)
+      effects.toList shouldBe (
+        List(
+          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration + 1), T19(1 + iteration), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration + 1), T19(1 + iteration + 1), T20(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration + 1), T19(1 + iteration + 1), T20(1 + iteration + 1))
+        )
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineSignal21 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val var1 = Var(T1(1))
+    val var2 = Var(T2(1))
+    val var3 = Var(T3(1))
+    val var4 = Var(T4(1))
+    val var5 = Var(T5(1))
+    val var6 = Var(T6(1))
+    val var7 = Var(T7(1))
+    val var8 = Var(T8(1))
+    val var9 = Var(T9(1))
+    val var10 = Var(T10(1))
+    val var11 = Var(T11(1))
+    val var12 = Var(T12(1))
+    val var13 = Var(T13(1))
+    val var14 = Var(T14(1))
+    val var15 = Var(T15(1))
+    val var16 = Var(T16(1))
+    val var17 = Var(T17(1))
+    val var18 = Var(T18(1))
+    val var19 = Var(T19(1))
+    val var20 = Var(T20(1))
+    val var21 = Var(T21(1))
+
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, var13, var14, var15, var16, var17, var18, var19, var20, var21)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+
+    val subscription = combinedSignal.addObserver(observer)
+
+    // --
+
+    effects.toList shouldBe (List(
+      (T1(1), T2(1), T3(1), T4(1), T5(1), T6(1), T7(1), T8(1), T9(1), T10(1), T11(1), T12(1), T13(1), T14(1), T15(1), T16(1), T17(1), T18(1), T19(1), T20(1), T21(1))
+    ))
+
+    // --
+
+    for (iteration <- 0 until 10) {
+      effects.clear()
+      var1.update(_.inc)
+      var2.update(_.inc)
+      var3.update(_.inc)
+      var4.update(_.inc)
+      var5.update(_.inc)
+      var6.update(_.inc)
+      var7.update(_.inc)
+      var8.update(_.inc)
+      var9.update(_.inc)
+      var10.update(_.inc)
+      var11.update(_.inc)
+      var12.update(_.inc)
+      var13.update(_.inc)
+      var14.update(_.inc)
+      var15.update(_.inc)
+      var16.update(_.inc)
+      var17.update(_.inc)
+      var18.update(_.inc)
+      var19.update(_.inc)
+      var20.update(_.inc)
+      var21.update(_.inc)
+      effects.toList shouldBe (
+        List(
+          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration + 1), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration + 1), T19(1 + iteration + 1), T20(1 + iteration), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration + 1), T19(1 + iteration + 1), T20(1 + iteration + 1), T21(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration + 1), T19(1 + iteration + 1), T20(1 + iteration + 1), T21(1 + iteration + 1))
+        )
+      )
+    }
+
+    subscription.kill()
+  }
+
+  it("CombineSignal22 works") {
+
+    implicit val testOwner: TestableOwner = new TestableOwner
+
+    val var1 = Var(T1(1))
+    val var2 = Var(T2(1))
+    val var3 = Var(T3(1))
+    val var4 = Var(T4(1))
+    val var5 = Var(T5(1))
+    val var6 = Var(T6(1))
+    val var7 = Var(T7(1))
+    val var8 = Var(T8(1))
+    val var9 = Var(T9(1))
+    val var10 = Var(T10(1))
+    val var11 = Var(T11(1))
+    val var12 = Var(T12(1))
+    val var13 = Var(T13(1))
+    val var14 = Var(T14(1))
+    val var15 = Var(T15(1))
+    val var16 = Var(T16(1))
+    val var17 = Var(T17(1))
+    val var18 = Var(T18(1))
+    val var19 = Var(T19(1))
+    val var20 = Var(T20(1))
+    val var21 = Var(T21(1))
+    val var22 = Var(T22(1))
+
+    val combinedSignal = Signal.combine(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, var13, var14, var15, var16, var17, var18, var19, var20, var21, var22)
+
+    val effects = mutable.Buffer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22)]()
+
+    val observer = Observer[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22)](effects += _)
+
+    // --
+
+    effects.shouldBeEmpty
+
+    // --
+
+    val subscription = combinedSignal.addObserver(observer)
+
+    // --
+
+    effects.toList shouldBe (List(
+      (T1(1), T2(1), T3(1), T4(1), T5(1), T6(1), T7(1), T8(1), T9(1), T10(1), T11(1), T12(1), T13(1), T14(1), T15(1), T16(1), T17(1), T18(1), T19(1), T20(1), T21(1), T22(1))
+    ))
+
+    // --
+
+    for (iteration <- 0 until 10) {
+      effects.clear()
+      var1.update(_.inc)
+      var2.update(_.inc)
+      var3.update(_.inc)
+      var4.update(_.inc)
+      var5.update(_.inc)
+      var6.update(_.inc)
+      var7.update(_.inc)
+      var8.update(_.inc)
+      var9.update(_.inc)
+      var10.update(_.inc)
+      var11.update(_.inc)
+      var12.update(_.inc)
+      var13.update(_.inc)
+      var14.update(_.inc)
+      var15.update(_.inc)
+      var16.update(_.inc)
+      var17.update(_.inc)
+      var18.update(_.inc)
+      var19.update(_.inc)
+      var20.update(_.inc)
+      var21.update(_.inc)
+      var22.update(_.inc)
+      effects.toList shouldBe (
+        List(
+          (T1(1 + iteration + 1), T2(1 + iteration), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration + 1), T19(1 + iteration), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration + 1), T19(1 + iteration + 1), T20(1 + iteration), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration + 1), T19(1 + iteration + 1), T20(1 + iteration + 1), T21(1 + iteration), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration + 1), T19(1 + iteration + 1), T20(1 + iteration + 1), T21(1 + iteration + 1), T22(1 + iteration)),
+          (T1(1 + iteration + 1), T2(1 + iteration + 1), T3(1 + iteration + 1), T4(1 + iteration + 1), T5(1 + iteration + 1), T6(1 + iteration + 1), T7(1 + iteration + 1), T8(1 + iteration + 1), T9(1 + iteration + 1), T10(1 + iteration + 1), T11(1 + iteration + 1), T12(1 + iteration + 1), T13(1 + iteration + 1), T14(1 + iteration + 1), T15(1 + iteration + 1), T16(1 + iteration + 1), T17(1 + iteration + 1), T18(1 + iteration + 1), T19(1 + iteration + 1), T20(1 + iteration + 1), T21(1 + iteration + 1), T22(1 + iteration + 1))
         )
       )
     }

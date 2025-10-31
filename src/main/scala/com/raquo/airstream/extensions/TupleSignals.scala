@@ -111,3 +111,172 @@ class TupleSignal9[T1, T2, T3, T4, T5, T6, T7, T8, T9](val signal: Signal[(T1, T
 
 // --
 
+class TupleSignal10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) => Out): Signal[Out] = {
+    new MapSignal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10), Out](
+      parent = signal,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10),
+      recover = None
+    )
+  }
+}
+
+// --
+
+class TupleSignal11[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11) => Out): Signal[Out] = {
+    new MapSignal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11), Out](
+      parent = signal,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11),
+      recover = None
+    )
+  }
+}
+
+// --
+
+class TupleSignal12[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12) => Out): Signal[Out] = {
+    new MapSignal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12), Out](
+      parent = signal,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12),
+      recover = None
+    )
+  }
+}
+
+// --
+
+class TupleSignal13[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13) => Out): Signal[Out] = {
+    new MapSignal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13), Out](
+      parent = signal,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13),
+      recover = None
+    )
+  }
+}
+
+// --
+
+class TupleSignal14[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14) => Out): Signal[Out] = {
+    new MapSignal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14), Out](
+      parent = signal,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14),
+      recover = None
+    )
+  }
+}
+
+// --
+
+class TupleSignal15[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15) => Out): Signal[Out] = {
+    new MapSignal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15), Out](
+      parent = signal,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15),
+      recover = None
+    )
+  }
+}
+
+// --
+
+class TupleSignal16[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16) => Out): Signal[Out] = {
+    new MapSignal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16), Out](
+      parent = signal,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16),
+      recover = None
+    )
+  }
+}
+
+// --
+
+class TupleSignal17[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17](val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17) => Out): Signal[Out] = {
+    new MapSignal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17), Out](
+      parent = signal,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17),
+      recover = None
+    )
+  }
+}
+
+// --
+
+class TupleSignal18[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18](val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18) => Out): Signal[Out] = {
+    new MapSignal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18), Out](
+      parent = signal,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17, v._18),
+      recover = None
+    )
+  }
+}
+
+// --
+
+class TupleSignal19[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19](val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19) => Out): Signal[Out] = {
+    new MapSignal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19), Out](
+      parent = signal,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17, v._18, v._19),
+      recover = None
+    )
+  }
+}
+
+// --
+
+class TupleSignal20[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20](val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20) => Out): Signal[Out] = {
+    new MapSignal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20), Out](
+      parent = signal,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17, v._18, v._19, v._20),
+      recover = None
+    )
+  }
+}
+
+// --
+
+class TupleSignal21[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21](val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21) => Out): Signal[Out] = {
+    new MapSignal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21), Out](
+      parent = signal,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17, v._18, v._19, v._20, v._21),
+      recover = None
+    )
+  }
+}
+
+// --
+
+class TupleSignal22[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22](val signal: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22) => Out): Signal[Out] = {
+    new MapSignal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22), Out](
+      parent = signal,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17, v._18, v._19, v._20, v._21, v._22),
+      recover = None
+    )
+  }
+}
+
+// --
+

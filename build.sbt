@@ -33,7 +33,7 @@ mimaPreviousArtifacts := Set("com.raquo" %%% "airstream" % "17.1.0")
 
 libraryDependencies ++= Seq(
   "org.scala-js" %%% "scalajs-dom" % Versions.ScalaJsDom,
-  "app.tulz" %%% "tuplez-full-light" % Versions.Tuplez,
+  "app.tulz" %%% "tuplez-full" % Versions.Tuplez,
   "com.raquo" %%% "ew" % Versions.Ew,
   "org.scalatest" %%% "scalatest" % Versions.ScalaTest % Test
 )
@@ -128,7 +128,7 @@ scalaJSUseMainModuleInitializer := true
 // -- Code generators for N-arity functionality
 
 val generateTupleCombinatorsFrom = 2
-val generateTupleCombinatorsTo = 9
+val generateTupleCombinatorsTo = 22
 
 Compile / sourceGenerators += Def.task {
   Seq.concat(

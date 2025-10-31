@@ -167,3 +167,263 @@ class TupleStream9[T1, T2, T3, T4, T5, T6, T7, T8, T9](val stream: EventStream[(
 
 // --
 
+class TupleStream10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) => Out): EventStream[Out] = {
+    new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10), Out](
+      parent = stream,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10),
+      recover = None
+    )
+  }
+
+  def filterN(passes: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)] = {
+    new FilterStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)](
+      parent = stream,
+      passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10)
+    )
+  }
+}
+
+// --
+
+class TupleStream11[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11) => Out): EventStream[Out] = {
+    new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11), Out](
+      parent = stream,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11),
+      recover = None
+    )
+  }
+
+  def filterN(passes: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)] = {
+    new FilterStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)](
+      parent = stream,
+      passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11)
+    )
+  }
+}
+
+// --
+
+class TupleStream12[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12) => Out): EventStream[Out] = {
+    new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12), Out](
+      parent = stream,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12),
+      recover = None
+    )
+  }
+
+  def filterN(passes: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)] = {
+    new FilterStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)](
+      parent = stream,
+      passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12)
+    )
+  }
+}
+
+// --
+
+class TupleStream13[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13) => Out): EventStream[Out] = {
+    new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13), Out](
+      parent = stream,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13),
+      recover = None
+    )
+  }
+
+  def filterN(passes: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)] = {
+    new FilterStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)](
+      parent = stream,
+      passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13)
+    )
+  }
+}
+
+// --
+
+class TupleStream14[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14) => Out): EventStream[Out] = {
+    new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14), Out](
+      parent = stream,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14),
+      recover = None
+    )
+  }
+
+  def filterN(passes: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)] = {
+    new FilterStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)](
+      parent = stream,
+      passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14)
+    )
+  }
+}
+
+// --
+
+class TupleStream15[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15) => Out): EventStream[Out] = {
+    new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15), Out](
+      parent = stream,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15),
+      recover = None
+    )
+  }
+
+  def filterN(passes: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)] = {
+    new FilterStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)](
+      parent = stream,
+      passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15)
+    )
+  }
+}
+
+// --
+
+class TupleStream16[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16) => Out): EventStream[Out] = {
+    new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16), Out](
+      parent = stream,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16),
+      recover = None
+    )
+  }
+
+  def filterN(passes: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16)] = {
+    new FilterStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16)](
+      parent = stream,
+      passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16)
+    )
+  }
+}
+
+// --
+
+class TupleStream17[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17) => Out): EventStream[Out] = {
+    new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17), Out](
+      parent = stream,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17),
+      recover = None
+    )
+  }
+
+  def filterN(passes: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17)] = {
+    new FilterStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17)](
+      parent = stream,
+      passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17)
+    )
+  }
+}
+
+// --
+
+class TupleStream18[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18) => Out): EventStream[Out] = {
+    new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18), Out](
+      parent = stream,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17, v._18),
+      recover = None
+    )
+  }
+
+  def filterN(passes: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18)] = {
+    new FilterStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18)](
+      parent = stream,
+      passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17, v._18)
+    )
+  }
+}
+
+// --
+
+class TupleStream19[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19) => Out): EventStream[Out] = {
+    new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19), Out](
+      parent = stream,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17, v._18, v._19),
+      recover = None
+    )
+  }
+
+  def filterN(passes: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19)] = {
+    new FilterStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19)](
+      parent = stream,
+      passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17, v._18, v._19)
+    )
+  }
+}
+
+// --
+
+class TupleStream20[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20) => Out): EventStream[Out] = {
+    new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20), Out](
+      parent = stream,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17, v._18, v._19, v._20),
+      recover = None
+    )
+  }
+
+  def filterN(passes: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)] = {
+    new FilterStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)](
+      parent = stream,
+      passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17, v._18, v._19, v._20)
+    )
+  }
+}
+
+// --
+
+class TupleStream21[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21) => Out): EventStream[Out] = {
+    new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21), Out](
+      parent = stream,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17, v._18, v._19, v._20, v._21),
+      recover = None
+    )
+  }
+
+  def filterN(passes: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)] = {
+    new FilterStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)](
+      parent = stream,
+      passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17, v._18, v._19, v._20, v._21)
+    )
+  }
+}
+
+// --
+
+class TupleStream22[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22)]) extends AnyVal {
+
+  def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22) => Out): EventStream[Out] = {
+    new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22), Out](
+      parent = stream,
+      project = v => project(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17, v._18, v._19, v._20, v._21, v._22),
+      recover = None
+    )
+  }
+
+  def filterN(passes: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22) => Boolean): EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22)] = {
+    new FilterStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22)](
+      parent = stream,
+      passes = v => passes(v._1, v._2, v._3, v._4, v._5, v._6, v._7, v._8, v._9, v._10, v._11, v._12, v._13, v._14, v._15, v._16, v._17, v._18, v._19, v._20, v._21, v._22)
+    )
+  }
+}
+
+// --
+
