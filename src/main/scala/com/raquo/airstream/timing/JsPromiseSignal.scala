@@ -11,7 +11,7 @@ class JsPromiseSignal[A](promise: => js.Promise[A]) extends WritableSignal[Optio
 
   private var promiseSubscribed: Boolean = false
 
-  private lazy val cachedPromise = promise
+  private lazy val lazyPromise = promise
 
   // #Note: It is not possible to synchronously get a Javascript promise's value,
   //  or even to check if it has been resolved, so we have to start this signal with None
@@ -24,17 +24,21 @@ class JsPromiseSignal[A](promise: => js.Promise[A]) extends WritableSignal[Optio
   override protected def onWillStart(): Unit = {
     if (!promiseSubscribed) {
       promiseSubscribed = true
-      cachedPromise.`then`[Unit](
-        (nextValue: A) => {
-          onPromiseResolved(Success(nextValue))
-        },
-        js.defined { (rawException: Any) =>
-          val nextError = rawException match {
-            case th: Throwable => th
-            case _ => js.JavaScriptException(rawException)
+      lazyPromise.asInstanceOf[js.Dynamic].applyDynamic("then")( // #TODO[Scala] Can't use scala.js `then` method because https://github.com/scala/scala3/issues/20476
+        (
+          (nextValue: A) => {
+            onPromiseResolved(Success(nextValue))
           }
-          onPromiseResolved(Failure(nextError))
-        }
+        ): js.Function1[A, Unit],
+        (
+          (rawException: Any) => {
+            val nextError = rawException match {
+              case th: Throwable => th
+              case _ => js.JavaScriptException(rawException)
+            }
+            onPromiseResolved(Failure(nextError))
+          }
+        ): js.Function1[Any, Unit]
       )
     }
   }

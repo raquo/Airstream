@@ -34,23 +34,25 @@ class JsPromiseStream[A](
         shouldSubscribe = false
       }
       isPending = true
-      lazyPromise.`then`[Unit](
-        (nextValue: A) => {
-          isPending = false
-          // println(s"> init trx from FutureEventStream.init($nextValue)")
-          Transaction(fireValue(nextValue, _))
-          (): Unit | js.Thenable[Unit]
-        },
-        js.defined { (rawException: Any) =>
-          isPending = false
-          val nextError = rawException match {
-            case th: Throwable => th
-            case _ => js.JavaScriptException(rawException)
+      lazyPromise.asInstanceOf[js.Dynamic].applyDynamic("then")( // #TODO[Scala] Can't use scala.js `then` method because https://github.com/scala/scala3/issues/20476
+        (
+          (nextValue: A) => {
+            isPending = false
+            // println(s"> init trx from FutureEventStream.init($nextValue)")
+            Transaction(fireValue(nextValue, _))
           }
-          // println(s"> init trx from JsPromiseEventStream.init($nextError)")
-          Transaction(fireError(nextError, _))
-          (): Unit | js.Thenable[Unit]
-        }
+        ): js.Function1[A, Unit],
+        (
+          (rawException: Any) => {
+            isPending = false
+            val nextError = rawException match {
+              case th: Throwable => th
+              case _ => js.JavaScriptException(rawException)
+            }
+            // println(s"> init trx from JsPromiseEventStream.init($nextError)")
+            Transaction(fireError(nextError, _))
+          }
+        ): js.Function1[Any, Unit]
       )
     }
   }
