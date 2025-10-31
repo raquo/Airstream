@@ -6,7 +6,9 @@ import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import org.scalatest.{Assertion, BeforeAndAfter}
 
 import scala.collection.mutable
-import scala.concurrent.Promise
+import scala.concurrent.{Future, Promise}
+import scala.scalajs.concurrent.JSExecutionContext.queue
+import scala.scalajs.js.JSConverters.JSRichFutureNonThenable
 
 class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
 
@@ -38,7 +40,7 @@ class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
   }
 
   it("asynchronously emits a future value") {
-    val promise = makePromise()
+    lazy val promise = makePromise()
     val signal = makeSignal(promise)
 
     calculations shouldBe mutable.Buffer()
@@ -113,6 +115,81 @@ class SignalFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
           effects shouldBe mutable.Buffer()
         }
       }
+    }
+  }
+
+  it("future and promise args are evaluated lazily") {
+    var counter1 = 0
+    var counter2 = 0
+    var counter3 = 0
+    var counter4 = 0
+
+    def future1 = {
+      counter1 += 1
+      Future.successful(1)
+    }
+
+    def future2 = {
+      counter2 += 1
+      Future.successful(2)
+    }
+
+    def future3 = {
+      counter3 += 1
+      Future.successful(3)
+    }
+
+    def future4 = {
+      counter4 += 1
+      Future.successful(4)
+    }
+
+    val signal1 = Signal.fromFuture(future1)
+    val signal2 = Signal.fromFuture(future2, initial = 0)
+    val signal3 = Signal.fromJsPromise(future3.toJSPromise)
+    val signal4 = Signal.fromJsPromise(future4.toJSPromise, initial = 0)
+
+    val owner = new TestableOwner
+
+    delay {
+      assertEquals(counter1, 0)
+      assertEquals(counter2, 0)
+      assertEquals(counter3, 0)
+      assertEquals(counter4, 0)
+
+      // --
+
+      val subs1 = List(
+        signal1.foreach(_ => ())(owner),
+        signal2.foreach(_ => ())(owner),
+        signal3.foreach(_ => ())(owner),
+        signal4.foreach(_ => ())(owner)
+      )
+
+      assertEquals(counter1, 1)
+      assertEquals(counter2, 1)
+      assertEquals(counter3, 1)
+      assertEquals(counter4, 1)
+
+      subs1.foreach(_.kill())
+
+      // --
+
+      val subs2 = List(
+        signal1.foreach(_ => ())(owner),
+        signal2.foreach(_ => ())(owner),
+        signal3.foreach(_ => ())(owner),
+        signal4.foreach(_ => ())(owner)
+      )
+
+      subs2.foreach(_.kill())
+
+      // lazy val semantics #TODO[API] that's what we want, right?
+
+      assertEquals(counter1, 1)
+      assertEquals(counter2, 1)
+      assertEquals(counter3, 1)
+      assertEquals(counter4, 1)
     }
   }
 

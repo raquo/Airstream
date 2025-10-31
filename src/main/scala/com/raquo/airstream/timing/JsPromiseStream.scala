@@ -12,7 +12,10 @@ import scala.scalajs.js.|
   *
   * @param promise Note: guarded against failures
   */
-class JsPromiseStream[A](promise: js.Promise[A], emitOnce: Boolean) extends WritableStream[A] {
+class JsPromiseStream[A](
+  promise: => js.Promise[A],
+  emitOnce: Boolean
+) extends WritableStream[A] {
 
   override protected val topoRank: Int = 1
 
@@ -23,13 +26,15 @@ class JsPromiseStream[A](promise: js.Promise[A], emitOnce: Boolean) extends Writ
 
   private var isPending: Boolean = false
 
+  private lazy val lazyPromise = promise
+
   override protected def onWillStart(): Unit = {
     if (shouldSubscribe && !isPending) {
       if (emitOnce) {
         shouldSubscribe = false
       }
       isPending = true
-      promise.`then`[Unit](
+      lazyPromise.`then`[Unit](
         (nextValue: A) => {
           isPending = false
           // println(s"> init trx from FutureEventStream.init($nextValue)")

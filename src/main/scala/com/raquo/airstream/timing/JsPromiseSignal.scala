@@ -5,11 +5,13 @@ import com.raquo.airstream.core.{Transaction, WritableSignal}
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
-class JsPromiseSignal[A](promise: js.Promise[A]) extends WritableSignal[Option[A]] {
+class JsPromiseSignal[A](promise: => js.Promise[A]) extends WritableSignal[Option[A]] {
 
   override protected val topoRank: Int = 1
 
   private var promiseSubscribed: Boolean = false
+
+  private lazy val cachedPromise = promise
 
   // #Note: It is not possible to synchronously get a Javascript promise's value,
   //  or even to check if it has been resolved, so we have to start this signal with None
@@ -22,7 +24,7 @@ class JsPromiseSignal[A](promise: js.Promise[A]) extends WritableSignal[Option[A
   override protected def onWillStart(): Unit = {
     if (!promiseSubscribed) {
       promiseSubscribed = true
-      promise.`then`[Unit](
+      cachedPromise.`then`[Unit](
         (nextValue: A) => {
           onPromiseResolved(Success(nextValue))
         },

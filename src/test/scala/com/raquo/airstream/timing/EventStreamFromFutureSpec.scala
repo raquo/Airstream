@@ -6,7 +6,9 @@ import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import org.scalatest.{Assertion, BeforeAndAfter}
 
 import scala.collection.mutable
-import scala.concurrent.Promise
+import scala.concurrent.{Future, Promise}
+import scala.scalajs.concurrent.JSExecutionContext.queue
+import scala.scalajs.js.JSConverters.JSRichFutureNonThenable
 
 class EventStreamFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
 
@@ -138,6 +140,57 @@ class EventStreamFromFutureSpec extends AsyncUnitSpec with BeforeAndAfter {
           effects shouldBe mutable.Buffer()
         }
       }
+    }
+  }
+
+  it("future and promise args are evaluated lazily") {
+    var counter1 = 0
+    var counter2 = 0
+
+    def future1 = {
+      counter1 += 1
+      Future.successful(1)
+    }
+
+    def future2 = {
+      counter2 += 1
+      Future.successful(2)
+    }
+
+    val signal1 = EventStream.fromFuture(future1)
+    val signal2 = EventStream.fromJsPromise(future2.toJSPromise)
+
+    val owner = new TestableOwner
+
+    delay {
+      assertEquals(counter1, 0)
+      assertEquals(counter2, 0)
+
+      // --
+
+      val subs1 = List(
+        signal1.foreach(_ => ())(owner),
+        signal2.foreach(_ => ())(owner),
+      )
+
+      assertEquals(counter1, 1)
+      assertEquals(counter2, 1)
+
+      subs1.foreach(_.kill())
+
+      // --
+
+      val subs2 = List(
+        signal1.foreach(_ => ())(owner),
+        signal2.foreach(_ => ())(owner),
+      )
+
+      subs2.foreach(_.kill())
+
+      // lazy val semantics #TODO[API] that's what we want, right?
+
+      assertEquals(counter1, 1)
+      assertEquals(counter2, 1)
     }
   }
 }

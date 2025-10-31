@@ -382,11 +382,11 @@ object EventStream {
     )
   }
 
-  def fromFuture[A](future: Future[A], emitOnce: Boolean = false)(implicit ec: ExecutionContext): EventStream[A] = {
+  def fromFuture[A](future: => Future[A], emitOnce: Boolean = false)(implicit ec: ExecutionContext): EventStream[A] = {
     fromJsPromise(future.toJSPromise(ec), emitOnce)
   }
 
-  def fromJsPromise[A](promise: js.Promise[A], emitOnce: Boolean = false): EventStream[A] = {
+  def fromJsPromise[A](promise: => js.Promise[A], emitOnce: Boolean = false): EventStream[A] = {
     new JsPromiseStream[A](promise, emitOnce)
   }
 

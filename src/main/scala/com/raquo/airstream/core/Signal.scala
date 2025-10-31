@@ -206,7 +206,7 @@ object Signal {
     * Once the future resolves (or after a minimal async delay if it's already resolved),
     * the signal's value will be updated to the future's resolved value.
     */
-  def fromFuture[A](future: Future[A])(implicit ec: ExecutionContext): Signal[Option[A]] = {
+  def fromFuture[A](future: => Future[A])(implicit ec: ExecutionContext): Signal[Option[A]] = {
     fromJsPromise(future.toJSPromise(ec))
   }
 
@@ -214,7 +214,7 @@ object Signal {
     * Once the future resolves (or after a minimal async delay if it's already resolved),
     * the signal's value will be updated to the future's resolved value.
     */
-  def fromFuture[A](future: Future[A], initial: => A)(implicit ec: ExecutionContext): Signal[A] = {
+  def fromFuture[A](future: => Future[A], initial: => A)(implicit ec: ExecutionContext): Signal[A] = {
     fromJsPromise(future.toJSPromise(ec), initial)
   }
 
@@ -222,7 +222,7 @@ object Signal {
     * Once the promise resolves (or after a minimal async delay if it's already resolved),
     * the signal's value will be updated to the promise's resolved value.
     */
-  def fromJsPromise[A](promise: js.Promise[A]): Signal[Option[A]] = {
+  def fromJsPromise[A](promise: => js.Promise[A]): Signal[Option[A]] = {
     new JsPromiseSignal(promise)
   }
 
@@ -230,7 +230,7 @@ object Signal {
     * Once the promise resolves (or after a minimal async delay if it's already resolved),
     * the signal's value will be updated to the promise's resolved value.
     */
-  def fromJsPromise[A](promise: js.Promise[A], initial: => A): Signal[A] = {
+  def fromJsPromise[A](promise: => js.Promise[A], initial: => A): Signal[A] = {
     new JsPromiseSignal(promise).map {
       case None => initial
       case Some(value) => value
