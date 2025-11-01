@@ -7,6 +7,7 @@ import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.debug.{DebuggableStream, Debugger, DebuggerStream}
 import com.raquo.airstream.distinct.DistinctStream
+import com.raquo.airstream.dynamicImport.{SignalObjDynamicImportOps, StreamDynamicImportOps, StreamObjDynamicImportOps}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.extensions._
 import com.raquo.airstream.javaflow.FlowPublisherStream
@@ -23,7 +24,12 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 import scala.util.{Failure, Success, Try}
 
-trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] with EventSource[A] {
+trait EventStream[+A]
+extends Observable[A]
+with BaseObservable[EventStream, A]
+with EventSource[A]
+with StreamDynamicImportOps[A] // Provides `dynamicImport` method (Scala 3 only)
+{
 
   override def map[B](project: A => B): EventStream[B] = {
     new MapStream(this, project, recover = None)
@@ -323,7 +329,9 @@ trait EventStream[+A] extends Observable[A] with BaseObservable[EventStream, A] 
 
 }
 
-object EventStream {
+object EventStream
+extends StreamObjDynamicImportOps // Provides `dynamicImport` method (Scala 3 only)
+{
 
   /** Event stream that never emits anything */
   val empty: EventStream[Nothing] = {

@@ -7,6 +7,7 @@ import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.debug.{DebuggableSignal, Debugger, DebuggerSignal}
 import com.raquo.airstream.distinct.DistinctSignal
+import com.raquo.airstream.dynamicImport.{SignalDynamicImportOps, SignalObjDynamicImportOps}
 import com.raquo.airstream.extensions._
 import com.raquo.airstream.misc.{MapSignal, ScanLeftSignal, StreamFromSignal}
 import com.raquo.airstream.ownership.Owner
@@ -23,7 +24,12 @@ import scala.scalajs.js.JSConverters._
 import scala.util.{Failure, Try}
 
 /** Signal is an Observable with a current value. */
-trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with SignalSource[A] {
+trait Signal[+A]
+extends Observable[A]
+with BaseObservable[Signal, A]
+with SignalSource[A]
+with SignalDynamicImportOps[A] // Provides `dynamicImport` method (Scala 3 only)
+{
 
   protected[this] var _lastUpdateId: Int = 0
 
@@ -194,7 +200,9 @@ trait Signal[+A] extends Observable[A] with BaseObservable[Signal, A] with Signa
 
 }
 
-object Signal {
+object Signal
+extends SignalObjDynamicImportOps // Provides `dynamicImport` method (Scala 3 only)
+{
 
   def fromValue[A](value: A): Val[A] = Val(value)
 
