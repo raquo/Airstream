@@ -1,6 +1,6 @@
 package com.raquo.airstream.ownership
 
-import com.raquo.airstream.core.{EventStream, Observable, Observer, Sink, Transaction}
+import com.raquo.airstream.core.{EventStream, Named, Observable, Observer, Sink, Transaction}
 import com.raquo.airstream.eventbus.WriteBus
 
 // @TODO[API] I could make the constructor public but it's less confusing if you use the companion object methods
@@ -27,10 +27,13 @@ class DynamicSubscription private (
   dynamicOwner: DynamicOwner,
   activate: Owner => Option[Subscription],
   prepend: Boolean
-) {
+) extends Named {
 
   // @Note this can be None even if this dynamic subscription is active (if activate() returned None)
   private[this] var maybeCurrentSubscription: Option[Subscription] = None
+
+  /** Note: this var is only guaranteed accurate inside onActivate. See comments below. */
+  private[this] var isPendingDeactivation = false
 
   dynamicOwner.addSubscription(this, prepend)
 
@@ -42,16 +45,35 @@ class DynamicSubscription private (
   def kill(): Unit = dynamicOwner.removeSubscription(this)
 
   private[ownership] def onActivate(owner: Owner): Unit = {
-    // println(s"    - activating $this")
+    // println(s"      - activating $this")
     Transaction.onStart.shared {
+      isPendingDeactivation = false // ensure this, in case we've called `onDeactivate` while sub was deactivated.
       maybeCurrentSubscription = activate(owner)
+      if (isPendingDeactivation) {
+        // println("      -> killing self after pending")
+        onDeactivate()
+        isPendingDeactivation = false
+      }
     }
   }
 
   private[ownership] def onDeactivate(): Unit = {
-    maybeCurrentSubscription.foreach { currentSubscription =>
-      currentSubscription.kill()
-      maybeCurrentSubscription = None
+    // println(s"      - deactivating $this")
+    Transaction.onStart.shared {
+      maybeCurrentSubscription.fold {
+        // If current Subscription is empty, we must have triggered deactivation while activating it.
+        //  - Or maybe we called onDeactivate on already-deactivated subscription, but no harm in that case.
+        isPendingDeactivation = true
+      } { currentSubscription =>
+        // println("      -> kill current sub")
+        // #TODO[Integrity] This can throw
+        //  - it runs user code, and also checks isActive
+        //  - we call .deactivate in a loop when iterating over subs – throwing would break it.
+        //  - we have the same issue with other user-provided code e.g. in observers
+        //  - Those user callbacks are marked with "must not throw", but perhaps we should be more resilient.
+        currentSubscription.kill()
+        maybeCurrentSubscription = None
+      }
     }
   }
 }

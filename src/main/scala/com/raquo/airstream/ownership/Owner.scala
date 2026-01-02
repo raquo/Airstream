@@ -1,5 +1,6 @@
 package com.raquo.airstream.ownership
 
+import com.raquo.airstream.core.Named
 import com.raquo.ew.JsArray
 
 import scala.annotation.unused
@@ -17,7 +18,8 @@ import scala.annotation.unused
   * If you need something more flexible, use [[DynamicOwner]],
   * or build your own custom logic on top of this in a similar manner.
   */
-trait Owner {
+trait Owner
+extends Named {
 
   /** Note: This is enforced to be a sorted set outside the type system. #performance */
   protected[this] val subscriptions: JsArray[Subscription] = JsArray()

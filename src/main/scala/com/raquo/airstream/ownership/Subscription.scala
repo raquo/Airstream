@@ -1,5 +1,7 @@
 package com.raquo.airstream.ownership
 
+import com.raquo.airstream.core.Named
+
 // @TODO[API] Change cleanup from () => Unit to : => Unit? Would it be possible to override such a field?
 /** Represents a leaky resource that needs to be cleaned up.
   *
@@ -13,7 +15,7 @@ package com.raquo.airstream.ownership
 class Subscription(
   private[ownership] val owner: Owner,
   cleanup: () => Unit
-) {
+) extends Named {
 
   /** Make sure we only kill any given Subscription once. Just a sanity check against bad user logic,
     * e.g. calling .kill() manually when `owner` has already killed this subscription.

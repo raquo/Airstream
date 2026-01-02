@@ -68,6 +68,11 @@ class TransferableSubscription(
       //    calls.
 
       // Remember that killing a subscription will only call deactivate() if we're not transferring
+      // #TODO[Docs] Somehow this snippet below seems to only call subscription.deactivate() when
+      //  moving it from active to inactive owner. I get the "active" part – the `isActive` filter
+      //  is in DynamicOwner.removeSubscriptionNow, but I don't understand (anymore) why we aren't
+      //  getting undesirable deactivation here if we're doing a live transfer.
+      //  Figure it out and write a more detailed comment eventually.
       maybeSubscription.foreach { subscription =>
         subscription.kill()
         maybeSubscription = None
