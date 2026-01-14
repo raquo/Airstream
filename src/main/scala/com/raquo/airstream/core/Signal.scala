@@ -11,7 +11,7 @@ import com.raquo.airstream.dynamicImport.{SignalDynamicImportOps, SignalObjDynam
 import com.raquo.airstream.extensions._
 import com.raquo.airstream.misc.{MapSignal, ScanLeftSignal, StreamFromSignal}
 import com.raquo.airstream.ownership.Owner
-import com.raquo.airstream.split.{SplittableOneSignal, SplittableSignal}
+import com.raquo.airstream.split.SplittableOneSignal
 import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
 import com.raquo.airstream.status.Status
 import com.raquo.airstream.timing.JsPromiseSignal
@@ -304,9 +304,6 @@ extends SignalObjDynamicImportOps // Provides `dynamicImport` method (Scala 3 on
 
   /** Provides methods on Signal: combine, combineWith, withCurrentValueOf, sample */
   implicit def toCombinableSignal[A](signal: Signal[A]): CombinableSignal[A] = new CombinableSignal(signal)
-
-  /** Provides methods on Signal: split, splitByIndex */
-  implicit def toSplittableSignal[M[_], Input](signal: Signal[M[Input]]): SplittableSignal[M, Input] = new SplittableSignal(signal)
 
   /** Provides methods on Signal: splitOne */
   implicit def toSplittableOneSignal[A](signal: Signal[A]): SplittableOneSignal[A] = new SplittableOneSignal[A](signal)

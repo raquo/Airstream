@@ -7,12 +7,12 @@ import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.debug.{DebuggableStream, Debugger, DebuggerStream}
 import com.raquo.airstream.distinct.DistinctStream
-import com.raquo.airstream.dynamicImport.{SignalObjDynamicImportOps, StreamDynamicImportOps, StreamObjDynamicImportOps}
+import com.raquo.airstream.dynamicImport.{StreamDynamicImportOps, StreamObjDynamicImportOps}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.extensions._
 import com.raquo.airstream.javaflow.FlowPublisherStream
 import com.raquo.airstream.misc._
-import com.raquo.airstream.split.{SplittableOneStream, SplittableStream}
+import com.raquo.airstream.split.SplittableOneStream
 import com.raquo.airstream.status.{AsyncStatusObservable, Status}
 import com.raquo.airstream.timing._
 import com.raquo.ew.JsArray
@@ -502,9 +502,6 @@ extends StreamObjDynamicImportOps // Provides `dynamicImport` method (Scala 3 on
 
   /** Provides methods on EventStream: combine, combineWith, withCurrentValueOf, sample */
   implicit def toCombinableStream[A](stream: EventStream[A]): CombinableStream[A] = new CombinableStream(stream)
-
-  /** Provides methods on EventStream: split, splitByIndex */
-  implicit def toSplittableStream[M[_], Input](stream: EventStream[M[Input]]): SplittableStream[M, Input] = new SplittableStream(stream)
 
   /** Provides methods on EventStream: splitOne */
   implicit def toSplittableOneStream[A](stream: EventStream[A]): SplittableOneStream[A] = new SplittableOneStream(stream)

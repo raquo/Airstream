@@ -144,6 +144,8 @@ class DynamicOwnerSpec extends UnitSpec {
 
   Seq(false, true).foreach { injectPrepend =>
 
+    // https://github.com/raquo/Airstream/issues/145
+
     val clue = if (injectPrepend) "[with-prepend] " else "[no-prepend] "
 
     def prependEffects(effect: String) =

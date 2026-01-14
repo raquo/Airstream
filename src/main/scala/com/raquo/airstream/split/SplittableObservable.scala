@@ -1,8 +1,8 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.core.{EventStream, Signal}
+import com.raquo.airstream.core.{Observable, Signal}
 
-class SplittableStream[M[_], Input](val stream: EventStream[M[Input]]) extends AnyVal {
+class SplittableObservable[M[_], Input](val observable: Observable[M[Input]]) extends AnyVal {
 
   def split[Output, Key](
     key: Input => Key,
@@ -10,15 +10,14 @@ class SplittableStream[M[_], Input](val stream: EventStream[M[Input]]) extends A
     duplicateKeys: DuplicateKeysConfig = DuplicateKeysConfig.default
   )(
     project: (Key, Input, Signal[Input]) => Output
-  )(implicit splittable: Splittable[M]
+  )(implicit
+    splittable: Splittable[M]
   ): Signal[M[Output]] = {
+    val parentSignal = observable.toSignalIfStream(
+      ifStream = _.startWith(splittable.empty, cacheInitialValue = true)
+    )
     new SplitSignal[M, Input, Output, Key](
-      parent = stream.startWith(splittable.empty, cacheInitialValue = true),
-      key,
-      distinctCompose,
-      project,
-      splittable,
-      duplicateKeys
+      parentSignal, key, distinctCompose, project, splittable, duplicateKeys
     )
   }
 
@@ -27,8 +26,13 @@ class SplittableStream[M[_], Input](val stream: EventStream[M[Input]]) extends A
     project: (Int, Input, Signal[Input]) => Output
   )(implicit splittable: Splittable[M]
   ): Signal[M[Output]] = {
+    val parentSignal = {
+      observable
+        .toSignalIfStream(_.startWith(splittable.empty, cacheInitialValue = true))
+        .map(splittable.zipWithIndex)
+    }
     new SplitSignal[M, (Input, Int), Output, Int](
-      parent = stream.map(splittable.zipWithIndex).startWith(splittable.empty, cacheInitialValue = true),
+      parent = parentSignal,
       key = _._2, // Index
       distinctCompose = _.distinctBy(_._1),
       project = (index: Int, initialTuple, tupleSignal) => {

@@ -11,8 +11,7 @@ object AirstreamError {
 
   def getFullMessage(e: Throwable): String = {
     // getMessage can have a custom implementation, and thus can throw
-    // Also, currently, MatchError.getMessage throws an NPE
-    // if the object being matched is a native JS type.
+    // Also, Scala.js 1.20.1 and below had this problem with Scala's MatchError: https://github.com/scala-js/scala-js/issues/5287
     val errorMessage =
       try {
         e.getMessage
