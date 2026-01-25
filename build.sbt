@@ -1,12 +1,7 @@
 import com.raquo.buildkit.SourceDownloader
 import VersionHelper.{versionFmt, fallbackVersion}
 
-// Lets me depend on Maven Central artifacts immediately without waiting
-resolvers ++= Resolver.sonatypeOssRepos("public")
-
 enablePlugins(ScalaJSPlugin)
-
-enablePlugins(ScalaJSBundlerPlugin)
 
 lazy val preload = taskKey[Unit]("runs Airstream-specific pre-load tasks")
 
@@ -28,7 +23,7 @@ Global / onLoad := {
   (Global / onLoad).value andThen { state => preload.key.label :: state }
 }
 
-mimaPreviousArtifacts := Set("com.raquo" %%% "airstream" % "17.1.0")
+mimaPreviousArtifacts := Set("com.raquo" %%% "airstream" % "17.2.0")
 
 
 libraryDependencies ++= Seq(
@@ -58,6 +53,7 @@ crossScalaVersions := Seq(Versions.Scala_2_13, Versions.Scala_3)
 
 scalacOptions ++= Seq(
   "-feature",
+  "-deprecation",
   "-language:higherKinds",
   "-language:implicitConversions"
 )
@@ -83,10 +79,10 @@ scalacOptions ++= sys.env.get("CI").map { _ =>
   }
 }
 
-(Compile / scalacOptions) ~= (_.filterNot(Set(
-  "-deprecation",
-  "-Xfatal-warnings"
-)))
+// (Compile / scalacOptions) ~= (_.filterNot(Set(
+//   "-deprecation",
+//   "-Xfatal-warnings"
+// )))
 
 (Compile / doc / scalacOptions) ~= (_.filterNot(
   Set(
@@ -108,21 +104,11 @@ scalacOptions ++= sys.env.get("CI").map { _ =>
   "-no-link-warnings" // Suppress scaladoc "Could not find any member to link for" warnings
 )
 
-(installJsdom / version) := Versions.JsDom
-
-(webpack / version) := Versions.Webpack
-
-(startWebpackDevServer / version) := Versions.WebpackDevServer
-
-useYarn := true
-
-(Test / requireJsDomEnv) := true
+jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
 
 (Test / parallelExecution) := false
 
 scalaJSUseMainModuleInitializer := true
-
-(Compile / fastOptJS / scalaJSLinkerConfig) ~= { _.withSourceMap(false) }
 
 
 // -- Code generators for N-arity functionality
@@ -183,5 +169,6 @@ Test / sourceGenerators += Def.task {
 // https://github.com/JetBrains/sbt-ide-settings
 SettingKey[Seq[File]]("ide-excluded-directories").withRank(KeyRanks.Invisible) := Seq(
   ".downloads", ".idea", ".metals", ".bloop", ".bsp",
-  "target", "project/target", "project/project/target", "project/project/project/target"
+  "target", "project/target", "project/project/target", "project/project/project/target",
+  "node_modules"
 ).map(file)

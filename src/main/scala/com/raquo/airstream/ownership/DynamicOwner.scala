@@ -3,6 +3,8 @@ package com.raquo.airstream.ownership
 import com.raquo.airstream.core.{Named, Transaction}
 import com.raquo.ew.JsArray
 
+import scala.annotation.nowarn
+
 // @Warning[Fragile]
 //  - We track a list of subscriptions and when activating / deactivating we run user code on each subscription
 //  - This is potentially dangerous because said user code could add / remove more subscriptions from this DynamicOwner
@@ -64,7 +66,7 @@ extends Named {
 
   @inline private[this] def numSubsToIterate = {
     val numSubsRemovedFromList = {
-      if (DynamicOwner.TEMP_UNSAFE_USE_PRE_V18_DELAYED_DYNSUB_REMOVAL) {
+      if (DynamicOwner.TEMP_UNSAFE_USE_PRE_V18_DELAYED_DYNSUB_REMOVAL: @nowarn("msg=deprecated")) {
         0
       } else {
         numRemovedSubs
@@ -87,7 +89,7 @@ extends Named {
         _maybeCurrentOwner = Some(newOwner)
         numPrependedSubs = 0
         activationSubIx = 0
-        if (DynamicOwner.TEMP_UNSAFE_USE_PRE_V18_DELAYED_DYNSUB_REMOVAL) {
+        if (DynamicOwner.TEMP_UNSAFE_USE_PRE_V18_DELAYED_DYNSUB_REMOVAL: @nowarn("msg=deprecated")) {
           isSafeToRemoveSubscription = false
         } else {
           numRemovedSubs = 0
@@ -108,7 +110,7 @@ extends Named {
         }
         // println(s"    - stop iteration of $this. numPrependedSubs = $numPrependedSubs, numDeletedSubs = ${numRemovedSubs}, activationSubIx = ${activationSubIx}, activationSubIx < numSubsToIterate = ${activationSubIx} < ${numSubsToIterate}")
 
-        if (DynamicOwner.TEMP_UNSAFE_USE_PRE_V18_DELAYED_DYNSUB_REMOVAL) {
+        if (DynamicOwner.TEMP_UNSAFE_USE_PRE_V18_DELAYED_DYNSUB_REMOVAL: @nowarn("msg=deprecated")) {
           removePendingSubscriptionsNow()
           isSafeToRemoveSubscription = true
         } else {
@@ -189,7 +191,7 @@ extends Named {
   private[this] def removeSubscriptionNow(subscription: DynamicSubscription): Unit = {
     val index = subscriptions.indexOf(subscription)
     if (index != -1) {
-      if (!DynamicOwner.TEMP_UNSAFE_USE_PRE_V18_DELAYED_DYNSUB_REMOVAL) {
+      if (!DynamicOwner.TEMP_UNSAFE_USE_PRE_V18_DELAYED_DYNSUB_REMOVAL: @nowarn("msg=deprecated")) {
         if (numRemovedSubs != -1 && index < numSubsToIterate) {
           // println(s"numDeletedSubs += 1 = ${numRemovedSubs + 1}")
           numRemovedSubs += 1
