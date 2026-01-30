@@ -734,4 +734,181 @@ class SwitchStreamSpec extends UnitSpec {
     )
     effects.clear()
   }
+
+  it("flatMapSwitch does not cancel side effects in async callbacks when switching") {
+    // flatMapSwitch prevents EVENTS from old inner streams from propagating,
+    // but it cannot cancel side effects that occur inside async callbacks
+    // (e.g., Futures, Promises, or other async operations that have already started).
+    //
+    // This is expected behavior - flatMapSwitch unsubscribes from the stream,
+    // but the underlying async operation continues to completion.
+    //
+    // If your use case requires cancelling stale async operations or ignoring
+    // their results, you need additional tracking (see next test for a pattern).
+
+    implicit val owner: TestableOwner = new TestableOwner
+
+    val effects = mutable.Buffer[Effect[String]]()
+    val resultVar = Var[String]("initial")
+
+    // Simulate async operations with manually-triggered completion
+    var pendingCallbacks: List[(String, () => Unit)] = Nil
+
+    def createAsyncStream(key: String): EventStream[Unit] = {
+      effects += Effect("async-started", key)
+
+      EventStream.fromCustomSource[Unit](
+        start = (fireValue, _, _, _) => {
+          // Register callback - simulates an async operation (e.g., fetch, Future)
+          pendingCallbacks = pendingCallbacks :+ (key, () => {
+            effects += Effect("async-completed", key)
+            resultVar.set(s"result-$key") // Side effect in async callback
+            fireValue(())
+          })
+        },
+        stop = _ => {
+          effects += Effect("stream-stopped", key)
+          // Stopping the stream does NOT cancel the pending async operation
+        }
+      )
+    }
+
+    val keyBus = new EventBus[String]
+
+    keyBus.events
+      .flatMapSwitch(createAsyncStream)
+      .addObserver(Observer.empty)
+
+    def completeAsync(key: String): Unit = {
+      pendingCallbacks.find(_._1 == key).foreach { case (_, callback) =>
+        callback()
+        pendingCallbacks = pendingCallbacks.filterNot(_._1 == key)
+      }
+    }
+
+    // -- Initial state
+    assert(resultVar.now() == "initial")
+    assert(effects.isEmpty)
+
+    // -- First key emitted
+    keyBus.emit("first")
+
+    assert(effects.toList == List(
+      Effect("async-started", "first")
+    ))
+    effects.clear()
+
+    // -- Second key emitted before first completes
+    keyBus.emit("second")
+
+    // flatMapSwitch starts new stream, then stops old one (make-before-break)
+    assert(effects.toList == List(
+      Effect("async-started", "second"),
+      Effect("stream-stopped", "first")
+    ))
+    effects.clear()
+
+    // -- Second async completes first
+    completeAsync("second")
+
+    assert(effects.toList == List(
+      Effect("async-completed", "second")
+    ))
+    assert(resultVar.now() == "result-second")
+    effects.clear()
+
+    // -- First async completes later (out of order)
+    // The callback still executes because the async operation was already in flight
+    completeAsync("first")
+
+    assert(effects.toList == List(
+      Effect("async-completed", "first")
+    ))
+
+    // The side effect from the stale operation overwrote the newer result
+    assert(resultVar.now() == "result-first")
+  }
+
+  it("request ID tracking pattern prevents stale async results from updating state") {
+    // This test demonstrates a pattern for ignoring results from stale async operations.
+    // By tracking a "current request ID", callbacks can check if they're still relevant
+    // before applying their side effects.
+
+    implicit val owner: TestableOwner = new TestableOwner
+
+    val effects = mutable.Buffer[Effect[String]]()
+    val resultVar = Var[String]("initial")
+
+    var requestIdCounter: Long = 0
+    var currentRequestId: Long = 0
+    var pendingCallbacks: List[(String, Long, () => Unit)] = Nil
+
+    def createAsyncStreamWithTracking(key: String): EventStream[Unit] = {
+      // Assign and track request ID at stream creation time
+      requestIdCounter += 1
+      val requestId = requestIdCounter
+      currentRequestId = requestId
+
+      effects += Effect("async-started", s"$key (id=$requestId)")
+
+      EventStream.fromCustomSource[Unit](
+        start = (fireValue, _, _, _) => {
+          pendingCallbacks = pendingCallbacks :+ (key, requestId, () => {
+            effects += Effect("async-completed", s"$key (id=$requestId)")
+            // Only apply side effect if this request is still current
+            if (currentRequestId == requestId) {
+              effects += Effect("state-updated", s"$key")
+              resultVar.set(s"result-$key")
+            } else {
+              effects += Effect("state-skipped", s"$key (stale: id=$requestId, current=$currentRequestId)")
+            }
+            fireValue(())
+          })
+        },
+        stop = _ => ()
+      )
+    }
+
+    val keyBus = new EventBus[String]
+
+    keyBus.events
+      .flatMapSwitch(createAsyncStreamWithTracking)
+      .addObserver(Observer.empty)
+
+    def completeAsync(key: String): Unit = {
+      pendingCallbacks.find(_._1 == key).foreach { case (_, _, callback) =>
+        callback()
+        pendingCallbacks = pendingCallbacks.filterNot(_._1 == key)
+      }
+    }
+
+    // -- First key emitted
+    keyBus.emit("first")
+    effects.clear()
+
+    // -- Second key emitted before first completes
+    keyBus.emit("second")
+    effects.clear()
+
+    // -- Second async completes first
+    completeAsync("second")
+
+    assert(effects.toList == List(
+      Effect("async-completed", "second (id=2)"),
+      Effect("state-updated", "second")
+    ))
+    assert(resultVar.now() == "result-second")
+    effects.clear()
+
+    // -- First async completes later (stale)
+    completeAsync("first")
+
+    assert(effects.toList == List(
+      Effect("async-completed", "first (id=1)"),
+      Effect("state-skipped", "first (stale: id=1, current=2)")
+    ))
+
+    // State correctly preserved - stale result was ignored
+    assert(resultVar.now() == "result-second")
+  }
 }
