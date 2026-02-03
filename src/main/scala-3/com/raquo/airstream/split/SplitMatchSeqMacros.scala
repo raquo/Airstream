@@ -1,16 +1,15 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.core.{
-  EventStream,
-  Signal,
-  Observable,
-  BaseObservable
-}
+import com.raquo.airstream.core.{BaseObservable, EventStream, Observable, Signal}
+import com.raquo.airstream.distinct.DistinctOps
+import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchTypeHandler, MatchValueHandler, innerObservableImpl}
+
 import scala.quoted.{Expr, Quotes, Type}
 import scala.annotation.{unused, targetName}
 import scala.compiletime.summonInline
 import scala.quoted.Varargs
-import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchTypeHandler, MatchValueHandler, innerObservableImpl}
+import scala.util.Success
+
 
 object SplitMatchSeqMacros {
 
@@ -311,7 +310,8 @@ object SplitMatchSeqMacros {
 
   private def innerHandleCaseImpl[Self[+_] <: Observable[_]: Type, I: Type, K: Type, O: Type, O1 >: O: Type, CC[_]: Type, A: Type, B: Type](
     keyFnExpr: Expr[Function1[I, K]],
-    distinctComposeExpr: Expr[Function1[Signal[I], Signal[I]]],
+    // distinctComposeExpr: Expr[Function1[KeyedStrictSignal[K, I], KeyedStrictSignal[K, I]]],
+    distinctComposeExpr: Expr[DistinctOps.DistinctorF[I]],
     duplicateKeysConfigExpr: Expr[DuplicateKeysConfig],
     observableExpr: Expr[BaseObservable[Self, CC[I]]],
     caseExprSeq: Seq[Expr[CaseAny]],
@@ -336,15 +336,26 @@ object SplitMatchSeqMacros {
     }
   }
 
-  private inline def customDistinctCompose[I](
-    distinctCompose: Signal[I] => Signal[I]
-  )(
-    dataSignal: Signal[(I, Int, Any)]
-  ): Signal[(I, Int, Any)] = {
-    val iSignal = dataSignal.map(_._1)
-    val otherSignal = dataSignal.map(data => data._2 -> data._3)
-    // TODO: We are unnecessary sufferring from `otherSignal.distinct`'s cost here
-    distinctCompose(iSignal).combineWith(otherSignal.distinct)
+  private inline def wrappedDistinctCompose[K, I](
+    // distinctCompose: KeyedStrictSignal[K, I] => KeyedStrictSignal[K, I]
+    distinctCompose: DistinctOps.DistinctorF[I]
+  ): DistinctOps.DistinctorF[(I, Int, Any)] = {
+    DistinctOps.DistinctorF[(I, Int, Any)] { ops =>
+      val scopedOps = new DistinctOps.F[I]
+      ops.distinctTry { (prevTry, nextTry) =>
+        distinctCompose(scopedOps)(prevTry.map(_._1), nextTry.map(_._1))
+        && {
+          // this is equivalent to `.distinct` – as implemented by HollandDM
+          // #nc[split] why do we need second distinct here? All tests pass either way. Ask HollandDM if no tests fail.
+          (prevTry, nextTry) match {
+            case (Success(prev), Success(next)) =>
+              prev._2 == next._2 && prev._3 == next._3
+            case _ =>
+              false
+          }
+        }
+      }
+    }
   }
 
   private inline def customKey[I, K](
@@ -359,16 +370,17 @@ object SplitMatchSeqMacros {
   private def toSplittableSeqObservable[Self[+_] <: Observable[_], I, K, O, CC[_]](
     parentObservable: BaseObservable[Self, CC[(I, Int, Any)]],
     keyFn: I => K,
-    distinctCompose: Signal[I] => Signal[I],
+    distinctCompose: DistinctOps.DistinctorF[I],
     duplicateKeysConfig: DuplicateKeysConfig,
     splittable: Splittable[CC],
     handlers: HandlerAny[O]*,
   ): Signal[CC[O]] = {
+    // #nc[split] why do we need matchStreamOrSignal here?
     parentObservable
       .matchStreamOrSignal(
         ifStream = _.split(
           key = customKey(keyFn),
-          distinctCompose = customDistinctCompose(distinctCompose),
+          distinctCompose = wrappedDistinctCompose[K, I](distinctCompose),
           duplicateKeys = duplicateKeysConfig
         ) { case ((idx, _), (_, _, b), dataSignal) =>
           val bSignal = dataSignal.map(_._3)
@@ -379,7 +391,7 @@ object SplitMatchSeqMacros {
         }(splittable),
         ifSignal = _.split(
           key = customKey(keyFn),
-          distinctCompose = customDistinctCompose(distinctCompose),
+          distinctCompose = wrappedDistinctCompose[K, I](distinctCompose),
           duplicateKeys = duplicateKeysConfig
         ) { case ((idx, _), (_, _, b), dataSignal) =>
           val bSignal = dataSignal.map(_._3)

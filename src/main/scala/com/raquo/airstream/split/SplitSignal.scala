@@ -2,6 +2,7 @@ package com.raquo.airstream.split
 
 import com.raquo.airstream.common.{InternalTryObserver, SingleParentSignal}
 import com.raquo.airstream.core.{AirstreamError, Protected, Signal, Transaction}
+import com.raquo.airstream.distinct.DistinctOps
 import com.raquo.airstream.timing.SyncDelayStream
 
 import scala.collection.mutable
@@ -14,7 +15,7 @@ import scala.util.Try
   * See docs.
   *
   * @param key       A sort of grouping / memoization key for inputs in `parent`
-  * @param distinctCompose   Transformation to apply to each key's input stream before providing it to `project`
+  * @param distinctCompose   Transformation to apply to each key's input stream before providing it to `project` // #nc comment
   *                  - Usually you want `_.distinct` here, so that each of the streams is only triggered
   *                    when the input for its key actually changes (otherwise they would get an update
   *                    every time that the parent stream emitted)
@@ -26,12 +27,15 @@ import scala.util.Try
 class SplitSignal[M[_], Input, Output, Key](
   override protected[this] val parent: Signal[M[Input]],
   key: Input => Key,
-  distinctCompose: Signal[Input] => Signal[Input],
-  project: (Key, Input, Signal[Input]) => Output,
+  // distinctCompose: KeyedStrictSignal[Key, Input] => KeyedStrictSignal[Key, Input],
+  distinctCompose: DistinctOps.DistinctorF[Input],
+  project: KeyedStrictSignal[Key, Input] => Output,
   splittable: Splittable[M],
   duplicateKeysConfig: DuplicateKeysConfig = DuplicateKeysConfig.default,
   strict: Boolean = false // #TODO `false` default for now to keep compatibility with 17.0.0 - consider changing in 18.0.0 #nc
 ) extends SingleParentSignal[M[Input], M[Output]] {
+
+  private val distinctF = distinctCompose(new DistinctOps.F[Input])
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
@@ -112,9 +116,10 @@ class SplitSignal[M[_], Input, Output, Key](
           // - Without this default, each inputSignal would receive updates whenever any other unrelated key
           //   was updated in the parent list of inputs. We do have a test to check that behaviour too.
 
-          val inputSignal = distinctCompose(
-            new SplitChildSignal[M, Input](
+          val inputSignal =
+            new SplitChildSignal[Key, M, Input](
               sharedDelayedParent,
+              key = memoizedKey,
               initialValue = Some((initialInput, Protected.lastUpdateId(parent))),
               getMemoizedValue = () => {
                 val maybeMemoizedValue = memoized.get(memoizedKey)
@@ -144,14 +149,13 @@ class SplitSignal[M[_], Input, Output, Key](
                     None
                 }).map(t => (t._1, t._4))
               }
-            )
-          )
+            ).distinctTry(isSame = distinctF)
 
           if (isStarted && strict) {
             inputSignal.addInternalObserver(emptyObserver, shouldCallMaybeWillStart = true)
           }
 
-          val newOutput = project(memoizedKey, initialInput, inputSignal)
+          val newOutput = project(inputSignal)
 
           (inputSignal, newOutput)
         }

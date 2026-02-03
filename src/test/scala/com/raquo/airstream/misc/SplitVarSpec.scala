@@ -55,10 +55,11 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
-      val signal = myVar.split(
+      val signal = myVar.splitSeq(
         key = _.id, distinctCompose = identity
-      ) {
-        (key, initialFoo, fooVar) =>
+      ) { fooVar =>
+          val key = fooVar.key
+          val initialFoo = fooVar.now()
           assert(key == initialFoo.id, "Key does not match initial value")
           effects += Effect(s"init-child-$key", key + "-" + initialFoo.version.toString)
           // @Note keep foreach / addObserver here – this is important.
@@ -732,13 +733,15 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
-      val signal = myVar.splitByIndex((index, initialFoo, fooVar) => {
+      val signal = myVar.splitByIndex { fooVar =>
+        val index = fooVar.key
+        val initialFoo = fooVar.now()
         effects += Effect(s"init-child-$index", initialFoo.id + "-" + initialFoo.version.toString)
         fooVar.signal.foreach { foo =>
           effects += Effect(s"update-child-$index", foo.id + "-" + foo.version.toString)
         }(owner)
         Bar(index.toString)
-      })
+      }
 
       signal.foreach { result =>
         effects += Effect("result", result.toString)

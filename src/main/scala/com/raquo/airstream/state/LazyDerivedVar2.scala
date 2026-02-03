@@ -1,6 +1,7 @@
 package com.raquo.airstream.state
 
-import com.raquo.airstream.core.Transaction
+import com.raquo.airstream.core.AirstreamError.{VarError, sendUnhandledError}
+import com.raquo.airstream.core.{AirstreamError, Transaction}
 
 import scala.util.{Failure, Success, Try}
 
@@ -16,13 +17,16 @@ import scala.util.{Failure, Success, Try}
   * even if its signal has no subscribers.
   *
   * @param updateParent  (currentParentValue, nextValue) => nextParentValue.
+  *                      If `updateParent` returns None, parent will not be updated.
+  *                      Use [[LazyDerivedVar2.standardErrorsF]] wrapper if you want
+  *                      standard error handling.
   */
-class LazyDerivedVar2[A, B](
-  parent: Var[A],
-  override val signal: StrictSignal[B],
-  updateParent: (Try[A], Try[B]) => Option[Try[A]],
+class LazyDerivedVar2[ParentV, ThisV](
+  parent: Var[ParentV],
+  override val signal: StrictSignal[ThisV],
+  updateParent: (Try[ParentV], Try[ThisV]) => Option[Try[ParentV]],
   displayNameSuffix: String
-) extends Var[B] {
+) extends Var[ThisV] {
 
   override private[state] def underlyingVar: SourceVar[_] = parent.underlyingVar
 
@@ -33,9 +37,9 @@ class LazyDerivedVar2[A, B](
   //  - But even if it does, I think keeping derived var's current value consistent with its signal value
   //    is more important, otherwise it would be madness if the derived var was accessed after its owner
   //    was killed
-  override private[state] def getCurrentValue: Try[B] = signal.tryNow()
+  override private[state] def getCurrentValue: Try[ThisV] = signal.tryNow()
 
-  override private[state] def setCurrentValue(value: Try[B], transaction: Transaction): Unit = {
+  override private[state] def setCurrentValue(value: Try[ThisV], transaction: Transaction): Unit = {
     val maybeNextValue = Try(updateParent(parent.tryNow(), value)) match {
       case Success(nextValue) => nextValue
       case Failure(err) => Some(Failure(err))
@@ -49,4 +53,39 @@ class LazyDerivedVar2[A, B](
   }
 
   override protected def defaultDisplayName: String = parent.displayName + displayNameSuffix
+}
+
+object LazyDerivedVar2 {
+
+  /** Wrap an `updateParent` callback that only deals with non-error values to handle
+    * errors in a standard manner:
+    *  - if parent is in error state, leave it as-is, and send unhandled error
+    *  - if `updateParent` throws, write the error into parent
+    */
+  def standardErrorsF[ParentV, ThisV](
+    updateParent: (ParentV, ThisV) => Option[ParentV]
+  )(
+    parentTry: Try[ParentV],
+    nextTry: Try[ThisV]
+  ): Option[Try[ParentV]] =
+    parentTry match {
+      case Success(parentValue) =>
+        nextTry.map(updateParent(parentValue, _)) match {
+          case Success(Some(newParentValue)) =>
+            Some(Success(newParentValue)) // Update parent var (as per `updateParent`)
+          case Success(None) =>
+            None // Skip updating parent var (as per `updateParent`)
+          case Failure(err) =>
+            Some(Failure(err)) // Update parent var with new error
+        }
+      case Failure(err) =>
+        sendUnhandledError(err)
+        None // Don't update parent var
+    }
+
+  // #TODO[DX] refactor message generation so that we can print the vars
+  def sendStandardError(err: Throwable): Unit =
+    AirstreamError.sendUnhandledError(
+      VarError(s"Unable to zoom out of lazy derived var when the parent var is failed.", cause = Some(err))
+    )
 }

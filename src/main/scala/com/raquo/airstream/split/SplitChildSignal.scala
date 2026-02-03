@@ -1,11 +1,22 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.common.{InternalTryObserver, SingleParentSignal}
+import com.raquo.airstream.common.SingleParentSignal
 import com.raquo.airstream.core.{Protected, Transaction}
 import com.raquo.airstream.timing.SyncDelayStream
 
 import scala.scalajs.js
 import scala.util.{Success, Try}
+
+// #TODO[Integrity] Should this extend LazyStrictSignal?
+//  - I don't think so.
+//  - LazyStrictSignal has logic in it that pulls from parent when we call tryNow()
+//  - But this SplitChildSignal already has similar logic (getMemoizedValue)
+//  - And SplitChildSignal does not technically depend on SplitSignal
+//  - So with this setup, this is fine, as long as we understand that we can't
+//    drive the parent split signal by trying to pull .now() from a child split signal
+//  - This is probably fine, at least for Laminar use cases, because normally
+//    the child split signals are unused / inaccessible if / when the parent
+//    split signal is not running.
 
 /** This signal MUST be sync delayed after the split signal to prevent it
   * from emitting unwanted events. The reason is... complicated.
@@ -17,15 +28,24 @@ import scala.util.{Success, Try}
   * duplicity is undesirable of course, so we take care of it by dropping the first event after initialization IF
   * it happens during the transaction in which this signal was initialized.
   *
-  * @param initialValue note that this can get stale - always try to read memoized value first.
+  * @param key This key that you're splitting by (e.g. `input.id` in case of `.split(_.id)`).
+  *            It identifies the input value in the splittable collection that this signal belongs to.
+  *
+  * @param initialValue Note: this can get stale - always try to read memoized value first.
+  *                     Note: after this Signal has used this value, we unset it (to None).
   *
   * @param getMemoizedValue get the latest memoized value and its corresponding parentLastUpdateId.
   */
-private[airstream] class SplitChildSignal[M[_], A](
+private[airstream] class SplitChildSignal[K, M[_], A](
   override protected[this] val parent: SyncDelayStream[M[A]],
+  override val key: K,
   private[this] var initialValue: Option[(A, Int)],
   getMemoizedValue: () => Option[(A, Int)]
-) extends SingleParentSignal[M[A], A] with InternalTryObserver[M[A]] {
+)
+extends KeyedStrictSignal[K, A]
+with SingleParentSignal[M[A], A] {
+
+  override def tryNow(): Try[A] = super.tryNow()
 
   private var maybeInitialTransaction: js.UndefOr[Transaction] = Transaction.currentTransaction()
 
@@ -60,7 +80,7 @@ private[airstream] class SplitChildSignal[M[_], A](
     nextParentLastUpdateId: Int
   ): Unit = {
     super.updateCurrentValueFromParent(nextValue, nextParentLastUpdateId)
-    initialValue = None // No longer needed regardless of what `nextValue` is
+    initialValue = None // No longer needed regardless of what `nextValue` is – clear it from memory
   }
 
   override protected def currentValueFromParent(): Try[A] = {

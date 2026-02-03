@@ -19,13 +19,22 @@ object Source {
 
   trait EventSource[+A] extends Source[A] {
 
+    @inline final def toStream: EventStream[A] = toObservable
+
     override def toObservable: EventStream[A]
   }
 
   trait SignalSource[+A] extends Source[A] {
 
+    @inline final def toSignal: Signal[A] = toObservable
+
     override def toObservable: Signal[A]
   }
+
+  // class StaticSource[+A](val value: A) extends SignalSource[A] {
+  //
+  //   override def toObservable: Signal[A] = Val(value)
+  // }
 
   // #TODO[API] Disabled integrations, let's see if anyone complains. These conversions are unfortunately not smooth enough to be implicit.
 

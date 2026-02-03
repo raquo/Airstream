@@ -1,36 +1,37 @@
 package com.raquo.airstream.split
 
 import com.raquo.airstream.core.Signal
-import com.raquo.airstream.state.{LazyDerivedVar, LazyStrictSignal, Var}
+import com.raquo.airstream.distinct.DistinctOps
+import com.raquo.airstream.state.Var
 
 class SplittableVar[M[_], Input](val v: Var[M[Input]]) extends AnyVal {
 
   /** This `split` operator works on Vars, and gives you a  */
-  def split[Output, Key](
+  def splitSeq[Output, Key](
     key: Input => Key,
-    distinctCompose: Signal[Input] => Signal[Input] = _.distinct,
+    // distinctCompose: KeyedStrictSignal[_, Input] => KeyedStrictSignal[_, Input] = (_: KeyedStrictSignal[_, Input]).distinct,
+    distinctCompose: DistinctOps.DistinctorF[Input] = _.distinct,
     duplicateKeys: DuplicateKeysConfig = DuplicateKeysConfig.default
   )(
-    project: (Key, Input, Var[Input]) => Output
+    project: KeyedDerivedVar[Key, M[Input], Input] => Output
   )(implicit splittable: Splittable[M]
   ): Signal[M[Output]] = {
     new SplitSignal[M, Input, Output, Key](
       parent = v.signal,
       key,
       distinctCompose,
-      project = (thisKey, initial, signal) => {
-        val displayNameSuffix = s".split(key = ${key})"
-        val childVar = new LazyDerivedVar[M[Input], Input](
+      project = signal => {
+        val thisKey = signal.key
+        val childVar = new KeyedDerivedVar[Key, M[Input], Input](
           parent = v,
-          signal = new LazyStrictSignal[Input, Input](
-            signal, identity, signal.displayName, displayNameSuffix + ".signal"
-          ),
-          zoomOut = (inputs, newInput) => {
-            splittable.findUpdate(inputs, key(_) == thisKey, newInput)
+          signal = signal,
+          key = thisKey,
+          updateParent = KeyedDerivedVar.standardErrorsF { (inputs, newInput) =>
+            Some(splittable.findUpdate(inputs, key(_) == thisKey, newInput))
           },
-          displayNameSuffix = displayNameSuffix
+          displayNameSuffix = s".split(key = ${key})"
         )
-        project(thisKey, initial, childVar)
+        project(childVar)
       },
       splittable,
       duplicateKeys,
@@ -40,26 +41,25 @@ class SplittableVar[M[_], Input](val v: Var[M[Input]]) extends AnyVal {
 
   /** Like `split`, but uses index of the item in the list as the key. */
   def splitByIndex[Output](
-    project: (Int, Input, Var[Input]) => Output
+    project: KeyedDerivedVar[Int, M[Input], Input] => Output
   )(implicit splittable: Splittable[M]
   ): Signal[M[Output]] = {
     new SplitSignal[M, (Input, Int), Output, Int](
       parent = v.signal.map(splittable.zipWithIndex),
       key = _._2, // Index
       distinctCompose = _.distinctBy(_._1),
-      project = (index: Int, initialTuple, tupleSignal) => {
-        val displayNameSuffix = s".splitByIndex(index = ${index})"
-        val childVar = new LazyDerivedVar[M[Input], Input](
+      project = tupleSignal => {
+        val thisIndex = tupleSignal.key
+        val childVar = new KeyedDerivedVar[Int, M[Input], Input](
           parent = v,
-          signal = new LazyStrictSignal[Input, Input](
-            tupleSignal.map(_._1), identity, tupleSignal.displayName, displayNameSuffix + ".signal"
-          ),
-          zoomOut = (inputs, newInput) => {
-            splittable.findUpdateByIndex(inputs, index, newInput)
+          signal = tupleSignal.map(_._1),
+          key = thisIndex,
+          updateParent = KeyedDerivedVar.standardErrorsF { (inputs, newInput) =>
+            Some(splittable.findUpdateByIndex(inputs, thisIndex, newInput))
           },
-          displayNameSuffix = displayNameSuffix
+          displayNameSuffix = s".splitByIndex(index = ${thisIndex})"
         )
-        project(index, initialTuple._1, childVar)
+        project(childVar)
       },
       splittable,
       DuplicateKeysConfig.noWarnings, // No need to check for duplicates – we know the keys are good.?
@@ -77,30 +77,30 @@ class SplittableVar[M[_], Input](val v: Var[M[Input]]) extends AnyVal {
     */
   def splitMutate[Output, Key](
     key: Input => Key,
-    distinctCompose: Signal[Input] => Signal[Input] = _.distinct,
+    // distinctCompose: KeyedStrictSignal[Key, Input] => KeyedStrictSignal[Key, Input] = (_: KeyedStrictSignal[Key, Input]).distinct,
+    distinctCompose: DistinctOps.DistinctorF[Input] = _.distinct,
     duplicateKeys: DuplicateKeysConfig = DuplicateKeysConfig.default
   )(
-    project: (Key, Input, Var[Input]) => Output
+    project: KeyedDerivedVar[Key, M[Input], Input] => Output
   )(implicit splittable: MutableSplittable[M]
   ): Signal[M[Output]] = {
     new SplitSignal[M, Input, Output, Key](
       parent = v.signal,
       key,
       distinctCompose,
-      project = (thisKey, initial, signal) => {
-        val displayNameSuffix = s".splitMutate(key = ${key})"
-        val childVar = new LazyDerivedVar[M[Input], Input](
+      project = signal => {
+        val thisKey = signal.key
+        val childVar = new KeyedDerivedVar[Key, M[Input], Input](
           parent = v,
-          signal = new LazyStrictSignal[Input, Input](
-            signal, identity, signal.displayName, displayNameSuffix + ".signal"
-          ),
-          zoomOut = (inputs, newInput) => {
+          signal = signal,
+          key = thisKey,
+          updateParent = KeyedDerivedVar.standardErrorsF { (inputs, newInput) =>
             splittable.findUpdateInPlace[Input](inputs, key(_) == thisKey, newInput)
-            inputs
+            Some(inputs)
           },
-          displayNameSuffix = displayNameSuffix
+          displayNameSuffix = s".splitMutate(key = ${key})"
         )
-        project(thisKey, initial, childVar)
+        project(childVar)
       },
       splittable.splittable,
       duplicateKeys,

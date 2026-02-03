@@ -21,6 +21,8 @@ private[state] class VarSignal[A] private[state] (
 
   setCurrentValue(initial)
 
+  override def tryNow(): Try[A] = super.tryNow()
+
   /** Note: we do not check if isStarted() here, this is how we ensure that this
     * signal's current value stays up to date. If this signal is stopped, this
     * value will not be propagated anywhere further though.

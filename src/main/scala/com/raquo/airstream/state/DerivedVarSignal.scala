@@ -4,6 +4,8 @@ import com.raquo.airstream.core.Observer
 import com.raquo.airstream.misc.MapSignal
 import com.raquo.airstream.ownership.{Owner, Subscription}
 
+import scala.util.Try
+
 class DerivedVarSignal[A, B](
   parent: Var[A],
   zoomIn: A => B,
@@ -14,6 +16,8 @@ class DerivedVarSignal[A, B](
   project = zoomIn,
   recover = None
 ) with OwnedSignal[B] {
+
+  override def tryNow(): Try[B] = super.tryNow()
 
   // Note that even if owner kills subscription, this signal might remain due to other listeners
   override protected[state] def isStarted: Boolean = super.isStarted

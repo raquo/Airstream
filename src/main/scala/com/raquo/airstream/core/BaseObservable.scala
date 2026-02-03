@@ -1,6 +1,7 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.debug.{DebuggableObservable, DebuggableSignal, Debugger}
+import com.raquo.airstream.distinct.DistinctOps
 import com.raquo.airstream.flatten.{AllowFlatMap, FlattenStrategy, MergingStrategy, SwitchingStrategy}
 import com.raquo.airstream.ownership.{Owner, Subscription}
 import com.raquo.airstream.status.{FlatMapStatusObservable, Status}
@@ -8,7 +9,7 @@ import com.raquo.ew.JsArray
 
 import scala.annotation.unused
 import scala.scalajs.js
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 /** This trait represents a reactive value that can be subscribed to.
   *
@@ -28,7 +29,11 @@ import scala.util.{Failure, Success, Try}
   *    to be garbage collected if they are otherwise unreachable (which they should become
   *    when their subscriptions are killed by their owners)
   */
-trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Named {
+trait BaseObservable[+Self[+_] <: Observable[_], +A]
+extends Source[A]
+with Named
+with CoreOps[Self, A]
+with DistinctOps[Self[A], A] {
 
   @inline implicit protected def protectedAccessEvidence: Protected = Protected.protectedAccessEvidence
 
@@ -36,24 +41,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
   protected val topoRank: Int
 
   /** @param project Note: guarded against exceptions */
-  def map[B](project: A => B): Self[B]
-
-  /** `value` is passed by name, so it will be evaluated whenever the Observable fires.
-    * Use it to sample mutable values (e.g. myInput.ref.value in Laminar).
-    *
-    * See also: [[mapToStrict]]
-    *
-    * @param value Note: guarded against exceptions
-    */
-  def mapTo[B](value: => B): Self[B] = map(_ => value)
-
-  /** `value` is evaluated strictly, only once, when this method is called.
-    *
-    * See also: [[mapTo]]
-    */
-  def mapToStrict[B](value: B): Self[B] = map(_ => value)
-
-  def mapToUnit: Self[Unit] = map(_ => ())
+  override def map[B](project: A => B): Self[B]
 
   /** #WARNING: DO NOT USE THIS METHOD.
     * See https://github.com/raquo/Airstream/#flattening-observables
@@ -109,39 +97,6 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A] extends Source[A] with Name
   def flatMapWithStatus[B](innerStream: => EventStream[B]): Self[Status[A, B]] = {
     flatMapWithStatus(_ => innerStream)
   }
-
-  /** Distinct events (but keep all errors) by == (equals) comparison */
-  def distinct: Self[A] = distinctByFn(_ == _)
-
-  /** Distinct events (but keep all errors) by matching key
-    * Note: `key(event)` might be evaluated more than once for each event
-    */
-  def distinctBy(key: A => Any): Self[A] = distinctByFn(key(_) == key(_))
-
-  /** Distinct events (but keep all errors) by reference equality (eq) */
-  def distinctByRef(implicit ev: A <:< AnyRef): Self[A] = distinctByFn(ev(_) eq ev(_))
-
-  /** Distinct events (but keep all errors) using a comparison function */
-  def distinctByFn(isSame: (A, A) => Boolean): Self[A] = distinctTry {
-    case (Success(prev), Success(next)) => isSame(prev, next)
-    case _ => false
-  }
-
-  /** Distinct errors only (but keep all events) using a comparison function */
-  def distinctErrors(isSame: (Throwable, Throwable) => Boolean): Self[A] = distinctTry {
-    case (Failure(prevErr), Failure(nextErr)) => isSame(prevErr, nextErr)
-    case _ => false
-  }
-
-  /** Distinct all values (both events and errors) using a comparison function */
-  def distinctTry(isSame: (Try[A], Try[A]) => Boolean): Self[A]
-
-  /** Execute a side effecting callback every time the observable emits.
-    * If it's a signal, it also runs when its initial value is evaluated.
-    *
-    * See https://github.com/raquo/Airstream/#tapEach for more details.
-    */
-  def tapEach[U](f: A => U): Self[A] = map { v => f(v); v }
 
   def toStreamIfSignal[B >: A](ifSignal: Signal[A] => EventStream[B]): EventStream[B] = {
     matchStreamOrSignal(identity, ifSignal)

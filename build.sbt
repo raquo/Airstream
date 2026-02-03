@@ -55,7 +55,7 @@ scalacOptions ++= Seq(
   "-feature",
   "-deprecation",
   "-language:higherKinds",
-  "-language:implicitConversions"
+  "-language:implicitConversions",
 )
 
 scalacOptions ~= { options: Seq[String] =>

@@ -38,7 +38,7 @@ class StrictSignalSpec extends UnitSpec with BeforeAndAfter {
     val effects: mutable.Buffer[String] = mutable.Buffer()
 
     val s = Var(Form(10))
-    val d = s.signal.mapLazy[Int] { form =>
+    val d = s.signal.map[Int] { form =>
       effects += s"project-${form.int}"
       form.int
     }
@@ -119,7 +119,7 @@ class StrictSignalSpec extends UnitSpec with BeforeAndAfter {
     val effects: mutable.Buffer[String] = mutable.Buffer()
 
     val s = Var(Form(10))
-    val d = s.signal.mapLazy[Int] { form =>
+    val d = s.signal.map[Int] { form =>
       effects += s"project-${form.int}"
       form.int
     }

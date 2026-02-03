@@ -1,6 +1,6 @@
 package com.raquo.airstream.state
 
-import com.raquo.airstream.core.Signal
+import com.raquo.airstream.core.{CoreOps, Signal}
 
 import scala.util.Try
 
@@ -9,7 +9,12 @@ import scala.util.Try
   * This means that its current value is kept up to date regardless of observers.
   * How this is actually accomplished is up to the concrete class extending this trait.
   */
-trait StrictSignal[+A] extends Signal[A] {
+trait StrictSignal[+A]
+extends Signal[A]
+with CoreOps[StrictSignal, A] {
+
+  @deprecated("Use StrictSignal.map – it behaves like `mapLazy` used to in 17.x", "18.0.0-M2")
+  def mapLazy[B](project: A => B): StrictSignal[B] = map(project)
 
   /** Map StrictSignal to get another StrictSignal, without requiring an Owner.
     *
@@ -17,12 +22,12 @@ trait StrictSignal[+A] extends Signal[A] {
     *
     * Just as `zoomLazy`, this method will be renamed in the next major Airstream release.
     */
-  def mapLazy[B](project: A => B): StrictSignal[B] = {
+  override def map[B](project: A => B): StrictSignal[B] = {
     new LazyStrictSignal(
       parentSignal = this,
       zoomIn = project,
       parentDisplayName = displayName,
-      displayNameSuffix = ".mapLazy"
+      displayNameSuffix = ".map"
     )
   }
 
@@ -32,5 +37,5 @@ trait StrictSignal[+A] extends Signal[A] {
     */
   override def now(): A = super.now()
 
-  override abstract def tryNow(): Try[A] = super.tryNow()
+  override def tryNow(): Try[A]
 }

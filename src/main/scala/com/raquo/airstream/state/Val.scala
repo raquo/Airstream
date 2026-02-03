@@ -4,6 +4,7 @@ import com.raquo.airstream.core.WritableSignal
 
 import scala.util.{Success, Try}
 
+// #nc should Val be StaticSource?
 class Val[A](constantValue: Try[A]) extends WritableSignal[A] with StrictSignal[A] {
 
   override protected val topoRank: Int = 1
