@@ -7,7 +7,7 @@ import scala.util.Try
 class KeyedDerivedVar[K, ParentV, ThisV](
   val parent: Var[ParentV],
   override val signal: StrictSignal[ThisV],
-  val key: K,
+  override val key: K,
   updateParent: (Try[ParentV], Try[ThisV]) => Option[Try[ParentV]],
   displayNameSuffix: String
 )
@@ -17,6 +17,7 @@ extends LazyDerivedVar2[ParentV, ThisV](
   updateParent = updateParent,
   displayNameSuffix = displayNameSuffix
 )
+with Keyed[K]
 
 object KeyedDerivedVar {
 

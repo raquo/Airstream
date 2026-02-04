@@ -9,10 +9,9 @@ import scala.util.Try
 
 trait KeyedStrictSignal[+K, +A]
 extends StrictSignal[A]
+with Keyed[K]
 with CoreOps[({ type Self[+V] = KeyedStrictSignal[K, V] })#Self, A] // #TODO[Scala] how to express this more concisely?
 with DistinctOps[KeyedStrictSignal[K, A], A] { self =>
-
-  val key: K
 
   override def map[B](project: A => B): KeyedStrictSignal[K, B] = {
     new MapSignal[A, B](parent = this, project, recover = None)
