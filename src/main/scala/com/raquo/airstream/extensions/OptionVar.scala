@@ -38,8 +38,8 @@ class OptionVar[A](val v: Var[Option[A]]) extends AnyVal {
           signal = new LazyStrictSignal[A, A](
             signal, identity, signal.displayName, displayNameSuffix + ".signal"
           ),
-          zoomOut = (inputs, newInput) => {
-            Some(newInput)
+          updateParent = LazyDerivedVar.standardErrorsF { (_, newInput) =>
+            Some(Some(newInput))
           },
           displayNameSuffix = displayNameSuffix
         )

@@ -1,6 +1,6 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.state.{LazyDerivedVar2, StrictSignal, Var}
+import com.raquo.airstream.state.{LazyDerivedVar, StrictSignal, Var}
 
 import scala.util.Try
 
@@ -11,7 +11,7 @@ class KeyedDerivedVar[K, ParentV, ThisV](
   updateParent: (Try[ParentV], Try[ThisV]) => Option[Try[ParentV]],
   displayNameSuffix: String
 )
-extends LazyDerivedVar2[ParentV, ThisV](
+extends LazyDerivedVar[ParentV, ThisV](
   parent = parent,
   signal = signal,
   updateParent = updateParent,
@@ -27,7 +27,7 @@ object KeyedDerivedVar {
     parentTry: Try[M[A]],
     nextTry: Try[A]
   ): Option[Try[M[A]]] = {
-    LazyDerivedVar2.standardErrorsF(updateParent)(parentTry, nextTry)
+    LazyDerivedVar.standardErrorsF(updateParent)(parentTry, nextTry)
   }
 
   // def noErrors[K, M[_], A](

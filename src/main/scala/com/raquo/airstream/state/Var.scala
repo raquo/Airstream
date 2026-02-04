@@ -95,12 +95,12 @@ with Named {
   /** Use this to create a Var that zooms into a field of a class stored
     * in the parent Var, for example:
     *
-    * ```scala
+    * {{{
     * val fieldVar = formStateVar.zoomLazy(_.field1) {
     *   (formState, newFieldValue) => formState.copy(field1 = newFieldValue)
     * }
     * fieldVar.set(newFieldValue) // updates both fieldVar and formStateVar
-    * ```
+    * }}}
     *
     * The vars become bidirectionally linked, with the underlying state stored
     * in the parent var, and the derived var providing a read-write lens view
@@ -124,29 +124,11 @@ with Named {
     new LazyDerivedVar[A, B](
       parent = this,
       signal = zoomedSignal,
-      zoomOut = (currValue, nextZoomedValue) => out(currValue, nextZoomedValue),
+      updateParent = LazyDerivedVar.standardErrorsF { (currValue, nextZoomedValue) =>
+        Some(out(currValue, nextZoomedValue))
+      },
       displayNameSuffix = ".zoomLazy"
     )
-    // #nc Use this new impl in 18.0
-    // new LazyDerivedVar2[A, B](
-    //   parent = this,
-    //   signal = zoomedSignal,
-    //   zoomOut = (currValueTry, nextZoomedValueTry) => {
-    //     currValueTry.fold(
-    //       err => {
-    //         // If parent value is error-ed, we can't update with the `out` fn.
-    //         AirstreamError.sendUnhandledError(
-    //           VarError(s"Unable to zoom out of lazy derived var when the parent var is failed.", cause = Some(err))
-    //         )
-    //         None
-    //       },
-    //       currValue =>
-    //         // Note: setting the derived var to a failed state writes that failure to the parent var
-    //         Some(nextZoomedValueTry.map(out(currValue, _)))
-    //     )
-    //   },
-    //   displayNameSuffix = ".zoomLazy"
-    // )
   }
 
   /** Create a derived Var with an isomorphic transformation, for example
@@ -172,7 +154,7 @@ with Named {
     val zoomedSignal = new LazyStrictSignal(
       signal, getThis, displayName, displayNameSuffix = ".bimap.signal"
     )
-    new LazyDerivedVar2[A, B](
+    new LazyDerivedVar[A, B](
       parent = this,
       signal = zoomedSignal,
       updateParent = (_, nextZoomedValueTry) => {
@@ -187,7 +169,7 @@ with Named {
     val distinctSignal = new LazyStrictSignal[A, A](
       signal.distinctTry(isSame), identity, displayName, displayNameSuffix = ".distinct*.signal"
     )
-    new LazyDerivedVar2[A, A](
+    new LazyDerivedVar[A, A](
       parent = this,
       signal = distinctSignal,
       updateParent = (currValue, nextValue) =>
