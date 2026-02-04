@@ -1,6 +1,6 @@
 package com.raquo.airstream.state
 
-import com.raquo.airstream.core.AirstreamError.{VarError, sendUnhandledError}
+import com.raquo.airstream.core.AirstreamError.VarError
 import com.raquo.airstream.core.{AirstreamError, Transaction}
 
 import scala.util.{Failure, Success, Try}
@@ -84,8 +84,9 @@ object LazyDerivedVar2 {
     }
 
   // #TODO[DX] refactor message generation so that we can print the vars
-  def sendStandardError(err: Throwable): Unit =
+  def sendUnhandledError(err: Throwable): Unit = {
     AirstreamError.sendUnhandledError(
       VarError(s"Unable to zoom out of lazy derived var when the parent var is failed.", cause = Some(err))
     )
+  }
 }
