@@ -166,12 +166,12 @@ class EitherObservableSpec extends UnitSpec {
     _var
       .signal
       .splitEither(
-        left = (_, leftS) => {
+        left = leftS => {
           ix += 1
           leftS.foreach(l => effects += Effect(s"left-${ix}", l))(innerOwner)
           ix
         },
-        right = (_, rightS) => {
+        right = rightS => {
           ix += 1
           rightS.foreach(r => effects += Effect(s"right-${ix}", r))(innerOwner)
           ix

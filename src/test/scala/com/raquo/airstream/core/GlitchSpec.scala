@@ -490,7 +490,8 @@ class GlitchSpec extends UnitSpec {
         effects += Effect("tap", v)
         v
       }
-      .splitOne(_ % 2 == 0)((isEven, _, signal) => {
+      .splitOne(_ % 2 == 0)((signal) => {
+        val isEven = signal.key
         effects += Effect("inner-init", isEven)
         signal
           .setDisplayName(s"inner-signal-$isEven")

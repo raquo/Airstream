@@ -25,27 +25,33 @@ class EitherStream[A, B](val stream: EventStream[Either[A, B]]) extends AnyVal {
   /** This `.split`-s a stream of Either-s by their `isRight` property.
     * If you want a different key, use the .splitOne operator directly.
     *
-    * @param left  (initialLeft, signalOfLeftValues) => output
+    * @param left  signalOfLeftValues => output
+    *
     *              `left` is called whenever `stream` switches from `Right()` to `Left()`.
-    *              `signalOfLeftValues` starts with `initialLeft` value, and updates when
-    *              the parent stream updates from `Left(a)` to Left(b)`.
-    * @param right (initialRight, signalOfRightValues) => output
+    *              `signalOfLeftValues` starts with an initial `Left` value, and updates when
+    *              the parent stream updates from `Left(a)` to `Left(b)`.
+    *
+    *              You can get the signal's current value with `.now()`.
+    *
+    * @param right signalOfRightValues => output
+    *
     *              `right` is called whenever `stream` switches from `Left()` to `Right()`.
-    *              `signalOfRightValues` starts with `initialRight` value, and updates when
+    *              `signalOfRightValues` starts with an initial `Right` value, and updates when
     *              the parent stream updates from `Right(a)` to `Right(b)`.
+    *
+    *              You can get the signal's current value with `.now()`.
     */
   def splitEither[C](
     left: (A, Signal[A]) => C,
     right: (B, Signal[B]) => C
   ): EventStream[C] = {
-    new SplittableOneStream(stream).splitOne(key = _.isRight) {
-      (_, initial, signal) =>
-        initial match {
-          case Right(v) =>
-            right(v, signal.map(e => e.getOrElse(throw new Exception(s"splitEither: `${stream}` bad right value: $e"))))
-          case Left(v) =>
-            left(v, signal.map(e => e.left.getOrElse(throw new Exception(s"splitEither: `${stream}` bad left value: $e"))))
-        }
+    new SplittableOneStream(stream).splitOne(key = _.isRight) { signal =>
+      signal.now() match {
+        case Right(v) =>
+          right(v, signal.map(e => e.getOrElse(throw new Exception(s"splitEither: `${stream}` bad right value: $e"))))
+        case Left(v) =>
+          left(v, signal.map(e => e.left.getOrElse(throw new Exception(s"splitEither: `${stream}` bad left value: $e"))))
+      }
     }
   }
 

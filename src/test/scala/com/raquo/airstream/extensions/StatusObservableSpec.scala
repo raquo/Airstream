@@ -28,12 +28,14 @@ class StatusObservableSpec extends UnitSpec {
         v
       }
       .splitStatus(
-        resolved = (init, signal) => {
+        resolved = signal => {
+          val init = signal.now()
           effects += Effect("resolved", init)
           signal.foreach(v => effects += Effect("resolved-signal", v))(innerOwner)
           init
         },
-        pending = (init, signal) => {
+        pending = signal => {
+          val init = signal.now()
           effects += Effect("pending", init)
           signal.foreach(v => effects += Effect("pending-signal", v))(innerOwner)
           init
@@ -120,12 +122,14 @@ class StatusObservableSpec extends UnitSpec {
       }
       .setDisplayName("tap")
       .splitStatus(
-        resolved = (init, signal) => {
+        resolved = signal => {
+          val init = signal.now()
           effects += Effect("resolved", init)
           signal.foreach(v => effects += Effect("resolved-signal", v))(innerOwner)
           init
         },
-        pending = (init, signal) => {
+        pending = signal => {
+          val init = signal.now()
           effects += Effect("pending", init)
           signal.foreach(v => effects += Effect("pending-signal", v))(innerOwner)
           init

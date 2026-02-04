@@ -872,7 +872,8 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
       val signal = myVar.splitOption(
-        (initialFoo, fooVar) => {
+        fooVar => {
+          val initialFoo = fooVar.now()
           val initialKey = s"${initialFoo.id}-${initialFoo.version}"
           effects += Effect(s"init-child-$initialKey", initialKey)
           // #Note: this manual management isn't great, but we don't have Laminar's mounting system here

@@ -263,7 +263,9 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
 
       val owner = new TestableOwner
 
-      val stream = bus.events.splitOne(_.id)((key, initialFoo, fooSignal) => {
+      val stream = bus.events.splitOne(_.id) { fooSignal =>
+        val key = fooSignal.key
+        val initialFoo = fooSignal.now()
         assert(key == initialFoo.id, "Key does not match initial value")
         effects += Effect("init-child", key + "-" + initialFoo.version.toString)
         fooSignal.foreach { foo =>
@@ -271,7 +273,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
           effects += Effect("update-child", foo.id + "-" + foo.version.toString)
         }(owner)
         Bar(key)
-      })
+      }
 
       stream.foreach { result =>
         effects += Effect("result", result.toString)
@@ -335,7 +337,9 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
 
       val owner = new TestableOwner
 
-      val splitSignal = myVar.signal.splitOne(_.id)((key, initialFoo, fooSignal) => {
+      val splitSignal = myVar.signal.splitOne(_.id) { fooSignal =>
+        val key = fooSignal.key
+        val initialFoo = fooSignal.now()
         assert(key == initialFoo.id, "Key does not match initial value")
         effects += Effect(s"init-child-$key", key + "-" + initialFoo.version.toString)
         fooSignal.foreach { foo =>
@@ -343,7 +347,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
           effects += Effect(s"update-child-${key}", foo.id + "-" + foo.version.toString)
         }(owner)
         Bar(key)
-      })
+      }
 
       splitSignal.foreach { result =>
         effects += Effect("result", result.toString)
@@ -906,7 +910,8 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
       val signal = myVar.signal.splitOption(
-        (initialFoo, fooSignal) => {
+        fooSignal => {
+          val initialFoo = fooSignal.now()
           val initialKey = s"${initialFoo.id}-${initialFoo.version}"
           effects += Effect(s"init-child-$initialKey", initialKey)
           // #Note: this manual management isn't great, but we don't have Laminar's mounting system here

@@ -41,6 +41,7 @@ object DistinctOps {
   def DistinctorF[A](f: F[A] => (Try[A], Try[A]) => Boolean): DistinctorF[A] =
     f
 
+  // #nc[split] naming
   class F[A]
   extends DistinctOps[Distinctor[A], A]
   with Distinctor[A] {

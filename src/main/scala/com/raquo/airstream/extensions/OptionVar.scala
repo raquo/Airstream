@@ -9,27 +9,29 @@ class OptionVar[A](val v: Var[Option[A]]) extends AnyVal {
   /** This `.split`-s a Var of an Option by the Option's `isDefined` property.
     * If you want a different key, use the .split operator directly.
     *
-    * @param project - (initialInput, varOfInput) => output
-    *                  `project` is called whenever the parent var switches from `None` to `Some()`.
-    *                  `varOfInput` starts with `initialInput` value, and updates when
+    * @param project - varOfInput => output
+    *
+    *                  `project` is called whenever the parent var switches from `None` to `Some(value)`.
+    *                  `varOfInput` starts with an initial `Some(value)`, and updates when
     *                  the parent var updates from `Some(a)` to `Some(b)`.
+    *
     * @param ifEmpty - returned if Option is empty. Evaluated whenever the parent var
     *                  switches from `Some(a)` to `None`, or when the parent var
     *                  starts with a `None`. `ifEmpty` is NOT re-evaluated when the
     *                  parent var emits `None` if its value is already `None`.
     */
   def splitOption[B](
-    project: (A, Var[A]) => B,
+    project: Var[A] => B,
     ifEmpty: => B
   ): Signal[B] = {
     // Note: We never have duplicate keys here, so we can use
     // DuplicateKeysConfig.noWarnings to improve performance
     v.signal
       .distinctByFn((prev, next) => prev.isEmpty && next.isEmpty) // Ignore consecutive `None` events
-      .split(
+      .splitSeq(
         key = _ => (),
         duplicateKeys = DuplicateKeysConfig.noWarnings
-      ) { (_, initial, signal) =>
+      ) { signal =>
         val displayNameSuffix = s".splitOption(Some)"
         val childVar = new LazyDerivedVar[Option[A], A](
           parent = v,
@@ -41,16 +43,16 @@ class OptionVar[A](val v: Var[Option[A]]) extends AnyVal {
           },
           displayNameSuffix = displayNameSuffix
         )
-        project(initial, childVar)
+        project(childVar)
       }
       .map(_.getOrElse(ifEmpty))
   }
 
   def splitOption[B](
-    project: (A, Var[A]) => B
+    project: Var[A] => B
   ): Signal[Option[B]] = {
     splitOption(
-      (initial, someVar) => Some(project(initial, someVar)),
+      _var => Some(project(_var)),
       ifEmpty = None
     )
   }

@@ -1,6 +1,7 @@
 package com.raquo.airstream.split
 
 import com.raquo.airstream.core.{EventStream, Signal}
+import com.raquo.airstream.state.StrictSignal
 
 class SplittableOneStream[Input](val stream: EventStream[Input]) extends AnyVal {
 
@@ -8,13 +9,13 @@ class SplittableOneStream[Input](val stream: EventStream[Input]) extends AnyVal 
   def splitOne[Output, Key](
     key: Input => Key
   )(
-    project: (Key, Input, Signal[Input]) => Output
+    project: KeyedStrictSignal[Key, Input] => Output
   ): EventStream[Output] = {
     // @TODO[Performance] Would be great if we didn't need .toWeakSignal and .map, but I can't figure out how to do that
     // Note: We never have duplicate keys here, so we can use
     // DuplicateKeysConfig.noWarnings to improve performance
     stream.toWeakSignal
-      .split(
+      .splitSeq(
         key,
         distinctCompose = identity,
         DuplicateKeysConfig.noWarnings
@@ -32,7 +33,7 @@ class SplittableOneStream[Input](val stream: EventStream[Input]) extends AnyVal 
     * when signal is actually stream.toWeakSignal or stream.startWith(initial)
     */
   def splitStart[Output](
-    project: (Input, Signal[Input]) => Output,
+    project: StrictSignal[Input] => Output,
     startWith: Output
   ): Signal[Output] = {
     stream.toWeakSignal.splitOption(project, startWith)
