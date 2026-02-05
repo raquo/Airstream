@@ -3,7 +3,6 @@ package com.raquo.airstream.state
 import com.raquo.airstream.common.SingleParentSignal
 import com.raquo.airstream.core.{Protected, Signal, Transaction}
 import com.raquo.airstream.distinct.DistinctSignal
-import com.raquo.airstream.misc.MapSignal
 
 import scala.util.Try
 
@@ -49,98 +48,47 @@ object LazyStrictSignal {
 
   // #nc[lazy] expose LazyStrictSignal as .observeLazy()?
 
+  /** Convert any signal into a LazyStrictSignal */
   def apply[A](
     parentSignal: Signal[A],
-    parentDisplayName: => String,
-    displayNameSuffix: String,
+    parentDisplayName: => String, // parentSignal.displayName
+    displayNameSuffix: String, // ".lazyStrictSignal"
   ): StrictSignal[A] = {
-    val _pdn = parentDisplayName
-    val _dns = displayNameSuffix
-
-    new LazyStrictSignal[A, A] {
-
-      override protected val topoRank: Int = Protected.topoRank(parentSignal) + 1
-
-      override protected[this] val parent: Signal[A] = parentSignal
-
-      override protected def parentDisplayName: String = _pdn
-
-      override protected val displayNameSuffix: String = _dns
-
-      override protected def onTry(nextParentValue: Try[A], transaction: Transaction): Unit = {
-        super.onTry(nextParentValue, transaction)
-        fireTry(nextParentValue, transaction)
-      }
-
-      override protected def currentValueFromParent(): Try[A] = parent.tryNow()
-    }
+    mapSignal[A, A](
+      parentSignal, project = identity, parentDisplayName, displayNameSuffix
+    )
   }
 
+  /** .map + make lazy-strict */
   def mapSignal[I, O](
     parentSignal: Signal[I],
     project: I => O,
     parentDisplayName: => String,
     displayNameSuffix: String,
-  ): MapSignal[I, O] with StrictSignal[O] = {
+  ): StrictSignal[O] = {
     val _pdn = parentDisplayName
     val _dns = displayNameSuffix
 
-    new MapSignal[I, O](
-      parentSignal, project, recover = None
-    ) with LazyStrictSignal[I, O] {
+    new LazyStrictSignal[I, O] {
+
+      override protected val topoRank: Int = Protected.topoRank(parentSignal) + 1
+
+      override protected[this] val parent: Signal[I] = parentSignal
 
       override protected def parentDisplayName: String = _pdn
 
       override protected val displayNameSuffix: String = _dns
+
+      override protected def onTry(nextParentValue: Try[I], transaction: Transaction): Unit = {
+        super.onTry(nextParentValue, transaction)
+        fireTry(nextParentValue.map(project), transaction)
+      }
+
+      override protected def currentValueFromParent(): Try[O] = {
+        parent.tryNow().map(project)
+      }
     }
   }
-  //
-  // /** Convert any signal into a LazyStrictSignal */
-  // def apply[A](
-  //   parentSignal: Signal[A],
-  //   parentDisplayName: => String, // parentSignal.displayName
-  //   displayNameSuffix: String, // ".lazyStrictSignal"
-  // ): StrictSignal[A] = {
-  //   mapSignal[A, A](
-  //     parentSignal, project = identity, parentDisplayName, displayNameSuffix
-  //   )
-  // }
-
-  // #nc >>>> RESUME HERE >>> Why does this mapSignal implementation fails 9 tests, but the MapSignal implementation works?
-  //  - Get to the bottom of this, something is sketchy.
-  //  - If there's a contract I violated, I need to figure it out and document it.
-  //  - Uncomment the below and run DistinctSpec / distinct signals – fail on line 196
-
-  /** .map + make lazy-strict */
-  // def mapSignal[I, O](
-  //   parentSignal: Signal[I],
-  //   project: I => O,
-  //   parentDisplayName: => String,
-  //   displayNameSuffix: String,
-  // ): StrictSignal[O] = {
-  //   val _pdn = parentDisplayName
-  //   val _dns = displayNameSuffix
-  //
-  //   new LazyStrictSignal[I, O] {
-  //
-  //     override protected val topoRank: Int = Protected.topoRank(parentSignal) + 1
-  //
-  //     override protected[this] val parent: Signal[I] = parentSignal
-  //
-  //     override protected def parentDisplayName: String = _pdn
-  //
-  //     override protected val displayNameSuffix: String = _dns
-  //
-  //     override protected def onTry(nextParentValue: Try[I], transaction: Transaction): Unit = {
-  //       super.onTry(nextParentValue, transaction)
-  //       fireTry(nextParentValue.map(project), transaction)
-  //     }
-  //
-  //     override protected def currentValueFromParent(): Try[O] = {
-  //       parent.tryNow().map(project)
-  //     }
-  //   }
-  // }
 
   def distinctSignal[A](
     parentSignal: Signal[A],

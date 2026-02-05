@@ -1,6 +1,9 @@
 package com.raquo.airstream.common
 
 import com.raquo.airstream.core.{Observable, Protected, Signal, Transaction, WritableSignal}
+import com.raquo.airstream.distinct.DistinctSignal
+import com.raquo.airstream.misc.SignalFromStream
+import com.raquo.airstream.split.SplitChildSignal
 
 import scala.util.Try
 
@@ -9,7 +12,9 @@ trait SingleParentSignal[I, O] extends WritableSignal[O] with InternalTryObserve
 
   protected[this] val parent: Observable[I]
 
-  protected[this] val parentIsSignal: Boolean = parent.isInstanceOf[Signal[_]]
+  // This needs to be lazy, otherwise it risks evaluating with an uninitialized `parent`
+  // if another trait extends this trait (overriding `val parent` in subclass param seems to be fine)
+  protected[this] lazy val parentIsSignal: Boolean = parent.isInstanceOf[Signal[_]]
 
   // Note: `-1` here means that we've never synced up with the parent.
   //       I am not sure if -1 vs 0 has a practical difference, but looking
@@ -19,9 +24,9 @@ trait SingleParentSignal[I, O] extends WritableSignal[O] with InternalTryObserve
   //       signal's value would only be updated in tryNow().
   protected[this] var _parentLastUpdateId: Int = -1
 
-  /** Note: this is overriden in:
-    *  - [[com.raquo.airstream.misc.SignalFromStream]] because parent can be a stream, and it has cacheInitialValue logic
-    *  - [[com.raquo.airstream.split.SplitChildSignal]] because its parent is a special timing stream, not the real parent
+  /** Note: this is overridden in:
+    *  - [[SignalFromStream]] because parent can be a stream, and it has cacheInitialValue logic
+    *  - [[SplitChildSignal]] because its parent is a special timing stream, not the real parent
     */
   override protected def onWillStart(): Unit = {
     // dom.console.log(s"${this} > onWillStart (SPS)")
@@ -38,20 +43,21 @@ trait SingleParentSignal[I, O] extends WritableSignal[O] with InternalTryObserve
   }
 
   /** Note: this is overridden in:
-   *  - [[com.raquo.airstream.split.SplitChildSignal]] to clear cached initial value (if any)
-   *  - [[com.raquo.airstream.distinct.DistinctSignal]] to filter out isSame events
+   *  - [[SplitChildSignal]] to clear cached initial value (if any)
+   *  - [[DistinctSignal]] to filter out isSame events
    */
   protected def updateCurrentValueFromParent(
     nextValue: Try[O],
     nextParentLastUpdateId: Int
   ): Unit = {
-    // dom.console.log(s"${this} > updateCurrentValueFromParent")
+    // dom.console.log(s"${this} > updateCurrentValueFromParent(nextValue = ${nextValue}, nextParentLastUpdateId = ${nextParentLastUpdateId})")
     setCurrentValue(nextValue)
     _parentLastUpdateId = nextParentLastUpdateId
   }
 
-  /** Note: this is overridden in:
-    *  - [[com.raquo.airstream.split.SplitChildSignal]] because its parent is a special timing stream, not the real parent
+  /** Note: this is overridden without calling super.onTry in:
+    *  - [[SplitChildSignal]] because its parent is a special timing stream, not the real parent
+    * Other Overrides in other
     */
   override protected def onTry(nextParentValue: Try[I], transaction: Transaction): Unit = {
     if (parentIsSignal) {
