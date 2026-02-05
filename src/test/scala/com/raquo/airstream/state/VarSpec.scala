@@ -343,8 +343,8 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     val var1 = Var(0)
     val var2 = Var(0)
     val var3 = Var(0)
-    val zoomedVar1 = var1.zoom(v => v)((_, v) => v)(owner)
-    val zoomedVar2 = var2.zoom(v => v)((_, v) => v)(owner)
+    val zoomedVar1 = var1.zoomStrict(v => v)((_, v) => v)(owner)
+    val zoomedVar2 = var2.zoomStrict(v => v)((_, v) => v)(owner)
 
     val err3 = new Exception("Var 3 is broken")
     val setDuplicatesErr = VarError("Unable to Var.{set,setTry}: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", None)

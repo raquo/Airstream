@@ -55,7 +55,7 @@ trait WritableObservable[A] extends Observable[A] {
   protected var willStartDone: Boolean = false
 
   override def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription = {
-    // println(s"// ${this} addObserver ${observer}")
+    // dom.console.log(s"// ${this} addObserver ${observer}")
     Transaction.onStart.shared({
       maybeWillStart()
       val subscription = addExternalObserver(observer, owner)

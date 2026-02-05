@@ -13,8 +13,8 @@ import scala.util.{Failure, Success, Try}
 
 /** Var is essentially a Signal that you can write to, so it's a source of state, like EventBus is a source of events.
   *
-  * There are two kinds of Vars: [[SourceVar]] and [[DerivedVar]]. The latter you can obtain by calling [[zoom]] on
-  * any Var, however, unlike SourceVar, DerivedVar requires an [[Owner]] in order to run.
+  * There are two main types of Vars: [[SourceVar]] and [[LazyDerivedVar]]. The latter you can obtain by calling [[zoom]] on
+  * any Var, however, unlike SourceVar, DerivedVar's current value is evaluated lazily, on-demand. There's also the strict version [[DerivedVar]], available via [[zoomStrict]], but it requires an [[Owner]] to run.
   */
 trait Var[A]
 extends SignalSource[A]
@@ -87,8 +87,8 @@ with Named {
     }
   }
 
-  /** Create a strictly evaluated DerivedVar. See also: [[zoomLazy]]. */
-  def zoom[B](in: A => B)(out: (A, B) => A)(implicit owner: Owner): Var[B] = {
+  /** Create a strictly evaluated [[DerivedVar]]. See also: [[zoom]]. */
+  def zoomStrict[B](in: A => B)(out: (A, B) => A)(implicit owner: Owner): Var[B] = {
     new DerivedVar[A, B](this, in, out, owner, displayNameSuffix = ".zoom")
   }
 
@@ -117,8 +117,8 @@ with Named {
     * Note: `in` and `out` functions should be free of side effects,
     * as they may not get called if the Var's value is not observed.
     */
-  def zoomLazy[B](in: A => B)(out: (A, B) => A): Var[B] = {
-    val zoomedSignal = new LazyStrictSignal(
+  def zoom[B](in: A => B)(out: (A, B) => A): Var[B] = {
+    val zoomedSignal = LazyStrictSignal.mapSignal(
       signal, in, displayName, displayNameSuffix = ".zoomLazy.signal"
     )
     new LazyDerivedVar[A, B](
@@ -131,12 +131,18 @@ with Named {
     )
   }
 
+  @deprecated("Use Var.zoom – it works like Var.zoomLazy used to. Note: the previous version of Var.zoom which required an Owner was renamed to `zoomStrict`", since = "18.0.0-M3")
+  def zoomLazy[B](in: A => B)(out: (A, B) => A): Var[B] = {
+    zoom(in)(out)
+  }
+
   /** Create a derived Var with an isomorphic transformation, for example
     * by transforming the value in the parent var with a codec.
     *
-    * ```scala
+    * {{{
+    * scala
     * val personVar = jsonVar.bimap(decodeJsonIntoPerson)(encodePersonToJson)
-    * ```
+    * }}}
     *
     * The two vars become bidirectionally linked, with the underlying state
     * stored in the parent var, and the derived var providing a transformed
@@ -151,7 +157,7 @@ with Named {
     * the thrown error.
     */
   def bimap[B](getThis: A => B)(getParent: B => A): Var[B] = {
-    val zoomedSignal = new LazyStrictSignal(
+    val zoomedSignal = LazyStrictSignal.mapSignal(
       signal, getThis, displayName, displayNameSuffix = ".bimap.signal"
     )
     new LazyDerivedVar[A, B](
@@ -166,8 +172,12 @@ with Named {
 
   /** Distinct all values (both events and errors) using a comparison function */
   override def distinctTry(isSame: (Try[A], Try[A]) => Boolean): Var[A] = {
-    val distinctSignal = new LazyStrictSignal[A, A](
-      signal.distinctTry(isSame), identity, displayName, displayNameSuffix = ".distinct*.signal"
+    val distinctSignal = LazyStrictSignal.distinctSignal(
+      parentSignal = signal,
+      isSame = isSame,
+      resetOnStop = false,
+      parentDisplayName = displayName,
+      displayNameSuffix = ".distinct*.signal"
     )
     new LazyDerivedVar[A, A](
       parent = this,

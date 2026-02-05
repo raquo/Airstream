@@ -44,7 +44,7 @@ class SplittableObservable[M[_], Input](val observable: Observable[M[Input]]) ex
     )
   }
 
-  @deprecated("Instead of `.split(...) { (key, initial, signal) => ... }`, use `.split(...)(strictSignal => ...)` – you can now read `.key` and `.now()` from `strictSignal`, but note that `.now()` updates over time, unlike `initial` before.", "18.0.0-M2")
+  @deprecated("Instead of `.split(...) { (key, initial, signal) => ... }`, use `.split(...)(strictSignal => ...)` – you can now read `.key` and `.now()` from `strictSignal`, but note that `.now()` updates over time, unlike `initial` before.", "18.0.0-M3")
   def split[Output, Key](
     key: Input => Key,
     // distinctCompose: KeyedStrictSignal[_, Input] => KeyedStrictSignal[_, Input] = (_: KeyedStrictSignal[_, Input]).distinct,
@@ -64,7 +64,7 @@ class SplittableObservable[M[_], Input](val observable: Observable[M[Input]]) ex
   }
 
   /** Like `split`, but uses index of the item in the list as the key. */
-  @deprecated("Instead of `.splitByIndex { (ix, initial, signal) => ... }`, use `.split(...)(strictSignal => ...)` – you can now read `.key` (containing index) and `.now()` from `strictSignal`, but note that `.now()` updates over time, unlike `initial` before.", "18.0.0-M2")
+  @deprecated("Instead of `.splitByIndex { (ix, initial, signal) => ... }`, use `.split(...)(strictSignal => ...)` – you can now read `.key` (containing index) and `.now()` from `strictSignal`, but note that `.now()` updates over time, unlike `initial` before.", "18.0.0-M3")
   def splitByIndex[Output](
     project: (Int, Input, Signal[Input]) => Output
   )(implicit splittable: Splittable[M]

@@ -39,7 +39,7 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     val effects: mutable.Buffer[String] = mutable.Buffer()
 
     val s = Var(Form(10))
-    val d = s.zoomLazy[Int](
+    val d = s.zoom[Int](
       in = form => {
         effects += s"zoomIn-${form.int}"
         form.int
@@ -215,7 +215,7 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     val effects: mutable.Buffer[String] = mutable.Buffer()
 
     val s = Var(Form(10))
-    val d = s.zoomLazy[Int](
+    val d = s.zoom[Int](
       in = form => {
         effects += s"zoomIn-${form.int}"
         form.int
@@ -399,7 +399,7 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     val s = Var(MetaForm(Form(10)))
 
-    val d1 = s.zoomLazy(
+    val d1 = s.zoom(
       in = metaForm => {
         effects += s"d1.zoomIn-${metaForm.form}"
         metaForm.form
@@ -412,7 +412,7 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
       }
     )
 
-    val d2 = d1.zoomLazy(
+    val d2 = d1.zoom(
       in = form => {
         effects += s"d2.zoomIn-${form.int}"
         form.int
@@ -529,7 +529,7 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     val s = Var(MetaForm(Form(10)))
 
-    val d1 = s.zoomLazy(
+    val d1 = s.zoom(
       in = metaForm => {
         effects += s"d1.zoomIn-${metaForm.form}"
         metaForm.form
@@ -542,7 +542,7 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
       }
     )
 
-    val d2 = d1.zoom(
+    val d2 = d1.zoomStrict(
       in = form => {
         effects += s"d2.zoomIn-${form.int}"
         form.int
@@ -637,7 +637,7 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
 
     val s = Var(MetaForm(Form(10)))
 
-    val d1 = s.zoom(
+    val d1 = s.zoomStrict(
       in = metaForm => {
         effects += s"d1.zoomIn-${metaForm.form}"
         metaForm.form
@@ -650,7 +650,7 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
       }
     )(d1Owner)
 
-    val d2 = d1.zoomLazy(
+    val d2 = d1.zoom(
       in = form => {
         effects += s"d2.zoomIn-${form.int}"
         form.int
@@ -756,7 +756,7 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     val effects = mutable.Buffer[Effect[Int]]()
 
     val s = Var(Form(1))
-    val d = s.zoomLazy(_.int)((f, v) => f.copy(int = v))
+    val d = s.zoom(_.int)((f, v) => f.copy(int = v))
 
     val combinedSignal = d.signal.combineWithFn(s.signal)(_ * 1000 + _.int) // e.g. if s.now() is Form(2), this is 2002
 
@@ -847,7 +847,7 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
     val obsOwner = new TestableOwner
 
     val s = Var(Form(10))
-    val d = s.zoomLazy(_.int)((f, int) => f.copy(int = int))
+    val d = s.zoom(_.int)((f, int) => f.copy(int = int))
 
     val sub = d.signal.addObserver(Observer.empty)(obsOwner)
 
@@ -944,8 +944,8 @@ class LazyDerivedVarSpec extends UnitSpec with BeforeAndAfter {
   it("asymmetric derived vars") {
 
     val s = Var(Form(10))
-    val d1 = s.zoomLazy(_.int)((f, int) => f.copy(int = 100 + int))
-    val d2 = s.zoomLazy(_.int + 100)((f, int) => f.copy(int = int))
+    val d1 = s.zoom(_.int)((f, int) => f.copy(int = 100 + int))
+    val d2 = s.zoom(_.int + 100)((f, int) => f.copy(int = int))
 
     assert(s.tryNow() == Success(Form(10)))
     assert(s.now() == Form(10))

@@ -188,7 +188,7 @@ with SignalDynamicImportOps[A] // Provides `dynamicImport` method (Scala 3 only)
     * signal's logic (e.g. MapSignal would apply the `project` function).
     *
     * This method is used to calculate the signal's initial value, but also to
-    * recalculate, this signal's value, to re-sync it with the parent, when this signal
+    * recalculate this signal's value, to re-sync it with the parent, when this signal
     * is restarted after being stopped. See https://github.com/raquo/Airstream/issues/43
     */
   protected def currentValueFromParent(): Try[A]

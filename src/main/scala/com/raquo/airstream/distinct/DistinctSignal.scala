@@ -34,8 +34,12 @@ class DistinctSignal[A](
     //    unless you're using some super weird isSame function where a != a.
     // #Note We check this signal's standard distinction condition with !isSame instead of `==`
     //  because isSame might be something incompatible, e.g. reference equality
-    if (resetOnStop || !isSame(nextValue, tryNow())) {
-      super.updateCurrentValueFromParent(nextValue, nextParentLastUpdateId) // #nc check this?????
+    // #Warning: LazyStrictSignal's tryNow() calls into updateCurrentValueFromParent
+    //  - therefore, when mixing `LazyStrictSignal` with `DistinctSignal` in one instance,
+    //    this `updateCurrentValueFromParent` MUST NOT CALL INTO tryNow()
+    //  - But then, how do we apply isSame
+    if (resetOnStop || maybeLastSeenCurrentValue.forall(!isSame(nextValue, _))) {
+      super.updateCurrentValueFromParent(nextValue, nextParentLastUpdateId)
     }
   }
 }

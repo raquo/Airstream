@@ -852,7 +852,7 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
     // --
 
     val _var = Var(1)
-    val _derived = _var.zoom(x => x)((acc, x) => x)
+    val _derived = _var.zoomStrict(x => x)((acc, x) => x)
 
     assert(_var.displayName.startsWith("SourceVar@"))
     assertEquals(_var.signal.displayName, _var.displayName + ".signal")

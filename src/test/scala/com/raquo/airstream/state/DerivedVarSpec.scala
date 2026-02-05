@@ -37,7 +37,7 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
     val owner = new TestableOwner
 
     val s = Var(Form(10))
-    val d = s.zoom(_.int)((form, int) => form.copy(int = int))(owner)
+    val d = s.zoomStrict(_.int)((form, int) => form.copy(int = int))(owner)
 
     assert(s.tryNow() == Success(Form(10)))
     assert(s.now() == Form(10))
@@ -120,7 +120,7 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
     val obsOwner = new TestableOwner
 
     val s = Var(Form(10))
-    val d = s.zoom(_.int)((f, int) => f.copy(int = int))(varOwner)
+    val d = s.zoomStrict(_.int)((f, int) => f.copy(int = int))(varOwner)
 
     val err1 = new Exception("Error: err1")
 
@@ -255,7 +255,7 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
     val effects = mutable.Buffer[Effect[Int]]()
 
     val s = Var(Form(1))
-    val d = s.zoom(_.int)((f, v) => f.copy(int = v))(owner)
+    val d = s.zoomStrict(_.int)((f, v) => f.copy(int = v))(owner)
 
     val combinedSignal = d.signal.combineWithFn(s.signal)(_ * 1000 + _.int) // e.g. if s.now() is Form(2), this is 2002
 
@@ -353,7 +353,7 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
     val obsOwner = new TestableOwner
 
     val s = Var(Form(10))
-    val d = s.zoom(_.int)((f, int) => f.copy(int = int))(varOwner)
+    val d = s.zoomStrict(_.int)((f, int) => f.copy(int = int))(varOwner)
 
     val sub = d.signal.addObserver(Observer.empty)(obsOwner)
 
@@ -455,8 +455,8 @@ class DerivedVarSpec extends UnitSpec with BeforeAndAfter {
     val varOwner = new TestableOwner
 
     val s = Var(Form(10))
-    val d1 = s.zoom(_.int)((f, int) => f.copy(int = 100 + int))(varOwner)
-    val d2 = s.zoom(_.int + 100)((f, int) => f.copy(int = int))(varOwner)
+    val d1 = s.zoomStrict(_.int)((f, int) => f.copy(int = 100 + int))(varOwner)
+    val d2 = s.zoomStrict(_.int + 100)((f, int) => f.copy(int = int))(varOwner)
 
     val err1 = new Exception("Error: err1")
 

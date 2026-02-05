@@ -2,6 +2,7 @@ package com.raquo.airstream.split
 
 import com.raquo.airstream.common.SingleParentSignal
 import com.raquo.airstream.core.{Protected, Transaction}
+import com.raquo.airstream.state.WritableStrictSignal
 import com.raquo.airstream.timing.SyncDelayStream
 
 import scala.scalajs.js
@@ -43,9 +44,8 @@ private[airstream] class SplitChildSignal[K, M[_], A](
   getMemoizedValue: () => Option[(A, Int)]
 )
 extends KeyedStrictSignal[K, A]
+with WritableStrictSignal[A]
 with SingleParentSignal[M[A], A] {
-
-  override def tryNow(): Try[A] = super.tryNow()
 
   private var maybeInitialTransaction: js.UndefOr[Transaction] = Transaction.currentTransaction()
 

@@ -14,14 +14,12 @@ import scala.util.Try
 private[state] class VarSignal[A] private[state] (
   initial: Try[A],
   parentDisplayName: => String
-) extends WritableSignal[A] with StrictSignal[A] {
+) extends WritableStrictSignal[A] {
 
   /** SourceVar does not directly depend on other observables, so it breaks the graph. */
   override protected val topoRank: Int = 1
 
   setCurrentValue(initial)
-
-  override def tryNow(): Try[A] = super.tryNow()
 
   /** Note: we do not check if isStarted() here, this is how we ensure that this
     * signal's current value stays up to date. If this signal is stopped, this

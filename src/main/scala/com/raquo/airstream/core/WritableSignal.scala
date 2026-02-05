@@ -3,6 +3,10 @@ package com.raquo.airstream.core
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
+/** This trait exists to provide private functionality that can not be covariant in A.
+  * Concrete classes like MapSignal can extend this trait, but more general types like
+  * Signal[A] need to remain covariant in A for good ergonomics.
+  */
 trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
 
   protected var maybeLastSeenCurrentValue: js.UndefOr[Try[A]] = js.undefined
@@ -16,6 +20,11 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
     maybeLastSeenCurrentValue = newValue
   }
 
+  // #Warning: be very careful when overriding tryNow. The returned value must
+  //  conceptually match maybeLastSeenCurrentValue, as we can sometimes use
+  //  the latter instead of calling tryNow, e.g. we do this in DistinctSignal
+  //  to avoid infinite loop between tryNow and currentValueFromParent when
+  //  mixing DistinctSignal with LazyStrictSignal in one class instance.
   /** Note: Initial value is only evaluated if/when needed (when there are observers) */
   override protected[airstream] def tryNow(): Try[A] = {
     // dom.console.log(s"${this} > tryNow (maybeLastSeenCurrentValue = ${maybeLastSeenCurrentValue})")

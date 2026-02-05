@@ -1,8 +1,11 @@
 package com.raquo.airstream.distinct
 
+import com.raquo.airstream.core.{EventStream, Signal}
+import com.raquo.airstream.split.KeyedStrictSignal
+import com.raquo.airstream.state.{StrictSignal, Var}
+
 import scala.util.{Failure, Success, Try}
 
-// #nc TODO try to make this DistinctOps[+Self[+_]] – is that possible?
 trait DistinctOps[+Self, +A] {
 
   /** Distinct events (but keep all errors) by == (equals) comparison */
@@ -28,7 +31,16 @@ trait DistinctOps[+Self, +A] {
     case _ => false
   }
 
-  /** Distinct all values (both events and errors) using a comparison function */
+  /** Distinct all values (both events and errors) using a comparison function
+    *
+    * Implementations typically instantiate subtypes of [[DistinctStream]] or [[DistinctSignal]] matching the [[Self]] type:
+    *  - [[EventStream.distinctTry]]
+    *  - [[Signal.distinctTry]]
+    *  - [[StrictSignal.distinctTry]]
+    *  - [[KeyedStrictSignal.distinctTry]]
+    *  - [[Var.distinctTry]]
+    *  - [[DistinctOps.F.distinctTry]]
+    */
   def distinctTry(isSame: (Try[A], Try[A]) => Boolean): Self
 }
 

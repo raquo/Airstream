@@ -1,6 +1,7 @@
 package com.raquo.airstream.state
 
 import com.raquo.airstream.core.{CoreOps, Signal}
+import com.raquo.airstream.distinct.DistinctOps
 
 import scala.util.Try
 
@@ -11,23 +12,30 @@ import scala.util.Try
   */
 trait StrictSignal[+A]
 extends Signal[A]
-with CoreOps[StrictSignal, A] {
+with CoreOps[StrictSignal, A]
+with DistinctOps[StrictSignal[A], A] {
 
-  @deprecated("Use StrictSignal.map – it behaves like `mapLazy` used to in 17.x", "18.0.0-M2")
+  @deprecated("Use StrictSignal.map – it behaves like `mapLazy` used to in 17.x", "18.0.0-M3")
   def mapLazy[B](project: A => B): StrictSignal[B] = map(project)
 
-  /** Map StrictSignal to get another StrictSignal, without requiring an Owner.
-    *
-    * The mechanism is similar to Var.zoomLazy.
-    *
-    * Just as `zoomLazy`, this method will be renamed in the next major Airstream release.
-    */
+  /** Note: the value of the resulting StrictSignal is evaluated lazily - only on demand. */
   override def map[B](project: A => B): StrictSignal[B] = {
-    new LazyStrictSignal(
+    LazyStrictSignal.mapSignal(
       parentSignal = this,
-      zoomIn = project,
+      project = project,
       parentDisplayName = displayName,
       displayNameSuffix = ".map"
+    )
+  }
+
+  /** Note: the value of the resulting StrictSignal is evaluated lazily - only on demand. */
+  override def distinctTry(isSame: (Try[A], Try[A]) => Boolean): StrictSignal[A] = {
+    LazyStrictSignal.distinctSignal(
+      parentSignal = this,
+      isSame = isSame,
+      resetOnStop = false,
+      parentDisplayName = displayName,
+      displayNameSuffix = ".distinct*"
     )
   }
 
@@ -35,7 +43,12 @@ with CoreOps[StrictSignal, A] {
     *
     * @throws Throwable the error from the current value's Failure
     */
-  override def now(): A = super.now()
+  final override def now(): A = super.now()
 
+  // This abstract override makes this method public.
+  // super.tryNow() should be the default implementation, but we can't put
+  // it here because Signal[+A] does not have a concrete implementation
+  // of tryNow, only WritableSignal[A] does.
+  // Thus, we put the default implementation in WritableStrictSignal.
   override def tryNow(): Try[A]
 }

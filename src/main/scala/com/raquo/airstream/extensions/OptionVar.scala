@@ -35,9 +35,7 @@ class OptionVar[A](val v: Var[Option[A]]) extends AnyVal {
         val displayNameSuffix = s".splitOption(Some)"
         val childVar = new LazyDerivedVar[Option[A], A](
           parent = v,
-          signal = new LazyStrictSignal[A, A](
-            signal, identity, signal.displayName, displayNameSuffix + ".signal"
-          ),
+          signal = signal,
           updateParent = LazyDerivedVar.standardErrorsF { (_, newInput) =>
             Some(Some(newInput))
           },

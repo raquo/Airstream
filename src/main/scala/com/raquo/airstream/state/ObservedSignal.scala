@@ -14,13 +14,14 @@ class ObservedSignal[A](
   override val parent: Signal[A],
   observer: Observer[A],
   owner: Owner
-) extends MapSignal[A, A](
+)
+extends MapSignal[A, A](
   parent,
   project = identity,
   recover = None
-) with OwnedSignal[A] {
-
-  override def tryNow(): Try[A] = super.tryNow()
+)
+with OwnedSignal[A]
+with WritableStrictSignal[A] {
 
   override protected[this] val subscription: Subscription = addObserver(observer)(owner)
 
