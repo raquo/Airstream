@@ -1,10 +1,13 @@
 package com.raquo.airstream.extensions
 
 import com.raquo.airstream.core.{BaseObservable, EventStream, Observable, Signal}
+import com.raquo.airstream.split.DuplicateKeysConfig
 import com.raquo.airstream.state.StrictSignal
 
-/** See also: [[OptionStream]] */
-class OptionObservable[A, Self[+_] <: Observable[_]](val observable: BaseObservable[Self, Option[A]]) extends AnyVal {
+/** See also: [[OptionStream]] for stream-specific operators */
+class OptionObservable[A, Self[+_] <: Observable[_]](
+  val observable: BaseObservable[Self, Option[A]]
+) extends AnyVal {
 
   /** Maps the value in Some(x) */
   def mapSome[B](project: A => B): Self[Option[B]] = {
@@ -31,26 +34,47 @@ class OptionObservable[A, Self[+_] <: Observable[_]](val observable: BaseObserva
     observable.map(_.toLeft(right))
   }
 
+  /** This `.split`-s an Observable of an Option by the Option's `isDefined` property.
+    * If you want a different key, use the .split operator directly.
+    * If the observable is a stream, it's treated as if it contains None before it emits its first event.
+    *
+    * @param project - signalOfInput => output
+    *
+    *                  `project` is called whenever the parent observable switches from `None` to `Some(value)`.
+    *                  `signalOfInput` starts with an initial `Some(value)`, and updates whenever
+    *                  the parent observable updates from `Some(a)` to `Some(b)`.
+    *
+    *                  You can get the signal's current value with `.now()`.
+    *
+    * @param ifEmpty - returned if Option is empty, or if the parent observable is a stream and has not emitted
+    *                  any events yet. Re-evaluated whenever the parent observable switches from
+    *                  `Some(a)` to `None`. `ifEmpty` is NOT re-evaluated when the parent
+    *                  observable emits `None` if the last event it emitted was also a `None`.
+    */
   def splitOption[B](
     project: StrictSignal[A] => B,
     ifEmpty: => B
   ): Signal[B] = {
-    observable match {
-      case stream: EventStream[Option[A @unchecked] @unchecked] =>
-        new OptionStream(stream).splitOption(project, ifEmpty)
-      case signal: Signal[Option[A @unchecked] @unchecked] =>
-        new OptionSignal(signal).splitOption(project, ifEmpty)
-    }
+    val signal = observable.toSignalIfStream(
+      _.startWith(initial = None, cacheInitialValue = true)
+    )
+    // Note: We never have duplicate keys here, so we can use
+    // DuplicateKeysConfig.noWarnings to improve performance
+    signal
+      .distinctByFn((prev, next) => prev.isEmpty && next.isEmpty) // Ignore consecutive `None` events
+      .splitSeq(
+        key = _ => (),
+        duplicateKeys = DuplicateKeysConfig.noWarnings
+      )(project)
+      .map(_.getOrElse(ifEmpty))
   }
 
   def splitOption[B](
     project: StrictSignal[A] => B
   ): Signal[Option[B]] = {
-    observable match {
-      case stream: EventStream[Option[A @unchecked] @unchecked] =>
-        new OptionStream(stream).splitOption(project)
-      case signal: Signal[Option[A @unchecked] @unchecked] =>
-        new OptionSignal(signal).splitOption(project)
-    }
+    splitOption(
+      signal => Some(project(signal)),
+      ifEmpty = None
+    )
   }
 }

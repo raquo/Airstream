@@ -311,9 +311,6 @@ extends SignalObjDynamicImportOps // Provides `dynamicImport` method (Scala 3 on
   /** Provides methods on Signal: splitBoolean */
   implicit def toBooleanSignal(signal: Signal[Boolean]): BooleanSignal = new BooleanSignal(signal)
 
-  /** Provides methods on Signal: splitOption */
-  implicit def toOptionSignal[A](signal: Signal[Option[A]]): OptionSignal[A] = new OptionSignal(signal)
-
   /** Provides methods on Signal: splitEither */
   implicit def toEitherSignal[A, B](signal: Signal[Either[A, B]]): EitherSignal[A, B] = new EitherSignal(signal)
 
