@@ -1,5 +1,6 @@
 package com.raquo.airstream.split
 
+import com.raquo.airstream.util.Id
 import com.raquo.ew.{JsArray, JsVector}
 
 import scala.collection.{immutable, mutable}
@@ -12,12 +13,7 @@ trait Splittable[M[_]] {
   def map[A, B](inputs: M[A], project: A => B): M[B]
 
   /** Equivalent of list.foreach(f) */
-  def foreach[A](inputs: M[A], f: A => Unit): Unit = {
-    // #TODO[API] This default implementation is inefficient,
-    //  we're only adding it to satisfy binary compatibility in 17.1.0.
-    //  #nc Remove this implementation later.
-    map(inputs, f)
-  }
+  def foreach[A](inputs: M[A], f: A => Unit): Unit
 
   /** Find the FIRST item matching predicate, and return a collection with it updated */
   def findUpdate[A](inputs: M[A], predicate: A => Boolean, newItem: A): M[A] = {
@@ -131,6 +127,23 @@ object Splittable extends LowPrioritySplittableImplicits {
     override def foreach[A](inputs: js.Array[A], f: A => Unit): Unit = inputs.foreach(f)
 
     override def empty[A]: js.Array[A] = js.Array()
+  }
+
+  /** Used for splitOne. Not `implicit`, to avoid accidental use with splitSeq.
+    * It's unsafe because the `empty` value throws instead of returning a valid A.
+    * We can still use it carefully in cases when we know that `empty` will not
+    * be evaluated, for example, splitting signals of A with splitOne. But not
+    * in streams.
+    */
+  object unsafeIdSplittable extends Splittable[Id] {
+
+    override def map[A, B](inputs: Id[A], project: A => B): Id[B] = project(inputs)
+
+    override def foreach[A](inputs: Id[A], f: A => Unit): Unit = f(inputs)
+
+    override def empty[A]: Id[A] = {
+      throw new Exception("Accessing unsafeIdSplittable.empty is not allowed!")
+    }
   }
 }
 

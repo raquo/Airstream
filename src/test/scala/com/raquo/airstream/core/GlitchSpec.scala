@@ -3,7 +3,9 @@ package com.raquo.airstream.core
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
+import com.raquo.airstream.split.Splittable
 import com.raquo.airstream.state.Var
+import com.raquo.airstream.util.{IdUnwrap, IdWrap}
 
 import scala.collection.mutable
 
@@ -545,8 +547,6 @@ class GlitchSpec extends UnitSpec {
   it("Nested split + flatMapSwitch") {
     // Test for https://github.com/raquo/Airstream/issues/140
 
-    import com.raquo.airstream.split.SplitSignalSpec._
-
     val intVar: Var[Int] = Var(10).setDisplayName("intVar")
 
     val owner = new TestableOwner
@@ -558,7 +558,7 @@ class GlitchSpec extends UnitSpec {
     val resultSignal =
       intVar
         .signal
-        .asIdSignal
+        .idWrap
         .split(
           key = _ => "outer",
           distinctCompose = identity
@@ -572,7 +572,7 @@ class GlitchSpec extends UnitSpec {
               }(owner)
 
             val splitInner = outerChildSignal
-              .asIdSignal
+              .idWrap
               .split(
                 key = _ => "inner",
                 distinctCompose = identity
@@ -586,12 +586,12 @@ class GlitchSpec extends UnitSpec {
                     }(owner)
                   x += 100
                   x
-              }
+              }(Splittable.unsafeIdSplittable)
             splitInner
               .setDisplayName(s"split-inner@${splitInner}")
-        }
+        }(Splittable.unsafeIdSplittable)
         .setDisplayName("split-outer")
-        .asSignal
+        .idUnwrap
         .map { x =>
           x.map(identity).setDisplayName(s"${x}-identity") // <<< adding this map triggers bug
         }

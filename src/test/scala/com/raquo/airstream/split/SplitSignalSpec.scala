@@ -6,6 +6,7 @@ import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, ManualOwner, Subscription}
 import com.raquo.airstream.state.Var
+import com.raquo.airstream.util.IdWrap
 import com.raquo.ew.JsArray
 import org.scalatest.{Assertion, BeforeAndAfter}
 
@@ -1649,8 +1650,6 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
 
   it("split child active while split signal is stopped") {
 
-    import com.raquo.airstream.split.SplitSignalSpec._
-
     val outerOwner = new TestableOwner
     val innerOwner = new TestableOwner
 
@@ -1669,7 +1668,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
     )
 
     val result = source
-      .asIdSignal
+      .idWrap
       .setDisplayName("source")
       .split(_ => "key", distinctCompose = identity) {
         (_, init, signal) =>
@@ -1678,7 +1677,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
             effects += Effect("child-update", v)
           }(innerOwner)
           init * 100
-      }
+      }(Splittable.unsafeIdSplittable)
       .setDisplayName("result")
 
     result
@@ -1802,25 +1801,5 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
       )
     )
     effects.clear()
-  }
-}
-
-object SplitSignalSpec {
-
-  type Id[A] = A
-
-  implicit val idSplittable: Splittable[Id] = new Splittable[Id] {
-
-    override def map[A, B](inputs: Id[A], project: A => B): Id[B] = project(inputs)
-
-    override def empty[A]: Id[A] = null.asInstanceOf[A]
-  }
-
-  implicit class IdSignal[A](val sig: Signal[A]) extends AnyVal {
-    def asIdSignal: Signal[Id[A]] = sig
-  }
-
-  implicit class NSignal[A](val sig: Signal[Id[A]]) extends AnyVal {
-    def asSignal: Signal[A] = sig
   }
 }
