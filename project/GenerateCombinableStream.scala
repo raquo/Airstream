@@ -24,7 +24,7 @@ case class GenerateCombinableStream(
     line("// These combine / combineWith / withCurrentValueOf / sample methods are implicitly available on all streams")
     line("// For combine / combineWith methods on the EventStream companion object, see StaticStreamCombineOps.scala")
     line()
-    enter(s"class CombinableStream[A](val stream: EventStream[A]) extends AnyVal {", "}") {
+    enter(s"class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {", "}") {
       line()
       for (n <- (from - 1) until to) {
         enter(s"def combineWith[${tupleType(n)}](") {

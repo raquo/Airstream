@@ -1,10 +1,11 @@
 package com.raquo.airstream.extensions
 
-import com.raquo.airstream.core.{EventStream, Signal}
-import com.raquo.airstream.state.StrictSignal
+import com.raquo.airstream.core.EventStream
 
 /** See also: [[OptionObservable]] */
-class OptionStream[A](val stream: EventStream[Option[A]]) extends AnyVal {
+class OptionStream[A](
+  private val stream: EventStream[Option[A]]
+) extends AnyVal {
 
   /** Emit `x` if parent stream emits `Some(x)`, do nothing otherwise */
   def collectSome: EventStream[A] = stream.collect { case Some(ev) => ev }

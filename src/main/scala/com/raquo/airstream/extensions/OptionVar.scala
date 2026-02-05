@@ -2,9 +2,11 @@ package com.raquo.airstream.extensions
 
 import com.raquo.airstream.core.Signal
 import com.raquo.airstream.split.DuplicateKeysConfig
-import com.raquo.airstream.state.{LazyDerivedVar, LazyStrictSignal, Var}
+import com.raquo.airstream.state.{LazyDerivedVar, Var}
 
-class OptionVar[A](val v: Var[Option[A]]) extends AnyVal {
+class OptionVar[A](
+  private val v: Var[Option[A]]
+) extends AnyVal {
 
   /** This `.split`-s a Var of an Option by the Option's `isDefined` property.
     * If you want a different key, use the .split operator directly.

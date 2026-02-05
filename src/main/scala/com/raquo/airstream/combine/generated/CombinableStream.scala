@@ -11,7 +11,7 @@ import com.raquo.ew.JsArray
 // These combine / combineWith / withCurrentValueOf / sample methods are implicitly available on all streams
 // For combine / combineWith methods on the EventStream companion object, see StaticStreamCombineOps.scala
 
-class CombinableStream[A](val stream: EventStream[A]) extends AnyVal {
+class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
 
   def combineWith[T1](
     s1: EventSource[T1]

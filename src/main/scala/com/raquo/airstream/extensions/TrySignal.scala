@@ -5,7 +5,9 @@ import com.raquo.airstream.state.StrictSignal
 
 import scala.util.Try
 
-class TrySignal[A](val signal: Signal[Try[A]]) extends AnyVal {
+class TrySignal[A](
+  private val signal: Signal[Try[A]]
+) extends AnyVal {
 
   /** This `.split`-s a signal of Try-s by their `isSuccess` property.
     * If you want a different key, use the .splitOne operator directly.

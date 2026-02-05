@@ -3,7 +3,9 @@ package com.raquo.airstream.split
 import com.raquo.airstream.core.Signal
 import com.raquo.airstream.util.IdWrap
 
-class SplittableOneSignal[Input](val signal: Signal[Input]) extends AnyVal {
+class SplittableOneSignal[Input](
+  private val signal: Signal[Input]
+) extends AnyVal {
 
   /** This operator works like `split`, but with only one item, not a collection of items. */
   def splitOne[Output, Key](

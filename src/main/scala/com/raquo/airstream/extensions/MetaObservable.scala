@@ -6,7 +6,7 @@ import com.raquo.airstream.flatten._
 import scala.annotation.unused
 
 class MetaObservable[A, Outer[+_] <: Observable[_], Inner[_]](
-  val parent: Outer[Inner[A]]
+  private val parent: Outer[Inner[A]]
 ) extends AnyVal {
 
   @inline def flatten[Output[+_] <: Observable[_]](

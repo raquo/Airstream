@@ -5,7 +5,9 @@ import com.raquo.airstream.split.SplittableOneSignal
 import com.raquo.airstream.state.StrictSignal
 import com.raquo.airstream.status.{Pending, Resolved, Status}
 
-class StatusSignal[In, Out](val signal: Signal[Status[In, Out]]) extends AnyVal {
+class StatusSignal[In, Out](
+  private val signal: Signal[Status[In, Out]]
+) extends AnyVal {
 
   /** This `.split`-s a signal of Statuses by their type (resolved vs pending).
     * If you want a different key, use the .splitOne operator directly.

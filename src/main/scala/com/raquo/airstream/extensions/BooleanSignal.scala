@@ -4,7 +4,9 @@ import com.raquo.airstream.core.Signal
 import com.raquo.airstream.split.SplittableOneSignal
 import com.raquo.airstream.state.StrictSignal
 
-class BooleanSignal(val signal: Signal[Boolean]) extends AnyVal {
+class BooleanSignal(
+  private val signal: Signal[Boolean]
+) extends AnyVal {
 
   /**
     * Split a signal of booleans.

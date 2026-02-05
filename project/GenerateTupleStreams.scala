@@ -21,7 +21,7 @@ case class GenerateTupleStreams(
     line("// These mapN and filterN helpers are implicitly available on streams of tuples")
     line()
     for (n <- from to to) {
-      enter(s"class TupleStream${n}[${tupleType(n)}](val stream: EventStream[(${tupleType(n)})]) extends AnyVal {", "}") {
+      enter(s"class TupleStream${n}[${tupleType(n)}](private val stream: EventStream[(${tupleType(n)})]) extends AnyVal {", "}") {
         line()
         enter(s"def mapN[Out](project: (${tupleType(n)}) => Out): EventStream[Out] = {", "}") {
           enter(s"new MapStream[(${tupleType(n)}), Out](", ")") {

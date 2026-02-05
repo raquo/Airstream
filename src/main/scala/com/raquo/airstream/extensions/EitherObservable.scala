@@ -3,7 +3,9 @@ package com.raquo.airstream.extensions
 import com.raquo.airstream.core.{BaseObservable, Observable}
 
 /** See also: [[EitherStream]] */
-class EitherObservable[A, B, Self[+_] <: Observable[_]](val observable: BaseObservable[Self, Either[A, B]]) extends AnyVal {
+/*  */class EitherObservable[A, B, Self[+_] <: Observable[_]](
+  private val observable: BaseObservable[Self, Either[A, B]]
+) extends AnyVal {
 
   /** Maps the value in Right(x) */
   def mapRight[BB](project: B => BB): Self[Either[A, BB]] = {

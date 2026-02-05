@@ -8,7 +8,7 @@ import org.scalatest.matchers.should
 // I don't want to use the full variety of ScalaTest "should" matchers.
 // Those that we actually need should be defined as simple methods here.
 
-class ShouldSyntax[A](val actual: A) extends AnyVal {
+class ShouldSyntax[A](private val actual: A) extends AnyVal {
 
   def shouldBe(
     expected: scala.Any

@@ -5,7 +5,9 @@ import com.raquo.airstream.split.SplittableOneStream
 import com.raquo.airstream.state.StrictSignal
 import com.raquo.airstream.status.{Pending, Resolved, Status}
 
-class StatusStream[In, Out](val stream: EventStream[Status[In, Out]]) extends AnyVal {
+class StatusStream[In, Out](
+  private val stream: EventStream[Status[In, Out]]
+) extends AnyVal {
 
   /** Emit `x` if parent stream emits `Resolved(_, x, _)`, do nothing otherwise */
   def collectOutput: EventStream[Out] = stream.collect {

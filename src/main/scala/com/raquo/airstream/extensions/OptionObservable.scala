@@ -6,7 +6,7 @@ import com.raquo.airstream.state.StrictSignal
 
 /** See also: [[OptionStream]] for stream-specific operators */
 class OptionObservable[A, Self[+_] <: Observable[_]](
-  val observable: BaseObservable[Self, Option[A]]
+  private val observable: BaseObservable[Self, Option[A]]
 ) extends AnyVal {
 
   /** Maps the value in Some(x) */

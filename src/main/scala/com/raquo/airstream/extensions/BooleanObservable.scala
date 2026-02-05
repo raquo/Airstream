@@ -2,7 +2,9 @@ package com.raquo.airstream.extensions
 
 import com.raquo.airstream.core.{BaseObservable, Observable}
 
-class BooleanObservable[Self[+_] <: Observable[_]](val observable: BaseObservable[Self, Boolean]) extends AnyVal {
+class BooleanObservable[Self[+_] <: Observable[_]](
+  private val observable: BaseObservable[Self, Boolean]
+) extends AnyVal {
 
   def invert: Self[Boolean] = {
     observable.map(!_)

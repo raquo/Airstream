@@ -24,7 +24,7 @@ case class GenerateCombinableSignal(
     line("// These combine / combineWith / withCurrentValueOf / sample methods are implicitly available on all signals")
     line("// For combine / combineWith methods on the Signal companion object, see StaticSignalCombineOps.scala")
     line()
-    enter("class CombinableSignal[A](val signal: Signal[A]) extends AnyVal {", "}") {
+    enter("class CombinableSignal[A](private val signal: Signal[A]) extends AnyVal {", "}") {
       line()
       for (n <- (from - 1) until to) {
         enter(s"def combineWith[${tupleType(n)}](") {

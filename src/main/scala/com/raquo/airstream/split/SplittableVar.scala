@@ -4,7 +4,9 @@ import com.raquo.airstream.core.Signal
 import com.raquo.airstream.distinct.DistinctOps
 import com.raquo.airstream.state.Var
 
-class SplittableVar[M[_], Input](val v: Var[M[Input]]) extends AnyVal {
+class SplittableVar[M[_], Input](
+  private val v: Var[M[Input]]
+) extends AnyVal {
 
   /** This `split` operator works on Vars, and gives you a  */
   def splitSeq[Output, Key](

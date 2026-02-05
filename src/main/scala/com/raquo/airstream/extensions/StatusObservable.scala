@@ -3,7 +3,9 @@ package com.raquo.airstream.extensions
 import com.raquo.airstream.core.{BaseObservable, Observable}
 import com.raquo.airstream.status.{Pending, Resolved, Status}
 
-class StatusObservable[In, Out, Self[+_] <: Observable[_]](val observable: BaseObservable[Self, Status[In, Out]]) extends AnyVal {
+class StatusObservable[In, Out, Self[+_] <: Observable[_]](
+  private val observable: BaseObservable[Self, Status[In, Out]]
+) extends AnyVal {
 
   /** Map the output value in Resolved */
   def mapOutput[Out2](project: Out => Out2): Self[Status[In, Out2]] = {

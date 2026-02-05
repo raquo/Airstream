@@ -5,7 +5,9 @@ import com.raquo.airstream.core.{BaseObservable, Observable}
 import scala.util.Try
 
 /** See also: [[OptionStream]] */
-class TryObservable[A, Self[+_] <: Observable[_]](val observable: BaseObservable[Self, Try[A]]) extends AnyVal {
+class TryObservable[A, Self[+_] <: Observable[_]](
+  private val observable: BaseObservable[Self, Try[A]]
+) extends AnyVal {
 
   /** Maps the value in Success(x) */
   def mapSuccess[B](project: A => B): Self[Try[B]] = {

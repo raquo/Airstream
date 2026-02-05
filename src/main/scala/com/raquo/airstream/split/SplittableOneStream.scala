@@ -3,7 +3,9 @@ package com.raquo.airstream.split
 import com.raquo.airstream.core.{EventStream, Signal}
 import com.raquo.airstream.state.StrictSignal
 
-class SplittableOneStream[Input](val stream: EventStream[Input]) extends AnyVal {
+class SplittableOneStream[Input](
+  private val stream: EventStream[Input]
+) extends AnyVal {
 
   /** This operator works like `split`, but with only one item, not a collection of items. */
   def splitOne[Output, Key](

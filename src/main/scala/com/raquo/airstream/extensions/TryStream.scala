@@ -4,7 +4,9 @@ import com.raquo.airstream.core.{EventStream, Signal}
 
 import scala.util.{Failure, Success, Try}
 
-class TryStream[A](val stream: EventStream[Try[A]]) extends AnyVal {
+class TryStream[A](
+  private val stream: EventStream[Try[A]]
+) extends AnyVal {
 
   /** Emit `x` if parent stream emits `Right(x)`, do nothing otherwise */
   def collectSuccess: EventStream[A] = stream.collect { case Success(ev) => ev }

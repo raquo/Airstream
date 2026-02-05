@@ -11,7 +11,7 @@ import com.raquo.ew.JsArray
 // These combine / combineWith / withCurrentValueOf / sample methods are implicitly available on all signals
 // For combine / combineWith methods on the Signal companion object, see StaticSignalCombineOps.scala
 
-class CombinableSignal[A](val signal: Signal[A]) extends AnyVal {
+class CombinableSignal[A](private val signal: Signal[A]) extends AnyVal {
 
   def combineWith[T1](
     s1: SignalSource[T1]

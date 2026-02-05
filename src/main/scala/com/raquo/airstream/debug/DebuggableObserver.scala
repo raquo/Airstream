@@ -15,7 +15,9 @@ import scala.util.{Failure, Success, Try}
   * Note: type inference doesn't work on Observer debug* methods,
   * so you need to provide the AA type param (it should be same as A).
   */
-class DebuggableObserver[A](val observer: Observer[A]) extends AnyVal {
+class DebuggableObserver[A](
+  private val observer: Observer[A]
+) extends AnyVal {
 
   /** Create a new observer with a displayName, that sends all events
     * to the original observer. This is different from `setDisplayName`.

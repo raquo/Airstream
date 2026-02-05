@@ -5,7 +5,9 @@ import com.raquo.airstream.split.SplittableOneStream
 import com.raquo.airstream.state.StrictSignal
 
 /** See also: [[EitherObservable]] */
-class EitherStream[A, B](val stream: EventStream[Either[A, B]]) extends AnyVal {
+class EitherStream[A, B](
+  private val stream: EventStream[Either[A, B]]
+) extends AnyVal {
 
   /** Emit `x` if parent stream emits `Left(x)`, do nothing otherwise */
   def collectLeft: EventStream[A] = stream.collect { case Left(ev) => ev }

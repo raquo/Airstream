@@ -4,7 +4,9 @@ import com.raquo.airstream.core.Signal
 import com.raquo.airstream.split.SplittableOneSignal
 import com.raquo.airstream.state.StrictSignal
 
-class EitherSignal[A, B](val signal: Signal[Either[A, B]]) extends AnyVal {
+class EitherSignal[A, B](
+  private val signal: Signal[Either[A, B]]
+) extends AnyVal {
 
   /** This `.split`-s a Signal of an Either by the Either's `isRight` property.
     * If you want a different key, use the .splitOne operator directly.

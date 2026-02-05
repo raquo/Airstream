@@ -3,7 +3,9 @@ package com.raquo.airstream.extensions
 import com.raquo.airstream.core.{EventStream, Signal}
 import com.raquo.airstream.split.SplittableOneStream
 
-class BooleanStream(val stream: EventStream[Boolean]) extends AnyVal {
+class BooleanStream(
+  private val stream: EventStream[Boolean]
+) extends AnyVal {
 
   /**
     * Split a stream of booleans.

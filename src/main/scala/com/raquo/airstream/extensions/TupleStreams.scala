@@ -7,7 +7,7 @@ import com.raquo.airstream.misc.{FilterStream, MapStream}
 
 // These mapN and filterN helpers are implicitly available on streams of tuples
 
-class TupleStream2[T1, T2](val stream: EventStream[(T1, T2)]) extends AnyVal {
+class TupleStream2[T1, T2](private val stream: EventStream[(T1, T2)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2) => Out): EventStream[Out] = {
     new MapStream[(T1, T2), Out](
@@ -27,7 +27,7 @@ class TupleStream2[T1, T2](val stream: EventStream[(T1, T2)]) extends AnyVal {
 
 // --
 
-class TupleStream3[T1, T2, T3](val stream: EventStream[(T1, T2, T3)]) extends AnyVal {
+class TupleStream3[T1, T2, T3](private val stream: EventStream[(T1, T2, T3)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3), Out](
@@ -47,7 +47,7 @@ class TupleStream3[T1, T2, T3](val stream: EventStream[(T1, T2, T3)]) extends An
 
 // --
 
-class TupleStream4[T1, T2, T3, T4](val stream: EventStream[(T1, T2, T3, T4)]) extends AnyVal {
+class TupleStream4[T1, T2, T3, T4](private val stream: EventStream[(T1, T2, T3, T4)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4), Out](
@@ -67,7 +67,7 @@ class TupleStream4[T1, T2, T3, T4](val stream: EventStream[(T1, T2, T3, T4)]) ex
 
 // --
 
-class TupleStream5[T1, T2, T3, T4, T5](val stream: EventStream[(T1, T2, T3, T4, T5)]) extends AnyVal {
+class TupleStream5[T1, T2, T3, T4, T5](private val stream: EventStream[(T1, T2, T3, T4, T5)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5), Out](
@@ -87,7 +87,7 @@ class TupleStream5[T1, T2, T3, T4, T5](val stream: EventStream[(T1, T2, T3, T4, 
 
 // --
 
-class TupleStream6[T1, T2, T3, T4, T5, T6](val stream: EventStream[(T1, T2, T3, T4, T5, T6)]) extends AnyVal {
+class TupleStream6[T1, T2, T3, T4, T5, T6](private val stream: EventStream[(T1, T2, T3, T4, T5, T6)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6), Out](
@@ -107,7 +107,7 @@ class TupleStream6[T1, T2, T3, T4, T5, T6](val stream: EventStream[(T1, T2, T3, 
 
 // --
 
-class TupleStream7[T1, T2, T3, T4, T5, T6, T7](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7)]) extends AnyVal {
+class TupleStream7[T1, T2, T3, T4, T5, T6, T7](private val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7), Out](
@@ -127,7 +127,7 @@ class TupleStream7[T1, T2, T3, T4, T5, T6, T7](val stream: EventStream[(T1, T2, 
 
 // --
 
-class TupleStream8[T1, T2, T3, T4, T5, T6, T7, T8](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8)]) extends AnyVal {
+class TupleStream8[T1, T2, T3, T4, T5, T6, T7, T8](private val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8), Out](
@@ -147,7 +147,7 @@ class TupleStream8[T1, T2, T3, T4, T5, T6, T7, T8](val stream: EventStream[(T1, 
 
 // --
 
-class TupleStream9[T1, T2, T3, T4, T5, T6, T7, T8, T9](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]) extends AnyVal {
+class TupleStream9[T1, T2, T3, T4, T5, T6, T7, T8, T9](private val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9), Out](
@@ -167,7 +167,7 @@ class TupleStream9[T1, T2, T3, T4, T5, T6, T7, T8, T9](val stream: EventStream[(
 
 // --
 
-class TupleStream10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]) extends AnyVal {
+class TupleStream10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](private val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10), Out](
@@ -187,7 +187,7 @@ class TupleStream10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](val stream: EventSt
 
 // --
 
-class TupleStream11[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)]) extends AnyVal {
+class TupleStream11[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](private val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11), Out](
@@ -207,7 +207,7 @@ class TupleStream11[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](val stream: Ev
 
 // --
 
-class TupleStream12[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)]) extends AnyVal {
+class TupleStream12[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](private val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12), Out](
@@ -227,7 +227,7 @@ class TupleStream12[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](val strea
 
 // --
 
-class TupleStream13[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)]) extends AnyVal {
+class TupleStream13[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](private val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13), Out](
@@ -247,7 +247,7 @@ class TupleStream13[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](val 
 
 // --
 
-class TupleStream14[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)]) extends AnyVal {
+class TupleStream14[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](private val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14), Out](
@@ -267,7 +267,7 @@ class TupleStream14[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14]
 
 // --
 
-class TupleStream15[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)]) extends AnyVal {
+class TupleStream15[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](private val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15), Out](
@@ -287,7 +287,7 @@ class TupleStream15[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14,
 
 // --
 
-class TupleStream16[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16)]) extends AnyVal {
+class TupleStream16[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](private val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16), Out](
@@ -307,7 +307,7 @@ class TupleStream16[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14,
 
 // --
 
-class TupleStream17[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17)]) extends AnyVal {
+class TupleStream17[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17](private val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17), Out](
@@ -327,7 +327,7 @@ class TupleStream17[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14,
 
 // --
 
-class TupleStream18[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18)]) extends AnyVal {
+class TupleStream18[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18](private val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18), Out](
@@ -347,7 +347,7 @@ class TupleStream18[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14,
 
 // --
 
-class TupleStream19[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19)]) extends AnyVal {
+class TupleStream19[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19](private val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19), Out](
@@ -367,7 +367,7 @@ class TupleStream19[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14,
 
 // --
 
-class TupleStream20[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)]) extends AnyVal {
+class TupleStream20[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20](private val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20), Out](
@@ -387,7 +387,7 @@ class TupleStream20[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14,
 
 // --
 
-class TupleStream21[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)]) extends AnyVal {
+class TupleStream21[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21](private val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21), Out](
@@ -407,7 +407,7 @@ class TupleStream21[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14,
 
 // --
 
-class TupleStream22[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22](val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22)]) extends AnyVal {
+class TupleStream22[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22](private val stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22)]) extends AnyVal {
 
   def mapN[Out](project: (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22) => Out): EventStream[Out] = {
     new MapStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22), Out](
