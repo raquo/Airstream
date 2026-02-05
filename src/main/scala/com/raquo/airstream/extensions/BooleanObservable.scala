@@ -19,4 +19,22 @@ class BooleanObservable[Self[+_] <: Observable[_]](val observable: BaseObservabl
     }
   }
 
+  /**
+    * Map the observable to an Option.
+    * @param a the value to map to when the observable is true
+    */
+  def mapTrueToSome[A](a: => A): Self[Option[A]] = observable.map {
+    case true => Some(a)
+    case false => None
+  }
+
+  /**
+    * Map the observable to an Option.
+    * @param a the value to map to when the observable is false
+    */
+  def mapFalseToSome[A](a: => A): Self[Option[A]] = observable.map {
+    case true => None
+    case false => Some(a)
+  }
+
 }
