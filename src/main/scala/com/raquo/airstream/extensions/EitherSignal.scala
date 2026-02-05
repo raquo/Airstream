@@ -1,7 +1,7 @@
 package com.raquo.airstream.extensions
 
 import com.raquo.airstream.core.Signal
-import com.raquo.airstream.split.{KeyedStrictSignal, SplittableOneSignal}
+import com.raquo.airstream.split.SplittableOneSignal
 import com.raquo.airstream.state.StrictSignal
 
 class EitherSignal[A, B](val signal: Signal[Either[A, B]]) extends AnyVal {

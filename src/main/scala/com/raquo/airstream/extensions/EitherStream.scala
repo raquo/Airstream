@@ -1,7 +1,8 @@
 package com.raquo.airstream.extensions
 
-import com.raquo.airstream.core.{EventStream, Signal}
+import com.raquo.airstream.core.EventStream
 import com.raquo.airstream.split.SplittableOneStream
+import com.raquo.airstream.state.StrictSignal
 
 /** See also: [[EitherObservable]] */
 class EitherStream[A, B](val stream: EventStream[Either[A, B]]) extends AnyVal {
@@ -42,8 +43,8 @@ class EitherStream[A, B](val stream: EventStream[Either[A, B]]) extends AnyVal {
     *              You can get the signal's current value with `.now()`.
     */
   def splitEither[C](
-    left: (A, Signal[A]) => C,
-    right: (B, Signal[B]) => C
+    left: (A, StrictSignal[A]) => C,
+    right: (B, StrictSignal[B]) => C
   ): EventStream[C] = {
     new SplittableOneStream(stream).splitOne(key = _.isRight) { signal =>
       signal.now() match {

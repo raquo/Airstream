@@ -4,7 +4,7 @@ import com.raquo.airstream.debug.DebuggableObservable
 import com.raquo.airstream.extensions._
 import com.raquo.airstream.flatten.{MergingStrategy, SwitchingStrategy}
 import com.raquo.airstream.flatten.FlattenStrategy._
-import com.raquo.airstream.split.SplittableObservable
+import com.raquo.airstream.split.{SplittableObservable, SplittableOneObservable}
 import com.raquo.airstream.status.Status
 
 import scala.util.Try
@@ -22,7 +22,10 @@ extends ObservableMacroImplicits
 with ObservableLowPriorityImplicits {
 
   /** Provides methods on Observable: split, splitByIndex */
-  implicit def toSplittableObservavble[M[_], Input](observable: Observable[M[Input]]): SplittableObservable[M, Input] = new SplittableObservable(observable)
+  implicit def toSplittableObservable[M[_], Input](observable: Observable[M[Input]]): SplittableObservable[M, Input] = new SplittableObservable(observable)
+
+  /** Provides methods on Observable: splitOne */
+  implicit def toSplittableOneObservable[Input](observable: Observable[Input]): SplittableOneObservable[Input] = new SplittableOneObservable(observable)
 
   /** Provides debug* methods on Observable: debugSpy, debugLogEvents, debugBreakErrors, etc. */
   implicit def toDebuggableObservable[A](observable: Observable[A]): DebuggableObservable[Observable, A] = new DebuggableObservable[Observable, A](observable)
