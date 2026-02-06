@@ -1,7 +1,7 @@
 package com.raquo.airstream.split
 
 import com.raquo.airstream.core.{Observable, BaseObservable}
-import com.raquo.airstream.distinct.DistinctOps
+import com.raquo.airstream.distinct.DistinctOps.DistinctOp
 import com.raquo.airstream.core.Signal
 import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchTypeHandler}
 
@@ -14,8 +14,7 @@ object SplitMatchSeqTypeObservable {
   @compileTimeOnly("`splitMatchSeq` without `toSignal` is illegal")
   def build[Self[+_] <: Observable[_] , I, K, O, CC[_], T](
     keyFn: Function1[I, K],
-    // distinctCompose: Function1[Signal[I], Signal[I]],
-    distinctCompose: DistinctOps.DistinctorF[I],
+    distinctOp: DistinctOp[I],
     duplicateKeysConfig: DuplicateKeysConfig,
     observable: BaseObservable[Self, CC[I]]
   )(

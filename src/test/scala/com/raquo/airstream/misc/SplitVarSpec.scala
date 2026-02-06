@@ -56,7 +56,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
       val signal = myVar.splitSeq(
-        key = _.id, distinctCompose = identity
+        key = _.id, distinctOp = identity
       ) { fooVar =>
           val key = fooVar.key
           val initialFoo = fooVar.now()

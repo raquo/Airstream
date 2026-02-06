@@ -3,6 +3,7 @@ package com.raquo.airstream.split
 import com.raquo.airstream.common.{InternalTryObserver, SingleParentSignal}
 import com.raquo.airstream.core.{AirstreamError, Protected, Signal, Transaction}
 import com.raquo.airstream.distinct.DistinctOps
+import com.raquo.airstream.distinct.DistinctOps.DistinctOp
 import com.raquo.airstream.timing.SyncDelayStream
 
 import scala.collection.mutable
@@ -14,28 +15,29 @@ import scala.util.Try
   *
   * See docs.
   *
-  * @param key       A sort of grouping / memoization key for inputs in `parent`
-  * @param distinctCompose   Transformation to apply to each key's input stream before providing it to `project` // #nc comment
-  *                  - Usually you want `_.distinct` here, so that each of the streams is only triggered
-  *                    when the input for its key actually changes (otherwise they would get an update
-  *                    every time that the parent stream emitted)
-  * @param project   (key, initialInput, inputChangesForThisKey) => output
-  *                  - Will only be called ONCE for a given key as long as parent contains an Input for this Key
-  *                  - Updates to Input with this Key will be published in `inputChangesForThisKey`
-  *                  - After parent stops containing an Input for this Key, we forget we ever called project for this key
+  * @param key          A sort of grouping / memoization key for inputs in `parent`
+  *
+  * @param distinctOp   Transformation to apply to each key's input signal before providing it to `project`
+  *                      - Usually you want `_.distinct` here, so that each of the signals is only triggered
+  *                        when the input for its key actually changes (otherwise they would get an update
+  *                        every time that the parent observable emitted)
+  *
+  * @param project      (key, initialInput, inputChangesForThisKey) => output
+  *                      - Will only be called ONCE for a given key as long as parent contains an Input for this Key
+  *                      - Updates to Input with this Key will be published in `inputChangesForThisKey`
+  *                      - After parent stops containing an Input for this Key, we forget we ever called project for this key
   */
 class SplitSignal[M[_], Input, Output, Key](
   override protected[this] val parent: Signal[M[Input]],
   key: Input => Key,
-  // distinctCompose: KeyedStrictSignal[Key, Input] => KeyedStrictSignal[Key, Input],
-  distinctCompose: DistinctOps.DistinctorF[Input],
+  distinctOp: DistinctOp[Input],
   project: KeyedStrictSignal[Key, Input] => Output,
   splittable: Splittable[M],
   duplicateKeysConfig: DuplicateKeysConfig = DuplicateKeysConfig.default,
-  strict: Boolean = false // #TODO `false` default for now to keep compatibility with 17.0.0 - consider changing in 18.0.0 #nc
+  strict: Boolean = false // #TODO `false` default for now to keep compatibility with 17.0.0 - consider changing in 18.0.0 #nc[split]
 ) extends SingleParentSignal[M[Input], M[Output]] {
 
-  private val distinctF = distinctCompose(new DistinctOps.F[Input])
+  private val distinctF = distinctOp(new DistinctOps.Ops[Input])
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 

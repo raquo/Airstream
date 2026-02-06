@@ -23,7 +23,7 @@ class SplittableOneObservable[Self[+_] <: Observable[_], Input](
         stream.toWeakSignal
           .splitSeq(
             key,
-            distinctCompose = identity,
+            distinctOp = identity,
             DuplicateKeysConfig.noWarnings
           )(
             project
@@ -36,7 +36,7 @@ class SplittableOneObservable[Self[+_] <: Observable[_], Input](
           .idWrap // Signal[A] => Signal[Id[A]] type helper
           .splitSeq(
             key,
-            distinctCompose = identity,
+            distinctOp = identity,
             DuplicateKeysConfig.noWarnings
           )(
             project

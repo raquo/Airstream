@@ -1,7 +1,7 @@
 package com.raquo.airstream.split
 
 import com.raquo.airstream.core.Signal
-import com.raquo.airstream.distinct.DistinctOps
+import com.raquo.airstream.distinct.DistinctOps.DistinctOp
 import com.raquo.airstream.state.Var
 
 class SplittableVar[M[_], Input](
@@ -11,8 +11,7 @@ class SplittableVar[M[_], Input](
   /** This `split` operator works on Vars, and gives you a  */
   def splitSeq[Output, Key](
     key: Input => Key,
-    // distinctCompose: KeyedStrictSignal[_, Input] => KeyedStrictSignal[_, Input] = (_: KeyedStrictSignal[_, Input]).distinct,
-    distinctCompose: DistinctOps.DistinctorF[Input] = _.distinct,
+    distinctOp: DistinctOp[Input] = _.distinct,
     duplicateKeys: DuplicateKeysConfig = DuplicateKeysConfig.default
   )(
     project: KeyedDerivedVar[Key, M[Input], Input] => Output
@@ -21,7 +20,7 @@ class SplittableVar[M[_], Input](
     new SplitSignal[M, Input, Output, Key](
       parent = v.signal,
       key,
-      distinctCompose,
+      distinctOp,
       project = signal => {
         val thisKey = signal.key
         val childVar = new KeyedDerivedVar[Key, M[Input], Input](
@@ -49,7 +48,7 @@ class SplittableVar[M[_], Input](
     new SplitSignal[M, (Input, Int), Output, Int](
       parent = v.signal.map(splittable.zipWithIndex),
       key = _._2, // Index
-      distinctCompose = _.distinctBy(_._1),
+      distinctOp = _.distinctBy(_._1),
       project = tupleSignal => {
         val thisIndex = tupleSignal.key
         val childVar = new KeyedDerivedVar[Int, M[Input], Input](
@@ -79,8 +78,7 @@ class SplittableVar[M[_], Input](
     */
   def splitMutate[Output, Key](
     key: Input => Key,
-    // distinctCompose: KeyedStrictSignal[Key, Input] => KeyedStrictSignal[Key, Input] = (_: KeyedStrictSignal[Key, Input]).distinct,
-    distinctCompose: DistinctOps.DistinctorF[Input] = _.distinct,
+    distinctOp: DistinctOp[Input] = _.distinct,
     duplicateKeys: DuplicateKeysConfig = DuplicateKeysConfig.default
   )(
     project: KeyedDerivedVar[Key, M[Input], Input] => Output
@@ -89,7 +87,7 @@ class SplittableVar[M[_], Input](
     new SplitSignal[M, Input, Output, Key](
       parent = v.signal,
       key,
-      distinctCompose,
+      distinctOp,
       project = signal => {
         val thisKey = signal.key
         val childVar = new KeyedDerivedVar[Key, M[Input], Input](

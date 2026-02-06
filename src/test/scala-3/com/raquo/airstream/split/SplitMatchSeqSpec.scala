@@ -334,7 +334,7 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
 
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
-      val signal = myVar.signal.splitMatchSeq(_.id, distinctCompose = identity)
+      val signal = myVar.signal.splitMatchSeq(_.id, distinctOp = identity)
         .handleCase {
           case FooE(Some(num)) => num
           case FooE(None) => -1
@@ -514,7 +514,7 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
 
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
-      val signal = myVar.signal.splitMatchSeq(_.id, distinctCompose = identity)
+      val signal = myVar.signal.splitMatchSeq(_.id, distinctOp = identity)
         .handleCase {
           case FooE(Some(num)) => num
           case FooE(None) => -1
@@ -682,7 +682,7 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
 
     // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
     //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
-    val signal = myVar.signal.splitMatchSeq(_.id, distinctCompose = identity)
+    val signal = myVar.signal.splitMatchSeq(_.id, distinctOp = identity)
         .handleCase {
           case FooE(Some(num)) => num
           case FooE(None) => -1

@@ -2,6 +2,7 @@ package com.raquo.airstream.core
 
 import com.raquo.airstream.core.{Observable, BaseObservable, Signal}
 import com.raquo.airstream.distinct.DistinctOps
+import com.raquo.airstream.distinct.DistinctOps.DistinctOp
 import com.raquo.airstream.split.*
 
 trait ObservableMacroImplicits {
@@ -45,11 +46,10 @@ trait ObservableMacroImplicits {
   extension [Self[+_] <: Observable[_], I, K, CC[_]](inline observable: BaseObservable[Self, CC[I]]) {
     inline def splitMatchSeq(
       inline keyFn: Function1[I, K],
-      inline distinctCompose: DistinctOps.DistinctorF[I] = (ops: DistinctOps.F[I]) => ops.distinct,
-    // Function1[Signal[I], Signal[I]] = (iSignal: Signal[I]) => iSignal.distinct,
+      inline distinctOp: DistinctOp[I] = (ops: DistinctOps.Ops[I]) => ops.distinct,
       inline duplicateKeysConfig: DuplicateKeysConfig = DuplicateKeysConfig.default,
     ) = {
-      SplitMatchSeqObservable.build(keyFn, distinctCompose, duplicateKeysConfig, observable)()()
+      SplitMatchSeqObservable.build(keyFn, distinctOp, duplicateKeysConfig, observable)()()
     }
   }
 

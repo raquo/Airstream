@@ -2,6 +2,7 @@ package com.raquo.airstream.split
 
 import com.raquo.airstream.core.{BaseObservable, EventStream, Observable, Signal}
 import com.raquo.airstream.distinct.DistinctOps
+import com.raquo.airstream.distinct.DistinctOps.DistinctOp
 import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchTypeHandler, MatchValueHandler, innerObservableImpl}
 
 import scala.quoted.{Expr, Quotes, Type}
@@ -311,7 +312,7 @@ object SplitMatchSeqMacros {
   private def innerHandleCaseImpl[Self[+_] <: Observable[_]: Type, I: Type, K: Type, O: Type, O1 >: O: Type, CC[_]: Type, A: Type, B: Type](
     keyFnExpr: Expr[Function1[I, K]],
     // distinctComposeExpr: Expr[Function1[KeyedStrictSignal[K, I], KeyedStrictSignal[K, I]]],
-    distinctComposeExpr: Expr[DistinctOps.DistinctorF[I]],
+    distinctComposeExpr: Expr[DistinctOp[I]],
     duplicateKeysConfigExpr: Expr[DuplicateKeysConfig],
     observableExpr: Expr[BaseObservable[Self, CC[I]]],
     caseExprSeq: Seq[Expr[CaseAny]],
@@ -337,13 +338,12 @@ object SplitMatchSeqMacros {
   }
 
   private inline def wrappedDistinctCompose[K, I](
-    // distinctCompose: KeyedStrictSignal[K, I] => KeyedStrictSignal[K, I]
-    distinctCompose: DistinctOps.DistinctorF[I]
-  ): DistinctOps.DistinctorF[(I, Int, Any)] = {
-    DistinctOps.DistinctorF[(I, Int, Any)] { ops =>
-      val scopedOps = new DistinctOps.F[I]
+    distinctOp: DistinctOp[I]
+  ): DistinctOp[(I, Int, Any)] = {
+    DistinctOp[(I, Int, Any)] { ops =>
+      val scopedOps = new DistinctOps.Ops[I]
       ops.distinctTry { (prevTry, nextTry) =>
-        distinctCompose(scopedOps)(prevTry.map(_._1), nextTry.map(_._1))
+        distinctOp(scopedOps)(prevTry.map(_._1), nextTry.map(_._1))
         && {
           // this is equivalent to `.distinct` – as implemented by HollandDM
           // #nc[split] why do we need second distinct here? All tests pass either way. Ask HollandDM if no tests fail.
@@ -370,14 +370,14 @@ object SplitMatchSeqMacros {
   private def toSplitSeqObservable[Self[+_] <: Observable[_], I, K, O, CC[_]](
     parentObservable: BaseObservable[Self, CC[(I, Int, Any)]],
     keyFn: I => K,
-    distinctCompose: DistinctOps.DistinctorF[I],
+    distinctOp: DistinctOp[I],
     duplicateKeysConfig: DuplicateKeysConfig,
     splittable: Splittable[CC],
     handlers: HandlerAny[O]*,
   ): Signal[CC[O]] = {
     parentObservable.splitSeq(
       key = customKey(keyFn),
-      distinctCompose = wrappedDistinctCompose[K, I](distinctCompose),
+      distinctOp = wrappedDistinctCompose[K, I](distinctOp),
       duplicateKeys = duplicateKeysConfig
     ) { dataSignal =>
       val idx = dataSignal.key._1

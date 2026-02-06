@@ -1,18 +1,15 @@
 package com.raquo.airstream.split
 
 import com.raquo.airstream.core.{BaseObservable, Observable, Signal}
-import com.raquo.airstream.distinct.DistinctOps
+import com.raquo.airstream.distinct.DistinctOps.DistinctOp
 
 class SplittableObservable[Self[+_] <: Observable[_], M[_], Input](
   private val observable: BaseObservable[Self, M[Input]]
 ) extends AnyVal {
 
-  // #nc[split] rename distinctCompose to distinctF?
-
   def splitSeq[Output, Key](
     key: Input => Key,
-    // distinctCompose: KeyedStrictSignal[_, Input] => KeyedStrictSignal[_, Input] = _.distinct,
-    distinctCompose: DistinctOps.DistinctorF[Input] = _.distinct,
+    distinctOp: DistinctOp[Input] = _.distinct,
     duplicateKeys: DuplicateKeysConfig = DuplicateKeysConfig.default
   )(
     project: KeyedStrictSignal[Key, Input] => Output
@@ -23,7 +20,7 @@ class SplittableObservable[Self[+_] <: Observable[_], M[_], Input](
       ifStream = _.startWith(splittable.empty, cacheInitialValue = true)
     )
     new SplitSignal[M, Input, Output, Key](
-      parentSignal, key, distinctCompose, project, splittable, duplicateKeys
+      parentSignal, key, distinctOp, project, splittable, duplicateKeys
     )
   }
 
@@ -39,7 +36,7 @@ class SplittableObservable[Self[+_] <: Observable[_], M[_], Input](
     new SplitSignal[M, (Input, Int), Output, Int](
       parent = parentSignal,
       key = _._2, // Index
-      distinctCompose = _.distinctBy(_._1),
+      distinctOp = _.distinctBy(_._1),
       project = signal => project(signal.map(_._1)),
       splittable,
       DuplicateKeysConfig.noWarnings // No need to check for duplicates – we know the keys are good.
@@ -49,8 +46,7 @@ class SplittableObservable[Self[+_] <: Observable[_], M[_], Input](
   @deprecated("Instead of `.split(...) { (key, initial, signal) => ... }`, use `.split(...)(strictSignal => ...)` – you can now read `.key` and `.now()` from `strictSignal`, but note that `.now()` updates over time, unlike `initial` before.", "18.0.0-M3")
   def split[Output, Key](
     key: Input => Key,
-    // distinctCompose: KeyedStrictSignal[_, Input] => KeyedStrictSignal[_, Input] = (_: KeyedStrictSignal[_, Input]).distinct,
-    distinctCompose: DistinctOps.DistinctorF[Input] = _.distinct,
+    distinctCompose: DistinctOp[Input] = _.distinct,
     duplicateKeys: DuplicateKeysConfig = DuplicateKeysConfig.default
   )(
     project: (Key, Input, Signal[Input]) => Output
@@ -79,7 +75,7 @@ class SplittableObservable[Self[+_] <: Observable[_], M[_], Input](
     new SplitSignal[M, (Input, Int), Output, Int](
       parent = parentSignal,
       key = _._2, // Index
-      distinctCompose = _.distinctBy(_._1),
+      distinctOp = _.distinctBy(_._1),
       project = s => project(s.key, s.now()._1, s.map(_._1)),
       splittable,
       DuplicateKeysConfig.noWarnings // No need to check for duplicates – we know the keys are good.
