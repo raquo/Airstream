@@ -28,6 +28,9 @@ import scala.util.Try
   *  - Stream doesn't hold references to Streams that no one observes, allowing those Streams
   *    to be garbage collected if they are otherwise unreachable (which they should become
   *    when their subscriptions are killed by their owners)
+  *
+  * #Warning: The [[Self]] kind must be either of: [[Observable]], [[EventStream]], or [[Signal]].
+  *  - It must NOT be a more specific type, otherwise [[matchStreamOrSignalAsSelf]] will break.
   */
 trait BaseObservable[+Self[+_] <: Observable[_], +A]
 extends Source[A]
@@ -123,6 +126,15 @@ with DistinctOps[Self[A], A] {
       case signal: Signal[A @unchecked] => ifSignal(signal)
       case _ => throw new Exception("All Observables must extend EventStream or Signal")
     }
+  }
+
+  /** Similar to matchStreamOrSignal, but has to return Self[B] – required for some generic coding patterns. */
+  def matchStreamOrSignalAsSelf[B](
+    ifStream: EventStream[A] => EventStream[B],
+    ifSignal: Signal[A] => Signal[B]
+  ): Self[B] = {
+    matchStreamOrSignal(ifStream, ifSignal)
+      .asInstanceOf[Self[B]] // #Safe as long as we respect the contract on Self type – see scaladoc at the top of this file.
   }
 
   // @TODO[API] I don't like the Option[O] output type here very much. We should consider a sentinel error object instead (need to check performance). Or maybe add a recoverOrSkip method or something?

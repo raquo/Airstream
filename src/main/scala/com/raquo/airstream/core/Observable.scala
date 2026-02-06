@@ -15,34 +15,35 @@ import scala.util.Try
   * This trait exists only as a sort of type alias for BaseObservable[Observable, A].
   * (I can't use an actual type alias for this due to an illegal cycle)
   */
-trait Observable[+A] extends BaseObservable[Observable, A] {}
+trait Observable[+A]
+extends BaseObservable[Observable, A] {}
 
 object Observable
 extends ObservableMacroImplicits
 with ObservableLowPriorityImplicits {
 
   /** Provides methods on Observable: split, splitByIndex */
-  implicit def toSplittableObservable[M[_], Input](observable: Observable[M[Input]]): SplittableObservable[M, Input] = new SplittableObservable(observable)
+  implicit def toSplittableObservable[Self[+_] <: Observable[_], M[_], Input](observable: BaseObservable[Self, M[Input]]): SplittableObservable[Self, M, Input] = new SplittableObservable(observable)
 
   /** Provides methods on Observable: splitOne */
-  implicit def toSplittableOneObservable[Input](observable: Observable[Input]): SplittableOneObservable[Input] = new SplittableOneObservable(observable)
+  implicit def toSplittableOneObservable[Self[+_] <: Observable[_], Input](observable: BaseObservable[Self, Input]): SplittableOneObservable[Self, Input] = new SplittableOneObservable(observable)
 
   /** Provides debug* methods on Observable: debugSpy, debugLogEvents, debugBreakErrors, etc. */
   implicit def toDebuggableObservable[A](observable: Observable[A]): DebuggableObservable[Observable, A] = new DebuggableObservable[Observable, A](observable)
 
-  /** Provides methods on observable: flip, foldBoolean */
+  /** Provides methods on observable: flip, foldBoolean, splitBoolean */
   implicit def toBooleanObservable[Self[+_] <: Observable[_]](observable: BaseObservable[Self, Boolean]): BooleanObservable[Self] = new BooleanObservable(observable)
 
-  /** Provides methods on observable: mapSome, mapFilterSome, foldOption, mapToRight, mapToLeft */
+  /** Provides methods on observable: mapSome, mapFilterSome, foldOption, mapToRight, mapToLeft, splitOption */
   implicit def toOptionObservable[A, Self[+_] <: Observable[_]](observable: BaseObservable[Self, Option[A]]): OptionObservable[A, Self] = new OptionObservable(observable)
 
-  /** Provides methods on observable: mapRight, mapLeft, foldEither, mapToOption, mapLeftToOption */
+  /** Provides methods on observable: mapRight, mapLeft, foldEither, mapToOption, mapLeftToOption, splitEither */
   implicit def toEitherObservable[A, B, Self[+_] <: Observable[_]](observable: BaseObservable[Self, Either[A, B]]): EitherObservable[A, B, Self] = new EitherObservable(observable)
 
-  /** Provides methods on observable: mapSuccess, mapFailure, foldTry, mapToEither, recoverFailure, throwFailure */
+  /** Provides methods on observable: mapSuccess, mapFailure, foldTry, mapToEither, recoverFailure, throwFailure, splitTry */
   implicit def toTryObservable[A, Self[+_] <: Observable[_]](observable: BaseObservable[Self, Try[A]]): TryObservable[A, Self] = new TryObservable(observable)
 
-  /** Provides methods on observable: mapOutput, mapInput, mapResolved, mapPending, foldStatus */
+  /** Provides methods on observable: mapOutput, mapInput, mapResolved, mapPending, foldStatus, splitStatus */
   implicit def toStatusObservable[In, Out, Self[+_] <: Observable[_]](observable: BaseObservable[Self, Status[In, Out]]): StatusObservable[In, Out, Self] = new StatusObservable(observable)
 
   /** Provides methods on observable: flattenSwitch, flattenMerge, flattenCustom, flatten (deprecated) */

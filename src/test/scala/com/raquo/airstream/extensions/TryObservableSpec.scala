@@ -128,12 +128,12 @@ class TryObservableSpec extends UnitSpec {
     bus
       .events
       .splitTry(
-        success = (_, successS) => {
+        success = successS => {
           ix += 1
           successS.foreach(r => effects += Effect(s"success-${ix}", r))(innerOwner)
           ix
         },
-        failure = (_, failureS) => {
+        failure = failureS => {
           ix += 1
           failureS.foreach(l => effects += Effect(s"failure-${ix}", l))(innerOwner)
           ix

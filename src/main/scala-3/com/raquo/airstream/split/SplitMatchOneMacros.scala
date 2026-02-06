@@ -307,31 +307,19 @@ object SplitMatchOneMacros {
     }
   }
 
-  private def toSplittableOneObservable[Self[+_] <: Observable[_], O](
+  private def toSplitOneObservable[Self[+_] <: Observable[_], O](
     parentObservable: BaseObservable[Self, (Int, Any)],
     handlers: HandlerAny[O]*
   ): Self[O] = {
-    // #nc[split] can we unify this? Would need to unify `splitOne` impl in SplittableOne{Signal,Stream} -> SplittableOneObservable
     parentObservable
-      .matchStreamOrSignal(
-        ifStream = _.splitOne(_._1) { dataSignal =>
-          val idx = dataSignal.key
-          val bSignal = dataSignal.map(_._2)
-          handlers.view.zipWithIndex.map(_.swap).toMap
-            .getOrElse(idx, IllegalStateException("Illegal SplitMatchOne state. This is a bug in Airstream."))
-            .asInstanceOf[Function2[Any, Any, O]]
-            .apply(bSignal.now(), bSignal)
-        },
-        ifSignal = _.splitOne(_._1) { dataSignal =>
-          val idx = dataSignal.key
-          val bSignal = dataSignal.map(_._2)
-          handlers.view.zipWithIndex.map(_.swap).toMap
-            .getOrElse(idx, IllegalStateException("Illegal SplitMatchOne state. This is a bug in Airstream."))
-            .asInstanceOf[Function2[Any, Any, O]]
-            .apply(bSignal.now(), bSignal)
-        }
-      )
-      .asInstanceOf[Self[O]] // #TODO[Integrity] Same as FlatMap/AsyncStatusObservable, how to type this properly?
+      .splitOne(_._1) { dataSignal =>
+        val idx = dataSignal.key
+        val bSignal = dataSignal.map(_._2)
+        handlers.view.zipWithIndex.map(_.swap).toMap
+          .getOrElse(idx, IllegalStateException("Illegal SplitMatchOne state. This is a bug in Airstream."))
+          .asInstanceOf[Function2[Any, Any, O]]
+          .apply(bSignal.now(), bSignal)
+      }
   }
 
   private def observableImpl[Self[+_] <: Observable[_]: Type, I: Type, O: Type](
@@ -357,7 +345,7 @@ object SplitMatchOneMacros {
           )
         } else {
           '{
-            toSplittableOneObservable(
+            toSplitOneObservable(
               $observableExpr
                 .map(i => ${ innerObservableImpl('i, caseExprSeq) })
                 .asInstanceOf[BaseObservable[Self, (Int, Any)]],

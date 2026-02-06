@@ -1,10 +1,10 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.core.{Observable, Signal}
+import com.raquo.airstream.core.{BaseObservable, Observable, Signal}
 import com.raquo.airstream.distinct.DistinctOps
 
-class SplittableObservable[M[_], Input](
-  private val observable: Observable[M[Input]]
+class SplittableObservable[Self[+_] <: Observable[_], M[_], Input](
+  private val observable: BaseObservable[Self, M[Input]]
 ) extends AnyVal {
 
   // #nc[split] rename distinctCompose to distinctF?

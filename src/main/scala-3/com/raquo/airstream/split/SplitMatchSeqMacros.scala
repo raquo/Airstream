@@ -367,7 +367,7 @@ object SplitMatchSeqMacros {
     idx -> keyFn(i)
   }
 
-  private def toSplittableSeqObservable[Self[+_] <: Observable[_], I, K, O, CC[_]](
+  private def toSplitSeqObservable[Self[+_] <: Observable[_], I, K, O, CC[_]](
     parentObservable: BaseObservable[Self, CC[(I, Int, Any)]],
     keyFn: I => K,
     distinctCompose: DistinctOps.DistinctorF[I],
@@ -375,32 +375,18 @@ object SplitMatchSeqMacros {
     splittable: Splittable[CC],
     handlers: HandlerAny[O]*,
   ): Signal[CC[O]] = {
-    // #nc[split] why do we need matchStreamOrSignal here?
-    parentObservable
-      .matchStreamOrSignal(
-        ifStream = _.split(
-          key = customKey(keyFn),
-          distinctCompose = wrappedDistinctCompose[K, I](distinctCompose),
-          duplicateKeys = duplicateKeysConfig
-        ) { case ((idx, _), (_, _, b), dataSignal) =>
-          val bSignal = dataSignal.map(_._3)
-          handlers.view.zipWithIndex.map(_.swap).toMap
-            .getOrElse(idx, IllegalStateException("Illegal SplitMatchSeq state. This is a bug in Airstream."))
-            .asInstanceOf[Function2[Any, Any, O]]
-            .apply(b, bSignal)
-        }(splittable),
-        ifSignal = _.split(
-          key = customKey(keyFn),
-          distinctCompose = wrappedDistinctCompose[K, I](distinctCompose),
-          duplicateKeys = duplicateKeysConfig
-        ) { case ((idx, _), (_, _, b), dataSignal) =>
-          val bSignal = dataSignal.map(_._3)
-          handlers.view.zipWithIndex.map(_.swap).toMap
-            .getOrElse(idx, IllegalStateException("Illegal SplitMatchSeq state. This is a bug in Airstream."))
-            .asInstanceOf[Function2[Any, Any, O]]
-            .apply(b, bSignal)
-        }(splittable)
-      )
+    parentObservable.splitSeq(
+      key = customKey(keyFn),
+      distinctCompose = wrappedDistinctCompose[K, I](distinctCompose),
+      duplicateKeys = duplicateKeysConfig
+    ) { dataSignal =>
+      val idx = dataSignal.key._1
+      val bSignal = dataSignal.map(_._3)
+      handlers.view.zipWithIndex.map(_.swap).toMap
+        .getOrElse(idx, IllegalStateException("Illegal SplitMatchSeq state. This is a bug in Airstream."))
+        .asInstanceOf[Function2[Any, Any, O]]
+        .apply(bSignal.now(), bSignal)
+    }(splittable)
   }
 
   private def observableImpl[Self[+_] <: Observable[_]: Type, I: Type, K: Type, O: Type, CC[_]: Type](
@@ -441,7 +427,7 @@ object SplitMatchSeqMacros {
               )
             } else {
               '{
-              toSplittableSeqObservable(
+              toSplitSeqObservable(
                 $observableExpr
                   .map { icc =>
                     $splittableExpr.map(

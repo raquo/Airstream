@@ -1,10 +1,10 @@
 package com.raquo.airstream.extensions
 
-import com.raquo.airstream.core.{BaseObservable, EventStream, Observable, Signal}
+import com.raquo.airstream.core.{BaseObservable, Observable, Signal}
 import com.raquo.airstream.split.DuplicateKeysConfig
 import com.raquo.airstream.state.StrictSignal
 
-/** See also: [[OptionStream]] for stream-specific operators */
+/** See also: [[OptionStream]] for stream-specific option operators */
 class OptionObservable[A, Self[+_] <: Observable[_]](
   private val observable: BaseObservable[Self, Option[A]]
 ) extends AnyVal {

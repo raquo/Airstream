@@ -54,12 +54,12 @@ class BooleanObservableSpec extends UnitSpec {
     bus
       .stream
       .splitBoolean(
-        trueF = { signal =>
+        whenTrue = { signal =>
           effects += Effect("true", true)
           signal.foreach(v => effects += Effect("true-signal", v))(innerOwner)
           true
         },
-        falseF = { signal =>
+        whenFalse = { signal =>
           effects += Effect("false", false)
           signal.foreach(v => effects += Effect("false-signal", v))(innerOwner)
           false

@@ -3,17 +3,15 @@ package com.raquo.airstream.core
 import com.raquo.airstream.combine.CombineSignalN
 import com.raquo.airstream.combine.generated.{CombinableSignal, StaticSignalCombineOps}
 import com.raquo.airstream.core.Source.SignalSource
-import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.custom.CustomSource._
+import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.debug.{DebuggableSignal, Debugger, DebuggerSignal}
 import com.raquo.airstream.distinct.DistinctSignal
 import com.raquo.airstream.dynamicImport.{SignalDynamicImportOps, SignalObjDynamicImportOps}
 import com.raquo.airstream.extensions._
 import com.raquo.airstream.misc.{MapSignal, ScanLeftSignal, StreamFromSignal}
 import com.raquo.airstream.ownership.Owner
-import com.raquo.airstream.split.SplittableOneSignal
 import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
-import com.raquo.airstream.status.Status
 import com.raquo.airstream.timing.JsPromiseSignal
 import com.raquo.ew.JsArray
 
@@ -304,21 +302,6 @@ extends SignalObjDynamicImportOps // Provides `dynamicImport` method (Scala 3 on
 
   /** Provides methods on Signal: combine, combineWith, withCurrentValueOf, sample */
   implicit def toCombinableSignal[A](signal: Signal[A]): CombinableSignal[A] = new CombinableSignal(signal)
-
-  /** Provides methods on Signal: splitOne */
-  implicit def toSplittableOneSignal[A](signal: Signal[A]): SplittableOneSignal[A] = new SplittableOneSignal[A](signal)
-
-  /** Provides methods on Signal: splitBoolean */
-  implicit def toBooleanSignal(signal: Signal[Boolean]): BooleanSignal = new BooleanSignal(signal)
-
-  /** Provides methods on Signal: splitEither */
-  implicit def toEitherSignal[A, B](signal: Signal[Either[A, B]]): EitherSignal[A, B] = new EitherSignal(signal)
-
-  /** Provides methods on Signal: splitTry */
-  implicit def toTrySignal[A](signal: Signal[Try[A]]): TrySignal[A] = new TrySignal(signal)
-
-  /** Provides methods on Signal: splitStatus */
-  implicit def toStatusSignal[In, Out](signal: Signal[Status[In, Out]]): StatusSignal[In, Out] = new StatusSignal(signal)
 
   /** Provides signal-specific debug* methods: debugSpyInitialEval, debugLogInitialEval, debugBreakInitialEval */
   implicit def toDebuggableSignal[A](signal: Signal[A]): DebuggableSignal[A] = new DebuggableSignal[A](signal)

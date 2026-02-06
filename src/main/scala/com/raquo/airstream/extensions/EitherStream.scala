@@ -1,7 +1,6 @@
 package com.raquo.airstream.extensions
 
 import com.raquo.airstream.core.EventStream
-import com.raquo.airstream.split.SplittableOneStream
 import com.raquo.airstream.state.StrictSignal
 
 /** See also: [[EitherObservable]] */
@@ -48,14 +47,15 @@ class EitherStream[A, B](
     left: (A, StrictSignal[A]) => C,
     right: (B, StrictSignal[B]) => C
   ): EventStream[C] = {
-    new SplittableOneStream(stream).splitOne(key = _.isRight) { signal =>
-      signal.now() match {
-        case Right(v) =>
-          right(v, signal.map(e => e.getOrElse(throw new Exception(s"splitEither: `${stream}` bad right value: $e"))))
-        case Left(v) =>
-          left(v, signal.map(e => e.left.getOrElse(throw new Exception(s"splitEither: `${stream}` bad left value: $e"))))
+    stream
+      .splitOne(key = _.isRight) { signal =>
+        signal.now() match {
+          case Right(v) =>
+            right(v, signal.map(e => e.getOrElse(throw new Exception(s"splitEither: `${stream}` bad right value: $e"))))
+          case Left(v) =>
+            left(v, signal.map(e => e.left.getOrElse(throw new Exception(s"splitEither: `${stream}` bad left value: $e"))))
+        }
       }
-    }
   }
 
 }

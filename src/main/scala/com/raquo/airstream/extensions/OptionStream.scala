@@ -2,7 +2,7 @@ package com.raquo.airstream.extensions
 
 import com.raquo.airstream.core.EventStream
 
-/** See also: [[OptionObservable]] */
+/** See also [[OptionObservable]] for generic option operators */
 class OptionStream[A](
   private val stream: EventStream[Option[A]]
 ) extends AnyVal {

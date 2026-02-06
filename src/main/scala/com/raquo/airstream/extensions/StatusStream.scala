@@ -1,10 +1,9 @@
 package com.raquo.airstream.extensions
 
-import com.raquo.airstream.core.{EventStream, Signal}
-import com.raquo.airstream.split.SplittableOneStream
-import com.raquo.airstream.state.StrictSignal
+import com.raquo.airstream.core.EventStream
 import com.raquo.airstream.status.{Pending, Resolved, Status}
 
+/** See also [[StatusObservable]] for generic status operators */
 class StatusStream[In, Out](
   private val stream: EventStream[Status[In, Out]]
 ) extends AnyVal {
@@ -43,39 +42,6 @@ class StatusStream[In, Out](
   /** Emit `input` if parent stream emits `Pending(input)`, do nothing otherwise */
   def collectPendingInput: EventStream[In] = stream.collect {
     case Pending(input) => input
-  }
-
-  /** This `.split`-s a stream of Statuses by their type (resolved vs pending).
-    * If you want a different key, use the .splitOne operator directly.
-    *
-    * @param resolved signalOfResolvedValues => output
-    *
-    *                 `resolved` is called whenever `stream` switches from `Pending` to `Resolved`.
-    *                 `signalOfResolvedValues` starts with an initial `Resolved` value, and updates when
-    *                 the parent stream emits a new `Resolved` consecutively after another `Resolved`.
-    *
-    *                 You can get the signal's current value with `.now()`.
-    *
-    * @param pending  signalOfPendingValues => output
-    *
-    *                 `pending` is called whenever `stream` switches from `Resolved` to `Pending`,
-    *                 or when the very first event is emitted (and it's `Pending`, as is typical)
-    *                 `signalOfPendingValues` starts with an initial `Pending` value, and updates when
-    *                 the parent stream emits a new `Resolved` consecutively after another `Resolved`.
-    *                 This happens when the stream emits inputs faster than the outputs are resolved.
-    *
-    *                 You can get the signal's current value with `.now()`.
-    */
-  def splitStatus[A](
-    resolved: StrictSignal[Resolved[In, Out]] => A,
-    pending: StrictSignal[Pending[In]] => A
-  ): EventStream[A] = {
-    new SplittableOneStream(stream).splitOne(key = _.isResolved) { signal =>
-      signal.now().fold(
-        resolved = _ => resolved(signal.asInstanceOf[StrictSignal[Resolved[In, Out]]]),
-        pending = _ => pending(signal.asInstanceOf[StrictSignal[Pending[In]]])
-      )
-    }
   }
 
 }

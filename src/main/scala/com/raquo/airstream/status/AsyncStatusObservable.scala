@@ -28,12 +28,10 @@ object AsyncStatusObservable {
       Resolved(lastInput, output, ix)
     }
 
-    val pendingS = inputS.map(Pending(_))
-
-    pendingS.matchStreamOrSignal(
-      ifStream = _.mergeWith(outputS),
-      ifSignal = _.changes(_.mergeWith(outputS))
-    ).asInstanceOf[Self[Status[A, B]]] // #TODO[Integrity] How to type this properly?
+    parent.matchStreamOrSignalAsSelf(
+      ifStream = _.map(Pending(_)).mergeWith(outputS),
+      ifSignal = _.map(Pending(_)).changes(_.mergeWith(outputS))
+    )
   }
 
 }
