@@ -35,8 +35,7 @@ class SplittableVar[M[_], Input](
         project(childVar)
       },
       splittable,
-      duplicateKeys,
-      strict = true
+      duplicateKeys
     )
   }
 
@@ -64,7 +63,6 @@ class SplittableVar[M[_], Input](
       },
       splittable,
       DuplicateKeysConfig.noWarnings, // No need to check for duplicates – we know the keys are good.?
-      strict = true
     )
   }
 
@@ -104,7 +102,6 @@ class SplittableVar[M[_], Input](
       },
       splittable.splittable,
       duplicateKeys,
-      strict = true
     )
   }
 }

@@ -34,7 +34,6 @@ class SplitSignal[M[_], Input, Output, Key](
   project: KeyedStrictSignal[Key, Input] => Output,
   splittable: Splittable[M],
   duplicateKeysConfig: DuplicateKeysConfig = DuplicateKeysConfig.default,
-  strict: Boolean = false // #TODO `false` default for now to keep compatibility with 17.0.0 - consider changing in 18.0.0 #nc[split]
 ) extends SingleParentSignal[M[Input], M[Output]] {
 
   private val distinctF = distinctOp(new DistinctOps.Ops[Input])
@@ -153,10 +152,6 @@ class SplitSignal[M[_], Input, Output, Key](
               }
             ).distinctTry(isSame = distinctF)
 
-          if (isStarted && strict) {
-            inputSignal.addInternalObserver(emptyObserver, shouldCallMaybeWillStart = true)
-          }
-
           val newOutput = project(inputSignal)
 
           (inputSignal, newOutput)
@@ -176,10 +171,6 @@ class SplitSignal[M[_], Input, Output, Key](
     memoized.keys.foreach { memoizedKey =>
       if (!nextKeys.contains(memoizedKey)) {
         // dom.console.log(s"${this} memoized.remove ${memoizedKey}")
-        if (strict) {
-          val inputSignal = memoized(memoizedKey)._2
-          inputSignal.removeInternalObserver(emptyObserver)
-        }
         memoized.remove(memoizedKey)
       }
     }
@@ -191,43 +182,5 @@ class SplitSignal[M[_], Input, Output, Key](
     }
 
     nextOutputs
-  }
-
-  override protected[this] def onStart(): Unit = {
-    if (strict) {
-      parent.tryNow().foreach { inputs =>
-        // splittable.foreach is perhaps less efficient that memoized.keys,
-        // but it has a predictable order that users expect.
-        splittable.foreach(inputs, (input: Input) => {
-          val memoizedKey = key(input)
-          val maybeInputSignal = memoized.get(memoizedKey).map(_._2)
-          maybeInputSignal.foreach { inputSignal =>
-            // - If inputSignal not found because `parent.tryNow()` and `memoized`
-            //   are temporarily out of sync, it should be added later just fine
-            //   when they sync up.
-            // - Typical pattern is to call Protected.maybeWillStart(inputSignal) in onWillStart,
-            //   but our SplitSignal does not actually depend on these inputSignal-s, so I think
-            //   it's ok to do both onWillStart and onStart for them here.
-            inputSignal.addInternalObserver(emptyObserver, shouldCallMaybeWillStart = true)
-          }
-        })
-      }
-    }
-    super.onStart()
-  }
-
-  override protected[this] def onStop(): Unit = {
-    if (strict) {
-      // memoized.keys has no defined order, so we don't want to
-      // use it for starting subscriptions, but for stopping them,
-      // seems fine.
-      // This way we make sure to remove observers from exactly
-      // all items that are in `memoized`, no more, no less.
-      memoized.keys.foreach { memoizedKey =>
-        val inputSignal = memoized(memoizedKey)._2
-        inputSignal.removeInternalObserver(emptyObserver)
-      }
-    }
-    super.onStop()
   }
 }
