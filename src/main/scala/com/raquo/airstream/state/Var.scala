@@ -87,11 +87,6 @@ with Named {
     }
   }
 
-  /** Create a strictly evaluated [[DerivedVar]]. See also: [[zoom]]. */
-  def zoomStrict[B](in: A => B)(out: (A, B) => A)(implicit owner: Owner): Var[B] = {
-    new DerivedVar[A, B](this, in, out, owner, displayNameSuffix = ".zoom")
-  }
-
   /** Use this to create a Var that zooms into a field of a class stored
     * in the parent Var, for example:
     *
@@ -119,7 +114,7 @@ with Named {
     */
   def zoom[B](in: A => B)(out: (A, B) => A): Var[B] = {
     val zoomedSignal = LazyStrictSignal.mapSignal(
-      signal, in, displayName, displayNameSuffix = ".zoomLazy.signal"
+      signal, in, displayName, displayNameSuffix = ".zoom.signal"
     )
     new LazyDerivedVar[A, B](
       parent = this,
@@ -127,8 +122,13 @@ with Named {
       updateParent = LazyDerivedVar.standardErrorsF { (currValue, nextZoomedValue) =>
         Some(out(currValue, nextZoomedValue))
       },
-      displayNameSuffix = ".zoomLazy"
+      displayNameSuffix = ".zoom"
     )
+  }
+
+  /** Create a strictly evaluated [[DerivedVar]]. See also: [[zoom]]. */
+  def zoomStrict[B](in: A => B)(out: (A, B) => A)(implicit owner: Owner): Var[B] = {
+    new DerivedVar[A, B](this, in, out, owner, displayNameSuffix = ".zoomStrict")
   }
 
   @deprecated("Use Var.zoom – it works like Var.zoomLazy used to. Note: the previous version of Var.zoom which required an Owner was renamed to `zoomStrict`", since = "18.0.0-M3")

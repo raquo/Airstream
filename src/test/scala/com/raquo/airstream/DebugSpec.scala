@@ -856,7 +856,7 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
 
     assert(_var.displayName.startsWith("SourceVar@"))
     assertEquals(_var.signal.displayName, _var.displayName + ".signal")
-    assertEquals(_derived.displayName, _var.displayName + ".zoom")
+    assertEquals(_derived.displayName, _var.displayName + ".zoomStrict")
     assertEquals(_derived.signal.displayName, _derived.displayName + ".signal")
 
     // --
@@ -865,7 +865,7 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
 
     assertEquals(_var.displayName, "var")
     assertEquals(_var.signal.displayName, "var.signal")
-    assertEquals(_derived.displayName, _var.displayName + ".zoom")
+    assertEquals(_derived.displayName, _var.displayName + ".zoomStrict")
     assertEquals(_derived.signal.displayName, _derived.displayName + ".signal")
 
     // --

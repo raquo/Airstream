@@ -8,7 +8,12 @@ class SplittableVar[M[_], Input](
   private val v: Var[M[Input]]
 ) extends AnyVal {
 
-  /** This `split` operator works on Vars, and gives you a  */
+  /** This `splitSeq` operator works on Vars. In contrast to the regular `splitSeq` operator,
+    * it provides you with a writable Var for each item, not just a Signal for each item.
+    *
+    * This makes it easy to update the individual item in the parent Var from within
+    * the item's context.
+    */
   def splitSeq[Output, Key](
     key: Input => Key,
     distinctOp: DistinctOp[Input] = _.distinct,
@@ -30,7 +35,7 @@ class SplittableVar[M[_], Input](
           updateParent = KeyedDerivedVar.standardErrorsF { (inputs, newInput) =>
             Some(splittable.findUpdate(inputs, key(_) == thisKey, newInput))
           },
-          displayNameSuffix = s".split(key = ${key})"
+          displayNameSuffix = s".splitSeq(key = ${key})"
         )
         project(childVar)
       },
@@ -40,7 +45,7 @@ class SplittableVar[M[_], Input](
   }
 
   /** Like `split`, but uses index of the item in the list as the key. */
-  def splitByIndex[Output](
+  def splitSeqByIndex[Output](
     project: KeyedDerivedVar[Int, M[Input], Input] => Output
   )(implicit splittable: Splittable[M]
   ): Signal[M[Output]] = {
@@ -57,7 +62,7 @@ class SplittableVar[M[_], Input](
           updateParent = KeyedDerivedVar.standardErrorsF { (inputs, newInput) =>
             Some(splittable.findUpdateByIndex(inputs, thisIndex, newInput))
           },
-          displayNameSuffix = s".splitByIndex(index = ${thisIndex})"
+          displayNameSuffix = s".splitSeqByIndex(index = ${thisIndex})"
         )
         project(childVar)
       },
@@ -66,15 +71,15 @@ class SplittableVar[M[_], Input](
     )
   }
 
-  /** This variation of the `split` operator is designed for Var-s of
+  /** This variation of the `splitSeq` operator is designed for Var-s of
     * mutable collections. It works like the usual split, except that
     * it updates the mutable collection in-place instead of creating
     * a modified copy of it, like the regular `split` operator does.
     *
-    * Note that the regular `split` operators work fine with both mutable
+    * Note that the regular `splitSeq` operators work fine with both mutable
     * and immutable collections, treating both of them as immutable.
     */
-  def splitMutate[Output, Key](
+  def splitSeqMutate[Output, Key](
     key: Input => Key,
     distinctOp: DistinctOp[Input] = _.distinct,
     duplicateKeys: DuplicateKeysConfig = DuplicateKeysConfig.default
