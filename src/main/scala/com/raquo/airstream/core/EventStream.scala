@@ -1,10 +1,10 @@
 package com.raquo.airstream.core
 
-import com.raquo.airstream.combine.{CombineStreamN, MergeStream}
 import com.raquo.airstream.combine.generated._
+import com.raquo.airstream.combine.{CombineStreamN, MergeStream}
 import com.raquo.airstream.core.Source.{EventSource, SignalSource}
-import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.custom.CustomSource._
+import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.debug.{DebuggableStream, Debugger, DebuggerStream}
 import com.raquo.airstream.distinct.DistinctStream
 import com.raquo.airstream.dynamicImport.{StreamDynamicImportOps, StreamObjDynamicImportOps}
@@ -18,7 +18,6 @@ import com.raquo.airstream.timing._
 import com.raquo.ew.JsArray
 
 import java.util.concurrent.Flow
-import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
@@ -330,7 +329,8 @@ with StreamDynamicImportOps[A] // Provides `dynamicImport` method (Scala 3 only)
 }
 
 object EventStream
-extends StreamObjDynamicImportOps // Provides `dynamicImport` method (Scala 3 only)
+extends StaticStreamCombineOps
+with StreamObjDynamicImportOps // Provides `dynamicImport` method (Scala 3 only)
 {
 
   /** Event stream that never emits anything */
@@ -497,9 +497,6 @@ extends StreamObjDynamicImportOps // Provides `dynamicImport` method (Scala 3 on
     new MergeStream[A](JsArray(streams: _*))
   }
 
-  /** Provides methods on EventStream companion object: combine, combineWith */
-  implicit def toEventStreamCompanionCombineSyntax(@unused s: EventStream.type): StaticStreamCombineOps.type = StaticStreamCombineOps
-
   /** Provides methods on EventStream: combine, combineWith, withCurrentValueOf, sample */
   implicit def toCombinableStream[A](stream: EventStream[A]): CombinableStream[A] = new CombinableStream(stream)
 
@@ -507,7 +504,7 @@ extends StreamObjDynamicImportOps // Provides `dynamicImport` method (Scala 3 on
   implicit def toSplittableOneStream[A](stream: EventStream[A]): SplittableOneStream[A] = new SplittableOneStream(stream)
 
   /** Provides methods on stream: splitBoolean */
-  implicit def toBooleanStream[A](stream: EventStream[Boolean]): BooleanStream = new BooleanStream(stream)
+  implicit def toBooleanStream(stream: EventStream[Boolean]): BooleanStream = new BooleanStream(stream)
 
   /** Provides methods on stream: filterSome, collectSome, splitOption */
   implicit def toOptionStream[A](stream: EventStream[Option[A]]): OptionStream[A] = new OptionStream(stream)

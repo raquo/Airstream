@@ -42,7 +42,7 @@ case class GenerateCombinableSignal(
           line(s"combinator: (A, ${tupleType(n)}) => Out")
         }
         enter(s"): Signal[Out] = {", "}") {
-          line(s"StaticSignalCombineOps.combineWithFn(signal, ${tupleType(n, "s")})(combinator)")
+          line(s"Signal.combineWithFn(signal, ${tupleType(n, "s")})(combinator)")
         }
         line()
         enter(s"def withCurrentValueOf[${tupleType(n)}](") {

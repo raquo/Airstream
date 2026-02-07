@@ -25,7 +25,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1)(combinator)
+    EventStream.combineWithFn(stream, s1)(combinator)
   }
 
   def withCurrentValueOf[T1](
@@ -62,7 +62,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2)(combinator)
+    EventStream.combineWithFn(stream, s1, s2)(combinator)
   }
 
   def withCurrentValueOf[T1, T2](
@@ -99,7 +99,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3](
@@ -136,7 +136,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4](
@@ -173,7 +173,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4, T5) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4, s5)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4, s5)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4, T5](
@@ -210,7 +210,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4, s5, s6)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4, s5, s6)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6](
@@ -247,7 +247,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6, T7) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7](
@@ -284,7 +284,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6, T7, T8) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8](
@@ -321,7 +321,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6, T7, T8, T9) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9](
@@ -358,7 +358,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
@@ -395,7 +395,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](
@@ -432,7 +432,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](
@@ -469,7 +469,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](
@@ -506,7 +506,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](
@@ -543,7 +543,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](
@@ -580,7 +580,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](
@@ -617,7 +617,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17](
@@ -654,7 +654,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18](
@@ -691,7 +691,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19](
@@ -728,7 +728,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20](
@@ -765,7 +765,7 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
   )(
     combinator: (A, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21) => Out
   ): EventStream[Out] = {
-    StaticStreamCombineOps.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21)(combinator)
+    EventStream.combineWithFn(stream, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21)(combinator)
   }
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21](

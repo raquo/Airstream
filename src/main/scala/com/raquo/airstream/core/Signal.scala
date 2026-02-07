@@ -15,7 +15,6 @@ import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
 import com.raquo.airstream.timing.JsPromiseSignal
 import com.raquo.ew.JsArray
 
-import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
@@ -199,7 +198,8 @@ with SignalDynamicImportOps[A] // Provides `dynamicImport` method (Scala 3 only)
 }
 
 object Signal
-extends SignalObjDynamicImportOps // Provides `dynamicImport` method (Scala 3 only)
+extends StaticSignalCombineOps
+with SignalObjDynamicImportOps // Provides `dynamicImport` method (Scala 3 only)
 {
 
   def fromValue[A](value: A): Val[A] = Val(value)
@@ -296,9 +296,6 @@ extends SignalObjDynamicImportOps // Provides `dynamicImport` method (Scala 3 on
   }
 
   @inline def combineSeq[A](signals: Seq[Signal[A]]): Signal[Seq[A]] = sequence(signals)
-
-  /** Provides methods on Signal companion object: combine, combineWith */
-  implicit def toSignalCompanionCombineSyntax(@unused s: Signal.type): StaticSignalCombineOps.type = StaticSignalCombineOps
 
   /** Provides methods on Signal: combine, combineWith, withCurrentValueOf, sample */
   implicit def toCombinableSignal[A](signal: Signal[A]): CombinableSignal[A] = new CombinableSignal(signal)

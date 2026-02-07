@@ -23,7 +23,7 @@ case class GenerateStaticStreamCombineOps(
     line("// These combine and combineWith methods are available on the EventStream companion object")
     line("// For instance methods of the same name, see CombinableStream.scala")
     line()
-    enter(s"object StaticStreamCombineOps {", "}") {
+    enter(s"trait StaticStreamCombineOps {", "}") {
       line()
       for (n <- from to to) {
         enter(s"def combine[${tupleType(n)}](") {

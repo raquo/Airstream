@@ -10,7 +10,7 @@ import com.raquo.ew.JsArray
 // These combine and combineWith methods are available on the EventStream companion object
 // For instance methods of the same name, see CombinableStream.scala
 
-object StaticStreamCombineOps {
+trait StaticStreamCombineOps {
 
   def combine[T1, T2](
     s1: EventSource[T1], s2: EventSource[T2]

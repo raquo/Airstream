@@ -10,7 +10,7 @@ import com.raquo.ew.JsArray
 // These combine and combineWith methods are available on the Signal companion object
 // For instance methods of the same name, see CombinableSignal.scala
 
-object StaticSignalCombineOps {
+trait StaticSignalCombineOps {
 
   def combine[T1, T2](
     s1: SignalSource[T1], s2: SignalSource[T2]

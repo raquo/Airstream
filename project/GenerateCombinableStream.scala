@@ -42,7 +42,7 @@ case class GenerateCombinableStream(
           line(s"combinator: (A, ${tupleType(n)}) => Out")
         }
         enter(s"): EventStream[Out] = {", "}") {
-          line(s"StaticStreamCombineOps.combineWithFn(stream, ${tupleType(n, "s")})(combinator)")
+          line(s"EventStream.combineWithFn(stream, ${tupleType(n, "s")})(combinator)")
         }
         line()
         enter(s"def withCurrentValueOf[${tupleType(n)}](") {
