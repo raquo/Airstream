@@ -5,7 +5,7 @@ import com.raquo.airstream.core.{EventStream, Signal}
 
 import scala.scalajs.js
 
-trait StreamObjDynamicImportOps { this: EventStream.type =>
+trait DynamicImportStreamObjectOps { this: EventStream.type =>
 
   /** Create an ECMAScript 6 Dynamic import boundary for progressive module loading.
     *

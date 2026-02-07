@@ -6,7 +6,7 @@ import com.raquo.airstream.core.AirstreamError.DebugError
 
 import scala.util.Try
 
-/** See [[DebuggableObservable]] and [[DebuggableSignal]] for user-facing debug methods */
+/** See [[DebugOps]] and [[DebuggableSignal]] for user-facing debug methods */
 class DebuggerSignal[A](
   override protected[this] val parent: Signal[A],
   override protected val debugger: Debugger[A]

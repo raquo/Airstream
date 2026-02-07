@@ -1,13 +1,13 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.combine.CombineSignalN
-import com.raquo.airstream.combine.generated.{CombinableSignal, StaticSignalCombineOps}
+import com.raquo.airstream.combine.generated.{CombinableSignal, CombineSignalObjectOps}
 import com.raquo.airstream.core.Source.SignalSource
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
-import com.raquo.airstream.debug.{DebuggableSignal, Debugger, DebuggerSignal}
-import com.raquo.airstream.distinct.DistinctSignal
-import com.raquo.airstream.dynamicImport.{SignalDynamicImportOps, SignalObjDynamicImportOps}
+import com.raquo.airstream.debug.{DebugOps, DebugSignalOps, Debugger, DebuggerSignal}
+import com.raquo.airstream.distinct.{DistinctOps, DistinctSignal}
+import com.raquo.airstream.dynamicImport.{DynamicImportSignalObjectOps, DynamicImportSignalOps}
 import com.raquo.airstream.extensions._
 import com.raquo.airstream.misc.{MapSignal, ScanLeftSignal, StreamFromSignal}
 import com.raquo.airstream.ownership.Owner
@@ -25,7 +25,8 @@ trait Signal[+A]
 extends Observable[A]
 with BaseObservable[Signal, A]
 with SignalSource[A]
-with SignalDynamicImportOps[A] // Provides `dynamicImport` method (Scala 3 only)
+with DebugSignalOps[A]
+with DynamicImportSignalOps[A] // Provides `dynamicImport` method (Scala 3 only)
 {
 
   protected[this] var _lastUpdateId: Int = 0
@@ -41,7 +42,10 @@ with SignalDynamicImportOps[A] // Provides `dynamicImport` method (Scala 3 only)
     */
   protected[airstream] def now(): A = tryNow().get
 
-  /** @param project Note: guarded against exceptions */
+  /** See also various map-like operators methods in [[CoreOps]].
+    *
+    * @param project Note: guarded against exceptions
+    */
   override def map[B](project: A => B): Signal[B] = {
     new MapSignal(parent = this, project, recover = None)
   }
@@ -129,7 +133,10 @@ with SignalDynamicImportOps[A] // Provides `dynamicImport` method (Scala 3 only)
     )
   }
 
-  /** Distinct all values (both events and errors) using a comparison function */
+  /** Distinct all values (both events and errors) using a comparison function
+    *
+    * See other distinct* operators in [[DistinctOps]].
+    */
   override def distinctTry(isSame: (Try[A], Try[A]) => Boolean): Signal[A] = {
     new DistinctSignal[A](parent = this, isSame, resetOnStop = false)
   }
@@ -151,7 +158,7 @@ with SignalDynamicImportOps[A] // Provides `dynamicImport` method (Scala 3 only)
     map(Right(_)).recover(err => Some(Left(err)))
   }
 
-  /** See also debug methods in [[com.raquo.airstream.debug.DebuggableObservable]] */
+  /** See also debug methods in [[DebugOps]] and [[DebugSignalOps]] */
   override def debugWith(debugger: Debugger[A]): Signal[A] = {
     new DebuggerSignal[A](this, debugger)
   }
@@ -198,8 +205,8 @@ with SignalDynamicImportOps[A] // Provides `dynamicImport` method (Scala 3 only)
 }
 
 object Signal
-extends StaticSignalCombineOps
-with SignalObjDynamicImportOps // Provides `dynamicImport` method (Scala 3 only)
+extends CombineSignalObjectOps
+with DynamicImportSignalObjectOps // Provides `dynamicImport` method (Scala 3 only)
 {
 
   def fromValue[A](value: A): Val[A] = Val(value)
@@ -299,9 +306,6 @@ with SignalObjDynamicImportOps // Provides `dynamicImport` method (Scala 3 only)
 
   /** Provides methods on Signal: combine, combineWith, withCurrentValueOf, sample */
   implicit def toCombinableSignal[A](signal: Signal[A]): CombinableSignal[A] = new CombinableSignal(signal)
-
-  /** Provides signal-specific debug* methods: debugSpyInitialEval, debugLogInitialEval, debugBreakInitialEval */
-  implicit def toDebuggableSignal[A](signal: Signal[A]): DebuggableSignal[A] = new DebuggableSignal[A](signal)
 
   // toTupleSignalN conversions provide mapN method on Signals of tuples
 

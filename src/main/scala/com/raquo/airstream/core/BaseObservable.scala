@@ -1,6 +1,6 @@
 package com.raquo.airstream.core
 
-import com.raquo.airstream.debug.{DebuggableObservable, DebuggableSignal, Debugger}
+import com.raquo.airstream.debug.DebugOps
 import com.raquo.airstream.distinct.DistinctOps
 import com.raquo.airstream.flatten.{AllowFlatMap, FlattenStrategy, MergingStrategy, SwitchingStrategy}
 import com.raquo.airstream.ownership.{Owner, Subscription}
@@ -36,7 +36,8 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A]
 extends Source[A]
 with Named
 with CoreOps[Self, A]
-with DistinctOps[Self[A], A] {
+with DistinctOps[Self[A], A]
+with DebugOps[Self, A] {
 
   @inline implicit protected def protectedAccessEvidence: Protected = Protected.protectedAccessEvidence
 
@@ -146,16 +147,6 @@ with DistinctOps[Self[A], A] {
 
   /** Convert this to an observable that emits Left(err) instead of erroring */
   def recoverToEither: Self[Either[Throwable, A]]
-
-  /** Create a new observable that listens to this one and has a debugger attached.
-    *
-    * Use the resulting observable in place of the original observable in your code.
-    * See docs for details.
-    *
-    * There are more convenient methods available implicitly from [[DebuggableObservable]] and [[DebuggableSignal]],
-    * such as debugLog(), debugSpyEvents(), etc.
-    */
-  def debugWith(debugger: Debugger[A]): Self[A]
 
   /** Create an external observer from a function and subscribe it to this observable.
     *

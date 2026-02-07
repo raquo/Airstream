@@ -1,10 +1,9 @@
 package com.raquo.airstream.core
 
-import com.raquo.airstream.debug.DebuggableObservable
 import com.raquo.airstream.extensions._
-import com.raquo.airstream.flatten.{MergingStrategy, SwitchingStrategy}
 import com.raquo.airstream.flatten.FlattenStrategy._
-import com.raquo.airstream.split.{SplittableSeqObservable, SplittableOneObservable}
+import com.raquo.airstream.flatten.{MergingStrategy, SwitchingStrategy}
+import com.raquo.airstream.split.{SplittableOneObservable, SplittableSeqObservable}
 import com.raquo.airstream.status.Status
 
 import scala.util.Try
@@ -27,9 +26,6 @@ with ObservableLowPriorityImplicits {
 
   /** Provides methods on Observable: splitOne */
   implicit def toSplittableOneObservable[Self[+_] <: Observable[_], Input](observable: BaseObservable[Self, Input]): SplittableOneObservable[Self, Input] = new SplittableOneObservable(observable)
-
-  /** Provides debug* methods on Observable: debugSpy, debugLogEvents, debugBreakErrors, etc. */
-  implicit def toDebuggableObservable[A](observable: Observable[A]): DebuggableObservable[Observable, A] = new DebuggableObservable[Observable, A](observable)
 
   /** Provides methods on observable: flip, foldBoolean, splitBoolean */
   implicit def toBooleanObservable[Self[+_] <: Observable[_]](observable: BaseObservable[Self, Boolean]): BooleanObservable[Self] = new BooleanObservable(observable)

@@ -22,7 +22,10 @@ with DistinctOps[KeyedStrictSignal[K, A], A] { self =>
     }
   }
 
-  /** Distinct all values (both events and errors) using a comparison function */
+  /** Distinct all values (both events and errors) using a comparison function
+    *
+    * See other distinct* operators in [[DistinctOps]]
+    */
   override def distinctTry(isSame: (Try[A], Try[A]) => Boolean): KeyedStrictSignal[K, A] = {
     new DistinctSignal[A](parent = this, isSame, resetOnStop = false)
       with KeyedStrictSignal[K, A]

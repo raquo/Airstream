@@ -5,7 +5,7 @@ import com.raquo.airstream.core.{EventStream, Protected, Transaction}
 
 import scala.util.{Failure, Success, Try}
 
-/** See [[DebuggableObservable]] and [[DebuggableSignal]] for user-facing debug methods */
+/** See [[DebugOps]] and [[DebuggableSignal]] for user-facing debug methods */
 class DebuggerStream[A](
   override protected[this] val parent: EventStream[A],
   override protected val debugger: Debugger[A]

@@ -12,8 +12,9 @@ import scala.util.{Failure, Success, Try}
   * Every debug* method creates a new observer that performs the specified behaviour
   * and then calls the original observer.
   *
-  * Note: type inference doesn't work on Observer debug* methods,
-  * so you need to provide the AA type param (it should be same as A).
+  * Note: we can't make this implicit class into a mixin *Ops trait because Observer
+  * is contravariant in A, so the types and/or type inference won't work.
+  * The current implementation is nicer to use.
   */
 class DebuggableObserver[A](
   private val observer: Observer[A]

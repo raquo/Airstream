@@ -1,26 +1,26 @@
 package com.raquo.airstream.debug
 
-import com.raquo.airstream.core.Signal
+import com.raquo.airstream.core.{BaseObservable, Signal}
 import com.raquo.airstream.util.always
 
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
-/** This implicit class provides Signal-specific debug* methods, e.g.:
+/** This trait provides Signal-specific debug* methods, e.g.:
   *
   * {{{
   * signal.debugLogInitialEval().debugLog()
   * }}}
   *
-  * See [[DebuggableObservable]] and the docs for details.
+  * See [[DebugOps]] and the docs for details.
   *
   * The implicit conversion to this class is defined in the [[Signal]] companion object.
   *
-  * This is not a value class because it needs to extend [[DebuggableObservable]].
-  * The performance penalty of one extra instantiation per debugged stream should
-  * not be noticeable.
+  * See also [[DebugOps]] for generic debug operators
   */
-class DebuggableSignal[+A](override val observable: Signal[A]) extends DebuggableObservable[Signal, A](observable) {
+trait DebugSignalOps[+A]
+extends DebugOps[Signal, A] {
+  this: BaseObservable[Signal, A] =>
 
   /** Execute fn when signal is evaluating its `currentValueFromParent`.
     * This is typically triggered when evaluating signal's initial value onStart,
@@ -28,7 +28,7 @@ class DebuggableSignal[+A](override val observable: Signal[A]) extends Debuggabl
     * to the parent's new current value. */
   def debugSpyEvalFromParent(fn: Try[A] => Unit): Signal[A] = {
     val debugger = Debugger(onEvalFromParent = fn)
-    observable.debugWith(debugger)
+    debugWith(debugger)
   }
 
   /** Log when signal is evaluating its initial value (if `when` passes at that time) */

@@ -5,7 +5,7 @@ import com.raquo.airstream.core.EventStream
 
 import scala.scalajs.js
 
-trait StreamDynamicImportOps[+A] { this: EventStream[A] =>
+trait DynamicImportStreamOps[+A] { this: EventStream[A] =>
 
   /** Create an ECMAScript 6 Dynamic import boundary for progressive module loading.
     *
@@ -17,10 +17,9 @@ trait StreamDynamicImportOps[+A] { this: EventStream[A] =>
     */
   @nowarn("msg=New anonymous class definition will be duplicated at each inline site") // `resource` Function1 anon class – NBD
   inline def dynamicImport[R](inline resource: A => R): EventStream[R] = {
-    lazy val x = js.dynamicImport(resource)
     flatMapSwitch { v =>
       EventStream
-        .fromJsPromise(x) // #Note: `resource`, not `resource(v)`!
+        .fromJsPromise(js.dynamicImport(resource)) // #Note: `resource`, not `resource(v)`!
         .map(_(v)) // execute the `resource` function once it's loaded
     }
   }

@@ -1,8 +1,8 @@
 package com.raquo.airstream.dynamicImport
 
-import com.raquo.airstream.core.EventStream
+import com.raquo.airstream.core.Signal
 
-trait StreamObjDynamicImportOps { this: EventStream.type =>
+trait DynamicImportSignalObjectOps { this: Signal.type =>
 
   // `dynamicImport` operator is only for Scala 3 because it relies on `inline`.
 }

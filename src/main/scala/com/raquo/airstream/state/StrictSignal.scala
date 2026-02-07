@@ -28,7 +28,12 @@ with DistinctOps[StrictSignal[A], A] {
     )
   }
 
-  /** Note: the value of the resulting StrictSignal is evaluated lazily - only on demand. */
+  /** Distinct all values (both events and errors) using a comparison function
+    *
+    * Note: the value of the resulting StrictSignal is evaluated lazily - only on demand.
+    *
+    * See other distinct* operators in [[DistinctOps]].
+    */
   override def distinctTry(isSame: (Try[A], Try[A]) => Boolean): StrictSignal[A] = {
     LazyStrictSignal.distinctSignal(
       parentSignal = this,

@@ -6,7 +6,7 @@ import com.raquo.airstream.core.AirstreamError.DebugError
 
 import scala.util.Try
 
-/** See [[DebuggableObservable]] and [[DebuggableSignal]] for user-facing debug methods */
+/** See [[DebugOps]] and [[DebugSignalOps]] for user-facing debug methods */
 trait DebuggerObservable[A] extends InternalTryObserver[A] {
 
   protected val debugger: Debugger[A]

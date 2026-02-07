@@ -138,12 +138,12 @@ Compile / sourceGenerators += Def.task {
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
-    GenerateStaticStreamCombineOps(
+    GenerateCombineStreamObjectOps(
       (Compile / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
-    GenerateStaticSignalCombineOps(
+    GenerateCombineSignalObjectOps(
       (Compile / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo

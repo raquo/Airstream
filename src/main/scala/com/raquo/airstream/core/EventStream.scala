@@ -5,9 +5,9 @@ import com.raquo.airstream.combine.{CombineStreamN, MergeStream}
 import com.raquo.airstream.core.Source.{EventSource, SignalSource}
 import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
-import com.raquo.airstream.debug.{DebuggableStream, Debugger, DebuggerStream}
-import com.raquo.airstream.distinct.DistinctStream
-import com.raquo.airstream.dynamicImport.{StreamDynamicImportOps, StreamObjDynamicImportOps}
+import com.raquo.airstream.debug.{Debugger, DebuggerStream}
+import com.raquo.airstream.distinct.{DistinctOps, DistinctStream}
+import com.raquo.airstream.dynamicImport.{DynamicImportStreamObjectOps, DynamicImportStreamOps}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.extensions._
 import com.raquo.airstream.javaflow.FlowPublisherStream
@@ -27,9 +27,13 @@ trait EventStream[+A]
 extends Observable[A]
 with BaseObservable[EventStream, A]
 with EventSource[A]
-with StreamDynamicImportOps[A] // Provides `dynamicImport` method (Scala 3 only)
+with DynamicImportStreamOps[A] // Provides `dynamicImport` method (Scala 3 only)
 {
 
+  /** See more map-like operators in [[CoreOps]]
+    *
+    * @param project Note: guarded against exceptions
+    */
   override def map[B](project: A => B): EventStream[B] = {
     new MapStream(this, project, recover = None)
   }
@@ -291,7 +295,10 @@ with StreamDynamicImportOps[A] // Provides `dynamicImport` method (Scala 3 only)
     operator(this)
   }
 
-  /** Distinct all values (both events and errors) using a comparison function */
+  /** Distinct all values (both events and errors) using a comparison function
+    *
+    * See other distinct* operators in [[DistinctOps]].
+    */
   override def distinctTry(isSame: (Try[A], Try[A]) => Boolean): EventStream[A] = {
     new DistinctStream[A](parent = this, isSame, resetOnStop = false)
   }
@@ -316,7 +323,7 @@ with StreamDynamicImportOps[A] // Provides `dynamicImport` method (Scala 3 only)
     map(Right(_)).recover(err => Some(Left(err)))
   }
 
-  /** See also various debug methods in [[com.raquo.airstream.debug.DebuggableObservable]] */
+  /** See also various debug methods in [[com.raquo.airstream.debug.DebugOps]] */
   override def debugWith(debugger: Debugger[A]): EventStream[A] = {
     new DebuggerStream[A](this, debugger)
   }
@@ -329,8 +336,8 @@ with StreamDynamicImportOps[A] // Provides `dynamicImport` method (Scala 3 only)
 }
 
 object EventStream
-extends StaticStreamCombineOps
-with StreamObjDynamicImportOps // Provides `dynamicImport` method (Scala 3 only)
+extends CombineStreamObjectOps
+with DynamicImportStreamObjectOps // Provides `dynamicImport` method (Scala 3 only)
 {
 
   /** Event stream that never emits anything */
@@ -519,7 +526,7 @@ with StreamObjDynamicImportOps // Provides `dynamicImport` method (Scala 3 only)
   implicit def toStatusStream[In, Out](stream: EventStream[Status[In, Out]]): StatusStream[In, Out] = new StatusStream(stream)
 
   /** Provides debug* methods on EventStream: debugSpy, debugLogEvents, debugBreakErrors, etc. */
-  implicit def toDebuggableStream[A](stream: EventStream[A]): DebuggableStream[A] = new DebuggableStream[A](stream)
+  // implicit def toDebuggableStream[A](stream: EventStream[A]): DebuggableStream[A] = new DebuggableStream[A](stream)
 
   // toTupleStreamN conversions provide mapN and filterN methods on Signals of tuples
 

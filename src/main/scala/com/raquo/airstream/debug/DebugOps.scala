@@ -7,7 +7,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
-/** This implicit class provides debug* methods for observables, e.g.:
+/** This trait provides debug* methods for observables, e.g.:
   *
   * {{{
   * stream.debugWithName("MyStream").debugSpyStarts().debugLogEvents()
@@ -18,14 +18,13 @@ import scala.util.{Failure, Success, Try}
   *
   * The implicit conversion to this class is defined in the [[Observable]] companion object.
   *
-  * This is not a value class because [[DebuggableSignal]] needs to extend this.
-  * The performance penalty of one extra instantiation per debugged stream should
-  * not be noticeable.
+  * See also: [[DebugSignalOps]] for signal-specific debug helpers
   */
-class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseObservable[Self, A]) {
+trait DebugOps[+Self[+_] <: Observable[_], +A] {
+  this: BaseObservable[Self, A] =>
 
   /** Return the observable's topoRank. This does not affect the observable in any way. */
-  def debugTopoRank: Int = Protected.topoRank(observable)
+  def debugTopoRank: Int = Protected.topoRank(this)
 
   /** Create a new observable that listens to the original, and
     * set the displayName of the new observable.
@@ -39,7 +38,7 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
     */
   def debugWithName(displayName: String): Self[A] = {
     val emptyDebugger = Debugger()
-    observable.debugWith(emptyDebugger).setDisplayName(displayName)
+    debugWith(emptyDebugger).setDisplayName(displayName)
   }
 
   // -- Callback spies --
@@ -49,7 +48,7 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
     */
   def debugSpy(fn: Try[A] => Unit): Self[A] = {
     val debugger = Debugger(onFire = fn)
-    observable.debugWith(debugger)
+    debugWith(debugger)
   }
 
   /** Execute fn on every emitted event (but not error)
@@ -78,10 +77,10 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
     */
   def debugSpyLifecycle(startFn: Int => Unit, stopFn: () => Unit): Self[A] = {
     val debugger = Debugger(
-      onStart = () => startFn(Protected.topoRank(observable)),
+      onStart = () => startFn(Protected.topoRank(this)),
       onStop = stopFn
     )
-    observable.debugWith(debugger)
+    debugWith(debugger)
   }
 
   /** Execute callbacks on when the observable starts
@@ -178,7 +177,7 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
     useJsLogger: Boolean
   ): Unit = {
     val maybeColon = if (value.isDefined) ":" else ""
-    val prefix = s"${observable.displayName} [$action]$maybeColon"
+    val prefix = s"${displayName} [$action]$maybeColon"
     if (useJsLogger) {
       // This is useful if you're emitting native JS objects, they will be printed to the console nicer
       if (value.isDefined) {
@@ -253,4 +252,14 @@ class DebuggableObservable[Self[+_] <: Observable[_], +A](val observable: BaseOb
       stopFn = () => js.special.debugger()
     )
   }
+
+  /** Create a new observable that listens to this one and has a debugger attached.
+    *
+    * Use the resulting observable in place of the original observable in your code.
+    * See docs for details.
+    *
+    * There are more convenient methods available implicitly from [[DebugOps]] and [[DebuggableSignal]],
+    * such as debugLog(), debugSpyEvents(), etc.
+    */
+  def debugWith(debugger: Debugger[A]): Self[A]
 }
