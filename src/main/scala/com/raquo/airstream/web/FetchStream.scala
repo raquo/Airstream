@@ -43,6 +43,7 @@ class FetchBuilder[In, Out](
   decodeResponse: dom.Response => EventStream[Out]
 ) {
 
+  /** Make GET HTTP request */
   def get(
     url: String,
     setOptions: (FetchOptions[In] => Unit)*
@@ -50,6 +51,7 @@ class FetchBuilder[In, Out](
     apply(_.GET, url, setOptions: _*)
   }
 
+  /** Make POST HTTP request */
   def post(
     url: String,
     setOptions: (FetchOptions[In] => Unit)*
@@ -57,6 +59,7 @@ class FetchBuilder[In, Out](
     apply(_.POST, url, setOptions: _*)
   }
 
+  /** Make PUT HTTP request */
   def put(
     url: String,
     setOptions: (FetchOptions[In] => Unit)*
@@ -64,6 +67,31 @@ class FetchBuilder[In, Out](
     apply(_.PUT, url, setOptions: _*)
   }
 
+  /** Make PATCH HTTP request */
+  def patch(
+    url: String,
+    setOptions: (FetchOptions[In] => Unit)*
+  ): EventStream[Out] = {
+    apply(_.PATCH, url, setOptions: _*)
+  }
+
+  /** Make DELETE HTTP request */
+  def delete(
+    url: String,
+    setOptions: (FetchOptions[In] => Unit)*
+  ): EventStream[Out] = {
+    apply(_.DELETE, url, setOptions: _*)
+  }
+
+  /** Make QUERY HTTP request */
+  def query(
+    url: String,
+    setOptions: (FetchOptions[In] => Unit)*
+  ): EventStream[Out] = {
+    apply(_.QUERY, url, setOptions: _*)
+  }
+
+  /** Make HTTP request */
   def apply(
     method: dom.HttpMethod.type => dom.HttpMethod,
     url: String,
@@ -100,7 +128,9 @@ class FetchBuilder[In, Out](
       shouldAbortOnStop,
       emitOnce
     ).flatMapSwitch { promise =>
-      EventStream.fromJsPromise(promise).flatMapSwitch(decodeResponse)
+      EventStream
+        .fromJsPromise(promise)
+        .flatMapSwitch(decodeResponse)
     }
   }
 }
