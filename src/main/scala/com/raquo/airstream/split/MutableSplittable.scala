@@ -9,6 +9,8 @@ trait MutableSplittable[M[_]] {
 
   val splittable: Splittable[M]
 
+  def isEmpty[A](items: M[A]): Boolean
+
   def size[A](items: M[A]): Int
 
   /** Equivalent of array(index) */
@@ -41,6 +43,8 @@ object MutableSplittable {
 
     override val splittable: Splittable[JsArray] = Splittable.JsArraySplittable
 
+    override def isEmpty[A](items: JsArray[A]): Boolean = items.length == 0
+
     override def size[A](items: JsArray[A]): Int = items.length
 
     override def getByIndex[A](items: JsArray[A], index: Int): A = items(index)
@@ -54,6 +58,8 @@ object MutableSplittable {
 
     override val splittable: Splittable[js.Array] = Splittable.ScalaJsArraySplittable
 
+    override def isEmpty[A](items: js.Array[A]): Boolean = items.length == 0
+
     override def size[A](items: js.Array[A]): Int = items.length
 
     override def getByIndex[A](items: js.Array[A], index: Int): A = items(index)
@@ -66,6 +72,8 @@ object MutableSplittable {
   implicit object BufferMutableSplittable extends MutableSplittable[mutable.Buffer] {
 
     override val splittable: Splittable[mutable.Buffer] = Splittable.BufferSplittable
+
+    override def isEmpty[A](items: mutable.Buffer[A]): Boolean = items.isEmpty
 
     override def size[A](items: mutable.Buffer[A]): Int = items.size
 

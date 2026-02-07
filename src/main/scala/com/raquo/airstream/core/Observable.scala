@@ -4,7 +4,7 @@ import com.raquo.airstream.debug.DebuggableObservable
 import com.raquo.airstream.extensions._
 import com.raquo.airstream.flatten.{MergingStrategy, SwitchingStrategy}
 import com.raquo.airstream.flatten.FlattenStrategy._
-import com.raquo.airstream.split.{SplittableObservable, SplittableOneObservable}
+import com.raquo.airstream.split.{SplittableSeqObservable, SplittableOneObservable}
 import com.raquo.airstream.status.Status
 
 import scala.util.Try
@@ -23,7 +23,7 @@ extends ObservableMacroImplicits
 with ObservableLowPriorityImplicits {
 
   /** Provides methods on Observable: split, splitByIndex */
-  implicit def toSplittableObservable[Self[+_] <: Observable[_], M[_], Input](observable: BaseObservable[Self, M[Input]]): SplittableObservable[Self, M, Input] = new SplittableObservable(observable)
+  implicit def toSplittableSeqObservable[Self[+_] <: Observable[_], M[_], Input](observable: BaseObservable[Self, M[Input]]): SplittableSeqObservable[Self, M, Input] = new SplittableSeqObservable(observable)
 
   /** Provides methods on Observable: splitOne */
   implicit def toSplittableOneObservable[Self[+_] <: Observable[_], Input](observable: BaseObservable[Self, Input]): SplittableOneObservable[Self, Input] = new SplittableOneObservable(observable)
@@ -45,6 +45,9 @@ with ObservableLowPriorityImplicits {
 
   /** Provides methods on observable: mapOutput, mapInput, mapResolved, mapPending, foldStatus, splitStatus */
   implicit def toStatusObservable[In, Out, Self[+_] <: Observable[_]](observable: BaseObservable[Self, Status[In, Out]]): StatusObservable[In, Out, Self] = new StatusObservable(observable)
+
+  /** Provides methods on observable: mapOutput, mapInput, mapResolved, mapPending, foldStatus, splitStatus */
+  implicit def toSeqObservable[A, Self[+_] <: Observable[_], M[_]](observable: BaseObservable[Self, M[A]]): SeqObservable[A, Self, M] = new SeqObservable(observable)
 
   /** Provides methods on observable: flattenSwitch, flattenMerge, flattenCustom, flatten (deprecated) */
   implicit def toMetaObservable[A, Outer[+_] <: Observable[_], Inner[_]](observable: Outer[Inner[A]]): MetaObservable[A, Outer, Inner] = new MetaObservable(observable)

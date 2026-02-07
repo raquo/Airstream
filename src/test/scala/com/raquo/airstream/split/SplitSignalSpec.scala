@@ -1207,13 +1207,6 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
     }
   }
 
-  it("split option by isDefined compiles") {
-
-    val bus = new EventBus[Option[Foo]]
-
-    val _ = bus.events.split(_ => ())((_, _, _) => 100).map(_.getOrElse(0))
-  }
-
   it("child split signal re-syncs with parent signal") {
     // https://github.com/raquo/Airstream/issues/120
 
@@ -1677,7 +1670,7 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
             effects += Effect("child-update", v)
           }(innerOwner)
           init * 100
-      }(Splittable.unsafeIdSplittable)
+      }(Splittable.UnsafeIdSplittable)
       .setDisplayName("result")
 
     result

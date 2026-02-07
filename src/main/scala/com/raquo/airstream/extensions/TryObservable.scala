@@ -38,8 +38,8 @@ class TryObservable[A, Self[+_] <: Observable[_]](
     observable.map(_.toEither.left.map(left))
   }
 
-  /** Merge Try[A] into Try[AA >: A] by mapping the value in Failure(y) */
-  def recoverFailure[AA >: A](f: Throwable => AA): Self[AA] = {
+  /** Merge Try[A] into AA >: A by mapping the value in Failure(y) */
+  def successOrElse[AA >: A](f: Throwable => AA): Self[AA] = {
     observable.map(_.fold(f, identity))
   }
 

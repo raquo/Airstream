@@ -43,10 +43,7 @@ with DistinctOps[Self[A], A] {
   /** Note: Use Protected.topoRank(observable) to read another observable's topoRank if needed */
   protected val topoRank: Int
 
-  /** @param project Note: guarded against exceptions */
-  override def map[B](project: A => B): Self[B]
-
-  /** #WARNING: DO NOT USE THIS METHOD.
+  /** #WARNING: DO NOT USE THIS METHOD. Use flatMapSwitch... but actually learn about flatmapping first.
     * See https://github.com/raquo/Airstream/#flattening-observables
     */
   @inline def flatMap[B, Inner[_], Output[+_] <: Observable[_]](

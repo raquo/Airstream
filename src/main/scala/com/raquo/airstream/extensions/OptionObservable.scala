@@ -1,7 +1,7 @@
 package com.raquo.airstream.extensions
 
 import com.raquo.airstream.core.{BaseObservable, Observable, Signal}
-import com.raquo.airstream.split.DuplicateKeysConfig
+import com.raquo.airstream.split.{DuplicateKeysConfig, Splittable}
 import com.raquo.airstream.state.StrictSignal
 
 /** See also: [[OptionStream]] for stream-specific option operators */
@@ -32,6 +32,11 @@ class OptionObservable[A, Self[+_] <: Observable[_]](
   /** Maps Option[A] to Either[A, R] - you need to provide the R. */
   def mapToLeft[R](right: => R): Self[Either[A, R]] = {
     observable.map(_.toLeft(right))
+  }
+
+  /** Maps Option[A] to option.getOrElse(ifEmpty) */
+  def someOrElse(ifEmpty: => A): Self[A] = {
+    observable.map(_.getOrElse(ifEmpty))
   }
 
   /** This `.split`-s an Observable of an Option by the Option's `isDefined` property.
@@ -65,7 +70,11 @@ class OptionObservable[A, Self[+_] <: Observable[_]](
       .splitSeq(
         key = _ => (),
         duplicateKeys = DuplicateKeysConfig.noWarnings
-      )(project)
+      )(
+        project
+      )(
+        Splittable.UnsafeOptionSplittable // // #Safe because we don't use Splittable.{create, empty} methods here
+      )
       .map(_.getOrElse(ifEmpty))
   }
 

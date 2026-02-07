@@ -27,6 +27,8 @@ class SplittableOneObservable[Self[+_] <: Observable[_], Input](
             DuplicateKeysConfig.noWarnings
           )(
             project
+          )(
+            Splittable.UnsafeOptionSplittable // #Safe because we don't use Splittable.{create, empty} methods here
           )
           .changes
           .map(_.get)
@@ -41,7 +43,7 @@ class SplittableOneObservable[Self[+_] <: Observable[_], Input](
           )(
             project
           )(
-            Splittable.unsafeIdSplittable // #Safe because Signal.splitSeq does not use Splittable.empty
+            Splittable.UnsafeIdSplittable // #Safe because we don't use Splittable.{create, empty} methods here
           )
       }
     )

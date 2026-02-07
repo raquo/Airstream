@@ -4,7 +4,7 @@ import com.raquo.airstream.core.Signal
 import com.raquo.airstream.distinct.DistinctOps.DistinctOp
 import com.raquo.airstream.state.Var
 
-class SplittableVar[M[_], Input](
+class SplittableSeqVar[M[_], Input](
   private val v: Var[M[Input]]
 ) extends AnyVal {
 

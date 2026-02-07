@@ -1,6 +1,7 @@
 package com.raquo.airstream.extensions
 
 import com.raquo.airstream.core.{BaseObservable, Observable}
+import com.raquo.airstream.split.Splittable
 import com.raquo.airstream.state.StrictSignal
 
 /** See also [[BooleanStream]] for stream-specific operators. */
@@ -13,6 +14,22 @@ class BooleanObservable[Self[+_] <: Observable[_]](
   }
 
   @inline def not: Self[Boolean] = invert
+
+  def mapTrueToSome[A](value: => A): Self[Option[A]] = {
+    observable.map(if (_) Some(value) else None)
+  }
+
+  def mapFalseToSome[A](value: => A): Self[Option[A]] = {
+    observable.map(if (_) None else Some(value))
+  }
+
+  def mapTrueToSeq[M[_], A](seq: => M[A])(implicit splittable: Splittable[M]): Self[M[A]] = {
+    observable.map(if (_) seq else splittable.empty)
+  }
+
+  def mapFalseToSeq[M[_], A](seq: => M[A])(implicit splittable: Splittable[M]): Self[M[A]] = {
+    observable.map(if (_) splittable.empty else seq)
+  }
 
   def foldBoolean[A](
     whenTrue: => A,

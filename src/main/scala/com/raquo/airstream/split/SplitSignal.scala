@@ -62,10 +62,6 @@ class SplitSignal[M[_], Input, Output, Key](
 
   private[this] val sharedDelayedParent = new SyncDelayStream(parent, after = this)
 
-  private[this] val emptyObserver = new InternalTryObserver[Input] {
-    override protected def onTry(nextValue: Try[Input], transaction: Transaction): Unit = ()
-  }
-
   private[this] def memoizedProject(nextInputs: M[Input]): M[Output] = {
     // Any keys not in this set by the end of this function will be removed from `memoized` map
     // This ensures that previously memoized values are forgotten once the source observables stops emitting their inputs

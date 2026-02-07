@@ -39,6 +39,14 @@ import com.raquo.airstream.state.StrictSignal
     observable.map(_.left.toOption)
   }
 
+  def rightOrElse[BB >: B](ifLeft: => BB): Self[BB] = {
+    observable.map(_.getOrElse(ifLeft))
+  }
+
+  def leftOrElse[AA >: A](ifRight: => AA): Self[AA] = {
+    observable.map(_.left.getOrElse(ifRight))
+  }
+
   /** This `.split`-s an Observable of an Either by the Either's `isRight` property.
     * If you want a different key, use the .splitOne operator directly.
     *

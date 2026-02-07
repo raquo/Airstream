@@ -1,7 +1,7 @@
 package com.raquo.airstream.extensions
 
 import com.raquo.airstream.core.Signal
-import com.raquo.airstream.split.DuplicateKeysConfig
+import com.raquo.airstream.split.{DuplicateKeysConfig, Splittable}
 import com.raquo.airstream.state.{LazyDerivedVar, Var}
 
 class OptionVar[A](
@@ -44,7 +44,9 @@ class OptionVar[A](
           displayNameSuffix = displayNameSuffix
         )
         project(childVar)
-      }
+      }(
+        Splittable.UnsafeOptionSplittable
+      )
       .map(_.getOrElse(ifEmpty))
   }
 

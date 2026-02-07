@@ -586,10 +586,10 @@ class GlitchSpec extends UnitSpec {
                     }(owner)
                   x += 100
                   x
-              }(Splittable.unsafeIdSplittable)
+              }(Splittable.UnsafeIdSplittable)
             splitInner
               .setDisplayName(s"split-inner@${splitInner}")
-        }(Splittable.unsafeIdSplittable)
+        }(Splittable.UnsafeIdSplittable)
         .setDisplayName("split-outer")
         .idUnwrap
         .map { x =>
