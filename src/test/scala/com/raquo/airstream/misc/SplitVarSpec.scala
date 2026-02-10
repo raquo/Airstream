@@ -967,4 +967,61 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
       // effects.clear()
     }
   }
+
+  it("unused child var behaviour") {
+
+    // If user does not actually subscribe to `fooVar`, we want to make
+    // sure that pulling its value with .now() still produces correct
+    // current value.
+
+    val owner = new TestableOwner
+
+    val effects: mutable.Buffer[String] = mutable.Buffer()
+
+    val fooVars: mutable.Map[String, Var[Foo]] = mutable.Map()
+
+    val foosVar = Var[List[Foo]](Nil).setDisplayName("foosVar")
+
+    foosVar.splitSeq(_.id) { fooVar =>
+      val id = fooVar.key
+      fooVar.setDisplayName(s"fooVar-${id}")
+      effects += s"create-${fooVar.now().toString}"
+      fooVars.update(id, fooVar)
+      Element(id, fooVar.signal)
+    }.foreach(_ => ())(owner)
+
+    assertEquals(effects.toList, Nil)
+
+    // --
+
+    foosVar.set(Foo("1", 10) :: Foo("2", 10) :: Foo("3", 10) :: Nil)
+
+    assertEquals(
+      effects.toList,
+      List(
+        """create-Foo(1,10)""",
+        """create-Foo(2,10)""",
+        """create-Foo(3,10)""",
+      )
+    )
+    effects.clear()
+
+    // --
+
+    foosVar.update(list => list.updated(0, list.head.copy(version = 20)))
+
+    assertEquals(effects.toList, Nil)
+
+    assertEquals(fooVars("1").now(), Foo("1", 20))
+
+    // --
+
+    fooVars("1").set(Foo("1", 30))
+
+    assertEquals(effects.toList, Nil)
+
+    assertEquals(fooVars("1").now(), Foo("1", 30))
+    assertEquals(fooVars("2").now(), Foo("2", 10))
+    assertEquals(fooVars("3").now(), Foo("3", 10))
+  }
 }

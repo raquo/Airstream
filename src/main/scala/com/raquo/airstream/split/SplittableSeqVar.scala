@@ -30,7 +30,7 @@ class SplittableSeqVar[M[_], Input](
         val thisKey = signal.key
         val childVar = new KeyedDerivedVar[Key, M[Input], Input](
           parent = v,
-          signal = signal,
+          signal = signal, //.map(identity).map(identity), // #nc[strict] – can't map twice here, lazy pull not picking up – why?
           key = thisKey,
           updateParent = KeyedDerivedVar.standardErrorsF { (inputs, newInput) =>
             Some(splittable.findUpdate(inputs, key(_) == thisKey, newInput))

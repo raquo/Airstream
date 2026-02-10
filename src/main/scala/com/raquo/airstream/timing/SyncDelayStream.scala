@@ -21,6 +21,7 @@ class SyncDelayStream[A](
   override protected val topoRank: Int = (Protected.topoRank(parent) max Protected.topoRank(after)) + 1
 
   override protected def onTry(nextValue: Try[A], transaction: Transaction): Unit = {
+    // dom.console.log(s"> ${this} > onTry > ${nextValue}")
     if (!transaction.containsPendingObservable(this)) {
       transaction.enqueuePendingObservable(this)
     }
@@ -28,6 +29,7 @@ class SyncDelayStream[A](
   }
 
   override private[airstream] def syncFire(transaction: Transaction): Unit = {
+    // dom.console.log(s"> ${this} > syncFire")
     maybePendingValue.foreach { pendingValue =>
       maybePendingValue = js.undefined
       fireTry(pendingValue, transaction)

@@ -37,10 +37,12 @@ class LazyDerivedVar[ParentV, ThisV](
   override private[state] def getCurrentValue: Try[ThisV] = signal.tryNow()
 
   override private[state] def setCurrentValue(value: Try[ThisV], transaction: Transaction): Unit = {
+    // dom.console.log(s"> ${this} > setCurrentValue > ${value}")
     val maybeNextValue = Try(updateParent(parent.tryNow(), value)) match {
       case Success(nextValue) => nextValue
       case Failure(err) => Some(Failure(err))
     }
+    // dom.console.log(s"  - maybeNextValue = $maybeNextValue")
     maybeNextValue.foreach { nextValue =>
       // This can update the parent without causing an infinite loop because
       // the parent updates this derived var's signal, it does not call

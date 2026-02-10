@@ -115,7 +115,7 @@ with SingleParentSignal[M[A], A] {
       //  I'm not sure if None is possible, but if it is, this is probably the right thing to do.
       //  I think None might be possible when evaluating this signal's initial value when starting it
       if (!droppedDuplicateEvent && maybeInitialTransaction == Transaction.currentTransaction()) {
-        // println(s">>>>> DROPPED EVENT ${freshMemoizedInput}, TRX IS ${maybeInitialTransaction}")
+        // dom.console.log(s">>>>> ${this} DROPPED EVENT ${freshMemoizedInput}, TRX IS ${maybeInitialTransaction}")
         maybeInitialTransaction = js.undefined
         droppedDuplicateEvent = true
       } else {

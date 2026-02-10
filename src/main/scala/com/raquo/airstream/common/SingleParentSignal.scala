@@ -8,7 +8,9 @@ import com.raquo.airstream.split.SplitChildSignal
 import scala.util.Try
 
 /** A simple stream that only has one parent. */
-trait SingleParentSignal[I, O] extends WritableSignal[O] with InternalTryObserver[I] {
+trait SingleParentSignal[I, O]
+extends WritableSignal[O]
+with InternalTryObserver[I] {
 
   protected[this] val parent: Observable[I]
 
@@ -25,20 +27,33 @@ trait SingleParentSignal[I, O] extends WritableSignal[O] with InternalTryObserve
   protected[this] var _parentLastUpdateId: Int = -1
 
   /** Note: this is overridden in:
-    *  - [[SignalFromStream]] because parent can be a stream, and it has cacheInitialValue logic
     *  - [[SplitChildSignal]] because its parent is a special timing stream, not the real parent
+    *  - [[SignalFromStream]] because parent can be a stream, and it has cacheInitialValue logic
     */
   override protected def onWillStart(): Unit = {
     // dom.console.log(s"${this} > onWillStart (SPS)")
     Protected.maybeWillStart(parent)
+    if (peekWhetherParentHasUpdated().contains(true)) {
+      val newParentLastUpdateId = Protected.lastUpdateId(parent.asInstanceOf[Signal[_]])
+      updateCurrentValueFromParent(
+        currentValueFromParent(),
+        newParentLastUpdateId
+      )
+    }
+  }
+
+  /** Returns:
+    *  - Some(true) if parent is signal and has updated
+    *  - Some(false) if parent is signal and has NOT updated
+    *  - None if parent is stream (impossible to get this info from a stream)
+    */
+  protected def peekWhetherParentHasUpdated(): Option[Boolean] = {
     if (parentIsSignal) {
       val newParentLastUpdateId = Protected.lastUpdateId(parent.asInstanceOf[Signal[_]])
-      if (newParentLastUpdateId != _parentLastUpdateId) {
-        updateCurrentValueFromParent(
-          currentValueFromParent(),
-          newParentLastUpdateId
-        )
-      }
+      val parentUpdated = newParentLastUpdateId != _parentLastUpdateId
+      Some(parentUpdated)
+    } else {
+      None
     }
   }
 

@@ -5,7 +5,7 @@ import com.raquo.airstream.state.{LazyDerivedVar, StrictSignal, Var}
 import scala.util.Try
 
 class KeyedDerivedVar[K, ParentV, ThisV](
-  val parent: Var[ParentV],
+  parent: Var[ParentV],
   override val signal: StrictSignal[ThisV],
   override val key: K,
   updateParent: (Try[ParentV], Try[ThisV]) => Option[Try[ParentV]],

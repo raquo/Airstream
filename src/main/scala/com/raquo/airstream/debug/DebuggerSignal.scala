@@ -6,11 +6,13 @@ import com.raquo.airstream.core.AirstreamError.DebugError
 
 import scala.util.Try
 
-/** See [[DebugOps]] and [[DebuggableSignal]] for user-facing debug methods */
+/** See [[DebugOps]] and [[DebugSignalOps]] for user-facing debug methods */
 class DebuggerSignal[A](
   override protected[this] val parent: Signal[A],
   override protected val debugger: Debugger[A]
-) extends SingleParentSignal[A, A] with DebuggerObservable[A] {
+)
+extends SingleParentSignal[A, A]
+with DebuggerObservable[A] {
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 

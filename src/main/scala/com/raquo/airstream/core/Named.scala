@@ -15,8 +15,10 @@ trait Named {
     */
   protected[this] var maybeDisplayName: js.UndefOr[String] = js.undefined
 
+  protected[this] def displayClassName: String = getClass.getSimpleName
+
   /** This is the method that subclasses override to preserve the user's ability to set custom display names. */
-  protected def defaultDisplayName: String = s"${getClass.getSimpleName}@${hashCode()}"
+  protected def defaultDisplayName: String = s"${displayClassName}@${hashCode()}"
 
   /** Override [[defaultDisplayName]] instead of this, if you need to. */
   final override def toString: String = displayName

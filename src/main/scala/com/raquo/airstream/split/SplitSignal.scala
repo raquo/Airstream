@@ -62,6 +62,20 @@ class SplitSignal[M[_], Input, Output, Key](
 
   private[this] val sharedDelayedParent = new SyncDelayStream(parent, after = this)
 
+  // We add this empty observer to every child signal to make sure that they run even
+  // if the user has not subscribed to them. This is important because we expose .now()
+  // on those signals, either directly, or via Var.splitSeq.
+  // Q: Why do we need this, now that we use LazyStrictSignal-s explicitly?
+  // A: Because SplitChildSignal-s depend on a stream (sharedDelayedParent) rather than
+  //    on a signal, so their normal pulling mechanism does not work – they can't
+  //    pull fresh value from SplitSignal because there's this stream in between them.
+  // (Previously, I removed this mechanism some time between 18.0.0-M1 and 18.0.0-M2
+  //  because there was no test for this behaviour in Airstream, only in Laminar,
+  //  I've fixed that now.)
+  private[this] val strictnessObserver = new InternalTryObserver[Input] {
+    override protected def onTry(nextValue: Try[Input], transaction: Transaction): Unit = ()
+  }
+
   private[this] def memoizedProject(nextInputs: M[Input]): M[Output] = {
     // Any keys not in this set by the end of this function will be removed from `memoized` map
     // This ensures that previously memoized values are forgotten once the source observables stops emitting their inputs
@@ -148,6 +162,10 @@ class SplitSignal[M[_], Input, Output, Key](
               }
             ).distinctTry(isSame = distinctF)
 
+          if (isStarted) {
+            inputSignal.addInternalObserver(strictnessObserver, shouldCallMaybeWillStart = true)
+          }
+
           val newOutput = project(inputSignal)
 
           (inputSignal, newOutput)
@@ -167,6 +185,8 @@ class SplitSignal[M[_], Input, Output, Key](
     memoized.keys.foreach { memoizedKey =>
       if (!nextKeys.contains(memoizedKey)) {
         // dom.console.log(s"${this} memoized.remove ${memoizedKey}")
+        val inputSignal = memoized(memoizedKey)._2
+        inputSignal.removeInternalObserver(strictnessObserver)
         memoized.remove(memoizedKey)
       }
     }
@@ -178,5 +198,38 @@ class SplitSignal[M[_], Input, Output, Key](
     }
 
     nextOutputs
+  }
+
+  override protected[this] def onStart(): Unit = {
+    parent.tryNow().foreach { inputs =>
+      // splittable.foreach has predictable order that users expect (unlike memoized.keys.foreach)
+      splittable.foreach(inputs, (input: Input) => {
+        val memoizedKey = key(input)
+        val maybeInputSignal = memoized.get(memoizedKey).map(_._2)
+        maybeInputSignal.foreach { inputSignal =>
+          // - If inputSignal not found because `parent.tryNow()` and `memoized`
+          //   are temporarily out of sync, it should be added later just fine
+          //   when they sync up.
+          // - Typical pattern is to call Protected.maybeWillStart(inputSignal) in onWillStart,
+          //   but our SplitSignal does not actually depend on these inputSignal-s, so I think
+          //   it's ok to do both onWillStart and onStart for them here.
+          inputSignal.addInternalObserver(strictnessObserver, shouldCallMaybeWillStart = true)
+        }
+      })
+    }
+    super.onStart()
+  }
+
+  override protected[this] def onStop(): Unit = {
+    // memoized.keys has no defined order, so we don't want to
+    // use it for starting subscriptions, but for stopping them,
+    // seems fine.
+    // This way we make sure to remove observers from exactly
+    // all items that are in `memoized`, no more, no less.
+    memoized.keys.foreach { memoizedKey =>
+      val inputSignal = memoized(memoizedKey)._2
+      inputSignal.removeInternalObserver(strictnessObserver)
+    }
+    super.onStop()
   }
 }

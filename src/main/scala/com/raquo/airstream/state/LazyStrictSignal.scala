@@ -18,8 +18,8 @@ import scala.util.Try
   * peekNow / pullNow https://github.com/raquo/Laminar/issues/130
   */
 trait LazyStrictSignal[I, O]
-extends StrictSignal[O]
-with SingleParentSignal[I, O] { self =>
+extends WritableStrictSignal[O]
+with SingleParentSignal[I, O] {
 
   protected val displayNameSuffix: String
 
@@ -30,13 +30,13 @@ with SingleParentSignal[I, O] { self =>
   override protected def defaultDisplayName: String = parentDisplayName + displayNameSuffix + s"@${hashCode()}"
 
   override def tryNow(): Try[O] = {
-    val newParentLastUpdateId = Protected.lastUpdateId(parent)
-    // #TODO This comparison only works when parentSignal is started or strict.
-    //  - e.g. it does not help us in `split`, it only helps us with lazyZoom.
-    if (newParentLastUpdateId != _parentLastUpdateId) {
-      // This branch can only run if !isStarted
+    // dom.console.log(s"> ${this} > tryNow")
+    if (peekWhetherParentHasUpdated().contains(true)) {
       val nextValue = currentValueFromParent()
-      updateCurrentValueFromParent(nextValue, newParentLastUpdateId)
+      updateCurrentValueFromParent(
+        nextValue,
+        Protected.lastUpdateId(parent)
+      )
       nextValue
     } else {
       super.tryNow()
@@ -79,6 +79,8 @@ object LazyStrictSignal {
 
       override protected val displayNameSuffix: String = _dns
 
+      override protected[this] def displayClassName: String = s"LazyStrictSignal.map"
+
       override protected def onTry(nextParentValue: Try[I], transaction: Transaction): Unit = {
         super.onTry(nextParentValue, transaction)
         fireTry(nextParentValue.map(project), transaction)
@@ -100,13 +102,14 @@ object LazyStrictSignal {
     val _pdn = parentDisplayName
     val _dns = displayNameSuffix
 
-    new DistinctSignal[A](
-      parentSignal, isSame, resetOnStop
-    ) with LazyStrictSignal[A, A] {
+    new DistinctSignal[A](parentSignal, isSame, resetOnStop)
+      with LazyStrictSignal[A, A] {
 
       override protected def parentDisplayName: String = _pdn
 
       override protected val displayNameSuffix: String = _dns
+
+      override protected[this] def displayClassName: String = s"LazyStrictSignal.distinct*"
     }
   }
 }

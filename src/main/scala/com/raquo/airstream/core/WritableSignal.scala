@@ -13,7 +13,7 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
 
   protected def setCurrentValue(newValue: Try[A]): Unit = {
     val isInitial = maybeLastSeenCurrentValue.isEmpty
-    // println(s"${this} > setCurrentValue > ${newValue}, isInitial = ${isInitial}")
+    // dom.console.log(s"> ${this} > setCurrentValue > ${newValue}, isInitial = ${isInitial}")
     if (!isInitial) {
       _lastUpdateId = Signal.nextUpdateId()
     }
@@ -27,7 +27,7 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
   //  mixing DistinctSignal with LazyStrictSignal in one class instance.
   /** Note: Initial value is only evaluated if/when needed (when there are observers) */
   override protected[airstream] def tryNow(): Try[A] = {
-    // dom.console.log(s"${this} > tryNow (maybeLastSeenCurrentValue = ${maybeLastSeenCurrentValue})")
+    // dom.console.log(s"> ${this} > tryNow (maybeLastSeenCurrentValue = ${maybeLastSeenCurrentValue})")
     maybeLastSeenCurrentValue.getOrElse {
       // #TODO[Integrity] I'm not sure if updating `_lastUpdateId` here is right.
       //  - I expected `0` to indicate "initial value" (no events emitted yet),
@@ -54,7 +54,7 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
   }
 
   override protected def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
-    // dom.console.log(s"$this > FIRE > $nextValue")
+    // dom.console.log(s"> $this > FIRE > $nextValue")
 
     setCurrentValue(nextValue)
 

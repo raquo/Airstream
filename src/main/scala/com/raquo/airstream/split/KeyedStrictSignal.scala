@@ -3,7 +3,7 @@ package com.raquo.airstream.split
 import com.raquo.airstream.core.CoreOps
 import com.raquo.airstream.distinct.{DistinctOps, DistinctSignal}
 import com.raquo.airstream.misc.MapSignal
-import com.raquo.airstream.state.{StrictSignal, WritableStrictSignal}
+import com.raquo.airstream.state.{LazyStrictSignal, StrictSignal}
 
 import scala.util.Try
 
@@ -16,9 +16,13 @@ with DistinctOps[KeyedStrictSignal[K, A], A] { self =>
   override def map[B](project: A => B): KeyedStrictSignal[K, B] = {
     new MapSignal[A, B](parent = this, project, recover = None)
       with KeyedStrictSignal[K, B]
-      with WritableStrictSignal[B] {
+      with LazyStrictSignal[A, B] {
 
       override val key: K = self.key
+
+      override protected[this] def displayClassName: String = s"KeyedStrictSignal.map(key=${key})"
+
+      override protected val displayNameSuffix: String = ".map"
     }
   }
 
@@ -29,9 +33,13 @@ with DistinctOps[KeyedStrictSignal[K, A], A] { self =>
   override def distinctTry(isSame: (Try[A], Try[A]) => Boolean): KeyedStrictSignal[K, A] = {
     new DistinctSignal[A](parent = this, isSame, resetOnStop = false)
       with KeyedStrictSignal[K, A]
-      with WritableStrictSignal[A] {
+      with LazyStrictSignal[A, A] {
 
       override val key: K = self.key
+
+      override protected[this] def displayClassName: String = s"KeyedStrictSignal.distinct*(key=${key})"
+
+      override protected val displayNameSuffix: String = ".distinct*"
     }
   }
 }
