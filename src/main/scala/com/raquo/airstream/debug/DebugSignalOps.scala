@@ -1,6 +1,6 @@
 package com.raquo.airstream.debug
 
-import com.raquo.airstream.core.{BaseObservable, Signal}
+import com.raquo.airstream.core.{Named, Signal}
 import com.raquo.airstream.util.always
 
 import scala.scalajs.js
@@ -18,15 +18,16 @@ import scala.util.{Failure, Success, Try}
   *
   * See also [[DebugOps]] for generic debug operators
   */
-trait DebugSignalOps[+A]
-extends DebugOps[Signal, A] {
-  this: BaseObservable[Signal, A] =>
+trait DebugSignalOps[+Self[+_] <: Signal[_], +A]
+extends DebugOps[Self, A] {
+  this: Named =>
 
   /** Execute fn when signal is evaluating its `currentValueFromParent`.
-    * This is typically triggered when evaluating signal's initial value onStart,
-    * as well as on subsequent re-starts when the signal is syncing its value
-    * to the parent's new current value. */
-  def debugSpyEvalFromParent(fn: Try[A] => Unit): Signal[A] = {
+    * This is typically triggered when getting a LazyStrictSignal's .now(), or
+    * evaluating signal's initial value onStart, as well as on subsequent
+    * re-starts when the signal is syncing its value to the parent's new
+    * current value. */
+  def debugSpyEvalFromParent(fn: Try[A] => Unit): Self[A] = {
     val debugger = Debugger(onEvalFromParent = fn)
     debugWith(debugger)
   }
@@ -35,7 +36,7 @@ extends DebugOps[Signal, A] {
   def debugLogEvalFromParent(
     when: Try[A] => Boolean = always,
     useJsLogger: Boolean = false
-  ): Signal[A] = {
+  ): Self[A] = {
     debugSpyEvalFromParent { value =>
       if (when(value)) {
         value match {
@@ -47,7 +48,7 @@ extends DebugOps[Signal, A] {
   }
 
   /** Trigger JS debugger when signal is evaluating its initial value (if `when` passes at that time) */
-  def debugBreakEvalFromParent(when: Try[A] => Boolean = always): Signal[A] = {
+  def debugBreakEvalFromParent(when: Try[A] => Boolean = always): Self[A] = {
     debugSpyEvalFromParent { value =>
       if (when(value)) {
         js.special.debugger()

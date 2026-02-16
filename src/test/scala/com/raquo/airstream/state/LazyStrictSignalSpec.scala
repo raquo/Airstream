@@ -1,7 +1,7 @@
 package com.raquo.airstream.state
 
 import com.raquo.airstream.UnitSpec
-import com.raquo.airstream.core.AirstreamError
+import com.raquo.airstream.core.{AirstreamError, Observer}
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import org.scalatest.BeforeAndAfter
 
@@ -258,5 +258,105 @@ class LazyStrictSignalSpec extends UnitSpec with BeforeAndAfter {
 
     assertEquals(s1.tryNow(), Success(Foo(2)))
     assertEquals(effects.toList, Nil)
+  }
+
+  it("LazyStrictSignal.debug") {
+
+    val v = Var(1)
+    val intEffects = mutable.Buffer[Effect[Int]]()
+
+    val s1 = v.signal.map(_ * 100)
+      .debugSpyEvents(Effect.log("s1-fire", intEffects))
+      .debugSpyEvalFromParent(t => intEffects += Effect("s1-eval", t.getOrElse(-1)))
+    val s2 = s1.map(_ + 1)
+      .debugSpyEvents(Effect.log("s2-fire", intEffects))
+      .debugSpyEvalFromParent(t => intEffects += Effect("s2-eval", t.getOrElse(-1)))
+
+    assertEquals(intEffects.toList, Nil)
+
+    // -- call s2.tryNow() to pull the value through s1
+
+    assertEquals(s2.tryNow(), Success(101))
+    assertEquals(
+      intEffects.toList,
+      List(
+        Effect("s1-eval", 100),
+        Effect("s2-eval", 101)
+      )
+    )
+    intEffects.clear()
+
+    assertEquals(s1.tryNow(), Success(100))
+    assertEquals(intEffects.toList, Nil)
+
+    // -- call s1.tryNow() to pull that one value first
+
+    v.set(2)
+
+    assertEquals(s1.tryNow(), Success(200))
+    assertEquals(
+      intEffects.toList,
+      List(
+        Effect("s1-eval", 200),
+      )
+    )
+    intEffects.clear()
+
+    // -- call s2.tryNow() to pull only that value (s1 already pulled)
+
+    assertEquals(s2.tryNow(), Success(201))
+    assertEquals(
+      intEffects.toList,
+      List(
+        Effect("s2-eval", 201),
+      )
+    )
+    intEffects.clear()
+
+    // --
+
+    v.setTry(Failure(err1))
+
+    assertEquals(s2.tryNow(), Failure(err1))
+    assertEquals(s1.tryNow(), Failure(err1))
+
+    assertEquals(
+      intEffects.toList,
+      List(
+        Effect("s1-eval", -1),
+        Effect("s2-eval", -1),
+      )
+    )
+    intEffects.clear()
+
+    // --
+
+    val owner = new TestableOwner
+
+    s2.addObserver(Observer.fromTry(
+      t => intEffects += Effect("obs", t.getOrElse(-1))
+    ))(owner)
+
+    assertEquals(
+      intEffects.toList,
+      List(
+        Effect("obs", -1)
+      )
+    )
+    intEffects.clear()
+
+    // --
+
+    v.set(3)
+
+    assertEquals(
+      intEffects.toList,
+      List(
+        Effect("s1-fire", 300),
+        Effect("s2-fire", 301),
+        Effect("obs", 301)
+      )
+    )
+    intEffects.clear()
   }
 }

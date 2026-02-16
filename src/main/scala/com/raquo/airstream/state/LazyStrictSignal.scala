@@ -2,6 +2,7 @@ package com.raquo.airstream.state
 
 import com.raquo.airstream.common.SingleParentSignal
 import com.raquo.airstream.core.{Protected, Signal, Transaction}
+import com.raquo.airstream.debug.{Debugger, DebuggerSignal}
 import com.raquo.airstream.distinct.DistinctSignal
 
 import scala.util.Try
@@ -91,7 +92,7 @@ object LazyStrictSignal {
 
       override protected val displayNameSuffix: String = _dns
 
-      override protected[this] def displayClassName: String = s"LazyStrictSignal.map"
+      override protected[this] def displayClassName: String = s"LazyStrictSignal{}"
 
       override protected def onTry(nextParentValue: Try[I], transaction: Transaction): Unit = {
         super.onTry(nextParentValue, transaction)
@@ -121,7 +122,27 @@ object LazyStrictSignal {
 
       override protected val displayNameSuffix: String = _dns
 
-      override protected[this] def displayClassName: String = s"LazyStrictSignal.distinct*"
+      override protected[this] def displayClassName: String = s"DistinctSignal+LazyStrictSignal"
+    }
+  }
+
+  def debuggerSignal[A](
+    parentSignal: Signal[A],
+    debugger: Debugger[A],
+    parentDisplayName: => String,
+    displayNameSuffix: String,
+  ): DebuggerSignal[A] with StrictSignal[A] = {
+    val _pdn = parentDisplayName
+    val _dns = displayNameSuffix
+
+    new DebuggerSignal[A](parentSignal, debugger)
+      with LazyStrictSignal[A, A] {
+
+      override protected def parentDisplayName: String = _pdn
+
+      override protected val displayNameSuffix: String = _dns
+
+      override protected[this] def displayClassName: String = "DebuggerSignal+LazyStrictSignal"
     }
   }
 }

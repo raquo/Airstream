@@ -1,6 +1,7 @@
 package com.raquo.airstream.state
 
 import com.raquo.airstream.core.{CoreOps, Signal}
+import com.raquo.airstream.debug.{DebugOps, DebugSignalOps, Debugger}
 import com.raquo.airstream.distinct.DistinctOps
 
 import scala.util.Try
@@ -13,7 +14,8 @@ import scala.util.Try
 trait StrictSignal[+A]
 extends Signal[A]
 with CoreOps[StrictSignal, A]
-with DistinctOps[StrictSignal[A], A] {
+with DistinctOps[StrictSignal[A], A]
+with DebugSignalOps[StrictSignal, A] {
 
   @deprecated("Use StrictSignal.map – it behaves like `mapLazy` used to in 17.x", "18.0.0-M3")
   def mapLazy[B](project: A => B): StrictSignal[B] = map(project)
@@ -43,6 +45,14 @@ with DistinctOps[StrictSignal[A], A] {
       displayNameSuffix = ".distinct*"
     )
   }
+
+  override def debugWith(debugger: Debugger[A]): StrictSignal[A] =
+    LazyStrictSignal.debuggerSignal(
+      parentSignal = this,
+      debugger = debugger,
+      parentDisplayName = displayName,
+      displayNameSuffix = ".debug*"
+    )
 
   /** Get the signal's current value
     *

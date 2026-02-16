@@ -1,6 +1,6 @@
 package com.raquo.airstream.debug
 
-import com.raquo.airstream.core.{BaseObservable, Observable, Protected}
+import com.raquo.airstream.core.{Named, Observable}
 import com.raquo.airstream.util.always
 import org.scalajs.dom
 
@@ -20,11 +20,11 @@ import scala.util.{Failure, Success, Try}
   *
   * See also: [[DebugSignalOps]] for signal-specific debug helpers
   */
-trait DebugOps[+Self[+_] <: Observable[_], +A] {
-  this: BaseObservable[Self, A] =>
+trait DebugOps[+Self[+_] <: Named, +A] {
+  this: Named =>
 
   /** Return the observable's topoRank. This does not affect the observable in any way. */
-  def debugTopoRank: Int = Protected.topoRank(this)
+  def debugTopoRank: Int
 
   /** Create a new observable that listens to the original, and
     * set the displayName of the new observable.
@@ -77,7 +77,7 @@ trait DebugOps[+Self[+_] <: Observable[_], +A] {
     */
   def debugSpyLifecycle(startFn: Int => Unit, stopFn: () => Unit): Self[A] = {
     val debugger = Debugger(
-      onStart = () => startFn(Protected.topoRank(this)),
+      onStart = () => startFn(debugTopoRank),
       onStop = stopFn
     )
     debugWith(debugger)
@@ -258,7 +258,7 @@ trait DebugOps[+Self[+_] <: Observable[_], +A] {
     * Use the resulting observable in place of the original observable in your code.
     * See docs for details.
     *
-    * There are more convenient methods available implicitly from [[DebugOps]] and [[DebuggableSignal]],
+    * There are more convenient methods available from [[DebugOps]] and [[DebugSignalOps]],
     * such as debugLog(), debugSpyEvents(), etc.
     */
   def debugWith(debugger: Debugger[A]): Self[A]

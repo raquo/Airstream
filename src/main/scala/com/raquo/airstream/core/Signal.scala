@@ -25,7 +25,7 @@ trait Signal[+A]
 extends Observable[A]
 with BaseObservable[Signal, A]
 with SignalSource[A]
-with DebugSignalOps[A]
+with DebugSignalOps[Signal, A]
 with DynamicImportSignalOps[A] // Provides `dynamicImport` method (Scala 3 only)
 {
 

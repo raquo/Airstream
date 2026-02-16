@@ -13,6 +13,9 @@ with Keyed[K]
 with CoreOps[({ type Self[+V] = KeyedStrictSignal[K, V] })#Self, A] // #TODO[Scala] how to express this more concisely?
 with DistinctOps[KeyedStrictSignal[K, A], A] { self =>
 
+  // #Note: Only add operators here that are needed internally for Airstream's split* functionality.
+  //  - Retaining .key is not part of the general public user contract.
+
   override def map[B](project: A => B): KeyedStrictSignal[K, B] = {
     new MapSignal[A, B](parent = this, project, recover = None)
       with KeyedStrictSignal[K, B]

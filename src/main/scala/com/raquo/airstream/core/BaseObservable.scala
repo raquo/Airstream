@@ -44,6 +44,8 @@ with DebugOps[Self, A] {
   /** Note: Use Protected.topoRank(observable) to read another observable's topoRank if needed */
   protected val topoRank: Int
 
+  override def debugTopoRank: Int = topoRank
+
   /** #WARNING: DO NOT USE THIS METHOD. Use flatMapSwitch... but actually learn about flatmapping first.
     * See https://github.com/raquo/Airstream/#flattening-observables
     */
