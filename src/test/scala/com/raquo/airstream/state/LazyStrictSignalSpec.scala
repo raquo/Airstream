@@ -6,8 +6,13 @@ import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import org.scalatest.BeforeAndAfter
 
 import scala.collection.mutable
+import scala.util.{Failure, Success}
 
 class LazyStrictSignalSpec extends UnitSpec with BeforeAndAfter {
+
+  private val err1 = new Exception("err1")
+
+  private val err2 = new Exception("err2")
 
   private val effects = mutable.Buffer[Effect[Foo]]()
 
@@ -132,5 +137,126 @@ class LazyStrictSignalSpec extends UnitSpec with BeforeAndAfter {
     )
     effects.clear()
 
+  }
+
+  it("LazyStrictSignal can pull from parent LazyStrictSignal") {
+
+    val v = Var(1)
+
+    val s1 = v.signal.map(n => new Foo(n * 100)).map(Effect.log("s1", effects))
+    val s2 = s1.map(f => f.copy(id = f.id + 1)).map(Effect.log("s2", effects))
+
+    assertEquals(effects.toList, Nil)
+
+    // -- call s2.tryNow() to pull the value through s1
+
+    assertEquals(s2.tryNow(), Success(Foo(101)))
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("s1", new Foo(100)),
+        Effect("s2", new Foo(101))
+      )
+    )
+    effects.clear()
+
+    assertEquals(s1.tryNow(), Success(Foo(100)))
+    assertEquals(effects.toList, Nil)
+
+    // -- call s1.tryNow() to pull that one value first
+
+    v.set(2)
+
+    assertEquals(s1.tryNow(), Success(Foo(200)))
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("s1", new Foo(200)),
+      )
+    )
+    effects.clear()
+
+    // -- call s2.tryNow() to pull only that value (s1 already pulled)
+
+    assertEquals(s2.tryNow(), Success(Foo(201)))
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("s2", new Foo(201)),
+      )
+    )
+    effects.clear()
+
+    // --
+
+    v.setTry(Failure(err1))
+
+    assertEquals(s2.tryNow(), Failure(err1))
+    assertEquals(s1.tryNow(), Failure(err1))
+
+  }
+
+  it("LazyStrictSignal.distinct") {
+
+    val v = Var(1)
+
+    val s1 = v.signal.map(n => new Foo(n)).map(Effect.log("s1", effects))
+    val s2 = s1.distinct.map(Effect.log("s2", effects))
+
+    assertEquals(effects.toList, Nil)
+
+    // --
+
+    assertEquals(s2.tryNow(), Success(Foo(1)))
+    assertEquals(effects.toList, List(Effect("s1", Foo(1)), Effect("s2", Foo(1))))
+    effects.clear()
+
+    assertEquals(s1.tryNow(), Success(Foo(1)))
+    assertEquals(effects.toList, Nil)
+
+    // --
+
+    v.set(1)
+
+    assertEquals(effects.toList, Nil)
+
+    // --
+
+    assertEquals(s2.tryNow(), Success(Foo(1)))
+    assertEquals(effects.toList, List(Effect("s1", Foo(1))))
+    effects.clear()
+
+    assertEquals(s1.tryNow(), Success(Foo(1)))
+    assertEquals(effects.toList, Nil)
+
+    // --
+
+    v.set(2)
+
+    assertEquals(effects.toList, Nil)
+
+    // --
+
+    assertEquals(s2.tryNow(), Success(Foo(2)))
+    assertEquals(effects.toList, List(Effect("s1", Foo(2)), Effect("s2", Foo(2))))
+    effects.clear()
+
+    assertEquals(s1.tryNow(), Success(Foo(2)))
+    assertEquals(effects.toList, Nil)
+
+    // --
+
+    v.set(2)
+
+    assertEquals(effects.toList, Nil)
+
+    // --
+
+    assertEquals(s2.tryNow(), Success(Foo(2)))
+    assertEquals(effects.toList, List(Effect("s1", Foo(2))))
+    effects.clear()
+
+    assertEquals(s1.tryNow(), Success(Foo(2)))
+    assertEquals(effects.toList, Nil)
   }
 }

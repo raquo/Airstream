@@ -149,10 +149,12 @@ class StrictSignalSpec extends UnitSpec with BeforeAndAfter {
 
     assert(effects.toList == Nil)
 
-    assert(errorEffects.toList == List(
-      Effect("unhandled", err1)
-    ))
+    assert(errorEffects.toList == Nil)
 
-    errorEffects.clear()
+    // assert(errorEffects.toList == List(
+    //   Effect("unhandled", err1)
+    // ))
+    //
+    // errorEffects.clear()
   }
 }

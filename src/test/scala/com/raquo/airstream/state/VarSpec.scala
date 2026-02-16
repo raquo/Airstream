@@ -157,12 +157,13 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     lazy val err2 = new Exception("err2")
     lazy val err3 = new Exception("err3")
 
-    x.writer.onError(err1)
+    x.setError(err1)
 
     assert(x.tryNow() == Failure(err1))
-    assert(errorEffects == mutable.Buffer(Effect("unhandled", err1)))
+    // assert(errorEffects == mutable.Buffer(Effect("unhandled", err1)))
+    assert(errorEffects.toList == Nil)
 
-    errorEffects.clear()
+    // errorEffects.clear()
 
     // --
 
@@ -233,11 +234,13 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     assert(x.tryNow() == Failure(err1))
     assert(y.now() == 300)
 
-    assert(errorEffects.toList == List(
-      Effect("unhandled", err1)
-    ))
+    assert(errorEffects.toList == Nil)
 
-    errorEffects.clear()
+    // assert(errorEffects.toList == List(
+    //   Effect("unhandled", err1)
+    // ))
+    //
+    // errorEffects.clear()
 
     // --
 
@@ -289,11 +292,13 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     assert(y.tryNow() == Failure(err2))
     assert(z.now() == "za")
 
-    assert(errorEffects.toList == List(
-      Effect("unhandled", err2)
-    ))
+    assert(errorEffects.toList == Nil)
 
-    errorEffects.clear()
+    // assert(errorEffects.toList == List(
+    //   Effect("unhandled", err2)
+    // ))
+    //
+    // errorEffects.clear()
   }
 
   it("batch updates are glitch-free") {
@@ -366,10 +371,10 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     )
 
     assert(errorEffects.toList == List(
-      Effect("unhandled", err3)
+      // Effect("unhandled", err3)
     ))
 
-    errorEffects.clear()
+    // errorEffects.clear()
 
     // --
 
@@ -483,11 +488,13 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
       v.tryNow() shouldBe Failure(err)
       v2.tryNow() shouldBe Success(2)
 
-      assert(errorEffects.toList == List(
-        Effect("unhandled", err)
-      ))
+      assert(errorEffects.toList == Nil)
 
-      errorEffects.clear()
+      //   assert(errorEffects.toList == List(
+      //   Effect("unhandled", err)
+      // ))
+      //
+      // errorEffects.clear()
     }
 
     // --
@@ -607,11 +614,13 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
       v.tryNow() shouldBe Failure(err)
       v2.tryNow() shouldBe Success(2)
 
-      assert(errorEffects.toList == List(
-        Effect("unhandled", err)
-      ))
+      assert(errorEffects.toList == Nil)
 
-      errorEffects.clear()
+      // assert(errorEffects.toList == List(
+      //   Effect("unhandled", err)
+      // ))
+      //
+      // errorEffects.clear()
     }
 
     // --
@@ -688,11 +697,13 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     v.update(_ => throw err)
     v.tryNow() shouldBe Failure(err)
 
-    assert(errorEffects.toList == List(
-      Effect("unhandled", err)
-    ))
+    assert(errorEffects.toList == Nil)
 
-    errorEffects.clear()
+    //   assert(errorEffects.toList == List(
+    //   Effect("unhandled", err)
+    // ))
+    //
+    // errorEffects.clear()
 
     reset()
 
@@ -716,11 +727,13 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     v.tryNow() shouldBe Failure(err)
     v2.tryNow() shouldBe Success(20)
 
-    assert(errorEffects.toList == List(
-      Effect("unhandled", err)
-    ))
+    assert(errorEffects.toList == Nil)
 
-    errorEffects.clear()
+    // assert(errorEffects.toList == List(
+    //   Effect("unhandled", err)
+    // ))
+    //
+    // errorEffects.clear()
 
     reset()
 
@@ -733,11 +746,13 @@ class VarSpec extends UnitSpec with BeforeAndAfter {
     v.tryNow() shouldBe Failure(err)
     v2.tryNow() shouldBe Success(20)
 
-    assert(errorEffects.toList == List(
-      Effect("unhandled", err)
-    ))
+    assert(errorEffects.toList == Nil)
 
-    errorEffects.clear()
+    // assert(errorEffects.toList == List(
+    //   Effect("unhandled", err)
+    // ))
+    //
+    // errorEffects.clear()
 
     reset()
 

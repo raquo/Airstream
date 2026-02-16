@@ -1,5 +1,6 @@
 package com.raquo.airstream.core
 
+import scala.annotation.nowarn
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
@@ -90,7 +91,7 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
     //
     // We want to report unhandled errors on such signals if they have no observers (including internal observers)
     // because if we don't, the error will not be reported anywhere, and I think we would usually want it to be reported.
-    if (isError && !errorReported) {
+    if (isError && !errorReported && (AirstreamError.PRE_V18_STRICT_SIGNAL_ERROR_REPORTING: @nowarn("msg=deprecated"))) {
       nextValue.fold(AirstreamError.sendUnhandledError, _ => ())
     }
   }

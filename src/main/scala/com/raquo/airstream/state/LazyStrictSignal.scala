@@ -31,6 +31,18 @@ with SingleParentSignal[I, O] {
 
   override def tryNow(): Try[O] = {
     // dom.console.log(s"> ${this} > tryNow")
+    if (parent.isInstanceOf[LazyStrictSignal[_, _]]) {
+      // LazyStrictSignal-s are lazy, so if we want to actively pull a fresh value
+      // from a LazyStrictSignal that depends on another LazyStrictSignal, we need
+      // to force-evaluate the current value of that parent signal.
+      // We need to do this recursively until we reach a (typically) StrictSignal
+      // parent, then we can check if that strict parent has updated since we last
+      // checked, and if that's the case, we can pull its value down this chain.
+      // And once we force-evaluate the parent signal's value,
+      // `peekWhetherParentHasUpdated` will return true if the parent has updated.
+      // All this is assuming no observers on any of the signals involved.
+      parent.tryNow()
+    }
     if (peekWhetherParentHasUpdated().contains(true)) {
       val nextValue = currentValueFromParent()
       updateCurrentValueFromParent(

@@ -9,6 +9,15 @@ sealed abstract class AirstreamError(message: String) extends Throwable(message)
 
 object AirstreamError {
 
+  /** If true, strict signals will emit an unhandled errors if they emit a Failure (for any reason)
+    * while not having any observers to observe this. For example, if you do myVar.setTry(Failure(err)),
+    * and the Var's signal has no observers, directly or indirectly, Airstream would emit an error into
+    * its `unhandled` error channel. As of v18.0.0-M3, we don't do this anymore, because we have normalized
+    * using LazyStrictSignal-s without observers.
+    */
+  @deprecated("Provided as a temporary migration troubleshooting helper only!", since = "18.0.0-M3")
+  var PRE_V18_STRICT_SIGNAL_ERROR_REPORTING = false
+
   def getFullMessage(e: Throwable): String = {
     // getMessage can have a custom implementation, and thus can throw
     // Also, Scala.js 1.20.1 and below had this problem with Scala's MatchError: https://github.com/scala-js/scala-js/issues/5287
