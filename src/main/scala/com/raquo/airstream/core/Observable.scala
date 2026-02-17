@@ -42,8 +42,11 @@ with ObservableLowPriorityImplicits {
   /** Provides methods on observable: mapOutput, mapInput, mapResolved, mapPending, foldStatus, splitStatus */
   implicit def toStatusObservable[In, Out, Self[+_] <: Observable[_]](observable: BaseObservable[Self, Status[In, Out]]): StatusObservable[In, Out, Self] = new StatusObservable(observable)
 
-  /** Provides methods on observable: mapOutput, mapInput, mapResolved, mapPending, foldStatus, splitStatus */
+  /** Provides methods on observable: mapSeq, seqOrElse */
   implicit def toSeqObservable[A, Self[+_] <: Observable[_], M[_]](observable: BaseObservable[Self, M[A]]): SeqObservable[A, Self, M] = new SeqObservable(observable)
+
+  /** Provides methods on observable: mapSeqOpt, seqOptOrElse */
+  implicit def toSeqOptionObservable[A, Self[+_] <: Observable[_], M[_]](observable: BaseObservable[Self, Option[M[A]]]): SeqOptionObservable[A, Self, M] = new SeqOptionObservable(observable)
 
   /** Provides methods on observable: flattenSwitch, flattenMerge, flattenCustom, flatten (deprecated) */
   implicit def toMetaObservable[A, Outer[+_] <: Observable[_], Inner[_]](observable: Outer[Inner[A]]): MetaObservable[A, Outer, Inner] = new MetaObservable(observable)

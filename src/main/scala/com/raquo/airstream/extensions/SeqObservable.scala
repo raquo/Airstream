@@ -7,7 +7,7 @@ class SeqObservable[A, Self[+_] <: Observable[_], M[_]](
   private val observable: BaseObservable[Self, M[A]]
 ) extends AnyVal {
 
-  /** Maps the value in Some(x) */
+  /** Maps the values inside Seq-like M[A] */
   def mapSeq[B](project: A => B)(implicit splittable: Splittable[M]): Self[M[B]] = {
     observable.map { seq =>
       splittable.map(seq, project)
