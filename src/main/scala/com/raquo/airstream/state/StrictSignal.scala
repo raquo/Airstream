@@ -1,7 +1,7 @@
 package com.raquo.airstream.state
 
-import com.raquo.airstream.core.{CoreOps, Signal}
-import com.raquo.airstream.debug.{DebugOps, DebugSignalOps, Debugger}
+import com.raquo.airstream.core.{CoreOps, RecoverOps, Signal}
+import com.raquo.airstream.debug.{Debugger, DebugOps, DebugSignalOps}
 import com.raquo.airstream.distinct.DistinctOps
 
 import scala.util.Try
@@ -14,6 +14,7 @@ import scala.util.Try
 trait StrictSignal[+A]
 extends Signal[A]
 with CoreOps[StrictSignal, A]
+with RecoverOps[StrictSignal, A]
 with DistinctOps[StrictSignal[A], A]
 with DebugSignalOps[StrictSignal, A] {
 
@@ -26,7 +27,28 @@ with DebugSignalOps[StrictSignal, A] {
       parentSignal = this,
       project = project,
       parentDisplayName = displayName,
-      displayNameSuffix = ".map"
+      displayNameSuffix = ".map*"
+    )
+  }
+
+  /** If `recover` is defined and needs to be called, it can do the following:
+    *  - Return Some(value) to make this stream emit value
+    *  - Return None to make this signal ignore (swallow) this error
+    *    - #Warning: Except if this error is the Signal's initial value, then we'll use it anyway.
+    *  - Not handle the error (meaning .isDefinedAt(error) must be false) to emit the original error
+    *
+    * If `recover` throws an exception, it will be wrapped in `ErrorHandlingError` and propagated.
+    */
+  override protected def mapRecover[B](
+    projectValue: A => B,
+    recoverError: PartialFunction[Throwable, Option[B]]
+  ): StrictSignal[B] = {
+    LazyStrictSignal.mapRecoverSignal(
+      parentSignal = this,
+      projectValue = projectValue,
+      recoverError = recoverError,
+      parentDisplayName = displayName,
+      displayNameSuffix = ".recover*"
     )
   }
 

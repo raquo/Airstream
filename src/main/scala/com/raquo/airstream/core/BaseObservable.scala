@@ -36,6 +36,7 @@ trait BaseObservable[+Self[+_] <: Observable[_], +A]
 extends Source[A]
 with Named
 with CoreOps[Self, A]
+with RecoverOps[Self, A]
 with DistinctOps[Self[A], A]
 with DebugOps[Self, A] {
 
@@ -136,19 +137,6 @@ with DebugOps[Self, A] {
     matchStreamOrSignal(ifStream, ifSignal)
       .asInstanceOf[Self[B]] // #Safe as long as we respect the contract on Self type – see scaladoc at the top of this file.
   }
-
-  // @TODO[API] I don't like the Option[O] output type here very much. We should consider a sentinel error object instead (need to check performance). Or maybe add a recoverOrSkip method or something?
-  /** @param pf Note: guarded against exceptions */
-  def recover[B >: A](pf: PartialFunction[Throwable, Option[B]]): Self[B]
-
-  def recoverIgnoreErrors: Self[A] = recover[A](_ => None)
-
-  // #TODO[Scala] I'm not sure why I can't implement this method here. Getting weird type error about `Self`.
-  /** Convert this to an observable that emits Failure(err) instead of erroring */
-  def recoverToTry: Self[Try[A]]
-
-  /** Convert this to an observable that emits Left(err) instead of erroring */
-  def recoverToEither: Self[Either[Throwable, A]]
 
   /** Create an external observer from a function and subscribe it to this observable.
     *

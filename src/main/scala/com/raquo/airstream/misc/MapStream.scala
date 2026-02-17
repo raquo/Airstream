@@ -40,19 +40,17 @@ class MapStream[I, O](
       // if no `recover` specified, fire original error
       ifEmpty = fireError(nextError, transaction)
     ) { pf =>
-      Try(pf.applyOrElse(nextError, (_: Throwable) => null)).fold(
-        tryError => {
+      Try(pf.lift(nextError)).fold(
+        pfError => {
           // if recover throws error, fire a wrapped error
-          fireError(ErrorHandlingError(error = tryError, cause = nextError), transaction)
+          fireError(ErrorHandlingError(error = pfError, cause = nextError), transaction)
         },
-        nextValue => {
-          if (nextValue == null) {
-            // If recover was not applicable, fire original error
-            fireError(nextError, transaction)
-          } else {
-            // If recover was applicable and resulted in a new value, fire that value
-            nextValue.foreach(fireValue(_, transaction))
-          }
+        _.fold(
+          // If recover was not applicable, fire original error
+          fireError(nextError, transaction)
+        ) { nextValueOpt =>
+          // If recover was applicable and resulted in a new value, fire that value
+          nextValueOpt.foreach(fireValue(_, transaction))
         }
       )
     }

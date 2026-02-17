@@ -3,9 +3,9 @@ package com.raquo.airstream.core
 import com.raquo.airstream.combine.CombineSignalN
 import com.raquo.airstream.combine.generated.{CombinableSignal, CombineSignalObjectOps}
 import com.raquo.airstream.core.Source.SignalSource
-import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
-import com.raquo.airstream.debug.{DebugOps, DebugSignalOps, Debugger, DebuggerSignal}
+import com.raquo.airstream.custom.CustomSource._
+import com.raquo.airstream.debug.{Debugger, DebuggerSignal, DebugOps, DebugSignalOps}
 import com.raquo.airstream.distinct.{DistinctOps, DistinctSignal}
 import com.raquo.airstream.dynamicImport.{DynamicImportSignalObjectOps, DynamicImportSignalOps}
 import com.raquo.airstream.extensions._
@@ -48,6 +48,25 @@ with DynamicImportSignalOps[A] // Provides `dynamicImport` method (Scala 3 only)
     */
   override def map[B](project: A => B): Signal[B] = {
     new MapSignal(parent = this, project, recover = None)
+  }
+
+  /** If `recover` is defined and needs to be called, it can do the following:
+    *  - Return Some(value) to make this stream emit value
+    *  - Return None to make this stream ignore (swallow) this error
+    *    - #Warning: Except if this error is the Signal's initial value, then we'll use it anyway.
+    *  - Not handle the error (meaning .isDefinedAt(error) must be false) to emit the original error
+    *
+    * If `recover` throws an exception, it will be wrapped in `ErrorHandlingError` and propagated.
+    */
+  override protected def mapRecover[B](
+    projectValue: A => B,
+    recoverError: PartialFunction[Throwable, Option[B]]
+  ): Signal[B] = {
+    new MapSignal[A, B](
+      parent = this,
+      project = projectValue,
+      recover = Some(recoverError)
+    )
   }
 
   /** @param operator Note: Must not throw! */
@@ -139,23 +158,6 @@ with DynamicImportSignalOps[A] // Provides `dynamicImport` method (Scala 3 only)
     */
   override def distinctTry(isSame: (Try[A], Try[A]) => Boolean): Signal[A] = {
     new DistinctSignal[A](parent = this, isSame, resetOnStop = false)
-  }
-
-  /** @param pf Note: guarded against exceptions */
-  override def recover[B >: A](pf: PartialFunction[Throwable, Option[B]]): Signal[B] = {
-    new MapSignal[A, B](
-      this,
-      project = identity,
-      recover = Some(pf)
-    )
-  }
-
-  override def recoverToTry: Signal[Try[A]] = {
-    map(Try(_)).recover[Try[A]](err => Some(Failure(err)))
-  }
-
-  override def recoverToEither: Signal[Either[Throwable, A]] = {
-    map(Right(_)).recover(err => Some(Left(err)))
   }
 
   /** See also debug methods in [[DebugOps]] and [[DebugSignalOps]] */

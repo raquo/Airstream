@@ -1,10 +1,10 @@
 package com.raquo.airstream.core
 
-import com.raquo.airstream.combine.generated._
 import com.raquo.airstream.combine.{CombineStreamN, MergeStream}
+import com.raquo.airstream.combine.generated._
 import com.raquo.airstream.core.Source.{EventSource, SignalSource}
-import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
+import com.raquo.airstream.custom.CustomSource._
 import com.raquo.airstream.debug.{Debugger, DebuggerStream}
 import com.raquo.airstream.distinct.{DistinctOps, DistinctStream}
 import com.raquo.airstream.dynamicImport.{DynamicImportStreamObjectOps, DynamicImportStreamOps}
@@ -21,7 +21,7 @@ import java.util.concurrent.Flow
 import scala.concurrent.{ExecutionContext, Future}
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
-import scala.util.{Failure, Success, Try}
+import scala.util.{Success, Try}
 
 trait EventStream[+A]
 extends Observable[A]
@@ -38,12 +38,30 @@ with DynamicImportStreamOps[A] // Provides `dynamicImport` method (Scala 3 only)
     new MapStream(this, project, recover = None)
   }
 
+  /** If `recover` is defined and needs to be called, it can do the following:
+    *  - Return Some(value) to make this stream emit value
+    *  - Return None to make this stream ignore (swallow) this error
+    *  - Not handle the error (meaning .isDefinedAt(error) must be false) to emit the original error
+    *
+    * If `recover` throws an exception, it will be wrapped in `ErrorHandlingError` and propagated.
+    */
+  override protected def mapRecover[B](
+    projectValue: A => B,
+    recoverError: PartialFunction[Throwable, Option[B]]
+  ): EventStream[B] = {
+    new MapStream[A, B](
+      parent = this,
+      project = projectValue,
+      recover = Some(recoverError)
+    )
+  }
+
   /** @param passes Note: guarded against exceptions */
   def filter(passes: A => Boolean): EventStream[A] = {
     new FilterStream(parent = this, passes)
   }
 
-  def filterNot(predicate: A => Boolean): EventStream[A] = filter(!predicate(_))
+  def filterNot(skip: A => Boolean): EventStream[A] = filter(!skip(_))
 
   /** Filter stream events by a signal or var of boolean.
     *
@@ -301,26 +319,6 @@ with DynamicImportStreamOps[A] // Provides `dynamicImport` method (Scala 3 only)
     */
   override def distinctTry(isSame: (Try[A], Try[A]) => Boolean): EventStream[A] = {
     new DistinctStream[A](parent = this, isSame, resetOnStop = false)
-  }
-
-  /** See docs for [[MapStream]]
-    *
-    * @param pf Note: guarded against exceptions
-    */
-  override def recover[B >: A](pf: PartialFunction[Throwable, Option[B]]): EventStream[B] = {
-    new MapStream[A, B](
-      parent = this,
-      project = identity,
-      recover = Some(pf)
-    )
-  }
-
-  override def recoverToTry: EventStream[Try[A]] = {
-    map(Try(_)).recover(err => Some(Failure(err)))
-  }
-
-  override def recoverToEither: EventStream[Either[Throwable, A]] = {
-    map(Right(_)).recover(err => Some(Left(err)))
   }
 
   /** See also various debug methods in [[com.raquo.airstream.debug.DebugOps]] */

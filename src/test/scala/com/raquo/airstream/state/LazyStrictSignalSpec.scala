@@ -333,8 +333,7 @@ class LazyStrictSignalSpec extends UnitSpec with BeforeAndAfter {
 
     val owner = new TestableOwner
 
-    s2.addObserver(Observer.fromTry(
-      t => intEffects += Effect("obs", t.getOrElse(-1))
+    s2.addObserver(Observer.fromTry(t => intEffects += Effect("obs", t.getOrElse(-1))
     ))(owner)
 
     assertEquals(
@@ -358,5 +357,117 @@ class LazyStrictSignalSpec extends UnitSpec with BeforeAndAfter {
       )
     )
     intEffects.clear()
+  }
+
+  it("LazyStrictSignal.mapRecover") {
+
+    val v = Var(1)
+    val intEffects = mutable.Buffer[Effect[Int]]()
+
+    val s1 =
+      v.signal
+        .map(_ * 100)
+        .recover {
+          case `err1` => Some(900)
+          case `err2` => None
+        }
+        .map(Effect.log("s1", intEffects))
+    val s2 =
+      s1
+        .map(_ + 1)
+        .map(Effect.log("s2", intEffects))
+
+    assertEquals(intEffects.toList, Nil)
+
+    // -- call s2.tryNow() to pull the value through s1
+
+    assertEquals(s2.tryNow(), Success(101))
+    assertEquals(
+      intEffects.toList,
+      List(
+        Effect("s1", 100),
+        Effect("s2", 101)
+      )
+    )
+    intEffects.clear()
+
+    assertEquals(s1.tryNow(), Success(100))
+    assertEquals(intEffects.toList, Nil)
+
+    // -- call s1.tryNow() to pull that one value first
+
+    v.set(2)
+
+    assertEquals(s1.tryNow(), Success(200))
+    assertEquals(
+      intEffects.toList,
+      List(
+        Effect("s1", 200),
+      )
+    )
+    intEffects.clear()
+
+    // -- call s2.tryNow() to pull only that value (s1 already pulled)
+
+    assertEquals(s2.tryNow(), Success(201))
+    assertEquals(
+      intEffects.toList,
+      List(
+        Effect("s2", 201),
+      )
+    )
+    intEffects.clear()
+
+    // --
+
+    v.setTry(Failure(err1))
+
+    assertEquals(s2.tryNow(), Success(901))
+    assertEquals(s1.tryNow(), Success(900))
+
+    assertEquals(
+      intEffects.toList,
+      List(
+        Effect("s1", 900),
+        Effect("s2", 901),
+      )
+    )
+    intEffects.clear()
+
+    // --
+
+    v.set(3)
+
+    assertEquals(s2.tryNow(), Success(301))
+    assertEquals(
+      intEffects.toList,
+      List(
+        Effect("s1", 300),
+        Effect("s2", 301),
+      )
+    )
+    intEffects.clear()
+
+    // --
+
+    // v.setTry(Failure(err2))
+    //
+    // assertEquals(s2.tryNow(), Success(301))
+    // assertEquals(s1.tryNow(), Success(300))
+    //
+    // // #TODO[Integrity,API] We actually expect intEffects to be empty here.
+    // //  But, even though we've "filtered out" / "swallowed" the `err2` error, the signal's value is
+    // //  still considered to have updated, so we're re-calculating these values.
+    // //  This seems problematic, and it's probably because we have a filter-like operator in Signals.
+    // //  Signals probably need a facility to avoid incrementing their lastUpdateId if the filter
+    // //  predicate fails.
+    // assertEquals(
+    //   intEffects.toList,
+    //   List(
+    //     Effect("s1", 300),
+    //     Effect("s2", 301),
+    //   )
+    // )
+    // intEffects.clear()
   }
 }

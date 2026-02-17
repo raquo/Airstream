@@ -50,6 +50,9 @@ object AirstreamError {
     override def toString: String = s"VarError: $message; cause: $cause"
   }
 
+  case class InitialValueError(error: Throwable)
+  extends AirstreamError(s"InitialValueError: ${getFullMessage(error)}")
+
   case class ErrorHandlingError(error: Throwable, cause: Throwable)
   extends AirstreamError(s"ErrorHandlingError: ${getFullMessage(error)}; cause: ${getFullMessage(cause)}") {
 

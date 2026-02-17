@@ -2,7 +2,7 @@ package com.raquo.airstream.misc
 
 import com.raquo.airstream.common.SingleParentSignal
 import com.raquo.airstream.core.{Protected, Signal, Transaction}
-import com.raquo.airstream.core.AirstreamError.ErrorHandlingError
+import com.raquo.airstream.core.AirstreamError.{ErrorHandlingError, InitialValueError}
 
 import scala.util.{Failure, Success, Try}
 
@@ -13,6 +13,7 @@ import scala.util.{Failure, Success, Try}
   * If `recover` is defined and needs to be called, it can do the following:
   *  - Return Some(value) to make this signal emit value
   *  - Return None to make this signal ignore (swallow) this error
+  *    - #Warning: Except if this error is the Signal's initial value, then we'll use it anyway.
   *  - Not handle the error (meaning .isDefinedAt(error) must be false) to emit the original error
   *
   * @param project Note: guarded against exceptions
@@ -33,23 +34,21 @@ class MapSignal[I, O](
         recover.fold(
           // if no `recover` specified, fire original error
           fireError(nextError, transaction)
-        )(pf =>
-          Try(pf.applyOrElse(nextError, (_: Throwable) => null)).fold(
-            tryError => {
+        ) { pf =>
+          Try(pf.lift(nextError)).fold(
+            pfError => {
               // if recover throws error, fire wrapped error
-              fireError(ErrorHandlingError(error = tryError, cause = nextError), transaction)
+              fireError(ErrorHandlingError(error = pfError, cause = nextError), transaction)
             },
-            nextValue => {
-              if (nextValue == null) {
-                // If recover was not applicable, fire original error
-                fireError(nextError, transaction)
-              } else {
-                // If recover was applicable and resulted in a new value, fire that value
-                nextValue.foreach(fireValue(_, transaction))
-              }
+            _.fold({
+              // If recover was not applicable, fire original error
+              fireError(nextError, transaction)
+            }) { nextValueOpt =>
+              // If recover was applicable and resulted in a new value, fire that value
+              nextValueOpt.foreach(fireValue(_, transaction))
             }
           )
-        ),
+        },
       _ => fireTry(nextParentValue.map(project), transaction)
     )
   }
@@ -60,25 +59,30 @@ class MapSignal[I, O](
     originalValue.fold(
       // if no `recover` specified, keep original error
       nextError =>
-        recover.fold(originalValue)(pf =>
-          Try(pf.applyOrElse(nextError, (_: Throwable) => null)).fold(
-            tryError => {
+        recover.fold(
+          // If no `recover` specified, use original error
+          originalValue
+        ) { pf =>
+          Try(pf.lift(nextError)).fold(
+            pfError => {
               // if recover throws error, save wrapped error
-              Failure(ErrorHandlingError(error = tryError, cause = nextError))
+              Failure(ErrorHandlingError(error = pfError, cause = nextError))
             },
-            nextValue => {
-              if (nextValue == null) {
-                // If recover was not applicable, keep original value
+            _.fold({
+              // If recover was not applicable, keep original value
+              originalValue
+            }) { nextValueOpt =>
+              // @TODO[Test] Verify this
+              // If recover was applicable and resulted in Some(value), use that.
+              // If None, use the original error because we can't "skip" initial value
+              nextValueOpt.fold(
                 originalValue
-              } else {
-                // @TODO[Test] Verify this
-                // If recover was applicable and resulted in Some(value), use that.
-                // If None, use the original error because we can't "skip" initial value
-                nextValue.map(Success(_)).getOrElse(originalValue)
-              }
+              )(
+                Success(_)
+              )
             }
           )
-        ),
+        },
       _ => originalValue
     )
   }

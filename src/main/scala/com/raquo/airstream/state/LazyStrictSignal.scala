@@ -4,6 +4,7 @@ import com.raquo.airstream.common.SingleParentSignal
 import com.raquo.airstream.core.{Protected, Signal, Transaction}
 import com.raquo.airstream.debug.{Debugger, DebuggerSignal}
 import com.raquo.airstream.distinct.DistinctSignal
+import com.raquo.airstream.misc.MapSignal
 
 import scala.util.Try
 
@@ -105,13 +106,33 @@ object LazyStrictSignal {
     }
   }
 
+  def mapRecoverSignal[I, O](
+    parentSignal: Signal[I],
+    projectValue: I => O,
+    recoverError: PartialFunction[Throwable, Option[O]],
+    parentDisplayName: => String,
+    displayNameSuffix: String,
+  ): StrictSignal[O] = {
+    val _pdn = parentDisplayName
+    val _dns = displayNameSuffix
+    new MapSignal[I, O](parentSignal, projectValue, Some(recoverError))
+      with LazyStrictSignal[I, O] {
+
+      override protected def parentDisplayName: String = _pdn
+
+      override protected val displayNameSuffix: String = _dns
+
+      override protected[this] def displayClassName: String = s"MapSignal+LazyStrictSignal"
+    }
+  }
+
   def distinctSignal[A](
     parentSignal: Signal[A],
     isSame: (Try[A], Try[A]) => Boolean,
     resetOnStop: Boolean,
     parentDisplayName: => String,
     displayNameSuffix: String,
-  ): DistinctSignal[A] with StrictSignal[A] = {
+  ): StrictSignal[A] = {
     val _pdn = parentDisplayName
     val _dns = displayNameSuffix
 
@@ -131,7 +152,7 @@ object LazyStrictSignal {
     debugger: Debugger[A],
     parentDisplayName: => String,
     displayNameSuffix: String,
-  ): DebuggerSignal[A] with StrictSignal[A] = {
+  ): StrictSignal[A] = {
     val _pdn = parentDisplayName
     val _dns = displayNameSuffix
 
