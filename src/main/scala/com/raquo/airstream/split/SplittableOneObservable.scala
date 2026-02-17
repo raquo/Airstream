@@ -30,7 +30,7 @@ class SplittableOneObservable[Self[+_] <: Observable[_], Input](
           )(
             Splittable.UnsafeOptionSplittable // #Safe because we don't use Splittable.{create, empty} methods here
           )
-          .changes
+          .updates
           .map(_.get)
       },
       ifSignal = { signal =>

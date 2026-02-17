@@ -18,7 +18,7 @@ import com.raquo.ew.JsArray
 import scala.concurrent.{ExecutionContext, Future}
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
-import scala.util.{Failure, Try}
+import scala.util.Try
 
 /** Signal is an Observable with a current value. */
 trait Signal[+A]
@@ -80,46 +80,59 @@ with DynamicImportSignalOps[A] // Provides `dynamicImport` method (Scala 3 only)
     *
     * @param operator Note: Must not throw!
     */
-  def composeChanges[AA >: A](
+  def composeUpdates[AA >: A](
     operator: EventStream[A] => EventStream[AA]
   ): Signal[AA] = {
-    composeAll(changesOperator = operator, initialOperator = identity)
+    composeAll(updatesOperator = operator, initialOperator = identity)
   }
 
   /** Modify both the Signal's changes stream, and its initial.
     * Similar to composeChanges, but lets you output a type unrelated to A.
     *
-    * @param changesOperator Note: Must not throw!
+    * @param updatesOperator Note: Must not throw!
     * @param initialOperator Note: Must not throw!
     */
   def composeAll[B](
-    changesOperator: EventStream[A] => EventStream[B],
+    updatesOperator: EventStream[A] => EventStream[B],
     initialOperator: Try[A] => Try[B],
     cacheInitialValue: Boolean = false
   ): Signal[B] = {
-    changesOperator(changes).toSignalWithTry(initialOperator(tryNow()), cacheInitialValue)
+    updatesOperator(updates).toSignalWithTry(initialOperator(tryNow()), cacheInitialValue)
   }
 
-  // #TODO[API] Why is .changes a def, and not a lazy val?
-  //  See `signal.changes shouldNotBe signal.changes` in SignalSpec
+  // #TODO[API] Why is .updates a def, and not a lazy val?
+  //  See `signal.updates shouldNotBe signal.updates` in SignalSpec
   /** A stream of all values in this signal, excluding the initial value.
     *
-    * When re-starting this stream, it emits the signal's new
-    * current value if and only if something has caused the signal's value to
-    * be updated or re-evaluated while the changes stream was stopped. This way
-    * the changes stream stays in sync with the signal even after restarting.
+    * When re-starting this stream, it emits the signal's new current value
+    * if and only if something has caused the signal's value to be updated
+    * or re-evaluated while the updates stream was stopped. This way the
+    * updates stream stays in sync with the signal even after restarting.
     */
-  def changes: EventStream[A] = new StreamFromSignal[A](parent = this, changesOnly = true)
+  def updates: EventStream[A] = new StreamFromSignal[A](parent = this, updatesOnly = true)
 
-  /** Modify the Signal's changes, e.g. signal.changes(_.delay(ms = 100))
+  /** Modify the Signal's updates, e.g. signal.updates(_.delay(ms = 100))
     *
-    * Alias to [[composeChanges]]. See also: [[composeAll]]
+    * Alias to [[composeUpdates]]. See also: [[composeAll]]
     *
     * @param compose Note: Must not throw!
     */
-  @inline def changes[AA >: A](compose: EventStream[A] => EventStream[AA]): Signal[AA] = {
-    composeChanges(compose)
+  @inline def updates[AA >: A](compose: EventStream[A] => EventStream[AA]): Signal[AA] = {
+    composeUpdates(compose)
   }
+
+  @deprecated("signal.composeChanges renamed to signal.composeUpdates", since = "18.0.0-M3")
+  def composeChanges[AA >: A](
+    operator: EventStream[A] => EventStream[AA]
+  ): Signal[AA] = {
+    composeUpdates(operator)
+  }
+
+  @deprecated("signal.changes renamed to signal.updates", since = "18.0.0-M3")
+  def changes: EventStream[A] = updates
+
+  @deprecated("signal.changes renamed to signal.updates", since = "18.0.0-M3")
+  def changes[AA >: A](compose: EventStream[A] => EventStream[AA]): Signal[AA] = updates(compose)
 
   @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")
   def foldLeft[B](makeInitial: A => B)(fn: (B, A) => B): Signal[B] = scanLeft(makeInitial)(fn)

@@ -181,7 +181,7 @@ class SignalSpec extends UnitSpec {
       .map(_ * 10)
       .toSignal(initial = -1)
       .map(Calculation.log("map-signal", calculations))
-    val changes = signal.changes.map(Calculation.log("changes", calculations))
+    val changes = signal.updates.map(Calculation.log("changes", calculations))
 
     // .changes can't be a lazy val for memory management purposes
     // (parent should not have a reference to a child that has no observers)
@@ -192,7 +192,7 @@ class SignalSpec extends UnitSpec {
     //  - If .changes is a def, in some cases we could GC it sooner
     //    than if it was linked, but on the flip side, now we need to create
     //    a new observable for every consumer of .changes, instead of reusing it.
-    signal.changes shouldNotBe signal.changes
+    signal.updates shouldNotBe signal.updates
 
     // --
 

@@ -3,11 +3,15 @@ package com.raquo.airstream.syntax
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.{EventStream, Observable, Signal}
 import com.raquo.airstream.eventbus.EventBus
-import scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.raquo.airstream.state.Var
 
+import scala.annotation.nowarn
+import scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.concurrent.Future
 
 class SyntaxSpec extends UnitSpec {
+
+  case class Foo(id: Int, label: String)
 
   it("CombinableStream & TupleStream") {
 
@@ -100,13 +104,13 @@ class SyntaxSpec extends UnitSpec {
     bus.events.toSignal(0)
 
     bus.events.toSignalIfStream(_.startWith(0))
-    obs.toStreamIfSignal(_.changes)
+    obs.toStreamIfSignal(_.updates)
 
     // I wish these wouldn't compile, but can't get =:= evidence to help me here.
     signal.toSignalIfStream(_.startWith(0))
-    signal.toStreamIfSignal(_.changes)
+    signal.toStreamIfSignal(_.updates)
     bus.events.toSignalIfStream(_.startWith(0))
-    bus.events.toStreamIfSignal(_.changes)
+    bus.events.toStreamIfSignal(_.updates)
 
     // -- Ensure weirdest type inference.
 
@@ -115,5 +119,17 @@ class SyntaxSpec extends UnitSpec {
 
     weirdBus.events.toSignalIfStream(_.startWith(composer))
     weirdBus.events.toSignal(composer)
+  }
+
+  it("Legacy methods from the video") {
+    val v = Var(1)
+    val vs = Var(Seq(Foo(1, "a"), Foo(2, "b"), Foo(3, "c")))
+    ((v.signal.changes: @nowarn("msg=deprecated")): EventStream[Int])
+    ((vs.signal.split(_.id){ (id, init, sig) =>
+      (id, init, sig)
+    }: @nowarn("msg=deprecated")): Signal[Seq[(Int, Foo, Signal[Foo])]])
+    ((vs.signal.changes.split(_.id){ (id, init, sig) =>
+      (id, init, sig)
+    }: @nowarn("msg=deprecated")): Signal[Seq[(Int, Foo, Signal[Foo])]])
   }
 }

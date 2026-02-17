@@ -30,7 +30,7 @@ object AsyncStatusObservable {
 
     parent.matchStreamOrSignalAsSelf(
       ifStream = _.map(Pending(_)).mergeWith(outputS),
-      ifSignal = _.map(Pending(_)).changes(_.mergeWith(outputS))
+      ifSignal = _.map(Pending(_)).updates(_.mergeWith(outputS))
     )
   }
 

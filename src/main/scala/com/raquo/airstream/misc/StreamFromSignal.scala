@@ -7,7 +7,7 @@ import scala.util.Try
 
 class StreamFromSignal[A](
   override protected[this] val parent: Signal[A],
-  changesOnly: Boolean
+  updatesOnly: Boolean
 ) extends SingleParentStream[A, A] with InternalTryObserver[A] {
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
@@ -18,7 +18,7 @@ class StreamFromSignal[A](
 
   override protected[this] def onStart(): Unit = {
     val newParentLastUpdateId = Protected.lastUpdateId(parent)
-    if (isFirstPull && changesOnly) {
+    if (isFirstPull && updatesOnly) {
       lastSeenParentUpdateId = newParentLastUpdateId
     } else {
       if (newParentLastUpdateId != lastSeenParentUpdateId) {

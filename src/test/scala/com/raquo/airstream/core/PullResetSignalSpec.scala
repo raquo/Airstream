@@ -38,7 +38,7 @@ class PullResetSignalSpec extends UnitSpec {
           .map(Calculation.log("up", calculations))
           .setDisplayName("varSignal.map(identity).map")
 
-        val changesStream = upSignal.changes // (if (EMIT_CHANGE_ON_RESTART) upSignal.changesEmitChangeOnRestart else upSignal.changes)
+        val changesStream = upSignal.updates // (if (EMIT_CHANGE_ON_RESTART) upSignal.changesEmitChangeOnRestart else upSignal.changes)
           .setDisplayName("upSignal.changes")
           .map(Calculation.log("changes", calculations))
           .setDisplayName("upSignal.changes.map")
@@ -214,7 +214,7 @@ class PullResetSignalSpec extends UnitSpec {
 
     def changes(name: String) = v
       .signal.setDisplayName("VarSignal")
-      .changes.setDisplayName("VarSignal.changes." + name)
+      .updates.setDisplayName("VarSignal.changes." + name)
 
     val isPositiveS = changes("IsPositive").map { num =>
       val isPositive = num > 0
@@ -308,7 +308,7 @@ class PullResetSignalSpec extends UnitSpec {
     // #Note: in this test the changes are shared, intentionally.
     val changes = v
       .signal.setDisplayName("VarSignal")
-      .changes.setDisplayName("VarSignal.changes")
+      .updates.setDisplayName("VarSignal.changes")
 
     val isPositive = changes.map { num =>
       val isPositive = num > 0
@@ -451,7 +451,7 @@ class PullResetSignalSpec extends UnitSpec {
     // #Note: in this test the changes are shared, intentionally.
     val changes = v
       .signal.setDisplayName("VarSignal")
-      .changes.setDisplayName("VarSignal.changes")
+      .updates.setDisplayName("VarSignal.changes")
 
     val isPositive = changes.map { num =>
       val isPositive = num > 0

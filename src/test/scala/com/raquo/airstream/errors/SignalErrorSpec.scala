@@ -156,7 +156,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
 
     val signalVar = Var.fromTry[Int](Failure(err1))
     val signal = signalVar.signal.map(Calculation.log("signal", calculations))
-    val changes = signal.changes.map(Calculation.log("stream", calculations))
+    val changes = signal.updates.map(Calculation.log("stream", calculations))
 
     changes.addObserver(Observer.withRecover(
       effects += Effect("sub", _),
