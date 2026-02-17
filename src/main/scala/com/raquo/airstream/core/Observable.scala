@@ -1,8 +1,8 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.extensions._
-import com.raquo.airstream.flatten.FlattenStrategy._
 import com.raquo.airstream.flatten.{MergingStrategy, SwitchingStrategy}
+import com.raquo.airstream.flatten.FlattenStrategy._
 import com.raquo.airstream.split.{SplittableOneObservable, SplittableSeqObservable}
 import com.raquo.airstream.status.Status
 

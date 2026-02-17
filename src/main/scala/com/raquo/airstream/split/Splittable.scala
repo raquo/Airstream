@@ -1,7 +1,7 @@
 package com.raquo.airstream.split
 
 import com.raquo.airstream.util.Id
-import com.raquo.ew.{JsArray, JsVector, ewArray}
+import com.raquo.ew.{ewArray, JsArray, JsVector}
 
 import scala.collection.{immutable, mutable}
 import scala.scalajs.js

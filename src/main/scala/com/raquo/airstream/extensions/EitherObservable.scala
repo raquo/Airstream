@@ -4,7 +4,7 @@ import com.raquo.airstream.core.{BaseObservable, Observable}
 import com.raquo.airstream.state.StrictSignal
 
 /** See also: [[EitherStream]] */
-/*  */class EitherObservable[A, B, Self[+_] <: Observable[_]](
+class EitherObservable[A, B, Self[+_] <: Observable[_]](
   private val observable: BaseObservable[Self, Either[A, B]]
 ) extends AnyVal {
 

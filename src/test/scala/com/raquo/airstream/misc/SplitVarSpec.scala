@@ -58,21 +58,21 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
       val signal = myVar.splitSeq(
         key = _.id, distinctOp = identity
       ) { fooVar =>
-          val key = fooVar.key
-          val initialFoo = fooVar.now()
-          assert(key == initialFoo.id, "Key does not match initial value")
-          effects += Effect(s"init-child-$key", key + "-" + initialFoo.version.toString)
-          // @Note keep foreach / addObserver here – this is important.
-          //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-          DynamicSubscription.subscribeCallback(
-            innerDynamicOwner,
-            owner =>
-              fooVar.signal.foreach { foo =>
-                assert(key == foo.id, "Subsequent value does not match initial key")
-                effects += Effect(s"update-child-$key", foo.id + "-" + foo.version.toString)
-              }(owner)
-          )
-          Bar(key)
+        val key = fooVar.key
+        val initialFoo = fooVar.now()
+        assert(key == initialFoo.id, "Key does not match initial value")
+        effects += Effect(s"init-child-$key", key + "-" + initialFoo.version.toString)
+        // @Note keep foreach / addObserver here – this is important.
+        //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
+        DynamicSubscription.subscribeCallback(
+          innerDynamicOwner,
+          owner =>
+            fooVar.signal.foreach { foo =>
+              assert(key == foo.id, "Subsequent value does not match initial key")
+              effects += Effect(s"update-child-$key", foo.id + "-" + foo.version.toString)
+            }(owner)
+        )
+        Bar(key)
       }
 
       DynamicSubscription.subscribeCallback(

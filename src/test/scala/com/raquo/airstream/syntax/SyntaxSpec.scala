@@ -4,9 +4,9 @@ import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.{EventStream, Observable, Signal}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.state.Var
+import scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 import scala.annotation.nowarn
-import scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.concurrent.Future
 
 class SyntaxSpec extends UnitSpec {
@@ -125,10 +125,10 @@ class SyntaxSpec extends UnitSpec {
     val v = Var(1)
     val vs = Var(Seq(Foo(1, "a"), Foo(2, "b"), Foo(3, "c")))
     ((v.signal.changes: @nowarn("msg=deprecated")): EventStream[Int])
-    ((vs.signal.split(_.id){ (id, init, sig) =>
+    ((vs.signal.split(_.id) { (id, init, sig) =>
       (id, init, sig)
     }: @nowarn("msg=deprecated")): Signal[Seq[(Int, Foo, Signal[Foo])]])
-    ((vs.signal.changes.split(_.id){ (id, init, sig) =>
+    ((vs.signal.changes.split(_.id) { (id, init, sig) =>
       (id, init, sig)
     }: @nowarn("msg=deprecated")): Signal[Seq[(Int, Foo, Signal[Foo])]])
   }
