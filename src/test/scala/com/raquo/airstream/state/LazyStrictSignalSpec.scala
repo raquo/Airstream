@@ -450,24 +450,25 @@ class LazyStrictSignalSpec extends UnitSpec with BeforeAndAfter {
 
     // --
 
-    // v.setTry(Failure(err2))
-    //
-    // assertEquals(s2.tryNow(), Success(301))
-    // assertEquals(s1.tryNow(), Success(300))
-    //
-    // // #TODO[Integrity,API] We actually expect intEffects to be empty here.
-    // //  But, even though we've "filtered out" / "swallowed" the `err2` error, the signal's value is
-    // //  still considered to have updated, so we're re-calculating these values.
-    // //  This seems problematic, and it's probably because we have a filter-like operator in Signals.
-    // //  Signals probably need a facility to avoid incrementing their lastUpdateId if the filter
-    // //  predicate fails.
-    // assertEquals(
-    //   intEffects.toList,
-    //   List(
-    //     Effect("s1", 300),
-    //     Effect("s2", 301),
-    //   )
-    // )
-    // intEffects.clear()
+    v.setTry(Failure(err2))
+
+    assertEquals(s2.tryNow(), Success(301))
+    assertEquals(s1.tryNow(), Success(300))
+
+    // #Note this tests non-strict logic as well, we should probably expand on this part of the test
+    // #TODO[Integrity,API] We actually expect intEffects to be empty here.
+    //  But, even though we've "filtered out" / "swallowed" the `err2` error, the signal's value is
+    //  still considered to have updated, so we're re-calculating these values.
+    //  This seems problematic, and it's probably because we have a filter-like operator in Signals.
+    //  Signals probably need a facility to avoid incrementing their lastUpdateId if the filter
+    //  predicate fails.
+    assertEquals(
+      intEffects.toList,
+      List(
+        Effect("s1", 300),
+        Effect("s2", 301),
+      )
+    )
+    intEffects.clear()
   }
 }

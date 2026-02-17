@@ -74,9 +74,12 @@ class MapSignal[I, O](
             }) { nextValueOpt =>
               // @TODO[Test] Verify this
               // If recover was applicable and resulted in Some(value), use that.
-              // If None, use the original error because we can't "skip" initial value
+              // If None, we want to keep the signal's previous value (maybeLastSeenCurrentValue),
+              // but if that's not available (because we're currently evaluating Signal's initial value),
+              // then we're forced to use the original error because we can't "skip" initial value.
+              // #TODO[Integrity,API] – this is like having `filter` on signals, but in the error channel
               nextValueOpt.fold(
-                originalValue
+                maybeLastSeenCurrentValue.getOrElse(Failure(InitialValueError(error = nextError)))
               )(
                 Success(_)
               )
