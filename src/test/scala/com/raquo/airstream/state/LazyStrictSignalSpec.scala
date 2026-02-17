@@ -471,4 +471,86 @@ class LazyStrictSignalSpec extends UnitSpec with BeforeAndAfter {
     )
     intEffects.clear()
   }
+
+  it("LazyStrictSignal.scanLeft") {
+
+    val owner = new TestableOwner
+
+    val sourceVar = Var(Foo(1))
+
+    val intEffects = mutable.Buffer[Effect[Int]]()
+
+    val s =
+      sourceVar.signal
+        .map(identity)
+        .scanLeft(_.id) { (acc, foo) => acc + foo.id }
+        .map(Effect.log("s", intEffects))
+
+    // --
+
+    assertEquals(s.tryNow(), Success(1))
+    assertEquals(
+      intEffects.toList,
+      List(Effect("s", 1))
+    )
+    intEffects.clear()
+
+    // --
+
+    sourceVar.set(Foo(2))
+
+    assertEquals(s.tryNow(), Success(3))
+    assertEquals(
+      intEffects.toList,
+      List(Effect("s", 3))
+    )
+    intEffects.clear()
+
+    // --
+
+    sourceVar.set(Foo(3)) // we didn't pull this value, so `scanLeft` operator didn't see it.
+    sourceVar.set(Foo(4))
+
+    assertEquals(s.tryNow(), Success(7))
+    assertEquals(
+      intEffects.toList,
+      List(Effect("s", 7))
+    )
+    intEffects.clear()
+
+    // --
+
+    s.foreach(Effect.log("obs", intEffects))(owner)
+    assertEquals(
+      intEffects.toList,
+      List(Effect("obs", 7))
+    )
+    intEffects.clear()
+
+    // --
+
+    sourceVar.set(Foo(5))
+
+    assertEquals(
+      intEffects.toList,
+      List(Effect("s", 12), Effect("obs", 12))
+    )
+    intEffects.clear()
+
+    // --
+
+    sourceVar.set(Foo(6))
+
+    assertEquals(
+      intEffects.toList,
+      List(Effect("s", 18), Effect("obs", 18))
+    )
+    intEffects.clear()
+
+    // --
+
+    assertEquals(s.tryNow(), Success(18))
+    assertEquals(intEffects.toList, Nil)
+  }
+
 }

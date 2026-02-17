@@ -1,7 +1,7 @@
 package com.raquo.airstream.state
 
-import com.raquo.airstream.core.{CoreOps, RecoverOps, Signal}
-import com.raquo.airstream.debug.{Debugger, DebugOps, DebugSignalOps}
+import com.raquo.airstream.core.{CoreOps, RecoverOps, ScanLeftSignalOps, Signal}
+import com.raquo.airstream.debug.{Debugger, DebugSignalOps}
 import com.raquo.airstream.distinct.DistinctOps
 
 import scala.util.Try
@@ -16,6 +16,7 @@ extends Signal[A]
 with CoreOps[StrictSignal, A]
 with RecoverOps[StrictSignal, A]
 with DistinctOps[StrictSignal[A], A]
+with ScanLeftSignalOps[StrictSignal, A]
 with DebugSignalOps[StrictSignal, A] {
 
   @deprecated("Use StrictSignal.map – it behaves like `mapLazy` used to in 17.x", "18.0.0-M3")
@@ -65,6 +66,20 @@ with DebugSignalOps[StrictSignal, A] {
       resetOnStop = false,
       parentDisplayName = displayName,
       displayNameSuffix = ".distinct*"
+    )
+  }
+
+  override def scanLeftRecover[B](
+    makeInitial: Try[A] => Try[B]
+  )(
+    fn: (Try[B], Try[A]) => Try[B]
+  ): StrictSignal[B] = {
+    LazyStrictSignal.scanLeftRecoverSignal(
+      parentSignal = this,
+      makeInitial = makeInitial,
+      fn = fn,
+      parentDisplayName = displayName,
+      displayNameSuffix = ".scanLeft*"
     )
   }
 

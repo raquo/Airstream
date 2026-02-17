@@ -25,6 +25,7 @@ trait Signal[+A]
 extends Observable[A]
 with BaseObservable[Signal, A]
 with SignalSource[A]
+with ScanLeftSignalOps[Signal, A]
 with DebugSignalOps[Signal, A]
 with DynamicImportSignalOps[A] // Provides `dynamicImport` method (Scala 3 only)
 {
@@ -62,11 +63,7 @@ with DynamicImportSignalOps[A] // Provides `dynamicImport` method (Scala 3 only)
     projectValue: A => B,
     recoverError: PartialFunction[Throwable, Option[B]]
   ): Signal[B] = {
-    new MapSignal[A, B](
-      parent = this,
-      project = projectValue,
-      recover = Some(recoverError)
-    )
+    new MapSignal[A, B](parent = this, projectValue, recover = Some(recoverError))
   }
 
   /** @param operator Note: Must not throw! */
@@ -142,22 +139,15 @@ with DynamicImportSignalOps[A] // Provides `dynamicImport` method (Scala 3 only)
 
   /** A signal that emits the accumulated value every time that the parent signal emits.
     *
-    * @param makeInitial Note: guarded against exceptions
-    * @param fn Note: guarded against exceptions
-    */
-  def scanLeft[B](makeInitial: A => B)(fn: (B, A) => B): Signal[B] = {
-    scanLeftRecover(parentInitial => parentInitial.map(makeInitial)) { (currentValue, nextParentValue) =>
-      Try(fn(currentValue.get, nextParentValue.get))
-    }
-  }
-
-  /** A signal that emits the accumulated value every time that the parent signal emits.
-    *
     * @param makeInitial currentParentValue => initialValue   Note: must not throw
     * @param fn (currentValue, nextParentValue) => nextValue
     * @return
     */
-  def scanLeftRecover[B](makeInitial: Try[A] => Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
+  override def scanLeftRecover[B](
+    makeInitial: Try[A] => Try[B]
+  )(
+    fn: (Try[B], Try[A]) => Try[B]
+  ): Signal[B] = {
     new ScanLeftSignal(
       parent = this,
       makeInitialValue = () => makeInitial(tryNow()),

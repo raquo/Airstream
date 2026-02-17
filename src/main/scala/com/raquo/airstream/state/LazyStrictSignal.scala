@@ -4,7 +4,7 @@ import com.raquo.airstream.common.SingleParentSignal
 import com.raquo.airstream.core.{Protected, Signal, Transaction}
 import com.raquo.airstream.debug.{Debugger, DebuggerSignal}
 import com.raquo.airstream.distinct.DistinctSignal
-import com.raquo.airstream.misc.MapSignal
+import com.raquo.airstream.misc.{MapSignal, ScanLeftSignal}
 
 import scala.util.Try
 
@@ -144,6 +144,27 @@ object LazyStrictSignal {
       override protected val displayNameSuffix: String = _dns
 
       override protected[this] def displayClassName: String = s"DistinctSignal+LazyStrictSignal"
+    }
+  }
+
+  def scanLeftRecoverSignal[A, B](
+    parentSignal: Signal[A],
+    makeInitial: Try[A] => Try[B],
+    fn: (Try[B], Try[A]) => Try[B],
+    parentDisplayName: => String,
+    displayNameSuffix: String,
+  ): StrictSignal[B] = {
+    val _pdn = parentDisplayName
+    val _dns = displayNameSuffix
+
+    new ScanLeftSignal(parentSignal, () => makeInitial(parentSignal.tryNow()), fn)
+      with LazyStrictSignal[A, B] {
+
+      override protected def parentDisplayName: String = _pdn
+
+      override protected val displayNameSuffix: String = _dns
+
+      override protected[this] def displayClassName: String = "ScanLeftSignal+LazyStrictSignal"
     }
   }
 

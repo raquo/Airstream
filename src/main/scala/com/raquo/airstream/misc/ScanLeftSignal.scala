@@ -13,8 +13,8 @@ import scala.util.Try
   * @param makeInitialValue Note: Must not throw!
   * @param fn Note: Must not throw!
   */
-class ScanLeftSignal[A, B](
-  override protected[this] val parent: Observable[A],
+class ScanLeftSignal[A, B, Parent <: Observable[A]](
+  override protected[this] val parent: Parent,
   makeInitialValue: () => Try[B],
   fn: (Try[B], Try[A]) => Try[B]
 ) extends SingleParentSignal[A, B] {
