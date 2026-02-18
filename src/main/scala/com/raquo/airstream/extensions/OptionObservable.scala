@@ -16,6 +16,16 @@ class OptionObservable[A, Self[+_] <: Observable[_]](
     observable.map(_.map(project))
   }
 
+  /** Maps Some[A] to Option[B], and None to None. */
+  def mapSomeToOption[B](project: A => Option[B]): Self[Option[B]] = {
+    observable.map(_.fold(Option.empty[B])(project))
+  }
+
+  /** Maps Some[A] to Seq[B], and None to empty Seq. */
+  def mapSomeToSeq[B, M[_]](project: A => M[B])(implicit splittable: Splittable[M]): Self[M[B]] = {
+    observable.map(_.fold(splittable.empty[B])(project))
+  }
+
   /** Filters the value in Some(x) */
   def mapFilterSome(passes: A => Boolean): Self[Option[A]] = {
     observable.map(_.filter(passes))
