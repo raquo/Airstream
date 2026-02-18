@@ -3,7 +3,7 @@ package com.raquo.airstream.core
 import com.raquo.airstream.extensions._
 import com.raquo.airstream.flatten.{MergingStrategy, SwitchingStrategy}
 import com.raquo.airstream.flatten.FlattenStrategy._
-import com.raquo.airstream.split.{SplittableOneObservable, SplittableSeqObservable}
+import com.raquo.airstream.split.{SplittableOneObservable, SplittableSeqObservable, SplittableSeqOptionObservable}
 import com.raquo.airstream.status.Status
 
 import scala.util.Try
@@ -21,8 +21,11 @@ object Observable
 extends ObservableMacroImplicits
 with ObservableLowPriorityImplicits {
 
-  /** Provides methods on Observable: split, splitByIndex */
+  /** Provides methods on Observable: splitSeq, splitSeqByIndex */
   implicit def toSplittableSeqObservable[Self[+_] <: Observable[_], M[_], Input](observable: BaseObservable[Self, M[Input]]): SplittableSeqObservable[Self, M, Input] = new SplittableSeqObservable(observable)
+
+  /** Provides methods on Observable: splitSomeSeq, splitSomeSeqByIndex */
+  implicit def toSplittableSeqOptionObservable[Self[+_] <: Observable[_], M[_], Input](observable: BaseObservable[Self, Option[M[Input]]]): SplittableSeqOptionObservable[Self, M, Input] = new SplittableSeqOptionObservable(observable)
 
   /** Provides methods on Observable: splitOne */
   implicit def toSplittableOneObservable[Self[+_] <: Observable[_], Input](observable: BaseObservable[Self, Input]): SplittableOneObservable[Self, Input] = new SplittableOneObservable(observable)

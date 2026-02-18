@@ -39,10 +39,12 @@ class EitherObservable[A, B, Self[+_] <: Observable[_]](
     observable.map(_.left.toOption)
   }
 
+  /** Maps `Right(a)` to `a`, and `Left(_)` to `ifLeft` */
   def rightOrElse[BB >: B](ifLeft: => BB): Self[BB] = {
     observable.map(_.getOrElse(ifLeft))
   }
 
+  /** Maps `Left(a)` to `a`, and `Right(_)` to `ifRight` */
   def leftOrElse[AA >: A](ifRight: => AA): Self[AA] = {
     observable.map(_.left.getOrElse(ifRight))
   }

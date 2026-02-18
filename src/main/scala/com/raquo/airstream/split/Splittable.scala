@@ -7,7 +7,7 @@ import scala.collection.{immutable, mutable}
 import scala.scalajs.js
 
 /** The `split` operator needs an implicit instance of Splittable[M] in order to work on observables of M[_] */
-trait Splittable[M[_]] {
+trait Splittable[M[_]] { self =>
 
   def create[A](values: Seq[A]): M[A]
 
@@ -57,6 +57,27 @@ trait Splittable[M[_]] {
   def isEmpty[A](inputs: M[A]): Boolean
 
   def empty[A]: M[A] = create(Nil)
+
+  lazy val toOptionSplittable: Splittable[({ type OptionM[V] = Option[M[V]] })#OptionM] =
+    new Splittable[({ type OptionM[V] = Option[M[V]] })#OptionM] {
+      override def create[A](values: Seq[A]): Option[M[A]] = {
+        Some(self.create(values))
+      }
+
+      /** Equivalent of list.map(project) */
+      override def map[A, B](inputs: Option[M[A]], project: A => B): Option[M[B]] = {
+        inputs.map(self.map(_, project))
+      }
+
+      /** Equivalent of list.foreach(f) */
+      override def foreach[A](inputs: Option[M[A]], f: A => Unit): Unit = {
+        inputs.foreach(self.foreach(_, f))
+      }
+
+      override def isEmpty[A](inputs: Option[M[A]]): Boolean = {
+        inputs.forall(self.isEmpty)
+      }
+    }
 }
 
 object Splittable extends LowPrioritySplittableImplicits {
