@@ -52,4 +52,28 @@ object KeyedDerivedVar {
   //     parent, signal, key, fullUpdateParent, displayNameSuffix
   //   )
   // }
+
+  /** Use this extractor if you want to name the `key` argument, e.g.:
+    * {{{
+    * seqSignal.splitSeq(_.id) { case KeyedStrictSignal(signal, id) => ... }
+    * }}}
+    */
+  def unapply[K, A](v: KeyedDerivedVar[K, _, A]): Some[(KeyedDerivedVar[K, _, A], K)] = {
+    Some((v, v.key))
+  }
+
+  /** Use this shorthand extractor if you want to name the `key` argument, e.g.:
+    * {{{
+    * seqSignal.splitSeq(_.id) { case withKey(signal, id) => ... }
+    * }}}
+    * Or (gasp!) using infix notation:
+    * {{{
+    * seqSignal.splitSeq(_.id) { case signal withKey id => ... }
+    * }}}
+    */
+  object varWithKey {
+    def unapply[K, A](v: KeyedDerivedVar[K, _, A]): Some[(KeyedDerivedVar[K, _, A], K)] = {
+      Some((v, v.key))
+    }
+  }
 }

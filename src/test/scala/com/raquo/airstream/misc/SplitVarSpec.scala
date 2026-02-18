@@ -5,6 +5,7 @@ import com.raquo.airstream.core.{Observer, Signal, Transaction}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, ManualOwner, Subscription}
+import com.raquo.airstream.split.KeyedDerivedVar.varWithKey
 import com.raquo.airstream.split.{DuplicateKeysConfig, KeyedStrictSignal}
 import com.raquo.airstream.split.KeyedStrictSignal.withKey
 import com.raquo.airstream.state.Var
@@ -58,8 +59,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
       val signal = myVar.splitSeq(
         key = _.id, distinctOp = identity
-      ) { fooVar =>
-        val key = fooVar.key
+      ) { case fooVar varWithKey key  =>
         val initialFoo = fooVar.now()
         assert(key == initialFoo.id, "Key does not match initial value")
         effects += Effect(s"init-child-$key", key + "-" + initialFoo.version.toString)
@@ -734,8 +734,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
-      val signal = myVar.splitSeqByIndex { fooVar =>
-        val index = fooVar.key
+      val signal = myVar.splitSeqByIndex { case fooVar varWithKey index =>
         val initialFoo = fooVar.now()
         effects += Effect(s"init-child-$index", initialFoo.id + "-" + initialFoo.version.toString)
         fooVar.signal.foreach { foo =>
@@ -983,8 +982,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
     val foosVar = Var[List[Foo]](Nil).setDisplayName("foosVar")
 
-    foosVar.splitSeq(_.id) { fooVar =>
-      val id = fooVar.key
+    foosVar.splitSeq(_.id) { case fooVar varWithKey id =>
       fooVar.setDisplayName(s"fooVar-${id}")
       effects += s"create-${fooVar.now().toString}"
       fooVars.update(id, fooVar)
