@@ -5,7 +5,8 @@ import com.raquo.airstream.core.{Observer, Signal, Transaction}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, ManualOwner, Subscription}
-import com.raquo.airstream.split.DuplicateKeysConfig
+import com.raquo.airstream.split.{DuplicateKeysConfig, KeyedStrictSignal}
+import com.raquo.airstream.split.KeyedStrictSignal.withKey
 import com.raquo.airstream.state.Var
 import com.raquo.ew.JsArray
 import org.scalatest.{Assertion, BeforeAndAfter}
@@ -190,9 +191,9 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
-      val signal = myVar.signal.split(_.id, distinctCompose = identity)(project = (key, initialFoo, fooSignal) => {
-        assert(key == initialFoo.id, "Key does not match initial value")
-        effects += Effect(s"init-child-$key", key + "-" + initialFoo.version.toString)
+      val signal = myVar.signal.splitSeq(_.id, distinctOp = identity) { case KeyedStrictSignal(fooSignal, key) =>
+        assert(key == fooSignal.now().id, "Key does not match initial value")
+        effects += Effect(s"init-child-$key", key + "-" + fooSignal.now().version.toString)
         DynamicSubscription.subscribeCallback(
           innerDynamicOwner,
           owner =>
@@ -213,7 +214,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
           )
         }
         Bar(key)
-      })
+      }
 
       DynamicSubscription.subscribeCallback(
         outerDynamicOwner,
@@ -271,9 +272,9 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
-      val signal = myVar.signal.split(_.id, distinctCompose = identity)(project = (key, initialFoo, fooSignal) => {
-        assert(key == initialFoo.id, "Key does not match initial value")
-        effects += Effect(s"init-child-$key", key + "-" + initialFoo.version.toString)
+      val signal = myVar.signal.splitSeq(_.id, distinctOp = identity) { case fooSignal withKey key =>
+        assert(key == fooSignal.now().id, "Key does not match initial value")
+        effects += Effect(s"init-child-$key", key + "-" + fooSignal.now().version.toString)
         DynamicSubscription.subscribeCallback(
           innerDynamicOwner,
           owner =>
@@ -283,7 +284,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
             }(owner)
         )
         Bar(key)
-      })
+      }
 
       DynamicSubscription.subscribeCallback(
         outerDynamicOwner,
@@ -334,11 +335,11 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
-      val signal = myVar.signal.split(_.id, distinctCompose = identity)(project = (key, initialFoo, fooSignal) => {
-        assert(key == initialFoo.id, "Key does not match initial value")
-        effects += Effect(s"init-child-$key", key + "-" + initialFoo.version.toString)
+      val signal = myVar.signal.splitSeq(_.id, distinctOp = identity) { case fooSignal withKey key =>
+        assert(key == fooSignal.now().id, "Key does not match initial value")
+        effects += Effect(s"init-child-$key", key + "-" + fooSignal.now().version.toString)
         Element(key, fooSignal)
-      })
+      }
 
       DynamicSubscription.subscribeCallback(
         dynamicOwner,
@@ -400,7 +401,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
     var fooSById = Map[String, Signal[Foo]]()
     var mapFooSById = Map[String, Signal[Option[Foo]]]()
 
-    val splitSignal = foosVar.signal.split(_.id)((id, _, fooS) => {
+    val splitSignal = foosVar.signal.splitSeq(_.id) { case fooS withKey id =>
       ownersById.get(id).foreach(_.killSubscriptions())
 
       val newOwner = new ManualOwner
@@ -410,7 +411,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
       val mapFooS = foosVar.signal.map(_.find(_.id == id))
       mapFooSById = mapFooSById.updated(id, mapFooS)
-    })
+    }
 
     // --
 
@@ -510,7 +511,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
     var fooSById = Map[String, Signal[Foo]]()
     var mapFooSById = Map[String, Signal[Option[Foo]]]()
 
-    val splitSignal = foosBus.stream.split(_.id)((id, _, fooS) => {
+    val splitSignal = foosBus.stream.splitSeq(_.id) { case fooS withKey id =>
       ownersById.get(id).foreach(_.killSubscriptions())
 
       val newOwner = new ManualOwner
@@ -520,7 +521,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
       val mapFooS = foosBus.stream.startWith(Nil).map(_.find(_.id == id))
       mapFooSById = mapFooSById.updated(id, mapFooS)
-    })
+    }
 
     // --
 
@@ -621,15 +622,15 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
     val owner = new TestableOwner
 
-    val signal = myVar.signal.split(_.id)(project = (key, initialFoo, fooSignal) => {
-      assert(key == initialFoo.id, "Key does not match initial value")
-      effects += Effect("init-child", key + "-" + initialFoo.version.toString)
+    val signal = myVar.signal.splitSeq(_.id) { case fooSignal withKey key =>
+      assert(key == fooSignal.now().id, "Key does not match initial value")
+      effects += Effect("init-child", key + "-" + fooSignal.now().version.toString)
       fooSignal.foreach { foo =>
         assert(key == foo.id, "Subsequent value does not match initial key")
         effects += Effect("update-child", foo.id + "-" + foo.version.toString)
       }(owner)
       Bar(key)
-    })
+    }
 
     signal.foreach { result =>
       effects += Effect("result", result.toString)

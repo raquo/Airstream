@@ -559,36 +559,34 @@ class GlitchSpec extends UnitSpec {
       intVar
         .signal
         .idWrap
-        .split(
+        .splitSeq(
           key = _ => "outer",
-          distinctCompose = identity
-        ) {
-          (_, outerInit, outerChildSignal) =>
-            effects += Effect("outer-cb", outerInit)
-            outerChildSignal
-              .setDisplayName(s"outer-child@${outerChildSignal}")
-              .foreach { v =>
-                effects += Effect("outer-child-update", v)
-              }(owner)
+          distinctOp = identity
+        ) { outerChildSignal =>
+          effects += Effect("outer-cb", outerChildSignal.now())
+          outerChildSignal
+            .setDisplayName(s"outer-child@${outerChildSignal}")
+            .foreach { v =>
+              effects += Effect("outer-child-update", v)
+            }(owner)
 
-            val splitInner = outerChildSignal
-              .idWrap
-              .split(
-                key = _ => "inner",
-                distinctCompose = identity
-              ) {
-                (_, innerInit, innerChildSignal) =>
-                  effects += Effect("inner-cb", innerInit)
-                  innerChildSignal
-                    .setDisplayName(s"inner-child@${innerChildSignal}")
-                    .foreach { v =>
-                      effects += Effect("inner-child-update", v)
-                    }(owner)
-                  x += 100
-                  x
-              }(Splittable.UnsafeIdSplittable)
-            splitInner
-              .setDisplayName(s"split-inner@${splitInner}")
+          val splitInner = outerChildSignal
+            .idWrap
+            .splitSeq(
+              key = _ => "inner",
+              distinctOp = identity
+            ) { innerChildSignal =>
+              effects += Effect("inner-cb", innerChildSignal.now())
+              innerChildSignal
+                .setDisplayName(s"inner-child@${innerChildSignal}")
+                .foreach { v =>
+                  effects += Effect("inner-child-update", v)
+                }(owner)
+              x += 100
+              x
+            }(Splittable.UnsafeIdSplittable)
+          splitInner
+            .setDisplayName(s"split-inner@${splitInner}")
         }(Splittable.UnsafeIdSplittable)
         .setDisplayName("split-outer")
         .idUnwrap
