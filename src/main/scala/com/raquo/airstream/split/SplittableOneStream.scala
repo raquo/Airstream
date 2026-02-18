@@ -18,7 +18,7 @@ class SplittableOneStream[Input](
     project: StrictSignal[Input] => Output,
     startWith: Output
   ): Signal[Output] = {
-    stream.toWeakSignal.splitOption(project, startWith)
+    stream.toWeakSignal.splitOption(project).someOrElse(startWith)
   }
 
 }

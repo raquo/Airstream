@@ -4,6 +4,8 @@ import com.raquo.airstream.core.{BaseObservable, Observable, Signal}
 import com.raquo.airstream.split.{DuplicateKeysConfig, Splittable}
 import com.raquo.airstream.state.StrictSignal
 
+import scala.annotation.nowarn
+
 /** See also: [[OptionStream]] for stream-specific option operators */
 class OptionObservable[A, Self[+_] <: Observable[_]](
   private val observable: BaseObservable[Self, Option[A]]
@@ -40,7 +42,6 @@ class OptionObservable[A, Self[+_] <: Observable[_]](
   }
 
   /** This `.split`-s an Observable of an Option by the Option's `isDefined` property.
-    * If you want a different key, use the .split operator directly.
     * If the observable is a stream, it's treated as if it contains None before it emits its first event.
     *
     * @param project - signalOfInput => output
@@ -56,6 +57,7 @@ class OptionObservable[A, Self[+_] <: Observable[_]](
     *                  `Some(a)` to `None`. `ifEmpty` is NOT re-evaluated when the parent
     *                  observable emits `None` if the last event it emitted was also a `None`.
     */
+  @deprecated("Use splitOption(project).someOrElse(ifEmpty) instead of splitOption(project, ifEmpty)", since = "18.0.0-M2")
   def splitOption[B](
     project: StrictSignal[A] => B,
     ifEmpty: => B
@@ -78,12 +80,23 @@ class OptionObservable[A, Self[+_] <: Observable[_]](
       .map(_.getOrElse(ifEmpty))
   }
 
+/** This `.split`-s an Observable of an Option by the Option's `isDefined` property.
+  * If the observable is a stream, it's treated as if it contains None before it emits its first event.
+  *
+  * @param project - signalOfInput => output
+  *
+  *                  `project` is called whenever the parent observable switches from `None` to `Some(value)`.
+  *                  `signalOfInput` starts with an initial `Some(value)`, and updates whenever
+  *                  the parent observable updates from `Some(a)` to `Some(b)`.
+  *
+  *                  You can get the signal's current value with `.now()`.
+  */
   def splitOption[B](
     project: StrictSignal[A] => B
   ): Signal[Option[B]] = {
-    splitOption(
+    (splitOption(
       signal => Some(project(signal)),
       ifEmpty = None
-    )
+    ): @nowarn("msg=deprecated"))
   }
 }

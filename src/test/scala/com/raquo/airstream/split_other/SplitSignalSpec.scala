@@ -919,8 +919,8 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
 
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
-      val signal = myVar.signal.splitOption(
-        fooSignal => {
+      val signal = myVar.signal
+        .splitOption { fooSignal =>
           val initialFoo = fooSignal.now()
           val initialKey = s"${initialFoo.id}-${initialFoo.version}"
           effects += Effect(s"init-child-$initialKey", initialKey)
@@ -931,12 +931,11 @@ class SplitSignalSpec extends UnitSpec with BeforeAndAfter {
             effects += Effect(s"update-child-$updatedKey", updatedKey)
           }(owner))
           Bar(initialKey)
-        },
-        ifEmpty = {
+        }
+        .someOrElse {
           effects += Effect("ifEmpty-eval", "")
           Bar("empty")
         }
-      )
 
       // --
 

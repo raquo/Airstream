@@ -5,8 +5,8 @@ import com.raquo.airstream.core.{Observer, Signal, Transaction}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, ManualOwner, Subscription}
-import com.raquo.airstream.split.KeyedDerivedVar.varWithKey
 import com.raquo.airstream.split.{DuplicateKeysConfig, KeyedStrictSignal}
+import com.raquo.airstream.split.KeyedDerivedVar.varWithKey
 import com.raquo.airstream.split.KeyedStrictSignal.withKey
 import com.raquo.airstream.state.Var
 import com.raquo.ew.JsArray
@@ -59,7 +59,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
       val signal = myVar.splitSeq(
         key = _.id, distinctOp = identity
-      ) { case fooVar varWithKey key  =>
+      ) { case fooVar varWithKey key =>
         val initialFoo = fooVar.now()
         assert(key == initialFoo.id, "Key does not match initial value")
         effects += Effect(s"init-child-$key", key + "-" + initialFoo.version.toString)
@@ -871,8 +871,8 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
-      val signal = myVar.splitOption(
-        fooVar => {
+      val signal = myVar
+        .splitOption { fooVar =>
           val initialFoo = fooVar.now()
           val initialKey = s"${initialFoo.id}-${initialFoo.version}"
           effects += Effect(s"init-child-$initialKey", initialKey)
@@ -883,12 +883,11 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
             effects += Effect(s"update-child-$updatedKey", updatedKey)
           }(owner))
           Bar(initialKey)
-        },
-        ifEmpty = {
+        }
+        .someOrElse {
           effects += Effect("ifEmpty-eval", "")
           Bar("empty")
         }
-      )
 
       // --
 

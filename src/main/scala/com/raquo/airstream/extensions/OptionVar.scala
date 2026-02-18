@@ -4,12 +4,13 @@ import com.raquo.airstream.core.Signal
 import com.raquo.airstream.split.{DuplicateKeysConfig, Splittable}
 import com.raquo.airstream.state.{LazyDerivedVar, Var}
 
+import scala.annotation.nowarn
+
 class OptionVar[A](
   private val v: Var[Option[A]]
 ) extends AnyVal {
 
   /** This `.split`-s a Var of an Option by the Option's `isDefined` property.
-    * If you want a different key, use the .split operator directly.
     *
     * @param project - varOfInput => output
     *
@@ -22,6 +23,7 @@ class OptionVar[A](
     *                  starts with a `None`. `ifEmpty` is NOT re-evaluated when the
     *                  parent var emits `None` if its value is already `None`.
     */
+  @deprecated("Use splitOption(project).someOrElse(ifEmpty) instead of splitOption(project, ifEmpty)", since = "18.0.0-M2")
   def splitOption[B](
     project: Var[A] => B,
     ifEmpty: => B
@@ -53,9 +55,9 @@ class OptionVar[A](
   def splitOption[B](
     project: Var[A] => B
   ): Signal[Option[B]] = {
-    splitOption(
+    (splitOption(
       _var => Some(project(_var)),
       ifEmpty = None
-    )
+    ): @nowarn("msg=deprecated"))
   }
 }
