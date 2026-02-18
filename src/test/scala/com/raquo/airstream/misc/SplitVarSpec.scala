@@ -191,7 +191,7 @@ class SplitVarSpec extends UnitSpec with BeforeAndAfter {
 
       // #Note: `identity` here means we're not using `distinct` to filter out redundancies in fooSignal
       //  We test like this to make sure that the underlying splitting machinery works correctly without this crutch
-      val signal = myVar.signal.splitSeq(_.id, distinctOp = identity) { case KeyedStrictSignal(fooSignal, key) =>
+      val signal = myVar.signal.splitSeq(_.id, distinctOp = identity) { case withKey(fooSignal, key) =>
         assert(key == fooSignal.now().id, "Key does not match initial value")
         effects += Effect(s"init-child-$key", key + "-" + fooSignal.now().version.toString)
         DynamicSubscription.subscribeCallback(
