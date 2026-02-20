@@ -5,6 +5,30 @@ import scala.util.{Failure, Success, Try}
 /** Operators related to bringing values from the error channel into the main channel */
 trait RecoverOps[+Self[+_], +A] {
 
+  // #TODO[Test]
+  /** Run a callback for every error, without affecting error propagation. */
+  def tapEachError[U](f: Throwable => U): Self[A] = {
+    // #TODO[API] To get rid of the hacks, we need mapRecover to handle
+    //  `Try[A] => Try[B]` but this is a significant change in the MapStream / MapSignal capability.
+    // This is a hacky partial function that calls f(err)
+    // without affecting the error propagation. It is crucial
+    // that this function is NOT defined for `err`, so that
+    // mapRecover does not swallow the error.
+    // #Warning: mapRecover impl. must only call .isDefinedAt once per event
+    //  to avoid `f` being called multiple times. We achieve this with pf.lift.
+    val pf = new PartialFunction[Throwable, Option[A]] {
+      override def isDefinedAt(err: Throwable): Boolean = {
+        f(err)
+        false
+      }
+
+      override def apply(err: Throwable): Option[A] = {
+        throw new Exception(s"tapEachError: executing pf.apply for ${err}. This is a bug in Airstream.")
+      }
+    }
+    mapRecover(identity, pf)
+  }
+
   // @TODO[API] I don't like the Option[O] output type here very much. We should consider a sentinel error object instead (need to check performance). Or maybe add a recoverOrSkip method or something?
   /** @param pf Note: guarded against exceptions */
   def recover[B >: A](pf: PartialFunction[Throwable, Option[B]]): Self[B] = {

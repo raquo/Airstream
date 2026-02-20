@@ -97,10 +97,12 @@ with DebugOps[Self, A] {
     FlatMapStatusObservable[A, B, Self](this, project)
   }
 
+  // Removed because IntelliJ can't handle this overload if you specify a `project` that is case-based like `{ case (Some(...), bar) => ... }`
+  // If needed, we can add it back under a different name, e.g. flatMapToWithStatus
   /** Shorthand for `flatMapWithStatus(_ => innerStream)`. */
-  def flatMapWithStatus[B](innerStream: => EventStream[B]): Self[Status[A, B]] = {
-    flatMapWithStatus(_ => innerStream)
-  }
+  // def flatMapWithStatus[B](innerStream: => EventStream[B]): Self[Status[A, B]] = {
+  //   flatMapWithStatus(_ => innerStream)
+  // }
 
   def toStreamIfSignal[B >: A](ifSignal: Signal[A] => EventStream[B]): EventStream[B] = {
     matchStreamOrSignal(identity, ifSignal)
