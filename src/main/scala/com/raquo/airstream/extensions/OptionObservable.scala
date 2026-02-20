@@ -47,7 +47,7 @@ class OptionObservable[A, Self[+_] <: Observable[_]](
   }
 
   /** Maps Option[A] to option.getOrElse(ifEmpty) */
-  def someOrElse(ifEmpty: => A): Self[A] = {
+  def someOrElse[AA >: A](ifEmpty: => AA): Self[AA] = {
     observable.map(_.getOrElse(ifEmpty))
   }
 
