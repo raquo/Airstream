@@ -1,6 +1,7 @@
 package com.raquo.airstream.split
 
 import com.raquo.airstream.core.{EventStream, Signal, Observable, BaseObservable}
+import com.raquo.airstream.state.StrictSignal
 import scala.quoted.{Expr, Quotes, Type}
 import scala.annotation.{unused, targetName}
 import scala.compiletime.summonInline
@@ -55,7 +56,7 @@ object SplitMatchOneMacros {
   private[airstream] inline def delegateHandleCase[Self[+_] <: Observable[_], I, O, A, B, O1 >: O](
     inline matchSplitObservable: SplitMatchOneObservable[Self, I, O],
     inline casePf: PartialFunction[A, B],
-    inline handleFn: (B, Signal[B]) => O1
+    inline handleFn: StrictSignal[B] => O1
   ) = ${
     handleCaseImpl('{ matchSplitObservable }, '{ casePf }, '{ handleFn })
   }
@@ -77,14 +78,14 @@ object SplitMatchOneMacros {
 
   private[airstream] inline def delegateHandleTypeApply[Self[+_] <: Observable[_], I, O, T, O1 >: O](
     inline matchTypeObserver: SplitMatchOneTypeObservable[Self, I, O, T],
-    inline handleFn: (T, Signal[T]) => O1
+    inline handleFn: StrictSignal[T] => O1
   ) = ${
     handleTypeApplyImpl('{ matchTypeObserver }, '{ handleFn })
   }
 
   private[airstream] inline def delegateHandleValueApply[Self[+_] <: Observable[_], I, O, V, O1 >: O](
     inline matchValueObservable: SplitMatchOneValueObservable[Self, I, O, V],
-    inline handleFn: (V, Signal[V]) => O1
+    inline handleFn: StrictSignal[V] => O1
   ) = ${
     handleValueApplyImpl('{ matchValueObservable }, '{ handleFn })
   }
@@ -104,7 +105,7 @@ object SplitMatchOneMacros {
   private def handleCaseImpl[Self[+_] <: Observable[_]: Type, I: Type, O: Type, O1 >: O: Type, A: Type, B: Type](
     matchSplitObservableExpr: Expr[SplitMatchOneObservable[Self, I, O]],
     casePfExpr: Expr[PartialFunction[A, B]],
-    handleFnExpr: Expr[Function2[B, Signal[B], O1]]
+    handleFnExpr: Expr[Function1[StrictSignal[B], O1]]
   )(
     using quotes: Quotes
   ): Expr[SplitMatchOneObservable[Self, I, O1]] = {
@@ -174,7 +175,7 @@ object SplitMatchOneMacros {
 
   private def handleTypeApplyImpl[Self[+_] <: Observable[_]: Type, I: Type, O: Type, O1 >: O: Type, T: Type](
     matchSplitObservableExpr: Expr[SplitMatchOneTypeObservable[Self, I, O, T]],
-    handleFnExpr: Expr[Function2[T, Signal[T], O1]]
+    handleFnExpr: Expr[Function1[StrictSignal[T], O1]]
   )(
     using quotes: Quotes
   ): Expr[SplitMatchOneObservable[Self, I, O1]] = {
@@ -246,7 +247,7 @@ object SplitMatchOneMacros {
 
   private def handleValueApplyImpl[Self[+_] <: Observable[_]: Type, I: Type, O: Type, O1 >: O: Type, V: Type](
     matchValueObservableExpr: Expr[SplitMatchOneValueObservable[Self, I, O, V]],
-    handleFnExpr: Expr[Function2[V, Signal[V], O1]]
+    handleFnExpr: Expr[Function1[StrictSignal[V], O1]]
   )(
     using quotes: Quotes
   ): Expr[SplitMatchOneObservable[Self, I, O1]] = {
@@ -291,7 +292,7 @@ object SplitMatchOneMacros {
     caseExprSeq: Seq[Expr[CaseAny]],
     handlerExprSeq: Seq[Expr[HandlerAny[O]]],
     casePfExpr: Expr[PartialFunction[A, B]],
-    handleFnExpr: Expr[Function2[B, Signal[B], O1]]
+    handleFnExpr: Expr[Function1[StrictSignal[B], O1]]
   )(
     using quotes: Quotes
   ): Expr[SplitMatchOneObservable[Self, I, O1]] = {
@@ -317,8 +318,8 @@ object SplitMatchOneMacros {
         val bSignal = dataSignal.map(_._2)
         handlers.view.zipWithIndex.map(_.swap).toMap
           .getOrElse(idx, IllegalStateException("Illegal SplitMatchOne state. This is a bug in Airstream."))
-          .asInstanceOf[Function2[Any, Any, O]]
-          .apply(bSignal.now(), bSignal)
+          .asInstanceOf[Function1[Any, O]]
+          .apply(bSignal)
       }
   }
 

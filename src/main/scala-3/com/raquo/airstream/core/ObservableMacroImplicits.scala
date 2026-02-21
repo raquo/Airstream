@@ -4,6 +4,7 @@ import com.raquo.airstream.core.{Observable, BaseObservable, Signal}
 import com.raquo.airstream.distinct.DistinctOps
 import com.raquo.airstream.distinct.DistinctOps.DistinctOp
 import com.raquo.airstream.split.*
+import com.raquo.airstream.state.StrictSignal
 
 trait ObservableMacroImplicits {
 
@@ -15,7 +16,7 @@ trait ObservableMacroImplicits {
   extension [Self[+_] <: Observable[_], I, O](
     inline matchSplitObservable: SplitMatchOneObservable[Self, I, O]
   ) {
-    inline def handleCase[A, B, O1 >: O](inline casePf: PartialFunction[A, B])(inline handleFn: (B, Signal[B]) => O1): SplitMatchOneObservable[Self, I, O1] =
+    inline def handleCase[A, B, O1 >: O](inline casePf: PartialFunction[A, B])(inline handleFn: StrictSignal[B] => O1): SplitMatchOneObservable[Self, I, O1] =
       SplitMatchOneMacros.delegateHandleCase(matchSplitObservable, casePf, handleFn)
 
     inline def handleType[T]: SplitMatchOneTypeObservable[Self, I, O, T] =
@@ -26,13 +27,13 @@ trait ObservableMacroImplicits {
   }
 
   extension [Self[+_] <: Observable[_], I, O, T](inline matchTypeObserver: SplitMatchOneTypeObservable[Self, I, O, T]) {
-    inline def apply[O1 >: O](inline handleFn: (T, Signal[T]) => O1): SplitMatchOneObservable[Self, I, O1] =
+    inline def apply[O1 >: O](inline handleFn: StrictSignal[T] => O1): SplitMatchOneObservable[Self, I, O1] =
       SplitMatchOneMacros.delegateHandleTypeApply(matchTypeObserver, handleFn)
   }
 
   extension [Self[+_] <: Observable[_], I, O, V](inline matchValueObservable: SplitMatchOneValueObservable[Self, I, O, V]) {
     inline def apply[O1 >: O](inline handle: => O1): SplitMatchOneObservable[Self, I, O1] =
-      SplitMatchOneMacros.delegateHandleValueApply(matchValueObservable, (_, _) => handle)
+      SplitMatchOneMacros.delegateHandleValueApply(matchValueObservable, _ => handle)
   }
 
   extension [I, O](inline matchSplitObservable: SplitMatchOneObservable[Signal, I, O]) {
@@ -56,7 +57,7 @@ trait ObservableMacroImplicits {
   extension [Self[+_] <: Observable[_], I, K, O, CC[_]](
     inline matchSplitObservable: SplitMatchSeqObservable[Self, I, K, O, CC]
   ) {
-    inline def handleCase[A, B, O1 >: O](inline casePf: PartialFunction[A, B])(inline handleFn: (B, Signal[B]) => O1): SplitMatchSeqObservable[Self, I, K, O1, CC] =
+    inline def handleCase[A, B, O1 >: O](inline casePf: PartialFunction[A, B])(inline handleFn: Signal[B] => O1): SplitMatchSeqObservable[Self, I, K, O1, CC] =
       SplitMatchSeqMacros.delegateHandleCase(matchSplitObservable, casePf, handleFn)
 
     inline def handleType[T]: SplitMatchSeqTypeObservable[Self, I, K, O, CC, T] =
@@ -70,13 +71,13 @@ trait ObservableMacroImplicits {
   }
 
   extension [Self[+_] <: Observable[_], I, K, O, CC[_], T](inline matchTypeObserver: SplitMatchSeqTypeObservable[Self, I, K, O, CC, T]) {
-    inline def apply[O1 >: O](inline handleFn: (T, Signal[T]) => O1): SplitMatchSeqObservable[Self, I, K, O1, CC] =
+    inline def apply[O1 >: O](inline handleFn: Signal[T] => O1): SplitMatchSeqObservable[Self, I, K, O1, CC] =
       SplitMatchSeqMacros.delegateHandleTypeApply(matchTypeObserver, handleFn)
   }
 
   extension [Self[+_] <: Observable[_], I, K, O, CC[_], V](inline matchValueObservable: SplitMatchSeqValueObservable[Self, I, K, O, CC, V]) {
 
     inline def apply[O1 >: O](inline handle: => O1): SplitMatchSeqObservable[Self, I, K, O1, CC] =
-      SplitMatchSeqMacros.delegateHandleValueApply(matchValueObservable, (_, _) => handle)
+      SplitMatchSeqMacros.delegateHandleValueApply(matchValueObservable, _ => handle)
   }
 }
