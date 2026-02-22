@@ -83,6 +83,7 @@ with DebugSignalOps[StrictSignal, A] {
     )
   }
 
+  @deprecated("Use debugSpyAll instead of debugWith", since = "18.0.0-M3")
   override def debugWith(debugger: Debugger[A]): StrictSignal[A] =
     LazyStrictSignal.debuggerSignal(
       parentSignal = this,

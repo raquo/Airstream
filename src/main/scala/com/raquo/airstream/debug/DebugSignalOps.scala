@@ -27,9 +27,8 @@ extends DebugOps[Self, A] {
     * evaluating signal's initial value onStart, as well as on subsequent
     * re-starts when the signal is syncing its value to the parent's new
     * current value. */
-  def debugSpyEvalFromParent(fn: Try[A] => Unit): Self[A] = {
-    val debugger = Debugger(onEvalFromParent = fn)
-    debugWith(debugger)
+  def debugSpyEvalFromParent(onEvalFromParent: Try[A] => Unit): Self[A] = {
+    debugSpyAll(onEvalFromParent = onEvalFromParent)
   }
 
   /** Log when signal is evaluating its initial value (if `when` passes at that time) */
@@ -40,7 +39,7 @@ extends DebugOps[Self, A] {
     debugSpyEvalFromParent { value =>
       if (when(value)) {
         value match {
-          case Success(ev) => log("eval-from-parent", Some(ev), useJsLogger)
+          case Success(ev) => log("eval-from-parent[value]", Some(ev), useJsLogger)
           case Failure(err) => log("eval-from-parent[error]", Some(err), useJsLogger)
         }
       }

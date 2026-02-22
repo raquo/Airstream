@@ -4,6 +4,7 @@ import com.raquo.airstream.core.{Named, Observable}
 import com.raquo.airstream.util.always
 import org.scalajs.dom
 
+import scala.annotation.nowarn
 import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
@@ -37,8 +38,7 @@ trait DebugOps[+Self[+_] <: Named, +A] {
     * the "foo" displayName of `stream` itself.
     */
   def debugWithName(displayName: String): Self[A] = {
-    val emptyDebugger = Debugger()
-    debugWith(emptyDebugger).setDisplayName(displayName)
+    debugSpyAll().setDisplayName(displayName)
   }
 
   // -- Callback spies --
@@ -46,17 +46,16 @@ trait DebugOps[+Self[+_] <: Named, +A] {
   /** Execute fn on every emitted event or error
     * Note: for Signals this also triggers onStart (with the current value at the time)
     */
-  def debugSpy(fn: Try[A] => Unit): Self[A] = {
-    val debugger = Debugger(onFire = fn)
-    debugWith(debugger)
+  def debugSpy(onFire: Try[A] => Unit): Self[A] = {
+    debugSpyAll(onFire = onFire)
   }
 
   /** Execute fn on every emitted event (but not error)
     * Note: for Signals this also triggers onStart (if current value is not an error)
     */
-  def debugSpyEvents(fn: A => Unit): Self[A] = {
+  def debugSpyEvents(onEvent: A => Unit): Self[A] = {
     debugSpy {
-      case Success(ev) => fn(ev)
+      case Success(ev) => onEvent(ev)
       case _ => ()
     }
   }
@@ -64,36 +63,55 @@ trait DebugOps[+Self[+_] <: Named, +A] {
   /** Execute fn on every emitted error (but not regular events)
     * Note: for Signals this also triggers onStart (if current value is an error)
     */
-  def debugSpyErrors(fn: Throwable => Unit): Self[A] = {
+  def debugSpyErrors(onError: Throwable => Unit): Self[A] = {
     debugSpy {
-      case Failure(err) => fn(err)
+      case Failure(err) => onError(err)
       case _ => ()
     }
   }
 
-  /** Execute callbacks on when the observable starts and stops
+  /** Execute callbacks when the observable starts and stops
     *
-    * @param startFn topoRank => ()
+    * @param onStart topoRank => ()
     */
-  def debugSpyLifecycle(startFn: Int => Unit, stopFn: () => Unit): Self[A] = {
-    val debugger = Debugger(
-      onStart = () => startFn(debugTopoRank),
-      onStop = stopFn
+  def debugSpyLifecycle(onStart: Int => Unit, onStop: () => Unit): Self[A] = {
+    debugSpyAll(
+      onStart = onStart,
+      onStop = onStop
     )
-    debugWith(debugger)
   }
 
-  /** Execute callbacks on when the observable starts
+  /** Execute callbacks when the observable starts
     *
-    * @param fn topoRank => ()
+    * @param onStart topoRank => ()
     */
-  def debugSpyStarts(fn: Int => Unit): Self[A] = {
-    debugSpyLifecycle(startFn = fn, stopFn = () => ())
+  def debugSpyStarts(onStart: Int => Unit): Self[A] = {
+    debugSpyLifecycle(onStart = onStart, onStop = () => ())
   }
 
-  /** Execute callbacks on when the observable stops */
-  def debugSpyStops(fn: () => Unit): Self[A] = {
-    debugSpyLifecycle(startFn = _ => (), stopFn = fn)
+  /** Execute callbacks when the observable stops */
+  def debugSpyStops(onStop: () => Unit): Self[A] = {
+    debugSpyLifecycle(onStart = _ => (), onStop = onStop)
+  }
+
+  /** Execute callbacks on any of the supported hooks.
+    * Note that for signals, `onFire` also fires onStart with the current value. // #TODO[API] does not seem very robust...
+    * Note that `onEvalFromParent` is only applicable to signals, not streams.
+    */
+  def debugSpyAll(
+    onStart: Int => Unit = _ => (),
+    onStop: () => Unit = () => (),
+    onFire: Try[A] => Unit = _ => (),
+    onEvalFromParent: Try[A] => Unit = _ => ()
+  ): Self[A] = {
+    (debugWith(
+      Debugger(
+        onStart = () => onStart(debugTopoRank),
+        onStop = onStop,
+        onFire = onFire,
+        onEvalFromParent = onEvalFromParent
+      )
+    ): @nowarn("msg=deprecated"))
   }
 
   // -- Logging --
@@ -152,12 +170,12 @@ trait DebugOps[+Self[+_] <: Named, +A] {
     logStops: Boolean = true
   ): Self[A] = {
     debugSpyLifecycle(
-      startFn = topoRank => {
+      onStart = topoRank => {
         if (logStarts) {
           log("started", Some(s"topoRank = $topoRank"), useJsLogger = false)
         }
       },
-      stopFn = () => {
+      onStop = () => {
         if (logStops) {
           log("stopped", value = None, useJsLogger = false)
         }
@@ -170,6 +188,26 @@ trait DebugOps[+Self[+_] <: Named, +A] {
 
   /** Log when the observable stops */
   def debugLogStops: Self[A] = debugLogLifecycle(logStarts = false)
+
+  /** Debug log everything. */
+  def debugLogAll(useJsLogger: Boolean = false): Self[A] = {
+    debugSpyAll(
+      onStart = topoRank => {
+        log("started", Some(s"topoRank = $topoRank"), useJsLogger = false)
+      },
+      onStop = () => {
+        log("stopped", value = None, useJsLogger = false)
+      },
+      onFire = {
+        case Success(ev) => log("event", Some(ev), useJsLogger)
+        case Failure(err) => log("error", Some(err), useJsLogger)
+      },
+      onEvalFromParent = {
+        case Success(ev) => log("eval-from-parent[value]", Some(ev), useJsLogger)
+        case Failure(err) => log("eval-from-parent[error]", Some(err), useJsLogger)
+      }
+    )
+  }
 
   protected[this] def log(
     action: String,
@@ -232,27 +270,28 @@ trait DebugOps[+Self[+_] <: Named, +A] {
   /** Trigger JS debugger when the observable starts and stops */
   def debugBreakLifecycle: Self[A] = {
     debugSpyLifecycle(
-      startFn = _ => js.special.debugger(),
-      stopFn = () => js.special.debugger()
+      onStart = _ => js.special.debugger(),
+      onStop = () => js.special.debugger()
     )
   }
 
   /** Trigger JS debugger when the observable starts */
   def debugBreakStarts: Self[A] = {
     debugSpyLifecycle(
-      startFn = _ => js.special.debugger(),
-      stopFn = () => ()
+      onStart = _ => js.special.debugger(),
+      onStop = () => ()
     )
   }
 
   /** Trigger JS debugger when the observable stops */
   def debugBreakStops: Self[A] = {
     debugSpyLifecycle(
-      startFn = _ => (),
-      stopFn = () => js.special.debugger()
+      onStart = _ => (),
+      onStop = () => js.special.debugger()
     )
   }
 
+  // #TODO[API] Remove this and switch to debugSpyAll being the abstract method
   /** Create a new observable that listens to this one and has a debugger attached.
     *
     * Use the resulting observable in place of the original observable in your code.
@@ -261,5 +300,6 @@ trait DebugOps[+Self[+_] <: Named, +A] {
     * There are more convenient methods available from [[DebugOps]] and [[DebugSignalOps]],
     * such as debugLog(), debugSpyEvents(), etc.
     */
+  @deprecated("Use debugSpyAll instead of debugWith", since = "18.0.0-M3")
   def debugWith(debugger: Debugger[A]): Self[A]
 }

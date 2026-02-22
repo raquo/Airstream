@@ -55,8 +55,8 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
       .debugSpyEvents(ev => Calculation.log("events-2", calculations)(Success(ev)))
       .debugSpyErrors(err => Calculation.log("events-2", calculations)(Failure(err)))
       .debugSpyLifecycle(
-        startFn = _ => Calculation.log("events-2-start", calculations)(Success(-1)),
-        stopFn = () => Calculation.log("events-2-stop", calculations)(Success(-1))
+        onStart = _ => Calculation.log("events-2-start", calculations)(Success(-1)),
+        onStop = () => Calculation.log("events-2-stop", calculations)(Success(-1))
       )
 
     val obs1 = Observer.empty[Int].debugSpy(ev => Calculation.log("obs-1", calculations)(ev))
@@ -219,8 +219,8 @@ class DebugSpec extends UnitSpec with BeforeAndAfter {
       .debugSpyEvents(ev => Calculation.log("signal-2", calculations)(Success(ev)))
       .debugSpyErrors(err => Calculation.log("signal-2", calculations)(Failure(err)))
       .debugSpyLifecycle(
-        startFn = _ => Calculation.log("signal-2-start", calculations)(Success(-1)),
-        stopFn = () => Calculation.log("signal-2-stop", calculations)(Success(-1))
+        onStart = _ => Calculation.log("signal-2-start", calculations)(Success(-1)),
+        onStop = () => Calculation.log("signal-2-stop", calculations)(Success(-1))
       )
 
     val obs1 = Observer.fromTry[Int](ev => Calculation.log("obs-1", calculations)(ev))

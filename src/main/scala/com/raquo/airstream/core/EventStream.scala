@@ -322,6 +322,7 @@ with DynamicImportStreamOps[A] // Provides `dynamicImport` method (Scala 3 only)
   }
 
   /** See also various debug methods in [[com.raquo.airstream.debug.DebugOps]] */
+  @deprecated("Use debugSpyAll instead of debugWith", since = "18.0.0-M3")
   override def debugWith(debugger: Debugger[A]): EventStream[A] = {
     new DebuggerStream[A](this, debugger)
   }

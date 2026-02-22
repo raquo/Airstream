@@ -164,6 +164,7 @@ with DynamicImportSignalOps[A] // Provides `dynamicImport` method (Scala 3 only)
   }
 
   /** See also debug methods in [[DebugOps]] and [[DebugSignalOps]] */
+  @deprecated("Use debugSpyAll instead of debugWith", since = "18.0.0-M3")
   override def debugWith(debugger: Debugger[A]): Signal[A] = {
     new DebuggerSignal[A](this, debugger)
   }
