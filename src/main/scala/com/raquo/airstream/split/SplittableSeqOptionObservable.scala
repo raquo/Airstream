@@ -23,7 +23,7 @@ class SplittableSeqOptionObservable[Self[+_] <: Observable[_], M[_], Input](
       observable.toSignalIfStream(
         ifStream = _.startWith(None, cacheInitialValue = true)
       )
-    new SplitSignal[({type OptionM[V] = Option[M[V]]})#OptionM, Input, Output, Key](
+    new SplitSignal[({ type OptionM[V] = Option[M[V]] })#OptionM, Input, Output, Key](
       parentSignal, key, distinctOp, project, splittable.toOptionSplittable, duplicateKeys
     )
   }
@@ -39,7 +39,7 @@ class SplittableSeqOptionObservable[Self[+_] <: Observable[_], M[_], Input](
         .toSignalIfStream(_.startWith(None, cacheInitialValue = true))
         .map(_.map(splittable.zipWithIndex))
     }
-    new SplitSignal[({type OptionM[V] = Option[M[V]]})#OptionM, (Input, Int), Output, Int](
+    new SplitSignal[({ type OptionM[V] = Option[M[V]] })#OptionM, (Input, Int), Output, Int](
       parent = parentSignal,
       key = _._2, // Index
       distinctOp = _.distinctBy(_._1),

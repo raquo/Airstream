@@ -90,7 +90,7 @@ class OptionObservable[A, Self[+_] <: Observable[_]](
       .map(_.getOrElse(ifEmpty))
   }
 
-/** This `.split`-s an Observable of an Option by the Option's `isDefined` property.
+  /** This `.split`-s an Observable of an Option by the Option's `isDefined` property.
   * If the observable is a stream, it's treated as if it contains None before it emits its first event.
   *
   * @param project - signalOfInput => output
