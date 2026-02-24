@@ -16,10 +16,8 @@ import com.raquo.airstream.split.SplittableOneStream
 import com.raquo.airstream.status.{AsyncStatusObservable, Status}
 import com.raquo.airstream.timing._
 import com.raquo.ew.JsArray
-import org.scalajs.dom.svg.A
 
 import java.util.concurrent.Flow
-import scala.::
 import scala.concurrent.{ExecutionContext, Future}
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
