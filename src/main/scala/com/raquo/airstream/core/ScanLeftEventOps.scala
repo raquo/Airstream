@@ -201,8 +201,8 @@ with EventSource[A] {
       throw new IllegalArgumentException(s"sliding size must be non-negative, got $size.")
 
     // Degenerate cases: we can optimise these by skipping the scanLeft and just mapping the parent stream.
-    case 0 => mapTo(Seq.empty)
-    case 1 => map(Seq(_))
+    case 0 => mapTo(Seq.empty).stride(step)
+    case 1 => map(Seq(_)).stride(step)
 
     // General case: we need to use scanLeft to keep track of the last `size` events.
     case size =>
