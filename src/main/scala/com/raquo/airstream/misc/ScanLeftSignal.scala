@@ -23,13 +23,11 @@ class ScanLeftSignal[A, B, Parent <: Observable[A]](
 
   /** #Note: this is called from tryNow(), make sure to avoid infinite loop. */
   override protected def currentValueFromParent(): Try[B] = {
-    if (parentIsSignal) {
-      val parentSignal = parent.asInstanceOf[Signal[A @unchecked]]
+    parentAsSignalOpt.fold(
+      ifEmpty = maybeLastSeenCurrentValue.getOrElse(makeInitialValue())
+    ) { parentSignal =>
       maybeLastSeenCurrentValue
         .map(lastSeenCurrentValue => fn(lastSeenCurrentValue, parentSignal.tryNow()))
-        .getOrElse(makeInitialValue())
-    } else {
-      maybeLastSeenCurrentValue
         .getOrElse(makeInitialValue())
     }
   }
