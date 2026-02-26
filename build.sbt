@@ -115,7 +115,7 @@ scalaJSUseMainModuleInitializer := true
 
 val generateTupleCombinatorsFrom = 2
 val generateTupleCombinatorsTo = 22
-val generateTupleSplitAt = 10
+val generateTupleSplitAt = 6
 
 Compile / sourceGenerators += Def.task {
   val sourceDir = (Compile / sourceDirectory).value
