@@ -16,7 +16,13 @@ with InternalTryObserver[I] {
 
   // This needs to be lazy, otherwise it risks evaluating with an uninitialized `parent`
   // if another trait extends this trait (overriding `val parent` in subclass param seems to be fine)
-  protected[this] lazy val parentIsSignal: Boolean = parent.isInstanceOf[Signal[_]]
+  protected[this] lazy val parentAsSignalOpt: Option[Signal[I]] = {
+    if (parent.isInstanceOf[Signal[_]]) {
+      Some(parent.asInstanceOf[Signal[I]])
+    } else {
+      None
+    }
+  }
 
   // Note: `-1` here means that we've never synced up with the parent.
   //       I am not sure if -1 vs 0 has a practical difference, but looking
@@ -48,12 +54,10 @@ with InternalTryObserver[I] {
     *  - None if parent is stream (impossible to get this info from a stream)
     */
   protected def peekWhetherParentHasUpdated(): Option[Boolean] = {
-    if (parentIsSignal) {
-      val newParentLastUpdateId = Protected.lastUpdateId(parent.asInstanceOf[Signal[_]])
+    parentAsSignalOpt.map { parentSignal =>
+      val newParentLastUpdateId = Protected.lastUpdateId(parentSignal)
       val parentUpdated = newParentLastUpdateId != _parentLastUpdateId
-      Some(parentUpdated)
-    } else {
-      None
+      parentUpdated
     }
   }
 
@@ -75,7 +79,7 @@ with InternalTryObserver[I] {
     * Other Overrides in other
     */
   override protected def onTry(nextParentValue: Try[I], transaction: Transaction): Unit = {
-    if (parentIsSignal) {
+    parentAsSignalOpt.foreach { _ =>
       _parentLastUpdateId = Protected.lastUpdateId(parent.asInstanceOf[Signal[_]])
     }
   }

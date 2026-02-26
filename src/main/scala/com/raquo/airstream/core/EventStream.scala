@@ -137,8 +137,9 @@ with DynamicImportStreamOps[A] // Provides `dynamicImport` method (Scala 3 only)
     * @param resetOnStop  Reset the count if the stream stops
     */
   def drop(numEvents: Int, resetOnStop: Boolean = false): EventStream[A] = {
-    if (numEvents <= 0) this
-    else {
+    if (numEvents <= 0) {
+      this
+    } else {
       var numDropped = 0
       new DropStream[A](
         parent = this,
