@@ -307,5 +307,6 @@ class CombinableSignal[A](private val signal: Signal[A]) extends AnyVal {
     )
   }
 
+  // --
 
 }

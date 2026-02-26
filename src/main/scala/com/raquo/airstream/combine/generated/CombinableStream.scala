@@ -307,5 +307,6 @@ class CombinableStream[A](private val stream: EventStream[A]) extends AnyVal {
     )
   }
 
+  // --
 
 }

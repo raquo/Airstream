@@ -222,5 +222,6 @@ trait CombineSignalObjectOps extends CombineSignalObjectOpsLow {
     )
   }
 
+  // --
 
 }
