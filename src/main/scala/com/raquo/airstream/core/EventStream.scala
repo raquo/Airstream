@@ -338,8 +338,13 @@ with DynamicImportStreamOps[A] // Provides `dynamicImport` method (Scala 3 only)
 
 }
 
+trait EventStreamLowPriorityImplicits {
+  implicit def toCombinableStreamN[A](stream: EventStream[A]): CombinableStreamN[A] = new CombinableStreamN(stream)
+}
+
 object EventStream
 extends CombineStreamObjectOps
+with EventStreamLowPriorityImplicits
 with DynamicImportStreamObjectOps // Provides `dynamicImport` method (Scala 3 only)
 {
 

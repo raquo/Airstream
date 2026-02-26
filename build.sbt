@@ -116,40 +116,45 @@ scalaJSUseMainModuleInitializer := true
 val generateTupleCombinatorsFrom = 2
 val generateTupleCombinatorsTo = 22
 
-Compile / sourceGenerators += Def.task {
-  Seq.concat(
-    GenerateTupleStreams(
-      (Compile / sourceDirectory).value,
-      from = generateTupleCombinatorsFrom,
-      to = generateTupleCombinatorsTo
-    ).run,
-    GenerateTupleSignals(
-      (Compile / sourceDirectory).value,
-      from = generateTupleCombinatorsFrom,
-      to = generateTupleCombinatorsTo
-    ).run,
-    GenerateCombinableStream(
-      (Compile / sourceDirectory).value,
-      from = generateTupleCombinatorsFrom,
-      to = generateTupleCombinatorsTo
-    ).run,
-    GenerateCombinableSignal(
-      (Compile / sourceDirectory).value,
-      from = generateTupleCombinatorsFrom,
-      to = generateTupleCombinatorsTo
-    ).run,
-    GenerateCombineStreamObjectOps(
-      (Compile / sourceDirectory).value,
-      from = generateTupleCombinatorsFrom,
-      to = generateTupleCombinatorsTo
-    ).run,
-    GenerateCombineSignalObjectOps(
-      (Compile / sourceDirectory).value,
-      from = generateTupleCombinatorsFrom,
-      to = generateTupleCombinatorsTo
-    ).run
-  )
-}.taskValue
+// Source generators disabled — generated files are manually split for implicit priority.
+// TupleStreams/TupleSignals still live in src/ and compile normally.
+// The 4 Combinable/CombineObjectOps files have been split into high-priority (arities 2-9)
+// and low-priority (arities 10-22) variants.
+// TODO: Update the code generators to produce the split output directly.
+//Compile / sourceGenerators += Def.task {
+//  Seq.concat(
+//    GenerateTupleStreams(
+//      (Compile / sourceDirectory).value,
+//      from = generateTupleCombinatorsFrom,
+//      to = generateTupleCombinatorsTo
+//    ).run,
+//    GenerateTupleSignals(
+//      (Compile / sourceDirectory).value,
+//      from = generateTupleCombinatorsFrom,
+//      to = generateTupleCombinatorsTo
+//    ).run,
+//    GenerateCombinableStream(
+//      (Compile / sourceDirectory).value,
+//      from = generateTupleCombinatorsFrom,
+//      to = generateTupleCombinatorsTo
+//    ).run,
+//    GenerateCombinableSignal(
+//      (Compile / sourceDirectory).value,
+//      from = generateTupleCombinatorsFrom,
+//      to = generateTupleCombinatorsTo
+//    ).run,
+//    GenerateCombineStreamObjectOps(
+//      (Compile / sourceDirectory).value,
+//      from = generateTupleCombinatorsFrom,
+//      to = generateTupleCombinatorsTo
+//    ).run,
+//    GenerateCombineSignalObjectOps(
+//      (Compile / sourceDirectory).value,
+//      from = generateTupleCombinatorsFrom,
+//      to = generateTupleCombinatorsTo
+//    ).run
+//  )
+//}.taskValue
 
 Test / sourceGenerators += Def.task {
   Seq.concat(

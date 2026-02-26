@@ -1,7 +1,7 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.combine.CombineSignalN
-import com.raquo.airstream.combine.generated.{CombinableSignal, CombineSignalObjectOps}
+import com.raquo.airstream.combine.generated.{CombinableSignal, CombinableSignalN, CombineSignalObjectOps}
 import com.raquo.airstream.core.Source.SignalSource
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.custom.CustomSource._
@@ -210,8 +210,13 @@ with DynamicImportSignalOps[A] // Provides `dynamicImport` method (Scala 3 only)
 
 }
 
+trait SignalLowPriorityImplicits {
+  implicit def toCombinableSignalN[A](signal: Signal[A]): CombinableSignalN[A] = new CombinableSignalN(signal)
+}
+
 object Signal
 extends CombineSignalObjectOps
+with SignalLowPriorityImplicits
 with DynamicImportSignalObjectOps // Provides `dynamicImport` method (Scala 3 only)
 {
 
