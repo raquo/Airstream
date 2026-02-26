@@ -82,7 +82,7 @@ class SplitSomeSeqSpec extends UnitSpec with BeforeAndAfter {
     assertEquals(
       elements.map(el => (el.id, el.fooSignal.now())),
       List(
-        ("a", Foo("a", 1))
+        "a" -> Foo("a", 1)
       )
     )
 
@@ -107,8 +107,8 @@ class SplitSomeSeqSpec extends UnitSpec with BeforeAndAfter {
     assertEquals(
       elements.map(el => (el.id, el.fooSignal.now())),
       List(
-        ("a", Foo("a", 2)),
-        ("b", Foo("b", 1))
+        "a" -> Foo("a", 2),
+        "b" -> Foo("b", 1)
       )
     )
 
@@ -173,7 +173,7 @@ class SplitSomeSeqSpec extends UnitSpec with BeforeAndAfter {
     assertEquals(
       elements.map(el => (el.id, el.fooSignal.now())),
       List(
-        ("0", Foo("a", 1))
+        "0" -> Foo("a", 1)
       )
     )
 
@@ -198,8 +198,8 @@ class SplitSomeSeqSpec extends UnitSpec with BeforeAndAfter {
     assertEquals(
       elements.map(el => (el.id, el.fooSignal.now())),
       List(
-        ("0", Foo("aa", 2)),
-        ("1", Foo("b", 1))
+        "0" -> Foo("aa", 2),
+        "1" -> Foo("b", 1)
       )
     )
 
