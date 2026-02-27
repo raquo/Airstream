@@ -3,11 +3,13 @@ import sbt._
 import java.io.File
 
 case class GenerateTupleStreams(
+  classNamePattern: Int => String, // N => className
+  fileName: String,
   sourceDir: File,
   from: Int,
   to: Int
 ) extends SourceGenerator(
-  sourceDir / "scala" / "com" / "raquo" / "airstream" / "extensions" / s"TupleStreams.scala"
+  sourceDir / "scala" / "com" / "raquo" / "airstream" / "extensions" / fileName
 ) {
 
   override def apply(): Unit = {
@@ -21,7 +23,7 @@ case class GenerateTupleStreams(
     line("// These mapN and filterN helpers are implicitly available on streams of tuples")
     line()
     for (n <- from to to) {
-      enter(s"class TupleStream${n}[${tupleType(n)}](private val stream: EventStream[(${tupleType(n)})]) extends AnyVal {", "}") {
+      enter(s"class ${classNamePattern(n)}[${tupleType(n)}](private val stream: EventStream[(${tupleType(n)})]) extends AnyVal {", "}") {
         line()
         enter(s"def mapN[Out](project: (${tupleType(n)}) => Out): EventStream[Out] = {", "}") {
           enter(s"new MapStream[(${tupleType(n)}), Out](", ")") {

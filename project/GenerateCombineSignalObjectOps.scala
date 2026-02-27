@@ -3,11 +3,12 @@ import sbt._
 import java.io.File
 
 case class GenerateCombineSignalObjectOps(
+  traitName: String,
   sourceDir: File,
   from: Int,
   to: Int
 ) extends SourceGenerator(
-  sourceDir / "scala" / "com" / "raquo" / "airstream" / "combine" / "generated" / s"CombineSignalObjectOps.scala"
+  sourceDir / "scala" / "com" / "raquo" / "airstream" / "combine" / "generated" / s"$traitName.scala"
 ) {
 
   override def apply(): Unit = {
@@ -23,7 +24,7 @@ case class GenerateCombineSignalObjectOps(
     line("// These combine and combineWith methods are available on the Signal companion object")
     line("// For instance methods of the same name, see CombinableSignal.scala")
     line()
-    enter(s"trait CombineSignalObjectOps {", "}") {
+    enter(s"trait $traitName {", "}") {
       line()
       for (n <- from to to) {
         enter(s"def combine[${tupleType(n)}](") {

@@ -119,32 +119,40 @@ val generateTupleCombinatorsTo = 22
 Compile / sourceGenerators += Def.task {
   Seq.concat(
     GenerateTupleStreams(
-      (Compile / sourceDirectory).value,
+      classNamePattern = n => s"TupleStream$n",
+      fileName = "TupleStreams.scala",
+      sourceDir = (Compile / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
     GenerateTupleSignals(
-      (Compile / sourceDirectory).value,
+      classNamePattern = n => s"TupleSignal$n",
+      fileName = "TupleSignals.scala",
+      sourceDir = (Compile / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
-    GenerateCombinableStream(
-      (Compile / sourceDirectory).value,
+    GenerateCombineStreamOps(
+      traitName = "CombineStreamOps",
+      sourceDir = (Compile / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
-    GenerateCombinableSignal(
-      (Compile / sourceDirectory).value,
+    GenerateCombineSignalOps(
+      traitName = "CombineSignalOps",
+      sourceDir = (Compile / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
     GenerateCombineStreamObjectOps(
-      (Compile / sourceDirectory).value,
+      traitName = "CombineStreamObjectOps",
+      sourceDir = (Compile / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
     GenerateCombineSignalObjectOps(
-      (Compile / sourceDirectory).value,
+      traitName = "CombineSignalObjectOps",
+      sourceDir = (Compile / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run
@@ -154,12 +162,14 @@ Compile / sourceGenerators += Def.task {
 Test / sourceGenerators += Def.task {
   Seq.concat(
     GenerateCombineSignalsTest(
-      (Test / sourceDirectory).value,
+      className = "CombineSignalsSpec",
+      testSourceDir = (Test / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
     GenerateCombineStreamsTest(
-      (Test / sourceDirectory).value,
+      className = "CombineStreamsSpec",
+      testSourceDir = (Test / sourceDirectory).value,
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run

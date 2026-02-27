@@ -1,7 +1,7 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.combine.{CombineStreamN, MergeStream}
-import com.raquo.airstream.combine.generated._
+import com.raquo.airstream.combine.generated.{CombineStreamObjectOps, CombineStreamOps}
 import com.raquo.airstream.core.Source.{EventSource, SignalSource}
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.custom.CustomSource._
@@ -27,7 +27,8 @@ trait EventStream[+A]
 extends Observable[A]
 with BaseObservable[EventStream, A]
 with EventSource[A]
-with DynamicImportStreamOps[A] // Provides `dynamicImport` method (Scala 3 only)
+with CombineStreamOps[A] // combineWith, combineWithFn, withCurrentValueOf, sample
+with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
 {
 
   /** See more map-like operators in [[CoreOps]]
@@ -506,9 +507,6 @@ with DynamicImportStreamObjectOps // Provides `dynamicImport` method (Scala 3 on
   def mergeSeq[A](streams: Seq[EventStream[A]]): EventStream[A] = {
     new MergeStream[A](JsArray(streams: _*))
   }
-
-  /** Provides methods on EventStream: combine, combineWith, withCurrentValueOf, sample */
-  implicit def toCombinableStream[A](stream: EventStream[A]): CombinableStream[A] = new CombinableStream(stream)
 
   /** Provides methods on EventStream: splitOne */
   implicit def toSplittableOneStream[A](stream: EventStream[A]): SplittableOneStream[A] = new SplittableOneStream(stream)

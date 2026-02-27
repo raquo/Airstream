@@ -1,7 +1,7 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.combine.CombineSignalN
-import com.raquo.airstream.combine.generated.{CombinableSignal, CombineSignalObjectOps}
+import com.raquo.airstream.combine.generated.{CombineSignalObjectOps, CombineSignalOps}
 import com.raquo.airstream.core.Source.SignalSource
 import com.raquo.airstream.custom.{CustomSignalSource, CustomSource}
 import com.raquo.airstream.custom.CustomSource._
@@ -25,9 +25,10 @@ trait Signal[+A]
 extends Observable[A]
 with BaseObservable[Signal, A]
 with SignalSource[A]
-with ScanLeftSignalOps[Signal, A]
-with DebugSignalOps[Signal, A]
-with DynamicImportSignalOps[A] // Provides `dynamicImport` method (Scala 3 only)
+with CombineSignalOps[A] // combineWith, combineWithFn, withCurrentValueOf, sample
+with ScanLeftSignalOps[Signal, A] // scanLeft, scanLeftRecover
+with DebugSignalOps[Signal, A] // debug* (debugLogEvents, debugSpyAll, etc.)
+with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
 {
 
   protected[this] var _lastUpdateId: Int = 0
@@ -309,9 +310,6 @@ with DynamicImportSignalObjectOps // Provides `dynamicImport` method (Scala 3 on
   }
 
   @inline def combineSeq[A](signals: Seq[Signal[A]]): Signal[Seq[A]] = sequence(signals)
-
-  /** Provides methods on Signal: combine, combineWith, withCurrentValueOf, sample */
-  implicit def toCombinableSignal[A](signal: Signal[A]): CombinableSignal[A] = new CombinableSignal(signal)
 
   // toTupleSignalN conversions provide mapN method on Signals of tuples
 

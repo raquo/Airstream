@@ -3,6 +3,8 @@ import sbt._
 import java.io.File
 
 case class GenerateTupleSignals(
+  classNamePattern: Int => String, // N => className
+  fileName: String,
   sourceDir: File,
   from: Int,
   to: Int
@@ -21,7 +23,7 @@ case class GenerateTupleSignals(
     line("// These mapN helpers are implicitly available on signals of tuples")
     line()
     for (n <- from to to) {
-      enter(s"class TupleSignal${n}[${tupleType(n)}](private val signal: Signal[(${tupleType(n)})]) extends AnyVal {", "}") {
+      enter(s"class ${classNamePattern(n)}[${tupleType(n)}](private val signal: Signal[(${tupleType(n)})]) extends AnyVal {", "}") {
         line()
         enter(s"def mapN[Out](project: (${tupleType(n)}) => Out): Signal[Out] = {", "}") {
           enter(s"new MapSignal[(${tupleType(n)}), Out](", ")") {
