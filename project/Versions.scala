@@ -8,7 +8,7 @@ object Versions {
 
   val ScalaJsDom = "2.8.1"
 
-  val Tuplez = "0.4.0"
+  val Tuplez = "0.5.0-M2"
 
   val Ew = "0.3.0"
 

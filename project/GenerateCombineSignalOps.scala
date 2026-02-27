@@ -28,10 +28,10 @@ case class GenerateCombineSignalOps(
     enter(s"trait ${traitName}[+A] { this: Signal[A] =>", "}") {
       line()
       for (n <- (from - 1) until to) {
-        enter(s"def combineWith[AA >: A, ${tupleType(n)}](") {
+        enter(s"def combineWith[${tupleType(n)}](") {
           line((1 to n).map(i => s"s${i}: SignalSource[T${i}]").mkString(", "))
         }
-        enter(s")(implicit c: Composition[AA, (${tupleType(n)})]): Signal[c.Composed] = {", "}") {
+        enter(s")(implicit c: Composition[A, (${tupleType(n)})]): Signal[c.Composed] = {", "}") {
           line(s"combineWithFn(${tupleType(n, "s")})((a, ${tupleType(n, "v")}) => c.compose(a, (${tupleType(n, "v")})))")
         }
         line()
@@ -46,10 +46,10 @@ case class GenerateCombineSignalOps(
           line(s"Signal.combineWithFn(this, ${tupleType(n, "s")})(combinator)")
         }
         line()
-        enter(s"def withCurrentValueOf[AA >: A, ${tupleType(n)}](") {
+        enter(s"def withCurrentValueOf[${tupleType(n)}](") {
           line((1 to n).map(i => s"s${i}: SignalSource[T${i}]").mkString(", "))
         }
-        enter(s")(implicit c: Composition[AA, (${tupleType(n)})]): Signal[c.Composed] = {", "}") {
+        enter(s")(implicit c: Composition[A, (${tupleType(n)})]): Signal[c.Composed] = {", "}") {
           line(s"val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (${(1 to n).map(i => s"arr(${i}).asInstanceOf[T${i}]").mkString(", ")}))")
           line(s"val sampledSignals = JsArray[Signal[Any]](${tupleType(n, "s", ".toObservable")})")
           enter(s"new SampleCombineSignalN(", ")") {
