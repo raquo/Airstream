@@ -39,6 +39,13 @@ with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
     new MapStream(this, project, recover = None)
   }
 
+  // BinCompat forwarder: In 17.x, recover was defined directly on EventStream.
+  // In 18.0.0-M3 it moved to RecoverOps[Self, A] where Self has no
+  // `<: Observable[_]` bound, changing the Scala.js IR method descriptor.
+  // This forwarder restores the old descriptor so that libraries compiled
+  // against 17.x (e.g. caliban) can link against 18.x.
+  override def recover[B >: A](pf: PartialFunction[Throwable, Option[B]]): EventStream[B] = mapRecover(identity, pf)
+
   /** If `recover` is defined and needs to be called, it can do the following:
     *  - Return Some(value) to make this stream emit value
     *  - Return None to make this stream ignore (swallow) this error
