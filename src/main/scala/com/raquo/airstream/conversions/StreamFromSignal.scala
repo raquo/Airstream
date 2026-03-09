@@ -1,4 +1,4 @@
-package com.raquo.airstream.misc
+package com.raquo.airstream.conversions
 
 import com.raquo.airstream.common.{InternalTryObserver, SingleParentStream}
 import com.raquo.airstream.core.{Protected, Signal, Transaction}

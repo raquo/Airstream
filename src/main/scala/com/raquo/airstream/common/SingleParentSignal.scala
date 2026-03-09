@@ -1,8 +1,8 @@
 package com.raquo.airstream.common
 
+import com.raquo.airstream.conversions.SignalFromStream
 import com.raquo.airstream.core.{Observable, Protected, Signal, Transaction, WritableSignal}
 import com.raquo.airstream.distinct.DistinctSignal
-import com.raquo.airstream.misc.SignalFromStream
 import com.raquo.airstream.split.SplitChildSignal
 
 import scala.util.Try

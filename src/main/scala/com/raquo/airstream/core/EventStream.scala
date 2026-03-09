@@ -2,6 +2,7 @@ package com.raquo.airstream.core
 
 import com.raquo.airstream.combine.{CombineStreamN, MergeStream}
 import com.raquo.airstream.combine.generated.{CombineStreamObjectOps, CombineStreamOps}
+import com.raquo.airstream.conversions.SignalFromStream
 import com.raquo.airstream.core.Source.{EventSource, SignalSource}
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.custom.CustomSource._
