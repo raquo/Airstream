@@ -9,8 +9,9 @@ import com.raquo.airstream.debug.{Debugger, DebuggerSignal, DebugOps, DebugSigna
 import com.raquo.airstream.distinct.{DistinctOps, DistinctSignal}
 import com.raquo.airstream.dynamicImport.{DynamicImportSignalObjectOps, DynamicImportSignalOps}
 import com.raquo.airstream.extensions._
-import com.raquo.airstream.misc.{MapSignal, ScanLeftSignal, StreamFromSignal}
+import com.raquo.airstream.misc.{MapSignal, StreamFromSignal}
 import com.raquo.airstream.ownership.Owner
+import com.raquo.airstream.scan.{ScanLeftSignal, ScanLeftSignalOps}
 import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
 import com.raquo.airstream.timing.JsPromiseSignal
 import com.raquo.ew.JsArray
@@ -132,19 +133,7 @@ with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
   @deprecated("signal.changes renamed to signal.updates", since = "18.0.0-M3")
   def changes[AA >: A](compose: EventStream[A] => EventStream[AA]): Signal[AA] = updates(compose)
 
-  @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")
-  def foldLeft[B](makeInitial: A => B)(fn: (B, A) => B): Signal[B] = scanLeft(makeInitial)(fn)
-
-  @deprecated("foldLeftRecover was renamed to scanLeftRecover", "15.0.0-M1")
-  def foldLeftRecover[B](makeInitial: Try[A] => Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = scanLeftRecover(makeInitial)(fn)
-
-  /** A signal that emits the accumulated value every time that the parent signal emits.
-    *
-    * @param makeInitial currentParentValue => initialValue   Note: must not throw
-    * @param fn (currentValue, nextParentValue) => nextValue
-    * @return
-    */
-  override def scanLeftRecover[B](
+  @inline def scanLeftRecover[B](
     makeInitial: Try[A] => Try[B]
   )(
     fn: (Try[B], Try[A]) => Try[B]

@@ -12,6 +12,7 @@ import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.extensions._
 import com.raquo.airstream.javaflow.FlowPublisherStream
 import com.raquo.airstream.misc._
+import com.raquo.airstream.scan.{ScanLeftSignal, ScanLeftStreamOps}
 import com.raquo.airstream.split.SplittableOneStream
 import com.raquo.airstream.status.{AsyncStatusObservable, Status}
 import com.raquo.airstream.timing._
@@ -28,6 +29,7 @@ extends Observable[A]
 with BaseObservable[EventStream, A]
 with EventSource[A]
 with CombineStreamOps[A] // combineWith, combineWithFn, withCurrentValueOf, sample
+with ScanLeftStreamOps[A]
 with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
 {
 
@@ -247,30 +249,7 @@ with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
     EventStream.merge(allStreams: _*)
   }
 
-  @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")
-  def foldLeft[B](initial: B)(fn: (B, A) => B): Signal[B] = scanLeft(initial)(fn)
-
-  @deprecated("foldLeftRecover was renamed to scanLeftRecover", "15.0.0-M1")
-  def foldLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = scanLeftRecover(initial)(fn)
-
-  // @TODO[API] Should we introduce some kind of FoldError() wrapper?
-  /** A signal that emits the accumulated value every time that the parent stream emits.
-    *
-    * See also: [[startWith]]
-    *
-    * @param fn Note: guarded against exceptions
-    */
-  def scanLeft[B](initial: B)(fn: (B, A) => B): Signal[B] = {
-    scanLeftRecover(Success(initial)) { (currentValue, nextParentValue) =>
-      Try(fn(currentValue.get, nextParentValue.get))
-    }
-  }
-
-  /** A signal that emits the accumulated value every time that the parent stream emits.
-    *
-    * @param fn Note: Must not throw!
-    */
-  def scanLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
+  @inline final def scanLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
     new ScanLeftSignal(parent = this, () => initial, fn)
   }
 

@@ -4,7 +4,8 @@ import com.raquo.airstream.common.SingleParentSignal
 import com.raquo.airstream.core.{Protected, Signal, Transaction}
 import com.raquo.airstream.debug.{Debugger, DebuggerSignal}
 import com.raquo.airstream.distinct.DistinctSignal
-import com.raquo.airstream.misc.{MapSignal, ScanLeftSignal}
+import com.raquo.airstream.misc.MapSignal
+import com.raquo.airstream.scan.ScanLeftSignal
 
 import scala.util.Try
 

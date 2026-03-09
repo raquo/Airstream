@@ -1,8 +1,9 @@
 package com.raquo.airstream.state
 
-import com.raquo.airstream.core.{CoreOps, RecoverOps, ScanLeftSignalOps, Signal}
+import com.raquo.airstream.core.{CoreOps, RecoverOps, Signal}
 import com.raquo.airstream.debug.{Debugger, DebugSignalOps}
 import com.raquo.airstream.distinct.DistinctOps
+import com.raquo.airstream.scan.ScanLeftSignalOps
 
 import scala.util.Try
 

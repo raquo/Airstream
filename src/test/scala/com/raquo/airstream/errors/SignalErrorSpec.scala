@@ -271,7 +271,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     effects.clear()
   }
 
-  it("foldRecover recovers from error") {
+  it("scanLeftRecover recovers from error") {
 
     val bus = new EventBus[Int]
 
@@ -313,7 +313,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     Try(signalDown.now()) shouldBe Success(-123)
     signalDown.tryNow() shouldBe Success(-123)
 
-    // foldRecover recovers from an error state
+    // scanLeftRecover recovers from an error state
 
     bus.writer.onNext(1)
 
