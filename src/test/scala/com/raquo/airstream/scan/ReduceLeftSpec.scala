@@ -622,13 +622,13 @@ class ReduceLeftSpec extends UnitSpec with BeforeAndAfter {
     // fn throws — signal enters error state
     bus.writer.onNext(-5)
 
-    effects shouldBe mutable.Buffer(Effect("obs-err", 0))
+    effects shouldBe mutable.Buffer(Effect("obs-err", None))
     effects.clear()
 
     // Error persists — each subsequent event re-emits the error
     bus.writer.onNext(2)
 
-    effects shouldBe mutable.Buffer(Effect("obs-err", 0))
+    effects shouldBe mutable.Buffer(Effect("obs-err", None))
   }
 
   it("EventStream.reduceLeftDefault: fn error persists; re-emitted on each subsequent event") {
