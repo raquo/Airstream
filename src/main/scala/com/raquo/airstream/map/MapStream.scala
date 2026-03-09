@@ -1,4 +1,4 @@
-package com.raquo.airstream.misc
+package com.raquo.airstream.map
 
 import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentStream}
 import com.raquo.airstream.core.{Observable, Protected, Transaction}

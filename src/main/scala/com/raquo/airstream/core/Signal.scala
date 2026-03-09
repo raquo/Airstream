@@ -9,7 +9,8 @@ import com.raquo.airstream.debug.{Debugger, DebuggerSignal, DebugOps, DebugSigna
 import com.raquo.airstream.distinct.{DistinctOps, DistinctSignal}
 import com.raquo.airstream.dynamicImport.{DynamicImportSignalObjectOps, DynamicImportSignalOps}
 import com.raquo.airstream.extensions._
-import com.raquo.airstream.misc.{MapSignal, ScanLeftSignal, StreamFromSignal}
+import com.raquo.airstream.map.{MapOps, MapSignal}
+import com.raquo.airstream.misc.{ScanLeftSignal, StreamFromSignal}
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
 import com.raquo.airstream.timing.JsPromiseSignal
@@ -44,7 +45,7 @@ with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
     */
   protected[airstream] def now(): A = tryNow().get
 
-  /** See also various map-like operators methods in [[CoreOps]].
+  /** See also various map-like operators methods in [[MapOps]].
     *
     * @param project Note: guarded against exceptions
     */
