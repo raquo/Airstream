@@ -28,6 +28,9 @@ trait ScanLeftStreamOps[+A] extends ScanLeftOps[Signal, EventStream, A] {
    *   It is safe for `fn` to throw an exception,
    *   in which case it will be propagated through the error channel of the resulting [[Observable]].
    *
+   * @note
+   *   Accumulated state persists across stop/start; events emitted while stopped are discarded.
+   *
    * @see
    *   [[reduceLeft]] for a version of this method where the result isn't wrapped in [[Option]].
    */
@@ -64,6 +67,10 @@ trait ScanLeftStreamOps[+A] extends ScanLeftOps[Signal, EventStream, A] {
    *   It is safe for `fn` to throw an exception,
    *   in which case it will be propagated through the error channel of the resulting [[Observable]].
    *
+   * @note
+   *   Accumulated state persists across stop/start; events emitted while stopped
+   *   are discarded. Once the first event has been accumulated, `default` is no longer used even on restart.
+   *
    * @see
    *   [[reduceLeft]] for a version of this method where no default is required.
    *
@@ -94,6 +101,10 @@ trait ScanLeftStreamOps[+A] extends ScanLeftOps[Signal, EventStream, A] {
    * @note
    *   It is safe for `fn` to throw an exception,
    *   in which case it will be propagated through the error channel of the resulting [[EventStream]].
+   *
+   * @note
+   *   Accumulated state persists across stop/start; events emitted while stopped
+   *   are discarded. If `fn` throws, the accumulated error state also persists for all subsequent events.
    *
    * @see
    *   [[scanLeft]] for a version of this method with an explicit initial value.

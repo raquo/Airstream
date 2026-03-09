@@ -27,8 +27,12 @@ trait ScanLeftSignalOps[+Self[+_], +A] extends ScanLeftOps[Self, Self, A] {
    *   A [[Signal]] that emits the accumulated value every time that the parent [[Observable]] emits.
    *
    * @note
-   *   It is safe for `fn` or `initial` to throw an exception,
+   *   It is safe for `fn` or `makeInitial` to throw an exception,
    *   in which case it will be propagated through the error channel of the resulting [[Signal]].
+   *
+   * @note
+   *   On restart, re-syncs with the parent by applying `fn` to the last
+   *   accumulated value and the parent's current value.
    *
    * @see
    *   [[scanLeftRecover]] for a version of this method with manual error recovery.
@@ -65,6 +69,10 @@ trait ScanLeftSignalOps[+Self[+_], +A] extends ScanLeftOps[Self, Self, A] {
    *   It is assumed that the user is responsible for wrapping any exceptions in [[Try]].
    *   If an uncaught exception nevertheless occurs, Airstream will likely crash.
    *
+   * @note
+   *   On restart, re-syncs with the parent by applying `fn` to the last
+   *   accumulated value and the parent's current value.
+   *
    * @see
    *   [[scanLeft]] for a version of this method that guards against exceptions,
    *   the use of which is recommended instead if you don't need manual error recovery.
@@ -78,6 +86,19 @@ trait ScanLeftSignalOps[+Self[+_], +A] extends ScanLeftOps[Self, Self, A] {
     fn: (Try[B], Try[A]) => Try[B]
   ): Self[B]
 
+  /**
+   * Like [[scanLeftRecover]] but takes a constant `initial: Try[B]` instead of a function.
+   * The initial value of the resulting [[Signal]] is `fn(initial, parent.now())`.
+   *
+   * @note
+   *   It is not safe for `fn` to throw an exception.
+   *   It is assumed that the user is responsible for wrapping any exceptions in [[Try]].
+   *   If an uncaught exception nevertheless occurs, Airstream will likely crash.
+   *
+   * @note
+   *   On restart, re-syncs with the parent by applying `fn` to the last
+   *   accumulated value and the parent's current value.
+   */
   @inline final def scanLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Self[B] =
     scanLeftRecover[B](fn(initial, _))(fn)
 
@@ -102,6 +123,10 @@ trait ScanLeftSignalOps[+Self[+_], +A] extends ScanLeftOps[Self, Self, A] {
    * @note
    *   It is safe for `fn` to throw an exception,
    *   in which case it will be propagated through the error channel of the resulting [[Signal]].
+   *
+   * @note
+   *   On restart, re-syncs with the parent by applying `fn` to the last
+   *   accumulated value and the parent's current value.
    *
    * @see
    *   [[reduceLeftRecover]] for a version of this method with manual error recovery.
@@ -135,6 +160,10 @@ trait ScanLeftSignalOps[+Self[+_], +A] extends ScanLeftOps[Self, Self, A] {
    *   It is not safe for `fn` to throw an exception.
    *   It is assumed that the user is responsible for wrapping any exceptions in [[Try]].
    *   If an uncaught exception nevertheless occurs, Airstream will likely crash.
+   *
+   * @note
+   *   On restart, re-syncs with the parent by applying `fn` to the last
+   *   accumulated value and the parent's current value.
    *
    * @see
    *   [[reduceLeft]] for a version of this method that guards against exceptions,

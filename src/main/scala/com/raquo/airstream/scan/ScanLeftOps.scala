@@ -9,10 +9,10 @@ import scala.util.Try
  * This is a parent of both [[ScanLeftSignalOps]] and [[ScanLeftStreamOps]].
  *
  * @tparam Scan
- *   The kind of [[Observable]] that is created by `scanLeft` (e.g. [[Signal]] or [[StrictSignal]].)
+ * The kind of [[Observable]] that is created by `scanLeft` (e.g. [[Signal]] or [[com.raquo.airstream.state.StrictSignal]].)
  *
  * @tparam Reduce
- *   The kind of [[Observable]] that is created by `reduceLeft` (e.g. [[EventStream]].)
+ * The kind of [[Observable]] that is created by `reduceLeft` (e.g. [[EventStream]].)
  *
  * @tparam A
  *   The type of value emitted by this [[Observable]]. (e.g. [[MouseEvent]] or [[Int]].)
@@ -44,6 +44,13 @@ trait ScanLeftOps[+Scan[+_], +Reduce[+_], +A] {
    * @note
    *   It is safe for `fn` or `initial` to throw an exception,
    *   in which case it will be propagated through the error channel of the resulting [[Signal]].
+   *
+   * @note
+   *   `initial` is evaluated when `scanLeft` is called, not when the first observer subscribes.
+   *
+   * @note
+   *   Accumulated state persists across stop/start; events emitted while stopped are discarded.
+   *   When the parent is a [[Signal]], also re-syncs with the parent's current value on restart.
    *
    * @see
    *   [[scanLeftRecover]] for a version of this method with manual error recovery.
@@ -80,6 +87,10 @@ trait ScanLeftOps[+Scan[+_], +Reduce[+_], +A] {
    *   It is assumed that the user is responsible for wrapping any exceptions in [[Try]].
    *   If an uncaught exception nevertheless occurs, Airstream will likely crash.
    *
+   * @note
+   *   Accumulated state persists across stop/start; events emitted while stopped are discarded.
+   *   When the parent is a [[Signal]], also re-syncs with the parent's current value on restart.
+   *
    * @see
    *   [[scanLeft]] for a version of this method that guards against exceptions,
    *   the use of which is recommended instead if you don't need manual error recovery.
@@ -105,6 +116,10 @@ trait ScanLeftOps[+Scan[+_], +Reduce[+_], +A] {
    * @note
    *   It is safe for `fn` to throw an exception,
    *   in which case it will be propagated through the error channel of the resulting [[Observable]].
+   *
+   * @note
+   *   Accumulated state persists across stop/start; events emitted while stopped are discarded.
+   *   When the parent is a [[Signal]], also re-syncs with the parent's current value on restart.
    *
    * @see
    *   [[scanLeft]] for a version of this method with an explicit initial value.
