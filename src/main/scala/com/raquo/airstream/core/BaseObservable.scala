@@ -3,6 +3,7 @@ package com.raquo.airstream.core
 import com.raquo.airstream.debug.DebugOps
 import com.raquo.airstream.distinct.DistinctOps
 import com.raquo.airstream.flatten.{AllowFlatMap, FlattenStrategy, MergingStrategy, SwitchingStrategy}
+import com.raquo.airstream.map.MapOps
 import com.raquo.airstream.ownership.{Owner, Subscription}
 import com.raquo.airstream.status.{FlatMapStatusObservable, Status}
 import com.raquo.ew.JsArray
@@ -32,10 +33,10 @@ import scala.util.Try
   * #Warning: The [[Self]] kind must be either of: [[Observable]], [[EventStream]], or [[Signal]].
   *  - It must NOT be a more specific type, otherwise [[matchStreamOrSignalAsSelf]] will break.
   */
-trait BaseObservable[+Self[+_] <: Observable[_], +A]
+trait BaseObservable[+Self[+B] <: BaseObservable[Self, B], +A]
 extends Source[A]
 with Named
-with CoreOps[Self, A]
+with MapOps[Self, A]
 with RecoverOps[Self, A]
 with DistinctOps[Self[A], A]
 with DebugOps[Self, A] {

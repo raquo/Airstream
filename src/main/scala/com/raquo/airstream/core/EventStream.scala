@@ -2,6 +2,7 @@ package com.raquo.airstream.core
 
 import com.raquo.airstream.combine.{CombineStreamN, MergeStream}
 import com.raquo.airstream.combine.generated._
+import com.raquo.airstream.conversions.SignalFromStream
 import com.raquo.airstream.core.Source.{EventSource, SignalSource}
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.custom.CustomSource._
@@ -11,7 +12,9 @@ import com.raquo.airstream.dynamicImport.{DynamicImportStreamObjectOps, DynamicI
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.extensions._
 import com.raquo.airstream.javaflow.FlowPublisherStream
+import com.raquo.airstream.map.MapStream
 import com.raquo.airstream.misc._
+import com.raquo.airstream.scan.ScanLeftEventOps
 import com.raquo.airstream.split.SplittableOneStream
 import com.raquo.airstream.status.{AsyncStatusObservable, Status}
 import com.raquo.airstream.timing._
@@ -28,7 +31,8 @@ extends Observable[A]
 with BaseObservable[EventStream, A]
 with EventSource[A]
 with ScanLeftEventOps[EventStream, A]
-with DynamicImportStreamOps[A] // Provides `dynamicImport` method (Scala 3 only)
+with CombineStreamOps[A] // combineWith, combineWithFn, withCurrentValueOf, sample
+with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
 {
 
   /** See more map-like operators in [[CoreOps]]
@@ -245,14 +249,6 @@ with DynamicImportStreamOps[A] // Provides `dynamicImport` method (Scala 3 only)
   def mergeWith[B >: A](streams: EventStream[B]*): EventStream[B] = {
     val allStreams = this +: streams
     EventStream.merge(allStreams: _*)
-  }
-
-  /** A signal that emits the accumulated value every time that the parent stream emits.
-   *
-   * @param fn Note: Must not throw!
-   */
-  def scanLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
-    new ScanLeftSignal(parent = this, () => initial, fn)
   }
 
   /** Convert stream to signal, given an initial value

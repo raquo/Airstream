@@ -1,7 +1,7 @@
-package com.raquo.airstream.misc
+package com.raquo.airstream.scan
 
 import com.raquo.airstream.common.SingleParentSignal
-import com.raquo.airstream.core.{Observable, Protected, Signal, Transaction}
+import com.raquo.airstream.core.{Observable, Protected, Transaction}
 
 import scala.util.Try
 

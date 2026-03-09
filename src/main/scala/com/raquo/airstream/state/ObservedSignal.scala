@@ -1,7 +1,7 @@
 package com.raquo.airstream.state
 
 import com.raquo.airstream.core.{Observer, Signal}
-import com.raquo.airstream.misc.MapSignal
+import com.raquo.airstream.map.MapSignal
 import com.raquo.airstream.ownership.{Owner, Subscription}
 
 import scala.util.Try
