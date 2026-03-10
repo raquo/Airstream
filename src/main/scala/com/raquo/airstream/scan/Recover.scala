@@ -3,7 +3,7 @@ package com.raquo.airstream.scan
 import scala.util.{Failure, Success, Try}
 
 /** A collection of strategies for handling errors in reduction operators such as `scanLeft`. */
-private[scan] object Recover {
+private[airstream] object Recover {
 
   /**
    * A binary operator that combines an accumulator of type `B` with the next value of type `A`.

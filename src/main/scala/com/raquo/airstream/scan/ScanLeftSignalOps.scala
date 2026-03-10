@@ -17,7 +17,7 @@ import scala.util.Try
 trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Self, A] {
 
   /**
-   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Accumulates all emissions from this parent using a binary operator `combine`.
    * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
    *
    * @param makeInitial A function for creating the seed value for the accumulator given the initial value of this parent.
@@ -26,7 +26,7 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
    *                    If `false`, errors will persist until restart.
    * @param combine     A binary operator that takes a tuple of the previously accumulated value and
    *                    the next emission from this parent to produce the next accumulated value.
-   *                    It is safe for `fn` to throw uncaught exceptions, which are propagated through the error channel.
+   *                    It is safe for `combine` to throw uncaught exceptions, which are propagated through the error channel.
    * @tparam B          The type of the accumulated value and thus of the resulting signal.
    * @return            A [[Signal]] that emits the accumulated value every time this parent emits.
    *
@@ -44,13 +44,13 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
   }
 
   /**
-   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Accumulates all emissions from this parent using a binary operator `combine`.
    * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
    *
    * @param makeInitial A function for creating the seed value for the accumulator given the initial value of this parent.
    * @param combine     A binary operator that takes a tuple of the previously accumulated value and
    *                    the next emission from this parent to produce the next accumulated value.
-   *                    It is safe for `fn` to throw uncaught exceptions, which are propagated through the error channel.
+   *                    It is safe for `combine` to throw uncaught exceptions, which are propagated through the error channel.
    * @tparam B          The type of the accumulated value and thus of the resulting signal.
    * @return            A [[Signal]] that emits the accumulated value every time this parent emits.
    *
@@ -66,14 +66,14 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
   }
 
   /**
-   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Accumulates all emissions from this parent using a binary operator `combine`.
    * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
    *
    * @param makeInitial A function for creating the seed value for the accumulator given the initial value of this parent.
    * @param resetOnStop Whether to reset the accumulator when this parent is restarted (default is `false`).
    * @param combine     A binary operator that takes a tuple of the previously accumulated value and
    *                    the next emission from this parent to produce the next accumulated value.
-   *                    It is safe for `fn` to throw uncaught exceptions, which are propagated through the error channel.
+   *                    It is safe for `combine` to throw uncaught exceptions, which are propagated through the error channel.
    * @tparam B          The type of the accumulated value and thus of the resulting signal.
    * @return            A [[Signal]] that emits the accumulated value every time this parent emits.
    *
@@ -87,13 +87,13 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
   ): Self[B]
 
   /**
-   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Accumulates all emissions from this parent using a binary operator `combine`.
    * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
    *
    * @param makeInitial A function for creating the seed value for the accumulator given the initial value of this parent.
    * @param combine     A binary operator that takes a tuple of the previously accumulated value and
    *                    the next emission from this parent to produce the next accumulated value.
-   *                    It is safe for `fn` to throw uncaught exceptions, which are propagated through the error channel.
+   *                    It is safe for `combine` to throw uncaught exceptions, which are propagated through the error channel.
    * @tparam B          The type of the accumulated value and thus of the resulting signal.
    * @return            A [[Signal]] that emits the accumulated value every time this parent emits.
    *
@@ -123,17 +123,17 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
   )(
     combine: Combine[A, B],
   ): Self[B] = {
-    scanLeft[B](identity[B])(combine)
+    scanLeft[B](identity[B], resetOnStop = resetOnStop, skipErrors = skipErrors)(combine)
   }
 
   /**
-   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Accumulates all emissions from this parent using a binary operator `combine`.
    * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
    *
    * @param resetOnStop Whether to reset the accumulator when this parent is restarted (default is `false`).
    * @param combine     A binary operator that takes a tuple of the previously accumulated value and
    *                    the next emission from this parent to produce the next accumulated value.
-   *                    It is not safe for `fn` to throw uncaught exceptions; you must use [[Try]] instead!
+   *                    It is not safe for `combine` to throw uncaught exceptions; you must use [[Try]] instead!
    * @tparam B          The type of the accumulated value and thus of the resulting signal.
    * @return            A [[Signal]] that emits the accumulated value every time this parent emits.
    *
@@ -148,12 +148,12 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
   }
 
   /**
-   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Accumulates all emissions from this parent using a binary operator `combine`.
    * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
    *
    * @param combine A binary operator that takes a tuple of the previously accumulated value and
    *                the next emission from this parent to produce the next accumulated value.
-   *                It is not safe for `fn` to throw uncaught exceptions; you must use [[Try]] instead!
+   *                It is not safe for `combine` to throw uncaught exceptions; you must use [[Try]] instead!
    * @tparam B      The type of the accumulated value and thus of the resulting signal.
    * @return        A [[Signal]] that emits the accumulated value every time this parent emits.
    *
@@ -167,8 +167,12 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
   }
 
   @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")
-  def foldLeft[B](makeInitial: A => B)(combine: Combine[A, B]): Self[B] = scanLeft[B](makeInitial)(combine)
+  def foldLeft[B](makeInitial: A => B)(combine: Combine[A, B]): Self[B] = {
+    scanLeft[B](makeInitial)(combine)
+  }
 
   @deprecated("foldLeftRecover was renamed to scanLeftRecover", "15.0.0-M1")
-  def foldLeftRecover[B](makeInitial: A => B)(combine: CombineTry[A, B]): Self[B] = scanLeftRecover[B](makeInitial)(combine)
+  def foldLeftRecover[B](makeInitial: Try[A] => Try[B])(combine: CombineTry[A, B]): Self[B] = {
+    scanLeftRecover[B](makeInitial)(combine)
+  }
 }

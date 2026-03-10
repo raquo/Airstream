@@ -13,6 +13,7 @@ import com.raquo.airstream.extensions._
 import com.raquo.airstream.javaflow.FlowPublisherStream
 import com.raquo.airstream.misc._
 import com.raquo.airstream.scan.{ScanLeftSignal, ScanLeftStreamOps}
+import com.raquo.airstream.scan.Recover.CombineTry
 import com.raquo.airstream.split.SplittableOneStream
 import com.raquo.airstream.status.{AsyncStatusObservable, Status}
 import com.raquo.airstream.timing._
@@ -249,8 +250,18 @@ with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
     EventStream.merge(allStreams: _*)
   }
 
-  @inline final def scanLeftRecover[B](initial: Try[B], resetOnStop: Boolean = false)(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
-    new ScanLeftSignal(parent = this, () => initial, fn, resetOnStop)
+  @inline final override def scanLeftRecover[B](
+    initial: Try[B],
+    resetOnStop: Boolean,
+  )(
+    combine: CombineTry[A, B],
+  ): Signal[B] = {
+    new ScanLeftSignal(
+      parent = this,
+      makeInitial = () => initial,
+      combine = combine,
+      resetOnStop = resetOnStop,
+    )
   }
 
   /** Convert stream to signal, given an initial value

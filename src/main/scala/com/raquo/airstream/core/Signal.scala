@@ -12,6 +12,7 @@ import com.raquo.airstream.extensions._
 import com.raquo.airstream.misc.{MapSignal, StreamFromSignal}
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.scan.{ScanLeftSignal, ScanLeftSignalOps}
+import com.raquo.airstream.scan.Recover.CombineTry
 import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
 import com.raquo.airstream.timing.JsPromiseSignal
 import com.raquo.ew.JsArray
@@ -135,15 +136,15 @@ with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
 
   @inline override def scanLeftRecover[B](
     makeInitial: Try[A] => Try[B],
-    resetOnStop: Boolean
+    resetOnStop: Boolean,
   )(
-    fn: (Try[B], Try[A]) => Try[B]
+    combine: CombineTry[A, B],
   ): Signal[B] = {
     new ScanLeftSignal(
       parent = this,
-      makeInitialValue = () => makeInitial(tryNow()),
-      fn,
-      resetOnStop
+      makeInitial = () => makeInitial(tryNow()),
+      combine = combine,
+      resetOnStop = resetOnStop,
     )
   }
 

@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(sbt:*)",
-      "Bash(gh pr:*)"
+      "Bash(gh pr:*)",
+      "Bash(git stash:*)"
     ]
   }
 }

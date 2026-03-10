@@ -18,7 +18,7 @@ import scala.util.Try
 trait ScanLeftOps[+Scan[+B] <: Observable[B], +Reduce[+B] <: Observable[B], +A] {
 
   /**
-   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Accumulates all emissions from this parent using a binary operator `combine`.
    * Produces an [[Observable]] that emits the accumulated value every time this parent emits.
    *
    * @param initial     The seed value for the accumulator. This is evaluated eagerly in current call stack.
@@ -29,7 +29,7 @@ trait ScanLeftOps[+Scan[+B] <: Observable[B], +Reduce[+B] <: Observable[B], +A] 
    *                    If `false`, errors will persist until restart.
    * @param combine     A binary operator that takes a tuple of the previously accumulated value and
    *                    the next emission from this parent to produce the next accumulated value.
-   *                    It is safe for `fn` to throw uncaught exceptions, which are propagated through the error channel.
+   *                    It is safe for `combine` to throw uncaught exceptions, which are propagated through the error channel.
    * @tparam B          The type of the accumulated value and thus of the resulting observable.
    * @return            An [[Observable]] that emits the accumulated value every time this parent emits.
    *                    The kind of observable produced is typically a signal or derivative thereof.
@@ -48,7 +48,7 @@ trait ScanLeftOps[+Scan[+B] <: Observable[B], +Reduce[+B] <: Observable[B], +A] 
   }
 
   /**
-   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Accumulates all emissions from this parent using a binary operator `combine`.
    * Produces an [[Observable]] that emits the accumulated value every time this parent emits.
    *
    * @param initial     The seed value for the accumulator. This is evaluated eagerly in current call stack.
@@ -57,7 +57,7 @@ trait ScanLeftOps[+Scan[+B] <: Observable[B], +Reduce[+B] <: Observable[B], +A] 
    * @param resetOnStop Whether to reset the accumulator when this parent is restarted (default is `false`).
    * @param combine     A binary operator that takes a tuple of the previously accumulated value and
    *                    the next emission from this parent to produce the next accumulated value.
-   *                    It is not safe for `fn` to throw uncaught exceptions; you must use [[Try]] instead!
+   *                    It is not safe for `combine` to throw uncaught exceptions; you must use [[Try]] instead!
    * @tparam B          The type of the accumulated value and thus of the resulting observable.
    * @return            An [[Observable]] that emits the accumulated value every time this parent emits.
    *                    The kind of observable produced is typically a signal or derivative thereof.
@@ -72,7 +72,7 @@ trait ScanLeftOps[+Scan[+B] <: Observable[B], +Reduce[+B] <: Observable[B], +A] 
   ): Scan[B]
 
   /**
-   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Accumulates all emissions from this parent using a binary operator `combine`.
    * Produces an [[Observable]] that emits the accumulated value every time this parent emits.
    *
    *
@@ -81,7 +81,7 @@ trait ScanLeftOps[+Scan[+B] <: Observable[B], +Reduce[+B] <: Observable[B], +A] 
    *                    If `false`, errors will persist until restart.
    * @param combine     A binary operator that takes a tuple of the previously accumulated value and
    *                    the next emission from this parent to produce the next accumulated value.
-   *                    It is safe for `fn` to throw uncaught exceptions, which are propagated through the error channel.
+   *                    It is safe for `combine` to throw uncaught exceptions, which are propagated through the error channel.
    * @tparam B          The type of the accumulated value and thus of the resulting observable.
    * @return            An [[Observable]] that emits the accumulated value every time this parent emits.
    *                    The kind of observable produced typically matches the kind of the parent observable.
@@ -96,12 +96,12 @@ trait ScanLeftOps[+Scan[+B] <: Observable[B], +Reduce[+B] <: Observable[B], +A] 
   ): Reduce[B]
 
   /**
-   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Accumulates all emissions from this parent using a binary operator `combine`.
    * Produces an [[Observable]] that emits the accumulated value every time this parent emits.
    *
    * @param combine A binary operator that takes a tuple of the previously accumulated value and
    *                the next emission from this parent to produce the next accumulated value.
-   *                It is safe for `fn` to throw uncaught exceptions, which are propagated through the error channel.
+   *                It is safe for `combine` to throw uncaught exceptions, which are propagated through the error channel.
    * @tparam B      The type of the accumulated value and thus of the resulting observable.
    * @return        An [[Observable]] that emits the accumulated value every time this parent emits.
    *                The kind of observable produced typically matches the kind of the parent observable.

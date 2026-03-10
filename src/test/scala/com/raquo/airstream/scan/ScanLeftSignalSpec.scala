@@ -1,4 +1,4 @@
-package com.raquo.airstream.misc
+package com.raquo.airstream.scan
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Observer
