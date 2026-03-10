@@ -524,7 +524,7 @@ class ReduceLeftSpec extends UnitSpec with BeforeAndAfter {
 
     val signal = v.signal.reduceLeftRecover[Int] { (tryAcc, tryNext) =>
       for {
-        acc  <- tryAcc
+        acc <- tryAcc
         next <- tryNext
       } yield {
         if (next < 0) throw err1

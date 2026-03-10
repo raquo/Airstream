@@ -1,124 +1,109 @@
 package com.raquo.airstream.scan
 
-import com.raquo.airstream.core.{EventStream, Observable, Signal}
+import com.raquo.airstream.core.{EventStream, Signal}
+import com.raquo.airstream.scan.Recover.{Combine, CombineTry}
 
 import scala.util.Try
 
+/**
+ * A base trait for [[EventStream]]s with reduction operators such as `scanLeft` and `reduceLeft`.
+ * 
+ * @tparam A The type of event emitted by this stream.
+ *
+ * @note Implementations must define `scanLeftRecover`.
+ * @see  [[ScanLeftSignalOps]] for the corresponding operators on [[Signal]].
+ */
 trait ScanLeftStreamOps[+A] extends ScanLeftOps[Signal, EventStream, A] {
 
   /**
-   * Creates a [[Signal]] that combines all events from the parent [[EventStream]] using `fn`,
-   * and emits the accumulated value every time that the parent [[EventStream]] emits.
+   * Accumulates all events from this parent using a binary operator `combine`.
+   * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
    *
-   * @param fn
-   *   A binary operator that takes
-   *   the previously accumulated value (on the left) and
-   *   the next event from the parent [[EventStream]] (on the right),
-   *   and produces the next accumulated value.
+   * @param resetOnStop Whether to reset the accumulator when this parent is restarted (default is `false`).
+   * @param skipErrors  Whether to skip error-valued emissions, omitting them from the accumulation (default is `false`).
+   *                    If `false`, errors will persist until restart.
+   * @param combine     A binary operator that takes a tuple of the previously accumulated value and
+   *                    the next emission from this parent to produce the next accumulated value.
+   *                    It is safe for `combine` to throw uncaught exceptions, which are propagated through the error channel.
+   * @tparam B          The type of the accumulated value and thus of the resulting signal.
+   * @return            A [[Signal]] that emits the accumulated value every time this parent emits.
+   *                    Values are given as [[Option]]s, which are [[None]] precisely when this parent has not yet emitted.
    *
-   * @tparam B
-   *   The type of the accumulated value and the resulting [[Signal]].
-   *
-   * @return
-   *   A [[Signal]] that emits the accumulated value every time that the parent [[EventStream]] emits.
-   *   The contents are wrapped in [[Option]],
-   *   which is [[None]] precisely when the parent [[EventStream]] has not emitted anything yet.
-   *
-   * @note
-   *   It is safe for `fn` to throw an exception,
-   *   in which case it will be propagated through the error channel of the resulting [[Observable]].
-   *
-   * @note
-   *   Accumulated state persists across stop/start; events emitted while stopped are discarded.
-   *
-   * @see
-   *   [[reduceLeft]] for a version of this method where the result isn't wrapped in [[Option]].
+   * @see [[reduceLeft]] instead produces an [[EventStream]], [[scanLeft]] has an explicit initial seed value.
    */
-  @inline final def reduceLeftOption[B >: A](fn: (B, A) => B): Signal[Option[B]] = {
-    scanLeft[Option[B]](None) {
+  @inline final def reduceLeftOption[B >: A](
+    resetOnStop: Boolean = false,
+    skipErrors: Boolean = false,
+  )(
+    combine: Combine[A, B],
+  ): Signal[Option[B]] = {
+    scanLeft[Option[B]](None, resetOnStop = resetOnStop, skipErrors = skipErrors) {
       case (None, next) => Some(next)
-      case (Some(previous), next) => Some(fn(previous, next))
+      case (Some(previous), next) => Some(combine(previous, next))
     }
   }
 
   /**
-   * Creates a [[Signal]] that combines all events from the parent [[EventStream]] using `fn`,
-   * and emits the accumulated value every time that the parent [[EventStream]] emits.
+   * Accumulates all events from this parent using a binary operator `combine`.
+   * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
    *
-   * @param default
-   *   The default value to use before the first event from the parent [[EventStream]].
-   *   After the first event, the default value is ignored and the accumulated value is emitted instead.
-   *   The default value is not incorporated into the accumulated value in any way.
+   * @param combine A binary operator that takes a tuple of the previously accumulated value and
+   *                the next emission from this parent to produce the next accumulated value.
+   *                It is safe for `combine` to throw uncaught exceptions, which are propagated through the error channel.
+   * @tparam B      The type of the accumulated value and thus of the resulting signal.
+   * @return        A [[Signal]] that emits the accumulated value every time this parent emits.
+   *                Values are given as [[Option]]s, which are [[None]] precisely when this parent has not yet emitted.
    *
-   * @param fn
-   *   A binary operator that takes
-   *   the previously accumulated value (on the left) and
-   *   the next event from the parent [[EventStream]] (on the right),
-   *   and produces the next accumulated value.
-   *
-   * @tparam B
-   *   The type of the accumulated value and the resulting [[Signal]].
-   *
-   * @return
-   *   A [[Signal]] that emits the accumulated value every time that the parent [[EventStream]] emits.
-   *   The `default` value is used until the first event arrives.
-   *
-   * @note
-   *   It is safe for `fn` to throw an exception,
-   *   in which case it will be propagated through the error channel of the resulting [[Observable]].
-   *
-   * @note
-   *   Accumulated state persists across stop/start; events emitted while stopped
-   *   are discarded. Once the first event has been accumulated, `default` is no longer used even on restart.
-   *
-   * @see
-   *   [[reduceLeft]] for a version of this method where no default is required.
-   *
-   * @see
-   *   [[scanLeft]] for a version of this method where the default value is used to seed the accumulator.
+   * @see [[reduceLeft]] instead produces an [[EventStream]], and [[scanLeft]] has an explicit initial seed value.
    */
-  @inline final def reduceLeftDefault[B >: A](default: => B)(fn: (B, A) => B): Signal[B] = {
-    reduceLeftOption(fn).map(_.getOrElse(default))
+  // Note: This is provided so that users don't have to pass an empty parameter list.
+  @inline final def reduceLeftOption[B >: A](
+    combine: Combine[A, B],
+  ): Signal[Option[B]] = {
+    reduceLeftOption[B]()(combine)
   }
 
   /**
-   * Creates an [[EventStream]] that combines all events from the parent [[EventStream]] using `fn`,
-   * and emits the accumulated value every time that the parent [[EventStream]] emits.
+   * Accumulates all events from this parent using a binary operator `combine`.
+   * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
    *
-   * @param fn
-   *   A binary operator that takes
-   *   the previously accumulated value (on the left) and
-   *   the next event from the parent [[EventStream]] (on the right),
-   *   and produces the next accumulated value.
+   * @param default     The initial value for the resulting signal, used until this parent emits for the first time.
+   *                    Following the first event, `default` is discarded and thereafter plays no role.
+   * @param resetOnStop Whether to reset the accumulator when this parent is restarted (default is `false`).
+   * @param skipErrors  Whether to skip error-valued emissions, omitting them from the accumulation (default is `false`).
+   *                    If `false`, errors will persist until restart.
+   * @param combine     A binary operator that takes a tuple of the previously accumulated value and
+   *                    the next emission from this parent to produce the next accumulated value.
+   *                    It is safe for `combine` to throw uncaught exceptions, which are propagated through the error channel.
+   * @tparam B          The type of the accumulated value and thus of the resulting signal.
+   * @return            A [[Signal]] that emits the accumulated value every time this parent emits.
    *
-   * @tparam B
-   *   The type of the accumulated value and the resulting [[EventStream]].
-   *
-   * @return
-   *   An [[EventStream]] that emits the accumulated value every time that the parent [[EventStream]] emits,
-   *   after the first event.
-   *
-   * @note
-   *   It is safe for `fn` to throw an exception,
-   *   in which case it will be propagated through the error channel of the resulting [[EventStream]].
-   *
-   * @note
-   *   Accumulated state persists across stop/start; events emitted while stopped
-   *   are discarded. If `fn` throws, the accumulated error state also persists for all subsequent events.
-   *
-   * @see
-   *   [[scanLeft]] for a version of this method with an explicit initial value.
-   *
-   * @see
-   *   [[reduceLeftOption]] for a version of this method where the result is wrapped in [[Option]].
+   * @see [[reduceLeft]] has no initial value, and [[scanLeft]] folds the initial value into the accumulation.
    */
-  @inline final def reduceLeft[B >: A](fn: (B, A) => B): EventStream[B] = {
-    reduceLeftOption(fn).updates.collect { case Some(value) => value }
+  @inline final def reduceLeftDefault[B >: A](
+    default: => B,
+    resetOnStop: Boolean = false,
+    skipErrors: Boolean = false,
+  )(
+    combine: Combine[A, B],
+  ): Signal[B] = {
+    reduceLeftOption[B](resetOnStop = resetOnStop, skipErrors = skipErrors)(combine)
+      .map(_.getOrElse(default))
+  }
+
+  @inline final override def reduceLeft[B >: A](
+    resetOnStop: Boolean,
+    skipErrors: Boolean,
+  )(
+    combine: Combine[A, B],
+  ): EventStream[B] = {
+    reduceLeftOption[B](resetOnStop = resetOnStop, skipErrors = skipErrors)(combine)
+      .updates.collect { case Some(value) => value }
   }
 
   @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")
-  def foldLeft[B](initial: B)(fn: (B, A) => B): Signal[B] = scanLeft(initial)(fn)
+  def foldLeft[B](initial: B)(fn: Combine[A, B]): Signal[B] = scanLeft(initial)(fn)
 
   @deprecated("foldLeftRecover was renamed to scanLeftRecover", "15.0.0-M1")
-  def foldLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = scanLeftRecover(initial)(fn)
+  def foldLeftRecover[B](initial: Try[B])(fn: CombineTry[A, B]): Signal[B] = scanLeftRecover(initial)(fn)
 }

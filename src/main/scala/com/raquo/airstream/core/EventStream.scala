@@ -249,8 +249,8 @@ with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
     EventStream.merge(allStreams: _*)
   }
 
-  @inline final def scanLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
-    new ScanLeftSignal(parent = this, () => initial, fn)
+  @inline final def scanLeftRecover[B](initial: Try[B], resetOnStop: Boolean = false)(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
+    new ScanLeftSignal(parent = this, () => initial, fn, resetOnStop)
   }
 
   /** Convert stream to signal, given an initial value

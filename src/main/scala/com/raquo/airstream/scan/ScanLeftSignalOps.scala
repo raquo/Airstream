@@ -1,183 +1,174 @@
 package com.raquo.airstream.scan
 
-import com.raquo.airstream.core.{Observable, Signal}
+import com.raquo.airstream.core.{EventStream, Signal}
+import com.raquo.airstream.scan.Recover.{Combine, CombineTry}
 
 import scala.util.Try
 
-trait ScanLeftSignalOps[+Self[+_], +A] extends ScanLeftOps[Self, Self, A] {
+/**
+ * A base trait for [[Signal]] with reduction operators such as `scanLeft` and `reduceLeft`.
+ *
+ * @tparam Self The kind of signal that is created by all reductions.
+ * @tparam A    The type of value contained in this signal.
+ *
+ * @note Implementations must define `scanLeftRecover`.
+ * @see [[ScanLeftStreamOps]] for the corresponding operators on [[EventStream]].
+ */
+trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Self, A] {
 
   /**
-   * Creates a [[Signal]] that combines all updates from the parent [[Signal]] using `fn`,
-   * and emits the accumulated value every time that the parent [[Signal]] emits.
+   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
    *
-   * @param makeInitial
-   *   A function for creating the initial value to use before the first update,
-   *   which takes the initial value of the parent [[Signal]] as input.
+   * @param makeInitial A function for creating the seed value for the accumulator given the initial value of this parent.
+   * @param resetOnStop Whether to reset the accumulator when this parent is restarted (default is `false`).
+   * @param skipErrors  Whether to skip error-valued emissions, omitting them from the accumulation (default is `false`).
+   *                    If `false`, errors will persist until restart.
+   * @param combine     A binary operator that takes a tuple of the previously accumulated value and
+   *                    the next emission from this parent to produce the next accumulated value.
+   *                    It is safe for `fn` to throw uncaught exceptions, which are propagated through the error channel.
+   * @tparam B          The type of the accumulated value and thus of the resulting signal.
+   * @return            A [[Signal]] that emits the accumulated value every time this parent emits.
    *
-   * @param fn
-   * A binary operator that takes
-   * the previously accumulated value (on the left) and
-   * the next update from the parent [[Observable]] (on the right),
-   * and produces the next accumulated value.
-   *
-   * @tparam B
-   *   The type of the accumulated value and the resulting [[Signal]].
-   *
-   * @return
-   *   A [[Signal]] that emits the accumulated value every time that the parent [[Observable]] emits.
-   *
-   * @note
-   *   It is safe for `fn` or `makeInitial` to throw an exception,
-   *   in which case it will be propagated through the error channel of the resulting [[Signal]].
-   *
-   * @note
-   *   On restart, re-syncs with the parent by applying `fn` to the last
-   *   accumulated value and the parent's current value.
-   *
-   * @see
-   *   [[scanLeftRecover]] for a version of this method with manual error recovery.
-   *
-   * @see
-   *   [[reduceLeft]] for a version of this method without an initial value.
+   * @see [[scanLeftRecover]] has manual error handling, and [[reduceLeft]] has no `initial` seed value.
    */
-  @inline final def scanLeft[B](makeInitial: A => B)(fn: (B, A) => B): Self[B] = {
-    scanLeftRecover[B](_.map(makeInitial))(recoverable(fn))
+  @inline final def scanLeft[B](
+    makeInitial: A => B,
+    resetOnStop: Boolean,
+    skipErrors: Boolean,
+  )(
+    combine: Combine[A, B],
+  ): Self[B] = {
+    val f = if (skipErrors) Recover.skipErrors(combine) else Recover.keepErrors(combine)
+    scanLeftRecover(_.map(makeInitial), resetOnStop = resetOnStop)(f)
   }
 
   /**
-   * Creates a [[Signal]] that combines all updates from the parent [[Observable]] using `fn`,
-   * and emits the accumulated value every time that the parent [[Signal]] emits.
+   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
    *
-   * @param makeInitial
-   *   A function for creating the initial value to use before the first update,
-   *   which takes the initial value of the parent [[Signal]] as input.
+   * @param makeInitial A function for creating the seed value for the accumulator given the initial value of this parent.
+   * @param combine     A binary operator that takes a tuple of the previously accumulated value and
+   *                    the next emission from this parent to produce the next accumulated value.
+   *                    It is safe for `fn` to throw uncaught exceptions, which are propagated through the error channel.
+   * @tparam B          The type of the accumulated value and thus of the resulting signal.
+   * @return            A [[Signal]] that emits the accumulated value every time this parent emits.
    *
-   * @param fn
-   *   A binary operator that takes
-   *   the previously accumulated value (on the left) and
-   *   the next update from the parent stream (on the right),
-   *   and produces the next accumulated value.
+   * @see [[scanLeftRecover]] has manual error handling, and [[reduceLeft]] has no `initial` seed value.
+   */
+  // Note: This is needed as default parameters are not supported on more than one method of the same name.
+  @inline final def scanLeft[B](
+    makeInitial: A => B,
+  )(
+    combine: Combine[A, B],
+  ): Self[B] = {
+    scanLeft(makeInitial, resetOnStop = false, skipErrors = false)(combine)
+  }
+
+  /**
+   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
    *
-   * @tparam B
-   *   The type of the accumulated value and the resulting [[Signal]].
+   * @param makeInitial A function for creating the seed value for the accumulator given the initial value of this parent.
+   * @param resetOnStop Whether to reset the accumulator when this parent is restarted (default is `false`).
+   * @param combine     A binary operator that takes a tuple of the previously accumulated value and
+   *                    the next emission from this parent to produce the next accumulated value.
+   *                    It is safe for `fn` to throw uncaught exceptions, which are propagated through the error channel.
+   * @tparam B          The type of the accumulated value and thus of the resulting signal.
+   * @return            A [[Signal]] that emits the accumulated value every time this parent emits.
    *
-   * @return
-   *   A [[Signal]] that emits the accumulated value every time that the parent [[Observable]] emits.
-   *
-   * @note
-   *   It is not safe for `fn` to throw an exception.
-   *   It is assumed that the user is responsible for wrapping any exceptions in [[Try]].
-   *   If an uncaught exception nevertheless occurs, Airstream will likely crash.
-   *
-   * @note
-   *   On restart, re-syncs with the parent by applying `fn` to the last
-   *   accumulated value and the parent's current value.
-   *
-   * @see
-   *   [[scanLeft]] for a version of this method that guards against exceptions,
-   *   the use of which is recommended instead if you don't need manual error recovery.
-   *
-   * @see
-   *   [[reduceLeftRecover]] for a version of this method without an initial value.
+   * @see [[scanLeft]] has automatic error handling, and [[reduceLeft]] has no `initial` seed value.
    */
   def scanLeftRecover[B](
-    makeInitial: Try[A] => Try[B]
+    makeInitial: Try[A] => Try[B],
+    resetOnStop: Boolean,
   )(
-    fn: (Try[B], Try[A]) => Try[B]
+    combine: CombineTry[A, B],
   ): Self[B]
 
   /**
-   * Like [[scanLeftRecover]] but takes a constant `initial: Try[B]` instead of a function.
-   * The initial value of the resulting [[Signal]] is `fn(initial, parent.now())`.
+   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
    *
-   * @note
-   *   It is not safe for `fn` to throw an exception.
-   *   It is assumed that the user is responsible for wrapping any exceptions in [[Try]].
-   *   If an uncaught exception nevertheless occurs, Airstream will likely crash.
+   * @param makeInitial A function for creating the seed value for the accumulator given the initial value of this parent.
+   * @param combine     A binary operator that takes a tuple of the previously accumulated value and
+   *                    the next emission from this parent to produce the next accumulated value.
+   *                    It is safe for `fn` to throw uncaught exceptions, which are propagated through the error channel.
+   * @tparam B          The type of the accumulated value and thus of the resulting signal.
+   * @return            A [[Signal]] that emits the accumulated value every time this parent emits.
    *
-   * @note
-   *   On restart, re-syncs with the parent by applying `fn` to the last
-   *   accumulated value and the parent's current value.
+   * @see [[scanLeft]] has automatic error handling, and [[reduceLeft]] has no `initial` seed value.
    */
-  @inline final def scanLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Self[B] =
-    scanLeftRecover[B](fn(initial, _))(fn)
+  // Note: This is needed as default parameters are not supported on more than one method of the same name.
+  @inline final def scanLeftRecover[B](
+    makeInitial: Try[A] => Try[B],
+  )(
+    combine: CombineTry[A, B],
+  ): Self[B] = {
+    scanLeftRecover(makeInitial, resetOnStop = false)(combine)
+  }
 
-  /**
-   * Creates a [[Signal]] that combines all updates from the parent [[Signal]] using `fn`,
-   * and emits the accumulated value every time that the parent [[Signal]] emits.
-   *
-   * The initial value of the resulting [[Signal]] is the initial value of the parent [[Signal]].
-   *
-   * @param fn
-   *   A binary operator that takes
-   *   the previously accumulated value (on the left) and
-   *   the next update from the parent [[Observable]] (on the right),
-   *   and produces the next accumulated value.
-   *
-   * @tparam B
-   *   The type of the accumulated value and the resulting [[Signal]].
-   *
-   * @return
-   *   A [[Signal]] that emits the accumulated value every time that the parent [[Observable]] emits.
-   *
-   * @note
-   *   It is safe for `fn` to throw an exception,
-   *   in which case it will be propagated through the error channel of the resulting [[Signal]].
-   *
-   * @note
-   *   On restart, re-syncs with the parent by applying `fn` to the last
-   *   accumulated value and the parent's current value.
-   *
-   * @see
-   *   [[reduceLeftRecover]] for a version of this method with manual error recovery.
-   *
-   * @see
-   *   [[scanLeft]] for a version of this method with an explicit initial value.
-   */
-  @inline final def reduceLeft[B >: A](fn: (B, A) => B): Self[B] = {
-    scanLeft(identity[B])(fn)
+  @inline final override def scanLeftRecover[B](
+    initial: Try[B],
+    resetOnStop: Boolean,
+  )(
+    combine: CombineTry[A, B],
+  ): Self[B] = {
+    scanLeftRecover[B](combine(initial, _), resetOnStop)(combine)
+  }
+
+  @inline final override def reduceLeft[B >: A](
+    resetOnStop: Boolean,
+    skipErrors: Boolean,
+  )(
+    combine: Combine[A, B],
+  ): Self[B] = {
+    scanLeft[B](identity[B])(combine)
   }
 
   /**
-   * Creates a [[Signal]] that combines all updates from the parent [[Signal]] using `fn`,
-   * and emits the accumulated value every time that the parent [[Signal]] emits.
+   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
    *
-   * The initial value of the resulting [[Signal]] is the initial value of the parent [[Signal]].
+   * @param resetOnStop Whether to reset the accumulator when this parent is restarted (default is `false`).
+   * @param combine     A binary operator that takes a tuple of the previously accumulated value and
+   *                    the next emission from this parent to produce the next accumulated value.
+   *                    It is not safe for `fn` to throw uncaught exceptions; you must use [[Try]] instead!
+   * @tparam B          The type of the accumulated value and thus of the resulting signal.
+   * @return            A [[Signal]] that emits the accumulated value every time this parent emits.
    *
-   * @param fn
-   *   A binary operator that takes
-   *   the previously accumulated value (on the left) and
-   *   the next update from the parent [[Observable]] (on the right),
-   *   and produces the next accumulated value.
-   *
-   * @tparam B
-   *   The type of the accumulated value and the resulting [[Signal]].
-   *
-   * @return
-   *   A [[Signal]] that emits the accumulated value every time that the parent [[Observable]] emits.
-   *
-   * @note
-   *   It is not safe for `fn` to throw an exception.
-   *   It is assumed that the user is responsible for wrapping any exceptions in [[Try]].
-   *   If an uncaught exception nevertheless occurs, Airstream will likely crash.
-   *
-   * @note
-   *   On restart, re-syncs with the parent by applying `fn` to the last
-   *   accumulated value and the parent's current value.
-   *
-   * @see
-   *   [[reduceLeft]] for a version of this method that guards against exceptions,
-   *   the use of which is recommended instead if you don't need manual error recovery.
-   *
-   * @see
-   *   [[scanLeftRecover]] for a version of this method with an explicit initial value.
+   * @see [[reduceLeft]] has automatic error handling, amd [[scanLeft]] has an explicit initial seed value.
    */
-  @inline final def reduceLeftRecover[B >: A](fn: (Try[B], Try[A]) => Try[B]): Self[B] =
-    scanLeftRecover[B](tryA => tryA.map(a => a: B))(fn)
+  @inline final def reduceLeftRecover[B >: A](
+    resetOnStop: Boolean = false,
+  )(
+    combine: CombineTry[A, B],
+  ): Self[B] = {
+    scanLeftRecover(identity[Try[B]])(combine)
+  }
+
+  /**
+   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
+   *
+   * @param combine A binary operator that takes a tuple of the previously accumulated value and
+   *                the next emission from this parent to produce the next accumulated value.
+   *                It is not safe for `fn` to throw uncaught exceptions; you must use [[Try]] instead!
+   * @tparam B      The type of the accumulated value and thus of the resulting signal.
+   * @return        A [[Signal]] that emits the accumulated value every time this parent emits.
+   *
+   * @see [[reduceLeft]] has automatic error handling, amd [[scanLeft]] has an explicit initial seed value.
+   */
+  // Note: This is provided so that users don't have to pass an empty parameter list.
+  @inline final def reduceLeftRecover[B >: A](
+    combine: CombineTry[A, B],
+  ): Self[B] = {
+    reduceLeftRecover[B]()(combine)
+  }
 
   @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")
-  def foldLeft[B](makeInitial: A => B)(fn: (B, A) => B): Self[B] = scanLeft(makeInitial)(fn)
+  def foldLeft[B](makeInitial: A => B)(combine: Combine[A, B]): Self[B] = scanLeft[B](makeInitial)(combine)
 
   @deprecated("foldLeftRecover was renamed to scanLeftRecover", "15.0.0-M1")
-  def foldLeftRecover[B](makeInitial: Try[A] => Try[B])(fn: (Try[B], Try[A]) => Try[B]): Self[B] = scanLeftRecover(makeInitial)(fn)
+  def foldLeftRecover[B](makeInitial: A => B)(combine: CombineTry[A, B]): Self[B] = scanLeftRecover[B](makeInitial)(combine)
 }

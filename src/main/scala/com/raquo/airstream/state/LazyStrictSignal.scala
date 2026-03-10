@@ -152,13 +152,14 @@ object LazyStrictSignal {
     parentSignal: Signal[A],
     makeInitial: Try[A] => Try[B],
     fn: (Try[B], Try[A]) => Try[B],
+    resetOnStop: Boolean,
     parentDisplayName: => String,
     displayNameSuffix: String,
   ): StrictSignal[B] = {
     val _pdn = parentDisplayName
     val _dns = displayNameSuffix
 
-    new ScanLeftSignal(parentSignal, () => makeInitial(parentSignal.tryNow()), fn)
+    new ScanLeftSignal(parentSignal, () => makeInitial(parentSignal.tryNow()), fn, resetOnStop)
       with LazyStrictSignal[A, B] {
 
       override protected def parentDisplayName: String = _pdn

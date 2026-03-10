@@ -1,132 +1,117 @@
 package com.raquo.airstream.scan
 
 import com.raquo.airstream.core.Observable
+import com.raquo.airstream.scan.Recover.{Combine, CombineTry}
 
 import scala.util.Try
 
 /**
- * The base type for [[Observable]]s that have reduction operators such as `scanLeft`.
- * This is a parent of both [[ScanLeftSignalOps]] and [[ScanLeftStreamOps]].
+ * A base trait for [[Observable]]s with reduction operators such as `scanLeft` and `reduceLeft`.
  *
- * @tparam Scan
- * The kind of [[Observable]] that is created by `scanLeft` (e.g. [[Signal]] or [[com.raquo.airstream.state.StrictSignal]].)
+ * @tparam Scan   The kind of observable that is created by `scanLeft`.
+ * @tparam Reduce The kind of observable that is created by `reduceLeft`.
+ * @tparam A      The type of value emitted by this observable.
  *
- * @tparam Reduce
- * The kind of [[Observable]] that is created by `reduceLeft` (e.g. [[EventStream]].)
- *
- * @tparam A
- *   The type of value emitted by this [[Observable]]. (e.g. [[MouseEvent]] or [[Int]].)
+ * @note Implementations must define `scanLeftRecover` and `reduceLeft`.
+ * @see  [[ScanLeftSignalOps]] and [[ScanLeftStreamOps]] for specialisations to signals and streams respectively.
  */
-trait ScanLeftOps[+Scan[+_], +Reduce[+_], +A] {
-
-  // @TODO[API] Should we introduce some kind of FoldError() wrapper?
-  /**
-   * Creates a [[Signal]] that combines all emissions from the parent [[Observable]] using `fn`,
-   * and emits the accumulated value every time that the parent [[Observable]] emits.
-   *
-   * @param initial
-   *   The initial value to use before the first emission from the parent.
-   *   If the parent is a [[Signal]], the starting signal value will be combined with this parameter
-   *   using `fn` to produce the new initial value.
-   *
-   * @param fn
-   * A binary operator that takes
-   * the previously accumulated value (on the left) and
-   * the next emission from the parent [[Observable]] (on the right),
-   * and produces the next accumulated value.
-   *
-   * @tparam B
-   *   The type of the accumulated value and the resulting [[Signal]].
-   *
-   * @return
-   *   A [[Signal]] that emits the accumulated value every time that the parent [[Observable]] emits.
-   *
-   * @note
-   *   It is safe for `fn` or `initial` to throw an exception,
-   *   in which case it will be propagated through the error channel of the resulting [[Signal]].
-   *
-   * @note
-   *   `initial` is evaluated when `scanLeft` is called, not when the first observer subscribes.
-   *
-   * @note
-   *   Accumulated state persists across stop/start; events emitted while stopped are discarded.
-   *   When the parent is a [[Signal]], also re-syncs with the parent's current value on restart.
-   *
-   * @see
-   *   [[scanLeftRecover]] for a version of this method with manual error recovery.
-   *
-   * @see
-   *   [[reduceLeft]] for a version of this method without an initial value.
-   */
-  @inline final def scanLeft[B](initial: => B)(fn: (B, A) => B): Scan[B] =
-    scanLeftRecover(Try(initial))(recoverable(fn))
+trait ScanLeftOps[+Scan[+B] <: Observable[B], +Reduce[+B] <: Observable[B], +A] {
 
   /**
-   * Creates a [[Signal]] that combines all emissions from the parent [[Observable]] using `fn`,
-   * and emits the accumulated value every time that the parent [[Observable]] emits.
+   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Produces an [[Observable]] that emits the accumulated value every time this parent emits.
    *
-   * @param initial
-   *   The initial value to use before the first emission from the parent.
-   *   If the parent is a [[Signal]], the starting signal value will be combined with this parameter
-   *   using `fn` to produce the new initial value.
+   * @param initial     The seed value for the accumulator. This is evaluated eagerly in current call stack.
+   *                    For signals, this is combined with the signal's initial value immediately.
+   *                    For streams, this is used as the initial value until the first event arrives.
+   * @param resetOnStop Whether to reset the accumulator when this parent is restarted (default is `false`).
+   * @param skipErrors  Whether to skip error-valued emissions, omitting them from the accumulation (default is `false`).
+   *                    If `false`, errors will persist until restart.
+   * @param combine     A binary operator that takes a tuple of the previously accumulated value and
+   *                    the next emission from this parent to produce the next accumulated value.
+   *                    It is safe for `fn` to throw uncaught exceptions, which are propagated through the error channel.
+   * @tparam B          The type of the accumulated value and thus of the resulting observable.
+   * @return            An [[Observable]] that emits the accumulated value every time this parent emits.
+   *                    The kind of observable produced is typically a signal or derivative thereof.
    *
-   * @param fn
-   *   A binary operator that takes
-   *   the previously accumulated value (on the left) and
-   *   the next emission from the parent stream (on the right),
-   *   and produces the next accumulated value.
-   *
-   * @tparam B
-   *   The type of the accumulated value and the resulting [[Signal]].
-   *
-   * @return
-   *   A [[Signal]] that emits the accumulated value every time that the parent [[Observable]] emits.
-   *
-   * @note
-   *   It is not safe for `fn` to throw an exception.
-   *   It is assumed that the user is responsible for wrapping any exceptions in [[Try]].
-   *   If an uncaught exception nevertheless occurs, Airstream will likely crash.
-   *
-   * @note
-   *   Accumulated state persists across stop/start; events emitted while stopped are discarded.
-   *   When the parent is a [[Signal]], also re-syncs with the parent's current value on restart.
-   *
-   * @see
-   *   [[scanLeft]] for a version of this method that guards against exceptions,
-   *   the use of which is recommended instead if you don't need manual error recovery.
+   * @see [[scanLeftRecover]] has manual error handling, and [[reduceLeft]] has no `initial` seed value.
    */
-  @inline def scanLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Scan[B]
+  @inline final def scanLeft[B](
+    initial: => B,
+    resetOnStop: Boolean = false,
+    skipErrors: Boolean = false,
+  )(
+    combine: Combine[A, B],
+  ): Scan[B] = {
+    val f = if (skipErrors) Recover.skipErrors(combine) else Recover.keepErrors(combine)
+    scanLeftRecover(Try(initial), resetOnStop)(f)
+  }
 
   /**
-   * Creates an [[Observable]] that combines all emissions from the parent [[Observable]] using `fn`,
-   * and emits the accumulated value every time that the parent [[Observable]] emits.
+   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Produces an [[Observable]] that emits the accumulated value every time this parent emits.
    *
-   * @param fn
-   *   A binary operator that takes
-   *   the previously accumulated value (on the left) and
-   *   the next emission from the parent [[Observable]] (on the right),
-   *   and produces the next accumulated value.
+   * @param initial     The seed value for the accumulator. This is evaluated eagerly in current call stack.
+   *                    For signals, this is combined with the signal's initial value immediately.
+   *                    For streams, this is used as the initial value until the first event arrives.
+   * @param resetOnStop Whether to reset the accumulator when this parent is restarted (default is `false`).
+   * @param combine     A binary operator that takes a tuple of the previously accumulated value and
+   *                    the next emission from this parent to produce the next accumulated value.
+   *                    It is not safe for `fn` to throw uncaught exceptions; you must use [[Try]] instead!
+   * @tparam B          The type of the accumulated value and thus of the resulting observable.
+   * @return            An [[Observable]] that emits the accumulated value every time this parent emits.
+   *                    The kind of observable produced is typically a signal or derivative thereof.
    *
-   * @tparam B
-   *   The type of the accumulated value and the resulting [[Observable]].
-   *
-   * @return
-   *   An [[Observable]] that emits the accumulated value every time that the parent [[Observable]] emits.
-   *
-   * @note
-   *   It is safe for `fn` to throw an exception,
-   *   in which case it will be propagated through the error channel of the resulting [[Observable]].
-   *
-   * @note
-   *   Accumulated state persists across stop/start; events emitted while stopped are discarded.
-   *   When the parent is a [[Signal]], also re-syncs with the parent's current value on restart.
-   *
-   * @see
-   *   [[scanLeft]] for a version of this method with an explicit initial value.
+   * @see [[scanLeft]] has automatic error handling, and [[reduceLeft]] has no `initial` seed value.
    */
-  def reduceLeft[B >: A](fn: (B, A) => B): Reduce[B]
+  @inline def scanLeftRecover[B](
+    initial: Try[B],
+    resetOnStop: Boolean = false,
+  )(
+    combine: CombineTry[A, B],
+  ): Scan[B]
 
-  @inline final protected def recoverable[X, Y](fn: (Y, X) => Y)(current: Try[Y], next: Try[X]): Try[Y] = {
-    Try(fn(current.get, next.get))
+  /**
+   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Produces an [[Observable]] that emits the accumulated value every time this parent emits.
+   *
+   *
+   * @param resetOnStop Whether to reset the accumulator when this parent is restarted (default is `false`).
+   * @param skipErrors  Whether to skip error-valued emissions, omitting them from the accumulation (default is `false`).
+   *                    If `false`, errors will persist until restart.
+   * @param combine     A binary operator that takes a tuple of the previously accumulated value and
+   *                    the next emission from this parent to produce the next accumulated value.
+   *                    It is safe for `fn` to throw uncaught exceptions, which are propagated through the error channel.
+   * @tparam B          The type of the accumulated value and thus of the resulting observable.
+   * @return            An [[Observable]] that emits the accumulated value every time this parent emits.
+   *                    The kind of observable produced typically matches the kind of the parent observable.
+   *
+   * @see [[scanLeft]] has an explicit seed value.
+   */
+  def reduceLeft[B >: A](
+    resetOnStop: Boolean = false,
+    skipErrors: Boolean = false,
+  )(
+    combine: Combine[A, B],
+  ): Reduce[B]
+
+  /**
+   * Accumulates all emissions from this parent using a binary operator `fn`.
+   * Produces an [[Observable]] that emits the accumulated value every time this parent emits.
+   *
+   * @param combine A binary operator that takes a tuple of the previously accumulated value and
+   *                the next emission from this parent to produce the next accumulated value.
+   *                It is safe for `fn` to throw uncaught exceptions, which are propagated through the error channel.
+   * @tparam B      The type of the accumulated value and thus of the resulting observable.
+   * @return        An [[Observable]] that emits the accumulated value every time this parent emits.
+   *                The kind of observable produced typically matches the kind of the parent observable.
+   *
+   * @see [[scanLeft]] has an explicit initial seed value.
+   */
+  // Note: This is provided so that users don't have to pass an empty parameter list.
+  @inline final def reduceLeft[B >: A](
+    combine: Combine[A, B],
+  ): Reduce[B] = {
+    reduceLeft[B]()(combine)
   }
 }

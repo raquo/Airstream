@@ -2,6 +2,7 @@ package com.raquo.airstream.scan
 
 import com.raquo.airstream.common.SingleParentSignal
 import com.raquo.airstream.core.{Observable, Protected, Transaction}
+import com.raquo.airstream.scan.Recover.CombineTry
 
 import scala.util.Try
 
@@ -16,19 +17,24 @@ import scala.util.Try
 class ScanLeftSignal[A, B, Parent <: Observable[A]](
   override protected[this] val parent: Parent,
   makeInitialValue: () => Try[B],
-  fn: (Try[B], Try[A]) => Try[B]
+  fn: CombineTry[A, B],
+  resetOnStop: Boolean = false
 ) extends SingleParentSignal[A, B] {
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
   /** #Note: this is called from tryNow(), make sure to avoid infinite loop. */
   override protected def currentValueFromParent(): Try[B] = {
-    parentAsSignalOpt.fold(
-      ifEmpty = maybeLastSeenCurrentValue.getOrElse(makeInitialValue())
-    ) { parentSignal =>
-      maybeLastSeenCurrentValue
-        .map(lastSeenCurrentValue => fn(lastSeenCurrentValue, parentSignal.tryNow()))
-        .getOrElse(makeInitialValue())
+    if (resetOnStop) {
+      makeInitialValue()
+    } else {
+      parentAsSignalOpt.fold(
+        ifEmpty = maybeLastSeenCurrentValue.getOrElse(makeInitialValue())
+      ) { parentSignal =>
+        maybeLastSeenCurrentValue
+          .map(lastSeenCurrentValue => fn(lastSeenCurrentValue, parentSignal.tryNow()))
+          .getOrElse(makeInitialValue())
+      }
     }
   }
 
