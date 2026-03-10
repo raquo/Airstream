@@ -102,8 +102,12 @@ trait ScanLeftStreamOps[+A] extends ScanLeftOps[Signal, EventStream, A] {
   }
 
   @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")
-  def foldLeft[B](initial: B)(fn: Combine[A, B]): Signal[B] = scanLeft(initial)(fn)
+  def foldLeft[B](initial: B)(fn: Combine[A, B]): Signal[B] = {
+    scanLeft(initial)(fn)
+  }
 
   @deprecated("foldLeftRecover was renamed to scanLeftRecover", "15.0.0-M1")
-  def foldLeftRecover[B](initial: Try[B])(fn: CombineTry[A, B]): Signal[B] = scanLeftRecover(initial)(fn)
+  def foldLeftRecover[B](initial: Try[B])(fn: CombineTry[A, B]): Signal[B] = {
+    scanLeftRecover(initial)(fn)
+  }
 }
