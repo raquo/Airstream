@@ -127,7 +127,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val _var = Var(0)
 
     val signal = _var.signal
-      .scanLeft(makeInitial = initial => s"numbers: init=${initial}") { (acc, nextValue) => acc + " " + nextValue.toString }
+      .scanLeft(makeInitial = initial => s"numbers: init=${initial}", resetOnStop = false, skipErrors = false) { (acc, nextValue) => acc + " " + nextValue.toString }
       .map(Calculation.log("signal", calculations))
 
     _var.writer.onNext(1)
@@ -414,7 +414,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val v = Var(5)
 
     // makeInitial overload: initial value of result = makeInitial(parent.now()) = parent.now() * 10 = 50
-    val withMakeInitial = v.signal.scanLeft(makeInitial = (n: Int) => n * 10)(_ + _)
+    val withMakeInitial = v.signal.scanLeft(makeInitial = (n: Int) => n * 10, resetOnStop = false, skipErrors = false)(_ + _)
 
     // constant initial overload: initial value of result = fn(0, parent.now()) = 0 + 5 = 5
     val withConstantInitial = v.signal.scanLeft(0)(_ + _)
@@ -507,7 +507,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val effects = mutable.Buffer[Effect[Int]]()
     val v = Var(1)
 
-    val signal = v.signal.reduceLeft(resetOnStop = true)(_ + _)
+    val signal = v.signal.reduceLeft(_ + _, resetOnStop = true)
 
     val sub = signal.addObserver(Observer[Int](effects += Effect("obs", _)))
 
@@ -543,7 +543,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val effects = mutable.Buffer[Effect[Int]]()
     val v = Var(1)
 
-    val signal = v.signal.reduceLeft(resetOnStop = false)(_ + _)
+    val signal = v.signal.reduceLeft(_ + _, resetOnStop = false)
 
     val sub = signal.addObserver(Observer[Int](effects += Effect("obs", _)))
 
@@ -578,7 +578,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val effects = mutable.Buffer[Effect[Int]]()
     val v = Var(1)
 
-    val signal = v.signal.reduceLeft(resetOnStop = false)(_ + _)
+    val signal = v.signal.reduceLeft(_ + _, resetOnStop = false)
 
     val sub = signal.addObserver(Observer[Int](effects += Effect("obs", _)))
 
@@ -884,7 +884,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val bus = new EventBus[Int]
 
     val parentSignal = bus.events.startWith(0)
-    val result = parentSignal.reduceLeft(skipErrors = true)(_ + _)
+    val result = parentSignal.reduceLeft(_ + _, skipErrors = true)
 
     result.addObserver(Observer.withRecover[Int](
       effects += Effect("obs", _),
@@ -921,7 +921,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val bus = new EventBus[Int]
 
     val parentSignal = bus.events.startWith(0)
-    val result = parentSignal.reduceLeft(skipErrors = false)(_ + _)
+    val result = parentSignal.reduceLeft(_ + _, skipErrors = false)
 
     result.addObserver(Observer.withRecover[Int](
       effects += Effect("obs", _),

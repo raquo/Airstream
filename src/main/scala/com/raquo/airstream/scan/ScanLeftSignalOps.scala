@@ -31,7 +31,7 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
   )(
     combine: (B, A) => B,
   ): Self[B] = {
-    val f = if (skipErrors) Recover.skipErrors(combine) else Recover.keepErrors(combine)
+    val f = if (skipErrors) Recover.skipErrors[A, B](combine) else Recover.keepErrors[A, B](combine)
     scanLeftRecover(_.map(makeInitial), resetOnStop = resetOnStop)(f)
   }
 
@@ -66,7 +66,7 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
     resetOnStop: Boolean,
     skipErrors: Boolean,
   ): Self[B] = {
-    scanLeft[B](identity[B], resetOnStop = resetOnStop, skipErrors = skipErrors)(combine)
+    scanLeft[B]((x: B) => x, resetOnStop = resetOnStop, skipErrors = skipErrors)(combine)
   }
 
   /**
@@ -82,7 +82,7 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
     combine: (Try[B], Try[A]) => Try[B],
     resetOnStop: Boolean = false,
   ): Self[B] = {
-    scanLeftRecover(identity[Try[B]], resetOnStop = resetOnStop)(combine)
+    scanLeftRecover((x: Try[B]) => x, resetOnStop = resetOnStop)(combine)
   }
 
   @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")

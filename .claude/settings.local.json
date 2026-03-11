@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sbt test:*)",
+      "Bash(npm install:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(gh run:*)",
+      "Bash(sbt compile:*)"
+    ]
+  }
+}

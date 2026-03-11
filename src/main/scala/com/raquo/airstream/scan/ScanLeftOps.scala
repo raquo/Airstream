@@ -34,7 +34,7 @@ trait ScanLeftOps[+ScanSelf[+B] <: Observable[B], +ReduceSelf[+B] <: Observable[
   )(
     combine: (B, A) => B,
   ): ScanSelf[B] = {
-    val f = if (skipErrors) Recover.skipErrors(combine) else Recover.keepErrors(combine)
+    val f = if (skipErrors) Recover.skipErrors[A, B](combine) else Recover.keepErrors[A, B](combine)
     scanLeftRecover(Try(initial), resetOnStop)(f)
   }
 

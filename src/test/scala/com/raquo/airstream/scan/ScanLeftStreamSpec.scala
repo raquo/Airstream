@@ -509,7 +509,7 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     val effects = mutable.Buffer[Effect[Int]]()
     val bus = new EventBus[Int]
 
-    val stream = bus.events.reduceLeft(resetOnStop = true)(_ + _)
+    val stream = bus.events.reduceLeft(_ + _, resetOnStop = true)
 
     val sub = stream.addObserver(Observer[Int](effects += Effect("obs", _)))
 
@@ -543,7 +543,7 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     val effects = mutable.Buffer[Effect[Int]]()
     val bus = new EventBus[Int]
 
-    val stream = bus.events.reduceLeft(resetOnStop = false)(_ + _)
+    val stream = bus.events.reduceLeft(_ + _, resetOnStop = false)
 
     val sub = stream.addObserver(Observer[Int](effects += Effect("obs", _)))
 
@@ -575,7 +575,7 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     val effects = mutable.Buffer[Effect[Option[Int]]]()
     val bus = new EventBus[Int]
 
-    val signal = bus.events.reduceLeftOption[Int](resetOnStop = true)(_ + _)
+    val signal = bus.events.reduceLeftOption[Int](_ + _, resetOnStop = true)
 
     val sub = signal.addObserver(Observer[Option[Int]](effects += Effect("obs", _)))
 
@@ -800,7 +800,7 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     val effects = mutable.Buffer[Effect[Int]]()
     val bus = new EventBus[Int]
 
-    val stream = bus.events.reduceLeft(skipErrors = true)(_ + _)
+    val stream = bus.events.reduceLeft(_ + _, skipErrors = true)
 
     stream.addObserver(Observer.withRecover[Int](
       effects += Effect("obs", _),
@@ -838,7 +838,7 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     val effects = mutable.Buffer[Effect[Int]]()
     val bus = new EventBus[Int]
 
-    val stream = bus.events.reduceLeft(skipErrors = false)(_ + _)
+    val stream = bus.events.reduceLeft(_ + _, skipErrors = false)
 
     stream.addObserver(Observer.withRecover[Int](
       effects += Effect("obs", _),
@@ -867,7 +867,7 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     val effects = mutable.Buffer[Effect[Option[Int]]]()
     val bus = new EventBus[Int]
 
-    val signal = bus.events.reduceLeftOption[Int](skipErrors = true)(_ + _)
+    val signal = bus.events.reduceLeftOption[Int](_ + _, skipErrors = true)
 
     signal.addObserver(Observer[Option[Int]](effects += Effect("obs", _)))
 
