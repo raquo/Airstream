@@ -1,4 +1,4 @@
-package com.raquo.airstream.misc
+package com.raquo.airstream.conversions
 
 import com.raquo.airstream.common.SingleParentSignal
 import com.raquo.airstream.core.{EventStream, Protected, Transaction}

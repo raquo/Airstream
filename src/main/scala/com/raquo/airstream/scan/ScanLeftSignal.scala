@@ -1,11 +1,11 @@
-package com.raquo.airstream.misc
+package com.raquo.airstream.scan
 
 import com.raquo.airstream.common.SingleParentSignal
-import com.raquo.airstream.core.{Observable, Protected, Signal, Transaction}
+import com.raquo.airstream.core.{Observable, Protected, Transaction}
 
 import scala.util.Try
 
-/** Note: In folds, failure is often toxic to all subsequent events.
+/** Note: In scans, failure is often toxic to all subsequent events.
   *       You often can not satisfactorily recover from a failure downstream
   *       because you will not have access to previous non-failed state in `fn`
   *       Therefore, make sure to handle recoverable errors in `fn`.

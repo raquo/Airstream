@@ -1,7 +1,8 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.combine.{CombineStreamN, MergeStream}
-import com.raquo.airstream.combine.generated.{CombineStreamObjectOps, CombineStreamOps}
+import com.raquo.airstream.combine.generated._
+import com.raquo.airstream.conversions.SignalFromStream
 import com.raquo.airstream.core.Source.{EventSource, SignalSource}
 import com.raquo.airstream.custom.{CustomSource, CustomStreamSource}
 import com.raquo.airstream.custom.CustomSource._
@@ -11,7 +12,9 @@ import com.raquo.airstream.dynamicImport.{DynamicImportStreamObjectOps, DynamicI
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.extensions._
 import com.raquo.airstream.javaflow.FlowPublisherStream
+import com.raquo.airstream.map.MapStream
 import com.raquo.airstream.misc._
+import com.raquo.airstream.scan.ScanLeftEventOps
 import com.raquo.airstream.split.SplittableOneStream
 import com.raquo.airstream.status.{AsyncStatusObservable, Status}
 import com.raquo.airstream.timing._
@@ -27,6 +30,7 @@ trait EventStream[+A]
 extends Observable[A]
 with BaseObservable[EventStream, A]
 with EventSource[A]
+with ScanLeftEventOps[EventStream, A]
 with CombineStreamOps[A] // combineWith, combineWithFn, withCurrentValueOf, sample
 with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
 {
@@ -245,33 +249,6 @@ with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
   def mergeWith[B >: A](streams: EventStream[B]*): EventStream[B] = {
     val allStreams = this +: streams
     EventStream.merge(allStreams: _*)
-  }
-
-  @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")
-  def foldLeft[B](initial: B)(fn: (B, A) => B): Signal[B] = scanLeft(initial)(fn)
-
-  @deprecated("foldLeftRecover was renamed to scanLeftRecover", "15.0.0-M1")
-  def foldLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = scanLeftRecover(initial)(fn)
-
-  // @TODO[API] Should we introduce some kind of FoldError() wrapper?
-  /** A signal that emits the accumulated value every time that the parent stream emits.
-    *
-    * See also: [[startWith]]
-    *
-    * @param fn Note: guarded against exceptions
-    */
-  def scanLeft[B](initial: B)(fn: (B, A) => B): Signal[B] = {
-    scanLeftRecover(Success(initial)) { (currentValue, nextParentValue) =>
-      Try(fn(currentValue.get, nextParentValue.get))
-    }
-  }
-
-  /** A signal that emits the accumulated value every time that the parent stream emits.
-    *
-    * @param fn Note: Must not throw!
-    */
-  def scanLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
-    new ScanLeftSignal(parent = this, () => initial, fn)
   }
 
   /** Convert stream to signal, given an initial value
@@ -507,6 +484,9 @@ with DynamicImportStreamObjectOps // Provides `dynamicImport` method (Scala 3 on
   def mergeSeq[A](streams: Seq[EventStream[A]]): EventStream[A] = {
     new MergeStream[A](JsArray(streams: _*))
   }
+
+  /** Provides methods on EventStream: combine, combineWith, withCurrentValueOf, sample */
+  implicit def toCombinableStream[A](stream: EventStream[A]): CombinableStream[A] = new CombinableStream(stream)
 
   /** Provides methods on EventStream: splitOne */
   implicit def toSplittableOneStream[A](stream: EventStream[A]): SplittableOneStream[A] = new SplittableOneStream(stream)

@@ -1,8 +1,10 @@
 package com.raquo.airstream.state
 
-import com.raquo.airstream.core.{CoreOps, RecoverOps, ScanLeftSignalOps, Signal}
-import com.raquo.airstream.debug.{Debugger, DebugSignalOps}
+import com.raquo.airstream.core.{CoreOps, RecoverOps, Signal}
+import com.raquo.airstream.debug.{DebugSignalOps, Debugger}
 import com.raquo.airstream.distinct.DistinctOps
+import com.raquo.airstream.map.MapOps
+import com.raquo.airstream.scan.ScanLeftSignalOps
 
 import scala.util.Try
 
@@ -13,7 +15,7 @@ import scala.util.Try
   */
 trait StrictSignal[+A]
 extends Signal[A]
-with CoreOps[StrictSignal, A]
+with MapOps[StrictSignal, A]
 with RecoverOps[StrictSignal, A]
 with DistinctOps[StrictSignal[A], A]
 with ScanLeftSignalOps[StrictSignal, A]

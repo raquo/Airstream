@@ -1,8 +1,8 @@
-package com.raquo.airstream.misc
+package com.raquo.airstream.map
 
 import com.raquo.airstream.common.SingleParentSignal
-import com.raquo.airstream.core.{Protected, Signal, Transaction}
 import com.raquo.airstream.core.AirstreamError.{ErrorHandlingError, InitialValueError}
+import com.raquo.airstream.core.{Protected, Signal, Transaction}
 
 import scala.util.{Failure, Success, Try}
 
