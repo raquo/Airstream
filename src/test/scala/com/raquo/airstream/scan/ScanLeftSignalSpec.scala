@@ -127,7 +127,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val _var = Var(0)
 
     val signal = _var.signal
-      .scanLeft(makeInitial = initial => s"numbers: init=${initial}", resetOnStop = false, skipErrors = false) { (acc, nextValue) => acc + " " + nextValue.toString }
+      .scanLeft(makeInitial = (initial: Int) => s"numbers: init=${initial}", resetOnStop = false, skipErrors = false) { (acc, nextValue) => acc + " " + nextValue.toString }
       .map(Calculation.log("signal", calculations))
 
     _var.writer.onNext(1)

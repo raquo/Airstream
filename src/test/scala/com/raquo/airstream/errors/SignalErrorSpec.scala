@@ -218,7 +218,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     val bus = new EventBus[Int]
 
     val signalUp = bus.events.startWith(-1).scanLeft(
-      { num =>
+      { (num: Int) =>
         if (num < 0) {
           throw err1
         } else num

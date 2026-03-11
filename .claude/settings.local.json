@@ -5,7 +5,9 @@
       "Bash(npm install:*)",
       "WebFetch(domain:github.com)",
       "Bash(gh run:*)",
-      "Bash(sbt compile:*)"
+      "Bash(sbt compile:*)",
+      "Bash(sbt \"+test\" 2>&1 | grep -E \"^\\\\[error\\\\]\" | head -80)",
+      "Bash(sbt \"+test\" 2>&1 | grep -E \"^\\\\[error\\\\]\" | head -60)"
     ]
   }
 }
