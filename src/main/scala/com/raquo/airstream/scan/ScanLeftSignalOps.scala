@@ -1,7 +1,6 @@
 package com.raquo.airstream.scan
 
 import com.raquo.airstream.core.Signal
-import com.raquo.airstream.scan.Recover.skipErrors
 
 import scala.util.Try
 

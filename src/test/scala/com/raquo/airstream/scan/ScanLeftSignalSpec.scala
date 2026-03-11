@@ -271,41 +271,6 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     )
   }
 
-  it("Signal.reduceLeft re-syncs with upstream when restarted") {
-
-    implicit val owner: TestableOwner = new TestableOwner
-
-    val effects = mutable.Buffer[Effect[Int]]()
-    val v = Var(1)
-
-    val signal = v.signal.reduceLeft[Int](_ + _)
-
-    val sub = signal.addObserver(Observer[Int](effects += Effect("obs", _)))
-
-    effects shouldBe mutable.Buffer(Effect("obs", 1))
-    effects.clear()
-
-    v.writer.onNext(2)
-
-    effects shouldBe mutable.Buffer(Effect("obs", 3))
-    effects.clear()
-
-    sub.kill()
-
-    // Upstream emits while stopped
-    v.writer.onNext(10)
-
-    // Re-subscribe — signal re-syncs with current upstream value
-    signal.addObserver(Observer[Int](effects += Effect("obs", _)))
-
-    effects shouldBe mutable.Buffer(Effect("obs", 13))
-    effects.clear()
-
-    v.writer.onNext(4)
-
-    effects shouldBe mutable.Buffer(Effect("obs", 17))
-  }
-
   it("Signal.reduceLeft supports type widening") {
 
     implicit val owner: TestableOwner = new TestableOwner
@@ -500,345 +465,188 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
   // resetOnStop
   // =========================================================================
 
-  it("Signal.reduceLeft(resetOnStop=true): resets to current parent value on restart") {
-
-    implicit val owner: TestableOwner = new TestableOwner
-
-    val effects = mutable.Buffer[Effect[Int]]()
-    val v = Var(1)
-
-    val signal = v.signal.reduceLeft(_ + _, resetOnStop = true)
-
-    val sub = signal.addObserver(Observer[Int](effects += Effect("obs", _)))
-
-    effects shouldBe mutable.Buffer(Effect("obs", 1))
-    effects.clear()
-
-    v.writer.onNext(5)
-
-    effects shouldBe mutable.Buffer(Effect("obs", 6))
-    effects.clear()
-
-    sub.kill()
-
-    // Upstream emits while stopped
-    v.writer.onNext(10)
-
-    // Re-subscribe — with resetOnStop=true the signal uses makeInitial(parent.now) = parent.now = 10
-    signal.addObserver(Observer[Int](effects += Effect("obs", _)))
-
-    effects shouldBe mutable.Buffer(Effect("obs", 10))
-    effects.clear()
-
-    v.writer.onNext(3)
-
-    // Accumulates from the reset value (10), not the old accumulated value (6)
-    effects shouldBe mutable.Buffer(Effect("obs", 13))
-  }
-
-  it("Signal.reduceLeft(resetOnStop=false): if parent updated while stopped, re-syncs by folding parent's new value into accumulated state") {
-
-    implicit val owner: TestableOwner = new TestableOwner
-
-    val effects = mutable.Buffer[Effect[Int]]()
-    val v = Var(1)
-
-    val signal = v.signal.reduceLeft(_ + _, resetOnStop = false)
-
-    val sub = signal.addObserver(Observer[Int](effects += Effect("obs", _)))
-
-    effects shouldBe mutable.Buffer(Effect("obs", 1))
-    effects.clear()
-
-    v.writer.onNext(5)
-
-    effects shouldBe mutable.Buffer(Effect("obs", 6))
-    effects.clear()
-
-    sub.kill()
-
-    // Parent emits while stopped — the new value will be folded in on restart
-    v.writer.onNext(10)
-
-    signal.addObserver(Observer[Int](effects += Effect("obs", _)))
-
-    // Re-syncs: combine(lastAccumulated=6, parent.now=10) = 16
-    effects shouldBe mutable.Buffer(Effect("obs", 16))
-    effects.clear()
-
-    v.writer.onNext(4)
-
-    effects shouldBe mutable.Buffer(Effect("obs", 20))
-  }
-
-  it("Signal.reduceLeft(resetOnStop=false): if parent has NOT updated while stopped, accumulated state is returned unchanged") {
-
-    implicit val owner: TestableOwner = new TestableOwner
-
-    val effects = mutable.Buffer[Effect[Int]]()
-    val v = Var(1)
-
-    val signal = v.signal.reduceLeft(_ + _, resetOnStop = false)
-
-    val sub = signal.addObserver(Observer[Int](effects += Effect("obs", _)))
-
-    effects shouldBe mutable.Buffer(Effect("obs", 1))
-    effects.clear()
-
-    v.writer.onNext(5)
-
-    effects shouldBe mutable.Buffer(Effect("obs", 6))
-    effects.clear()
-
-    sub.kill()
-
-    // Parent does NOT emit while stopped — no new value to fold in
-
-    signal.addObserver(Observer[Int](effects += Effect("obs", _)))
-
-    // Accumulated state (6) is preserved exactly as-is; combine is NOT re-applied
-    effects shouldBe mutable.Buffer(Effect("obs", 6))
-    effects.clear()
-
-    v.writer.onNext(4)
-
-    effects shouldBe mutable.Buffer(Effect("obs", 10))
-  }
-
-  it("Signal.scanLeft with makeInitial (resetOnStop=true): re-evaluates makeInitial with current parent on restart") {
+  it("Signal.scanLeft(makeInitial) resetOnStop: re-evaluates makeInitial vs re-syncs on restart; resets unconditionally") {
 
     implicit val owner: TestableOwner = new TestableOwner
 
     val effects = mutable.Buffer[Effect[String]]()
     val v = Var(1)
 
-    val signal = v.signal.scanLeftGenerated(
+    // -- resetOnStop=true re-evaluates makeInitial; resetOnStop=false re-syncs with parent --
+
+    val signalReset = v.signal.scanLeftGenerated(
       makeInitial = (n: Int) => s"start:$n",
       resetOnStop = true,
       skipErrors = false,
     ) { (acc, n) => s"$acc $n" }
 
-    val sub = signal.addObserver(Observer[String](effects += Effect("obs", _)))
-
-    // makeInitial(1) = "start:1"
-    effects shouldBe mutable.Buffer(Effect("obs", "start:1"))
-    effects.clear()
-
-    v.writer.onNext(2)
-
-    effects shouldBe mutable.Buffer(Effect("obs", "start:1 2"))
-    effects.clear()
-
-    sub.kill()
-
-    v.writer.onNext(10)
-
-    // Re-subscribe — makeInitial is re-evaluated with current parent value (10)
-    signal.addObserver(Observer[String](effects += Effect("obs", _)))
-
-    effects shouldBe mutable.Buffer(Effect("obs", "start:10"))
-    effects.clear()
-
-    v.writer.onNext(3)
-
-    effects shouldBe mutable.Buffer(Effect("obs", "start:10 3"))
-  }
-
-  it("Signal.scanLeft with makeInitial (resetOnStop=false): default — re-syncs accumulated value with upstream") {
-
-    implicit val owner: TestableOwner = new TestableOwner
-
-    val effects = mutable.Buffer[Effect[String]]()
-    val v = Var(1)
-
-    val signal = v.signal.scanLeftGenerated(
+    val signalKeep = v.signal.scanLeftGenerated(
       makeInitial = (n: Int) => s"start:$n",
       resetOnStop = false,
       skipErrors = false,
     ) { (acc, n) => s"$acc $n" }
 
-    val sub = signal.addObserver(Observer[String](effects += Effect("obs", _)))
+    val subReset = signalReset.addObserver(Observer[String](effects += Effect("reset", _)))
+    val subKeep  = signalKeep.addObserver(Observer[String](effects += Effect("keep", _)))
 
-    effects shouldBe mutable.Buffer(Effect("obs", "start:1"))
+    effects shouldBe mutable.Buffer(Effect("reset", "start:1"), Effect("keep", "start:1"))
     effects.clear()
 
     v.writer.onNext(2)
 
-    effects shouldBe mutable.Buffer(Effect("obs", "start:1 2"))
+    effects shouldBe mutable.Buffer(Effect("reset", "start:1 2"), Effect("keep", "start:1 2"))
     effects.clear()
 
-    sub.kill()
+    subReset.kill()
+    subKeep.kill()
 
     v.writer.onNext(10)
 
-    // Re-subscribe — re-syncs: fn("start:1 2", 10) = "start:1 2 10"
-    signal.addObserver(Observer[String](effects += Effect("obs", _)))
+    signalReset.addObserver(Observer[String](effects += Effect("reset", _)))
+    signalKeep.addObserver(Observer[String](effects += Effect("keep", _)))
 
-    effects shouldBe mutable.Buffer(Effect("obs", "start:1 2 10"))
+    effects shouldBe mutable.Buffer(
+      Effect("reset", "start:10"),    // resetOnStop=true: re-evaluates makeInitial(parent.now=10)
+      Effect("keep", "start:1 2 10"), // resetOnStop=false: re-syncs; combine("start:1 2", 10)
+    )
     effects.clear()
 
     v.writer.onNext(3)
 
-    effects shouldBe mutable.Buffer(Effect("obs", "start:1 2 10 3"))
-  }
-
-  it("Signal.scanLeft with constant initial (resetOnStop=false): default — re-syncs by folding parent's new value into accumulated state; seed is not re-applied") {
-
-    implicit val owner: TestableOwner = new TestableOwner
-
-    val effects = mutable.Buffer[Effect[String]]()
-    val v = Var(1)
-
-    val signal = v.signal.scanLeft("n:", resetOnStop = false) { (acc, n) => s"$acc $n" }
-
-    val sub = signal.addObserver(Observer[String](effects += Effect("obs", _)))
-
-    // combine("n:", 1) = "n: 1"
-    effects shouldBe mutable.Buffer(Effect("obs", "n: 1"))
+    effects shouldBe mutable.Buffer(Effect("reset", "start:10 3"), Effect("keep", "start:1 2 10 3"))
     effects.clear()
 
-    v.writer.onNext(2)
+    // -- resetOnStop=true resets even when parent has not updated while stopped --
 
-    effects shouldBe mutable.Buffer(Effect("obs", "n: 1 2"))
-    effects.clear()
-
-    sub.kill()
-
-    v.writer.onNext(10)
-
-    // Re-subscribe — re-syncs: combine("n: 1 2", 10) = "n: 1 2 10"
-    // The seed "n:" is NOT re-applied; only the accumulated state is extended with the new parent value
-    signal.addObserver(Observer[String](effects += Effect("obs", _)))
-
-    effects shouldBe mutable.Buffer(Effect("obs", "n: 1 2 10"))
-    effects.clear()
-
-    v.writer.onNext(3)
-
-    effects shouldBe mutable.Buffer(Effect("obs", "n: 1 2 10 3"))
-  }
-
-  it("Signal.scanLeft with constant initial (resetOnStop=true): re-applies seed to current parent value on restart") {
-
-    implicit val owner: TestableOwner = new TestableOwner
-
-    val effects = mutable.Buffer[Effect[String]]()
-    val v = Var(1)
-
-    val signal = v.signal.scanLeft("n:", resetOnStop = true) { (acc, n) => s"$acc $n" }
-
-    val sub = signal.addObserver(Observer[String](effects += Effect("obs", _)))
-
-    // combine("n:", 1) = "n: 1"
-    effects shouldBe mutable.Buffer(Effect("obs", "n: 1"))
-    effects.clear()
-
-    v.writer.onNext(2)
-
-    effects shouldBe mutable.Buffer(Effect("obs", "n: 1 2"))
-    effects.clear()
-
-    sub.kill()
-
-    v.writer.onNext(10)
-
-    // Re-subscribe — reset: re-apply seed to current parent value → combine("n:", 10) = "n: 10"
-    signal.addObserver(Observer[String](effects += Effect("obs", _)))
-
-    effects shouldBe mutable.Buffer(Effect("obs", "n: 10"))
-    effects.clear()
-
-    v.writer.onNext(3)
-
-    effects shouldBe mutable.Buffer(Effect("obs", "n: 10 3"))
-  }
-
-  it("Signal.scanLeft(resetOnStop=true): resets even when parent signal has not updated while stopped") {
-
-    implicit val owner: TestableOwner = new TestableOwner
-
-    val effects = mutable.Buffer[Effect[String]]()
-    val v = Var(1)
-
-    val signal = v.signal.scanLeftGenerated(
+    val v2 = Var(1)
+    val signalReset2 = v2.signal.scanLeftGenerated(
       makeInitial = (n: Int) => s"start:$n",
       resetOnStop = true,
       skipErrors = false,
     ) { (acc, n) => s"$acc $n" }
 
-    val sub = signal.addObserver(Observer[String](effects += Effect("obs", _)))
+    val subReset2 = signalReset2.addObserver(Observer[String](effects += Effect("obs", _)))
 
     effects shouldBe mutable.Buffer(Effect("obs", "start:1"))
     effects.clear()
 
-    v.writer.onNext(2)
+    v2.writer.onNext(2)
 
     effects shouldBe mutable.Buffer(Effect("obs", "start:1 2"))
     effects.clear()
 
-    sub.kill()
+    subReset2.kill()
 
     // Parent signal does NOT update while stopped
+    signalReset2.addObserver(Observer[String](effects += Effect("obs", _)))
 
-    // Re-subscribe — even though parent hasn't changed, accumulated state is reset
-    signal.addObserver(Observer[String](effects += Effect("obs", _)))
-
+    // Even though parent hasn't changed, accumulated state is still reset
     // makeInitial(parent.now() = 2) = "start:2"
     effects shouldBe mutable.Buffer(Effect("obs", "start:2"))
     effects.clear()
 
-    v.writer.onNext(3)
+    v2.writer.onNext(3)
 
     effects shouldBe mutable.Buffer(Effect("obs", "start:2 3"))
+  }
+
+  it("Signal.scanLeft(constant initial) resetOnStop: re-applies seed vs re-syncs on restart") {
+
+    implicit val owner: TestableOwner = new TestableOwner
+
+    val effects = mutable.Buffer[Effect[String]]()
+    val v = Var(1)
+
+    val signalReset = v.signal.scanLeft("n:", resetOnStop = true) { (acc, n) => s"$acc $n" }
+    val signalKeep  = v.signal.scanLeft("n:", resetOnStop = false) { (acc, n) => s"$acc $n" }
+
+    val subReset = signalReset.addObserver(Observer[String](effects += Effect("reset", _)))
+    val subKeep  = signalKeep.addObserver(Observer[String](effects += Effect("keep", _)))
+
+    // combine("n:", 1) = "n: 1"
+    effects shouldBe mutable.Buffer(Effect("reset", "n: 1"), Effect("keep", "n: 1"))
+    effects.clear()
+
+    v.writer.onNext(2)
+
+    effects shouldBe mutable.Buffer(Effect("reset", "n: 1 2"), Effect("keep", "n: 1 2"))
+    effects.clear()
+
+    subReset.kill()
+    subKeep.kill()
+
+    v.writer.onNext(10)
+
+    signalReset.addObserver(Observer[String](effects += Effect("reset", _)))
+    signalKeep.addObserver(Observer[String](effects += Effect("keep", _)))
+
+    effects shouldBe mutable.Buffer(
+      Effect("reset", "n: 10"),    // resetOnStop=true: re-apply seed to current parent → combine("n:", 10)
+      Effect("keep", "n: 1 2 10"), // resetOnStop=false: re-sync; combine("n: 1 2", 10); seed is NOT re-applied
+    )
+    effects.clear()
+
+    v.writer.onNext(3)
+
+    effects shouldBe mutable.Buffer(Effect("reset", "n: 10 3"), Effect("keep", "n: 1 2 10 3"))
   }
 
   // =========================================================================
   // skipErrors
   // =========================================================================
 
-  it("Signal.scanLeft(skipErrors=true): upstream errors from a signal parent are skipped; state is preserved") {
+  it("Signal.scanLeft(makeInitial) skipErrors: upstream error — skipped vs propagated") {
 
     implicit val owner: TestableOwner = new TestableOwner
 
     val effects = mutable.Buffer[Effect[String]]()
     val bus = new EventBus[Int]
 
-    // Parent is a signal that can emit errors
     val parentSignal = bus.events.startWith(0)
-    val result = parentSignal.scanLeftGenerated(
+
+    val resultSkip = parentSignal.scanLeftGenerated(
       makeInitial = (n: Int) => s"start:$n",
       resetOnStop = false,
       skipErrors = true,
     ) { (acc, n) => s"$acc $n" }
 
-    result.addObserver(Observer.withRecover[String](
-      effects += Effect("obs", _),
-      _ => effects += Effect("obs-err", "err"),
-    ))
+    val resultProp = parentSignal.scanLeftGenerated(
+      makeInitial = (n: Int) => s"start:$n",
+      resetOnStop = false,
+      skipErrors = false,
+    ) { (acc, n) => s"$acc $n" }
+
+    resultSkip.addObserver(Observer.withRecover[String](effects += Effect("skip", _), _ => effects += Effect("skip-err", "err")))
+    resultProp.addObserver(Observer.withRecover[String](effects += Effect("prop", _), _ => effects += Effect("prop-err", "err")))
 
     // makeInitial(0) = "start:0"
-    effects shouldBe mutable.Buffer(Effect("obs", "start:0"))
+    effects shouldBe mutable.Buffer(Effect("skip", "start:0"), Effect("prop", "start:0"))
     effects.clear()
 
     bus.writer.onNext(1)
 
-    effects shouldBe mutable.Buffer(Effect("obs", "start:0 1"))
+    effects shouldBe mutable.Buffer(Effect("skip", "start:0 1"), Effect("prop", "start:0 1"))
     effects.clear()
 
-    // Parent signal emits error — skipErrors preserves "start:0 1" and re-emits it
+    // Upstream error
     bus.writer.onError(err1)
 
-    effects shouldBe mutable.Buffer(Effect("obs", "start:0 1"))
+    effects shouldBe mutable.Buffer(
+      Effect("skip", "start:0 1"), // skipErrors=true: state preserved and re-emitted
+      Effect("prop-err", "err"),   // skipErrors=false: error propagated
+    )
     errorEffects shouldBe mutable.Buffer()
     effects.clear()
 
-    // Accumulation continues from preserved state
     bus.writer.onNext(2)
 
-    effects shouldBe mutable.Buffer(Effect("obs", "start:0 1 2"))
+    effects shouldBe mutable.Buffer(
+      Effect("skip", "start:0 1 2"), // skipErrors=true: accumulation continues from preserved state
+      Effect("prop-err", "err"),     // skipErrors=false: error state persists
+    )
   }
 
-  it("Signal.scanLeft(skipErrors=false): default — upstream errors from a signal parent are propagated") {
+  it("Signal.scanLeft(makeInitial) skipErrors: combine error — skipped vs persists") {
 
     implicit val owner: TestableOwner = new TestableOwner
 
@@ -846,188 +654,47 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val bus = new EventBus[Int]
 
     val parentSignal = bus.events.startWith(0)
-    val result = parentSignal.scanLeftGenerated(
-      makeInitial = (n: Int) => s"start:$n",
-      resetOnStop = false,
-      skipErrors = false,
-    ) { (acc, n) => s"$acc $n" }
 
-    result.addObserver(Observer.withRecover[String](
-      effects += Effect("obs", _),
-      _ => effects += Effect("obs-err", "err"),
-    ))
+    val combine = (acc: String, n: Int) => { if (n < 0) throw err1; s"$acc $n" }
 
-    effects shouldBe mutable.Buffer(Effect("obs", "start:0"))
-    effects.clear()
-
-    bus.writer.onNext(1)
-
-    effects shouldBe mutable.Buffer(Effect("obs", "start:0 1"))
-    effects.clear()
-
-    bus.writer.onError(err1)
-
-    effects shouldBe mutable.Buffer(Effect("obs-err", "err"))
-    effects.clear()
-
-    // Error persists on subsequent events
-    bus.writer.onNext(2)
-
-    effects shouldBe mutable.Buffer(Effect("obs-err", "err"))
-  }
-
-  it("Signal.reduceLeft(skipErrors=true): upstream errors are skipped; accumulated state is preserved") {
-
-    implicit val owner: TestableOwner = new TestableOwner
-
-    val effects = mutable.Buffer[Effect[Int]]()
-    val bus = new EventBus[Int]
-
-    val parentSignal = bus.events.startWith(0)
-    val result = parentSignal.reduceLeft(_ + _, skipErrors = true)
-
-    result.addObserver(Observer.withRecover[Int](
-      effects += Effect("obs", _),
-      _ => effects += Effect("obs-err", -1),
-    ))
-
-    // Initial: identity(parent.now) = 0
-    effects shouldBe mutable.Buffer(Effect("obs", 0))
-    effects.clear()
-
-    bus.writer.onNext(5)
-
-    effects shouldBe mutable.Buffer(Effect("obs", 5))
-    effects.clear()
-
-    // Upstream error — skipErrors preserves 5 and re-emits it
-    bus.writer.onError(err1)
-
-    effects shouldBe mutable.Buffer(Effect("obs", 5))
-    errorEffects shouldBe mutable.Buffer()
-    effects.clear()
-
-    // Accumulation continues from preserved state (5)
-    bus.writer.onNext(3)
-
-    effects shouldBe mutable.Buffer(Effect("obs", 8))
-  }
-
-  it("Signal.reduceLeft(skipErrors=false): default — upstream errors are propagated through the signal") {
-
-    implicit val owner: TestableOwner = new TestableOwner
-
-    val effects = mutable.Buffer[Effect[Int]]()
-    val bus = new EventBus[Int]
-
-    val parentSignal = bus.events.startWith(0)
-    val result = parentSignal.reduceLeft(_ + _, skipErrors = false)
-
-    result.addObserver(Observer.withRecover[Int](
-      effects += Effect("obs", _),
-      _ => effects += Effect("obs-err", -1),
-    ))
-
-    effects shouldBe mutable.Buffer(Effect("obs", 0))
-    effects.clear()
-
-    bus.writer.onNext(5)
-
-    effects shouldBe mutable.Buffer(Effect("obs", 5))
-    effects.clear()
-
-    bus.writer.onError(err1)
-
-    effects shouldBe mutable.Buffer(Effect("obs-err", -1))
-    effects.clear()
-
-    bus.writer.onNext(3)
-
-    effects shouldBe mutable.Buffer(Effect("obs-err", -1))
-  }
-
-  it("Signal.scanLeft(skipErrors=true): combine errors are skipped; accumulated state is preserved") {
-
-    implicit val owner: TestableOwner = new TestableOwner
-
-    val effects = mutable.Buffer[Effect[String]]()
-    val bus = new EventBus[Int]
-
-    val parentSignal = bus.events.startWith(0)
-    val result = parentSignal.scanLeftGenerated(
+    val resultSkip = parentSignal.scanLeftGenerated(
       makeInitial = (n: Int) => s"start:$n",
       resetOnStop = false,
       skipErrors = true,
-    ) { (acc, n) =>
-      if (n < 0) throw err1
-      s"$acc $n"
-    }
+    )(combine)
 
-    result.addObserver(Observer.withRecover[String](
-      effects += Effect("obs", _),
-      _ => effects += Effect("obs-err", "err"),
-    ))
-
-    effects shouldBe mutable.Buffer(Effect("obs", "start:0"))
-    effects.clear()
-
-    bus.writer.onNext(1)
-
-    effects shouldBe mutable.Buffer(Effect("obs", "start:0 1"))
-    effects.clear()
-
-    // combine throws for negative input — skipErrors preserves "start:0 1" and re-emits it
-    bus.writer.onNext(-1)
-
-    effects shouldBe mutable.Buffer(Effect("obs", "start:0 1"))
-    errorEffects shouldBe mutable.Buffer()
-    effects.clear()
-
-    // Accumulation continues from the preserved state
-    bus.writer.onNext(2)
-
-    effects shouldBe mutable.Buffer(Effect("obs", "start:0 1 2"))
-  }
-
-  it("Signal.scanLeft(skipErrors=false): default — combine errors replace accumulated state") {
-
-    implicit val owner: TestableOwner = new TestableOwner
-
-    val effects = mutable.Buffer[Effect[String]]()
-    val bus = new EventBus[Int]
-
-    val parentSignal = bus.events.startWith(0)
-    val result = parentSignal.scanLeftGenerated(
+    val resultProp = parentSignal.scanLeftGenerated(
       makeInitial = (n: Int) => s"start:$n",
       resetOnStop = false,
       skipErrors = false,
-    ) { (acc, n) =>
-      if (n < 0) throw err1
-      s"$acc $n"
-    }
+    )(combine)
 
-    result.addObserver(Observer.withRecover[String](
-      effects += Effect("obs", _),
-      _ => effects += Effect("obs-err", "err"),
-    ))
+    resultSkip.addObserver(Observer.withRecover[String](effects += Effect("skip", _), _ => effects += Effect("skip-err", "err")))
+    resultProp.addObserver(Observer.withRecover[String](effects += Effect("prop", _), _ => effects += Effect("prop-err", "err")))
 
-    effects shouldBe mutable.Buffer(Effect("obs", "start:0"))
+    effects shouldBe mutable.Buffer(Effect("skip", "start:0"), Effect("prop", "start:0"))
     effects.clear()
 
     bus.writer.onNext(1)
 
-    effects shouldBe mutable.Buffer(Effect("obs", "start:0 1"))
+    effects shouldBe mutable.Buffer(Effect("skip", "start:0 1"), Effect("prop", "start:0 1"))
     effects.clear()
 
-    // combine throws — signal enters error state
+    // combine throws for negative input
     bus.writer.onNext(-1)
 
-    effects shouldBe mutable.Buffer(Effect("obs-err", "err"))
+    effects shouldBe mutable.Buffer(
+      Effect("skip", "start:0 1"), // skipErrors=true: error discarded; state preserved
+      Effect("prop-err", "err"),   // skipErrors=false: error replaces state
+    )
+    errorEffects shouldBe mutable.Buffer()
     effects.clear()
 
-    // Error state persists
     bus.writer.onNext(2)
 
-    effects shouldBe mutable.Buffer(Effect("obs-err", "err"))
+    effects shouldBe mutable.Buffer(
+      Effect("skip", "start:0 1 2"), // skipErrors=true: continues from preserved state
+      Effect("prop-err", "err"),     // skipErrors=false: error state persists
+    )
   }
 }
