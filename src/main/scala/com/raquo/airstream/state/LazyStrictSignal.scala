@@ -5,7 +5,6 @@ import com.raquo.airstream.core.{Protected, Signal, Transaction}
 import com.raquo.airstream.debug.{Debugger, DebuggerSignal}
 import com.raquo.airstream.distinct.DistinctSignal
 import com.raquo.airstream.misc.MapSignal
-import com.raquo.airstream.scan.Recover.CombineTry
 import com.raquo.airstream.scan.ScanLeftSignal
 import org.scalajs.dom.window.parent
 

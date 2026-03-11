@@ -12,7 +12,6 @@ import com.raquo.airstream.extensions._
 import com.raquo.airstream.misc.{MapSignal, StreamFromSignal}
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.scan.{ScanLeftSignal, ScanLeftSignalOps}
-import com.raquo.airstream.scan.Recover.CombineTry
 import com.raquo.airstream.state.{ObservedSignal, OwnedSignal, Val}
 import com.raquo.airstream.timing.JsPromiseSignal
 import com.raquo.ew.JsArray

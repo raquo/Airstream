@@ -61,7 +61,7 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
     scanLeftRecover[B](combine(initial, _), resetOnStop)(combine)
   }
 
-  override def reduceLeft[B >: A] (
+  override def reduceLeft[B >: A](
     combine: (B, A) => B,
     resetOnStop: Boolean,
     skipErrors: Boolean,
@@ -82,7 +82,7 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
     combine: (Try[B], Try[A]) => Try[B],
     resetOnStop: Boolean = false,
   ): Self[B] = {
-    scanLeftRecover(identity[Try[B]])(combine)
+    scanLeftRecover(identity[Try[B]], resetOnStop = resetOnStop)(combine)
   }
 
   @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")
