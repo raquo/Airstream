@@ -20,3 +20,7 @@ yarn.lock
 !website/yarn.lock
 
 .downloads
+
+# Agents
+.claude/settings.local.json
+.claude/worktrees/
