@@ -85,13 +85,13 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
     combine: (Try[B], Try[A]) => Try[B],
   ): Self[B]
 
-  @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")
+  @deprecated("foldLeft was renamed to scanLeft and later to scanLeftGenerated", "15.0.0-M1")
   def foldLeft[B](makeInitial: A => B)(combine: (B, A) => B): Self[B] = {
-    scanLeftGenerated[B](makeInitial, resetOnStop = false, skipErrors = false)(combine)
+    scanLeftGenerated[B](makeInitial)(combine)
   }
 
-  @deprecated("foldLeftRecover was renamed to scanLeftRecover", "15.0.0-M1")
+  @deprecated("foldLeftRecover was renamed to scanLeftRecover and later to scanLeftGeneratedRecover", "15.0.0-M1")
   def foldLeftRecover[B](makeInitial: Try[A] => Try[B])(combine: (Try[B], Try[A]) => Try[B]): Self[B] = {
-    scanLeftGeneratedRecover[B](makeInitial, resetOnStop = false)(combine)
+    scanLeftGeneratedRecover[B](makeInitial)(combine)
   }
 }
