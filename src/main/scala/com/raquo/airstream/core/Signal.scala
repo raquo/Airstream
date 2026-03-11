@@ -138,7 +138,7 @@ with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
     makeInitial: Try[A] => Try[B],
     resetOnStop: Boolean,
   )(
-    combine: CombineTry[A, B],
+    combine: (Try[B], Try[A]) => Try[B],
   ): Signal[B] = {
     new ScanLeftSignal(
       parent = this,

@@ -7,6 +7,7 @@ import com.raquo.airstream.distinct.DistinctSignal
 import com.raquo.airstream.misc.MapSignal
 import com.raquo.airstream.scan.Recover.CombineTry
 import com.raquo.airstream.scan.ScanLeftSignal
+import org.scalajs.dom.window.parent
 
 import scala.util.Try
 
@@ -152,7 +153,7 @@ object LazyStrictSignal {
   def scanLeftRecoverSignal[A, B](
     parentSignal: Signal[A],
     makeInitial: Try[A] => Try[B],
-    combine: CombineTry[A, B],
+    combine: (Try[B], Try[A]) => Try[B],
     resetOnStop: Boolean,
     parentDisplayName: => String,
     displayNameSuffix: String,
@@ -160,8 +161,12 @@ object LazyStrictSignal {
     val _pdn = parentDisplayName
     val _dns = displayNameSuffix
 
-    new ScanLeftSignal(parentSignal, () => makeInitial(parentSignal.tryNow()), combine, resetOnStop)
-      with LazyStrictSignal[A, B] {
+    new ScanLeftSignal(
+      parent = parentSignal,
+      makeInitial = () => makeInitial(parentSignal.tryNow()),
+      combine = combine,
+      resetOnStop = resetOnStop,
+    ) with LazyStrictSignal[A, B] {
 
       override protected def parentDisplayName: String = _pdn
 

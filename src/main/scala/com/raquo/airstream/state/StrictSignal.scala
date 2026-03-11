@@ -3,7 +3,6 @@ package com.raquo.airstream.state
 import com.raquo.airstream.core.{CoreOps, RecoverOps, Signal}
 import com.raquo.airstream.debug.{Debugger, DebugSignalOps}
 import com.raquo.airstream.distinct.DistinctOps
-import com.raquo.airstream.scan.Recover.CombineTry
 import com.raquo.airstream.scan.ScanLeftSignalOps
 
 import scala.util.Try
@@ -75,7 +74,7 @@ with DebugSignalOps[StrictSignal, A] {
     makeInitial: Try[A] => Try[B],
     resetOnStop: Boolean,
   )(
-    combine: CombineTry[A, B],
+    combine: (Try[B], Try[A]) => Try[B],
   ): StrictSignal[B] = {
     LazyStrictSignal.scanLeftRecoverSignal(
       parentSignal = this,

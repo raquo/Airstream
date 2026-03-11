@@ -2,31 +2,27 @@ package com.raquo.airstream.scan
 
 import com.raquo.airstream.common.SingleParentSignal
 import com.raquo.airstream.core.{Observable, Protected, Signal, Transaction}
-import com.raquo.airstream.scan.Recover.CombineTry
 
 import scala.scalajs.js
 import scala.util.Try
 
 /**
  * Accumulates all emissions from the `parent` using a binary operator `combine`.
- * Forms a [[com.raquo.airstream.core.Signal]] that emits the accumulated value every time the `parent` emits.
+ * Forms a [[Signal]] that emits the accumulated value every time the `parent` emits.
  * 
- * @param parent      The parent observable whose emissions are combined with `combine`.
- * @param makeInitial A function for creating the seed value for this accumulator given the initial value of the `parent`.
- * @param combine     A binary operator that takes a tuple of the previously accumulated value and
- *                    the next emission from the `parent` to produce the next accumulated value.
- *                    It is not safe for `combine` to throw uncaught exceptions; you must use [[Try]] instead!
- * @param resetOnStop Whether to reset the accumulator when the `parent` is restarted (default is `false`).
+ * @param parent      The parent observable whose events or updates are accumulated.
+ * @param makeInitial A generator for the accumulator's seed, given the initial value of the `parent`.
+ * @param combine     A binary operator to update the accumulator given its previous value and the next event.
+ *                    It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
+ * @param resetOnStop Whether to reset the accumulator when `parent` is restarted.
  * @tparam A          The type of values emitted by the `parent` observable.
  * @tparam B          The type of the accumulated value and thus of this signal.
  * @tparam Parent     The kind of observable on which this signal is based.
- *
- * @note Should be constructed using the operators in [[ScanLeftOps]] such as `scanLeft`.
  */
 class ScanLeftSignal[A, B, Parent <: Observable[A]] private[airstream] (
   override protected[this] val parent: Parent,
   makeInitial: () => Try[B],
-  combine: CombineTry[A, B],
+  combine: (Try[B], Try[A]) => Try[B],
   resetOnStop: Boolean = false,
 ) extends SingleParentSignal[A, B] {
 
