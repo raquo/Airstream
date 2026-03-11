@@ -70,7 +70,7 @@ with DebugSignalOps[StrictSignal, A] {
     )
   }
 
-  @inline override def scanLeftRecover[B](
+  override def scanLeftGeneratedRecover[B](
     makeInitial: Try[A] => Try[B],
     resetOnStop: Boolean,
   )(

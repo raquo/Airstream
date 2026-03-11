@@ -127,7 +127,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val _var = Var(0)
 
     val signal = _var.signal
-      .scanLeft(makeInitial = (initial: Int) => s"numbers: init=${initial}", resetOnStop = false, skipErrors = false) { (acc, nextValue) => acc + " " + nextValue.toString }
+      .scanLeftGenerated(makeInitial = (initial: Int) => s"numbers: init=${initial}", resetOnStop = false, skipErrors = false) { (acc, nextValue) => acc + " " + nextValue.toString }
       .map(Calculation.log("signal", calculations))
 
     _var.writer.onNext(1)
@@ -414,7 +414,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val v = Var(5)
 
     // makeInitial overload: initial value of result = makeInitial(parent.now()) = parent.now() * 10 = 50
-    val withMakeInitial = v.signal.scanLeft(makeInitial = (n: Int) => n * 10, resetOnStop = false, skipErrors = false)(_ + _)
+    val withMakeInitial = v.signal.scanLeftGenerated(makeInitial = (n: Int) => n * 10, resetOnStop = false, skipErrors = false)(_ + _)
 
     // constant initial overload: initial value of result = fn(0, parent.now()) = 0 + 5 = 5
     val withConstantInitial = v.signal.scanLeft(0)(_ + _)
@@ -612,7 +612,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val effects = mutable.Buffer[Effect[String]]()
     val v = Var(1)
 
-    val signal = v.signal.scanLeft(
+    val signal = v.signal.scanLeftGenerated(
       makeInitial = (n: Int) => s"start:$n",
       resetOnStop = true,
       skipErrors = false,
@@ -651,7 +651,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val effects = mutable.Buffer[Effect[String]]()
     val v = Var(1)
 
-    val signal = v.signal.scanLeft(
+    val signal = v.signal.scanLeftGenerated(
       makeInitial = (n: Int) => s"start:$n",
       resetOnStop = false,
       skipErrors = false,
@@ -760,7 +760,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val effects = mutable.Buffer[Effect[String]]()
     val v = Var(1)
 
-    val signal = v.signal.scanLeft(
+    val signal = v.signal.scanLeftGenerated(
       makeInitial = (n: Int) => s"start:$n",
       resetOnStop = true,
       skipErrors = false,
@@ -805,7 +805,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
 
     // Parent is a signal that can emit errors
     val parentSignal = bus.events.startWith(0)
-    val result = parentSignal.scanLeft(
+    val result = parentSignal.scanLeftGenerated(
       makeInitial = (n: Int) => s"start:$n",
       resetOnStop = false,
       skipErrors = true,
@@ -846,7 +846,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val bus = new EventBus[Int]
 
     val parentSignal = bus.events.startWith(0)
-    val result = parentSignal.scanLeft(
+    val result = parentSignal.scanLeftGenerated(
       makeInitial = (n: Int) => s"start:$n",
       resetOnStop = false,
       skipErrors = false,
@@ -954,7 +954,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val bus = new EventBus[Int]
 
     val parentSignal = bus.events.startWith(0)
-    val result = parentSignal.scanLeft(
+    val result = parentSignal.scanLeftGenerated(
       makeInitial = (n: Int) => s"start:$n",
       resetOnStop = false,
       skipErrors = true,
@@ -997,7 +997,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val bus = new EventBus[Int]
 
     val parentSignal = bus.events.startWith(0)
-    val result = parentSignal.scanLeft(
+    val result = parentSignal.scanLeftGenerated(
       makeInitial = (n: Int) => s"start:$n",
       resetOnStop = false,
       skipErrors = false,

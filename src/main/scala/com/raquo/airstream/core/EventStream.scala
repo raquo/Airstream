@@ -249,7 +249,7 @@ with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
     EventStream.merge(allStreams: _*)
   }
 
-  @inline final override def scanLeftRecover[B](
+  override def scanLeftRecover[B](
     initial: Try[B],
     resetOnStop: Boolean,
   )(

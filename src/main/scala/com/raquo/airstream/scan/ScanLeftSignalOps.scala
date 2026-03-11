@@ -1,6 +1,7 @@
 package com.raquo.airstream.scan
 
 import com.raquo.airstream.core.Signal
+import com.raquo.airstream.scan.Recover.skipErrors
 
 import scala.util.Try
 
@@ -13,6 +14,39 @@ import scala.util.Try
  */
 trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Self, A] {
 
+  override def scanLeftRecover[B](
+    initial: Try[B],
+    resetOnStop: Boolean,
+  )(
+    combine: (Try[B], Try[A]) => Try[B],
+  ): Self[B] = {
+    scanLeftGeneratedRecover[B](combine(initial, _), resetOnStop)(combine)
+  }
+
+  override def reduceLeft[B >: A](
+    combine: (B, A) => B,
+    resetOnStop: Boolean,
+    skipErrors: Boolean,
+  ): Self[B] = {
+    scanLeftGenerated[B]((x: B) => x, resetOnStop = resetOnStop, skipErrors = skipErrors)(combine)
+  }
+
+  /**
+   * Accumulates all updates from this parent using `combine`.
+   * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
+   *
+   * @param combine     A binary operator to update the accumulator given its previous value and the next event.
+   *                    It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
+   * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
+   * @see               [[reduceLeft]], [[scanLeftGenerated]]
+   */
+  def reduceLeftRecover[B >: A](
+    combine: (Try[B], Try[A]) => Try[B],
+    resetOnStop: Boolean = false,
+  ): Self[B] = {
+    scanLeftGeneratedRecover((x: Try[B]) => x, resetOnStop = resetOnStop)(combine)
+  }
+
   /**
    * Accumulates all updates from this parent using `combine`.
    * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
@@ -22,17 +56,17 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
    * @param skipErrors  Whether to continue after receiving an error.
    * @param combine     A binary operator to update the accumulator given its previous value and the next event.
    *                    Exceptions thrown during evaluation are caught by Airstream (see `recover()`).
-   * @see               [[scanLeftRecover]], [[reduceLeft]]
+   * @see               [[scanLeft]], [[scanLeftGeneratedRecover]], [[reduceLeft]]
    */
-  def scanLeft[B](
+  def scanLeftGenerated[B](
     makeInitial: A => B,
-    resetOnStop: Boolean,
-    skipErrors: Boolean,
+    resetOnStop: Boolean = false,
+    skipErrors: Boolean = false,
   )(
     combine: (B, A) => B,
   ): Self[B] = {
     val f = if (skipErrors) Recover.skipErrors[A, B](combine) else Recover.keepErrors[A, B](combine)
-    scanLeftRecover(_.map(makeInitial), resetOnStop = resetOnStop)(f)
+    scanLeftGeneratedRecover(_.map(makeInitial), resetOnStop = resetOnStop)(f)
   }
 
   /**
@@ -43,55 +77,22 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
    * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
    * @param combine     A binary operator to update the accumulator given its previous value and the next event.
    *                    It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
-   * @see               [[scanLeft]]
+   * @see               [[scanLeftGenerated]], [[scanLeft]]
    */
-  def scanLeftRecover[B](
+  def scanLeftGeneratedRecover[B](
     makeInitial: Try[A] => Try[B],
-    resetOnStop: Boolean,
+    resetOnStop: Boolean = false,
   )(
     combine: (Try[B], Try[A]) => Try[B],
   ): Self[B]
 
-  override def scanLeftRecover[B](
-    initial: Try[B],
-    resetOnStop: Boolean,
-  )(
-    combine: (Try[B], Try[A]) => Try[B],
-  ): Self[B] = {
-    scanLeftRecover[B](combine(initial, _), resetOnStop)(combine)
-  }
-
-  override def reduceLeft[B >: A](
-    combine: (B, A) => B,
-    resetOnStop: Boolean,
-    skipErrors: Boolean,
-  ): Self[B] = {
-    scanLeft[B]((x: B) => x, resetOnStop = resetOnStop, skipErrors = skipErrors)(combine)
-  }
-
-  /**
-   * Accumulates all updates from this parent using `combine`.
-   * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
-   *
-   * @param combine     A binary operator to update the accumulator given its previous value and the next event.
-   *                    It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
-   * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
-   * @see               [[reduceLeft]], [[scanLeft]]
-   */
-  def reduceLeftRecover[B >: A](
-    combine: (Try[B], Try[A]) => Try[B],
-    resetOnStop: Boolean = false,
-  ): Self[B] = {
-    scanLeftRecover((x: Try[B]) => x, resetOnStop = resetOnStop)(combine)
-  }
-
   @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")
   def foldLeft[B](makeInitial: A => B)(combine: (B, A) => B): Self[B] = {
-    scanLeft[B](makeInitial, resetOnStop = false, skipErrors = false)(combine)
+    scanLeftGenerated[B](makeInitial, resetOnStop = false, skipErrors = false)(combine)
   }
 
   @deprecated("foldLeftRecover was renamed to scanLeftRecover", "15.0.0-M1")
   def foldLeftRecover[B](makeInitial: Try[A] => Try[B])(combine: (Try[B], Try[A]) => Try[B]): Self[B] = {
-    scanLeftRecover[B](makeInitial, resetOnStop = false)(combine)
+    scanLeftGeneratedRecover[B](makeInitial, resetOnStop = false)(combine)
   }
 }
