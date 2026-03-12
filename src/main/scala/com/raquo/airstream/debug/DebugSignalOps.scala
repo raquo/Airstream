@@ -26,7 +26,8 @@ extends DebugOps[Self, A] {
     * This is typically triggered when getting a LazyStrictSignal's .now(), or
     * evaluating signal's initial value onStart, as well as on subsequent
     * re-starts when the signal is syncing its value to the parent's new
-    * current value. */
+    * current value.
+    */
   def debugSpyEvalFromParent(onEvalFromParent: Try[A] => Unit): Self[A] = {
     debugSpyAll(onEvalFromParent = onEvalFromParent)
   }

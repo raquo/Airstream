@@ -173,7 +173,6 @@ with Named {
   /** Distinct all values (both events and errors) using a comparison function
     *
     * See other distinct* operators in [[DistinctOps]].
-    *
     */
   override def distinctTry(isSame: (Try[A], Try[A]) => Boolean): Var[A] = {
     val distinctSignal = LazyStrictSignal.distinctSignal(

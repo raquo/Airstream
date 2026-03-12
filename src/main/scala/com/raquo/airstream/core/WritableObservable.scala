@@ -51,7 +51,8 @@ trait WritableObservable[A] extends Observable[A] {
   protected val internalObservers: ObserverList[InternalObserver[A]] = new ObserverList(JsArray())
 
   /** Set to true after onWillStart finishes, and until onStop finishes. It's set to false all other times.
-    * We need this to prevent onWillStart from running twice in weird cases (we have a test for that). */
+    * We need this to prevent onWillStart from running twice in weird cases (we have a test for that).
+    */
   protected var willStartDone: Boolean = false
 
   override def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription = {

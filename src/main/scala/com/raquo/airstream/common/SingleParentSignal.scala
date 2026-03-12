@@ -62,9 +62,9 @@ with InternalTryObserver[I] {
   }
 
   /** Note: this is overridden in:
-   *  - [[SplitChildSignal]] to clear cached initial value (if any)
-   *  - [[DistinctSignal]] to filter out isSame events
-   */
+    *  - [[SplitChildSignal]] to clear cached initial value (if any)
+    *  - [[DistinctSignal]] to filter out isSame events
+    */
   protected def updateCurrentValueFromParent(
     nextValue: Try[O],
     nextParentLastUpdateId: Int
