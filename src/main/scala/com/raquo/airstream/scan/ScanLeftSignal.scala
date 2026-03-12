@@ -7,7 +7,7 @@ import scala.scalajs.js
 import scala.util.{Success, Try}
 
 /**
-  * Accumulates all emissions from the `parent` using a binary operator `combine`.
+  * Accumulates all events or updates from the `parent` using a binary operator `combine`.
   * Forms a [[Signal]] that emits the accumulated value every time the `parent` emits.
   *
   * @param parent      The parent observable whose events or updates are accumulated.

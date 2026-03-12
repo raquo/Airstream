@@ -106,7 +106,7 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     // Re-subscribe — the underlying signal remembers the last accumulated value (30)
     stream.addObserver(Observer[Int](effects += Effect("obs", _)))
 
-    // No immediate emission (this is a stream, not a signal)
+    // No immediate change (this is a stream, not a signal)
     effects shouldBe mutable.Buffer()
 
     // The next event accumulates on top of the preserved state (30), NOT from 5 (which was lost)
