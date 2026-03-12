@@ -1,63 +1,58 @@
 package com.raquo.airstream.map
 
-import com.raquo.airstream.core.{EventStream, Signal}
+import com.raquo.airstream.core.{EventStream, Observable, Signal}
 
 /**
- * A base trait for observables that have mapping operators such as `map` and `mapTo`.
- * @tparam Self The kind of observable that this is (e.g. [[Signal]] or [[EventStream]]).
- * @tparam A The type of value emitted by this observable (e.g. [[org.scalajs.dom.MouseEvent]] or [[Int]]).
- */
+  * A base trait for observables that have mapping operators such as [[map]] and [[mapTo]].
+  *
+  * @tparam Self The kind of observable that this is (e.g. [[EventStream]], [[Signal]], or [[com.raquo.airstream.state.StrictSignal]]).
+  * @tparam A    The type of value emitted by this observable (e.g. [[org.scalajs.dom.MouseEvent]] or [[Int]]).
+  */
 trait MapOps[+Self[+_], +A] {
 
   /**
-   * Map all events or updates of this observable through a pure transformation `project`.
-   * The resulting observable emits once each time this parent observable emits.
-   *
-   * @param project The transformation to apply, to be called exactly once per event or update.
-   *                Exceptions thrown during evaluation are caught by Airstream (see `recover()`).
-   *
-   * @see [[mapTo]], [[mapToStrict]], [[mapToUnit]], [[tapEach]]
-   */
+    * This observable emits `project(ev)` for every `ev` emitted by the parent observable.
+    *
+    * @param project Exceptions here are emitted as errors.
+    *
+    * @see [[mapTo]], [[mapToStrict]], [[mapToUnit]], [[tapEach]]
+    */
   def map[B](project: A => B): Self[B]
 
   /**
-   * Ignore the current value and take a new value instead.
-   *
-   * @param value The replacement value, evaluated lazily and repeatedly on every event or update.
-   *              Exceptions thrown during evaluation are caught by Airstream (see `recover()`).
-   *
-   * @note Equivalent to `map(_ => value)` if `value` is defined with `def`.
-   * @see [[map]], [[mapToStrict]], [[mapToUnit]], [[tapEach]]
-   */
+    * This observable emits `value` for every event emitted by the parent observable.
+    *
+    * It is equivalent to `map(_ => value)`, i.e. `value` is re-evaluated on every event.
+    * You can use this to sample mutable value, e.g. `mapTo(myInputEl.ref.value)` in Laminar.
+    *
+    * @param value Exceptions here are emitted as errors.
+    *
+    * @see [[map]], [[mapToStrict]], [[mapToUnit]]
+    */
   def mapTo[B](value: => B): Self[B] = map(_ => value)
 
   /**
-   * Ignore the current value and take a new value instead.
-   *
-   * @param value The replacement value, evaluated eagerly and only once.
-   *              Exceptions thrown during evaluation go uncaught in the current call stack.
-   *
-   * @note Equivalent to `map(_ => value)` if `value` is defined with `val`.
-   * @see [[map]], [[mapTo]], [[mapToUnit]], [[tapEach]]
-   */
+    * Like `mapTo(value)`, except `value` is evaluated by-value (strictly).
+    *
+    * @see [[mapTo]]
+    */
   def mapToStrict[B](value: B): Self[B] = map(_ => value)
 
   /**
-   * Ignore the current value and instead take the value "`()`" (i.e. of type [[Unit]]).
-   *
-   * @note Equivalent to `mapTo(())` or `mapToStrict(())`.
-   * @see [[map]], [[mapTo]], [[mapToStrict]], [[tapEach]]
-   */
+    * Equivalent to `mapTo(())` or `mapToStrict(())`.
+    *
+    * @see [[mapTo]], [[mapToStrict]]
+    */
   @inline def mapToUnit: Self[Unit] = map(_ => ())
 
   /**
-   * Execute a side-effecting callback on every event or update.
-   *
-   * @param callback A callback whose return value is ignored, to be called exactly once per event or update.
-   *                 Exceptions thrown during evaluation are caught by Airstream (see `recover()`).
-   *
-   * @note Will not work if no downstream observable is subscribed to by an observer.
-   * @see [[map]], [[mapTo]], [[mapToStrict]], [[mapToUnit]]
-   */
+    * Execute a side-effecting callback on every event or update.
+    *
+    * @param callback Exceptions here are emitted as errors.
+    *
+    * @note The resulting observable is lazy, so the callback will only be run if it has observers.
+    *
+    * @see [[Observable.foreach]], [[Observable.addObserver]], [[https://github.com/raquo/Airstream/?tab=readme-ov-file#laziness Docs: Laziness]]
+    */
   @inline def tapEach[U](callback: A => U): Self[A] = map { v => callback(v); v }
 }
