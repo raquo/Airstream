@@ -15,7 +15,7 @@ trait MultiParentSignal[I, O] extends WritableSignal[O] {
     parents.forEach(Protected.maybeWillStart(_))
     val shouldPullFromParent = updateParentLastUpdateIds()
     if (shouldPullFromParent) {
-      updateCurrentValueFromParent()
+      loadCurrentValueFromParent(incrementUpdateId = false)
     }
   }
 
@@ -32,10 +32,4 @@ trait MultiParentSignal[I, O] extends WritableSignal[O] {
     }
     parentHasUpdated
   }
-
-  protected def updateCurrentValueFromParent(): Unit = {
-    val nextValue = currentValueFromParent()
-    setCurrentValue(nextValue)
-  }
-
 }

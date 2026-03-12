@@ -153,6 +153,7 @@ object LazyStrictSignal {
     makeInitial: Try[A] => Try[B],
     combine: (Try[B], Try[A]) => Try[B],
     resetOnStop: Boolean,
+    skipErrors: Boolean,
     parentDisplayName: => String,
     displayNameSuffix: String,
   ): StrictSignal[B] = {
@@ -164,6 +165,7 @@ object LazyStrictSignal {
       makeInitial = () => makeInitial(parentSignal.tryNow()),
       combine = combine,
       resetOnStop = resetOnStop,
+      skipErrors = skipErrors,
     )
       with LazyStrictSignal[A, B] {
 

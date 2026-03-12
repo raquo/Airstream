@@ -37,6 +37,10 @@ with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
 
   protected[airstream] def lastUpdateId: Int = _lastUpdateId
 
+  protected[airstream] def incrementUpdateId(): Unit = {
+    _lastUpdateId = Signal.nextUpdateId()
+  }
+
   /** Get the signal's current value */
   protected[airstream] def tryNow(): Try[A]
 
@@ -137,6 +141,7 @@ with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
   override def scanLeftGeneratedRecover[B](
     makeInitial: Try[A] => Try[B],
     resetOnStop: Boolean = false,
+    skipErrors: Boolean = false,
   )(
     combine: (Try[B], Try[A]) => Try[B],
   ): Signal[B] = {
@@ -145,6 +150,7 @@ with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
       makeInitial = () => makeInitial(tryNow()),
       combine = combine,
       resetOnStop = resetOnStop,
+      skipErrors = skipErrors,
     )
   }
 

@@ -28,7 +28,11 @@ trait ScanLeftStreamOps[+A] extends ScanLeftOps[Signal, EventStream, A] {
     resetOnStop: Boolean = false,
     skipErrors: Boolean = false,
   ): Signal[Option[B]] = {
-    scanLeft[Option[B]](None, resetOnStop = resetOnStop, skipErrors = skipErrors) {
+    scanLeft[Option[B]](
+      initial = None,
+      resetOnStop = resetOnStop,
+      skipErrors = skipErrors,
+    ) {
       case (None, next) => Some(next)
       case (Some(previous), next) => Some(combine(previous, next))
     }
@@ -53,8 +57,11 @@ trait ScanLeftStreamOps[+A] extends ScanLeftOps[Signal, EventStream, A] {
   )(
     combine: (B, A) => B,
   ): Signal[B] = {
-    reduceLeftOption[B](combine, resetOnStop = resetOnStop, skipErrors = skipErrors)
-      .map(_.getOrElse(default))
+    reduceLeftOption[B](
+      combine = combine,
+      resetOnStop = resetOnStop,
+      skipErrors = skipErrors,
+    ).map(_.getOrElse(default))
   }
 
   override def reduceLeft[B >: A](
@@ -62,8 +69,11 @@ trait ScanLeftStreamOps[+A] extends ScanLeftOps[Signal, EventStream, A] {
     resetOnStop: Boolean,
     skipErrors: Boolean,
   ): EventStream[B] = {
-    reduceLeftOption[B](combine, resetOnStop = resetOnStop, skipErrors = skipErrors)
-      .updates.collect { case Some(value) => value }
+    reduceLeftOption[B](
+      combine = combine,
+      resetOnStop = resetOnStop,
+      skipErrors = skipErrors,
+    ).updates.collect { case Some(value) => value }
   }
 
   @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")

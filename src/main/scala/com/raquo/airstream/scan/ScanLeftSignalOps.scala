@@ -16,10 +16,15 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
   override def scanLeftRecover[B](
     initial: Try[B],
     resetOnStop: Boolean = false,
+    skipErrors: Boolean = false,
   )(
     combine: (Try[B], Try[A]) => Try[B],
   ): Self[B] = {
-    scanLeftGeneratedRecover[B](combine(initial, _), resetOnStop)(combine)
+    scanLeftGeneratedRecover[B](
+      combine(initial, _),
+      resetOnStop = resetOnStop,
+      skipErrors = skipErrors,
+    )(combine)
   }
 
   override def reduceLeft[B >: A](
@@ -27,7 +32,11 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
     resetOnStop: Boolean = false,
     skipErrors: Boolean = false,
   ): Self[B] = {
-    scanLeftGenerated[B]((x: B) => x, resetOnStop = resetOnStop, skipErrors = skipErrors)(combine)
+    scanLeftGenerated[B](
+      makeInitial = x => x,
+      resetOnStop = resetOnStop,
+      skipErrors = skipErrors,
+    )(combine)
   }
 
   /**
@@ -37,13 +46,19 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
     * @param combine     A binary operator to update the accumulator given its previous value and the next event.
     *                    It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
     * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
+   *  @param skipErrors  Whether to continue after receiving an error.
     * @see               [[reduceLeft]], [[scanLeftGenerated]]
     */
   def reduceLeftRecover[B >: A](
     combine: (Try[B], Try[A]) => Try[B],
     resetOnStop: Boolean = false,
+    skipErrors: Boolean = false,
   ): Self[B] = {
-    scanLeftGeneratedRecover((x: Try[B]) => x, resetOnStop = resetOnStop)(combine)
+    scanLeftGeneratedRecover[B](
+      makeInitial = x => x,
+      resetOnStop = resetOnStop,
+      skipErrors = skipErrors,
+    )(combine)
   }
 
   /**
@@ -64,8 +79,11 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
   )(
     combine: (B, A) => B,
   ): Self[B] = {
-    val f = if (skipErrors) Recover.skipErrors[A, B](combine) else Recover.keepErrors[A, B](combine)
-    scanLeftGeneratedRecover(_.map(makeInitial), resetOnStop = resetOnStop)(f)
+    scanLeftGeneratedRecover[B](
+      makeInitial = _.map(makeInitial),
+      resetOnStop = resetOnStop,
+      skipErrors = skipErrors,
+    )(keepErrors(combine))
   }
 
   /**
@@ -74,6 +92,7 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
     *
     * @param makeInitial A generator for the accumulator's seed, given the initial value of this parent.
     * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
+   *  @param skipErrors  Whether to continue after receiving an error.
     * @param combine     A binary operator to update the accumulator given its previous value and the next event.
     *                    It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
     * @see               [[scanLeftGenerated]], [[scanLeft]]
@@ -81,6 +100,7 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
   def scanLeftGeneratedRecover[B](
     makeInitial: Try[A] => Try[B],
     resetOnStop: Boolean = false,
+    skipErrors: Boolean = false,
   )(
     combine: (Try[B], Try[A]) => Try[B],
   ): Self[B]

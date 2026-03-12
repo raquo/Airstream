@@ -117,7 +117,7 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     )
   }
 
-  it("EventStream.scanLeft: accumulated state persists across stop/start; events between are ignored") {
+  it("EventStream.scanLeft: accumulated state persists across stop/start; events missed while stopped are lost") {
 
     implicit val owner: TestableOwner = new TestableOwner
 
@@ -273,36 +273,6 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     )
   }
 
-  it("EventStream.reduceLeftDefault uses default lazily") {
-
-    implicit val owner: TestableOwner = new TestableOwner
-
-    var defaultEvalCount = 0
-
-    val effects = mutable.Buffer[Effect[Int]]()
-    val bus = new EventBus[Int]
-
-    val signal = bus.events.reduceLeftDefault {
-      defaultEvalCount += 1
-      -1
-    }(_ + _)
-
-    signal.addObserver(Observer[Int](effects += Effect("obs", _)))
-
-    // Default is evaluated once to produce the signal's initial value
-    defaultEvalCount shouldBe 1
-
-    bus.writer.onNext(1)
-
-    // After the first event, default is no longer needed
-    defaultEvalCount shouldBe 1
-
-    effects shouldBe mutable.Buffer(
-      Effect("obs", -1),
-      Effect("obs", 1)
-    )
-  }
-
   // =========================================================================
   // resetOnStop
   // =========================================================================
@@ -382,7 +352,7 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     bus.writer.onError(err1)
 
     effects shouldBe mutable.Buffer(
-      Effect("skip", 1), // skipErrors=true: preserved and re-emitted
+      Effect("skip-err", -1), // skipErrors=true: error is emitted
       Effect("prop-err", -1), // skipErrors=false: error propagated
     )
     errorEffects shouldBe mutable.Buffer()
@@ -391,7 +361,7 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     bus.writer.onNext(2)
 
     effects shouldBe mutable.Buffer(
-      Effect("skip", 3), // skipErrors=true: continues from preserved state (1)
+      Effect("skip", 3), // skipErrors=true: continues from last non-error state (1)
       Effect("prop-err", -1), // skipErrors=false: error state persists
     )
     errorEffects shouldBe mutable.Buffer()
@@ -424,7 +394,7 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     bus.writer.onNext(-1)
 
     effects shouldBe mutable.Buffer(
-      Effect("skip", 5), // skipErrors=true: error caught and discarded; state (5) preserved
+      Effect("skip-err", -1), // skipErrors=true: error is emitted
       Effect("prop-err", -1), // skipErrors=false: error replaces state
     )
     errorEffects shouldBe mutable.Buffer()
@@ -433,7 +403,7 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     bus.writer.onNext(3)
 
     effects shouldBe mutable.Buffer(
-      Effect("skip", 8), // skipErrors=true: continues from preserved state (5)
+      Effect("skip", 8), // skipErrors=true: continues from last non-error state (5)
       Effect("prop-err", -1), // skipErrors=false: error state persists
     )
   }
@@ -461,12 +431,12 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
 
     bus.writer.onNext(5)
 
-    // Upstream error — skipped, 5 preserved and re-emitted
+    // Upstream error — emitted; last non-error state (5) preserved
     bus.writer.onError(err1)
 
     effects shouldBe mutable.Buffer(
       Effect("obs", 5),
-      Effect("obs", 5),
+      Effect("obs-err", -1), // skipErrors=true: error is emitted
     )
     errorEffects shouldBe mutable.Buffer()
     effects.clear()

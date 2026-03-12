@@ -2,7 +2,7 @@ package com.raquo.airstream.scan
 
 import com.raquo.airstream.core.Observable
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /**
   * A base trait for [[Observable]] with reduction operators such as `scanLeft` and `reduceLeft`.
@@ -34,8 +34,11 @@ trait ScanLeftOps[+ScanSelf[+B] <: Observable[B], +ReduceSelf[+B] <: Observable[
   )(
     combine: (B, A) => B,
   ): ScanSelf[B] = {
-    val f = if (skipErrors) Recover.skipErrors[A, B](combine) else Recover.keepErrors[A, B](combine)
-    scanLeftRecover(Try(initial), resetOnStop)(f)
+    scanLeftRecover(
+      initial = Try(initial),
+      resetOnStop = resetOnStop,
+      skipErrors = skipErrors,
+    )(keepErrors(combine))
   }
 
   /**
@@ -46,6 +49,7 @@ trait ScanLeftOps[+ScanSelf[+B] <: Observable[B], +ReduceSelf[+B] <: Observable[
     *                    For signals, this is combined with the signal's initial value immediately.
     *                    For streams, this is used as the initial value until the first event arrives.
     * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
+   *  @param skipErrors  Whether to continue after receiving an error.
     * @param combine     A binary operator to update the accumulator given its previous value and the next event.
     *                    It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
     * @see               [[scanLeft]]
@@ -53,6 +57,7 @@ trait ScanLeftOps[+ScanSelf[+B] <: Observable[B], +ReduceSelf[+B] <: Observable[
   def scanLeftRecover[B](
     initial: Try[B],
     resetOnStop: Boolean = false,
+    skipErrors: Boolean = false,
   )(
     combine: (Try[B], Try[A]) => Try[B],
   ): ScanSelf[B]
@@ -72,4 +77,11 @@ trait ScanLeftOps[+ScanSelf[+B] <: Observable[B], +ReduceSelf[+B] <: Observable[
     resetOnStop: Boolean = false,
     skipErrors: Boolean = false,
   ): ReduceSelf[B]
+
+  /** Convert a reduction function into one that is error-aware and keeps all errors. */
+  protected def keepErrors[X, Y](combine: (Y, X) => Y): (Try[Y], Try[X]) => Try[Y] = {
+    case (Success(current), Success(next)) => Try(combine(current, next))
+    case (Failure(error), _) => Failure(error)
+    case (_, Failure(error)) => Failure(error)
+  }
 }

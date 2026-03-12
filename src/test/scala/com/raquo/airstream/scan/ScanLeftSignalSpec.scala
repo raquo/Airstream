@@ -632,7 +632,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     bus.writer.onError(err1)
 
     effects shouldBe mutable.Buffer(
-      Effect("skip", "start:0 1"), // skipErrors=true: state preserved and re-emitted
+      Effect("skip-err", "err"), // skipErrors=true: error is emitted
       Effect("prop-err", "err"), // skipErrors=false: error propagated
     )
     errorEffects shouldBe mutable.Buffer()
@@ -641,7 +641,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     bus.writer.onNext(2)
 
     effects shouldBe mutable.Buffer(
-      Effect("skip", "start:0 1 2"), // skipErrors=true: accumulation continues from preserved state
+      Effect("skip", "start:0 1 2"), // skipErrors=true: accumulation continues from last non-error state
       Effect("prop-err", "err"), // skipErrors=false: error state persists
     )
   }
@@ -684,7 +684,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     bus.writer.onNext(-1)
 
     effects shouldBe mutable.Buffer(
-      Effect("skip", "start:0 1"), // skipErrors=true: error discarded; state preserved
+      Effect("skip-err", "err"), // skipErrors=true: error is emitted
       Effect("prop-err", "err"), // skipErrors=false: error replaces state
     )
     errorEffects shouldBe mutable.Buffer()
@@ -693,7 +693,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     bus.writer.onNext(2)
 
     effects shouldBe mutable.Buffer(
-      Effect("skip", "start:0 1 2"), // skipErrors=true: continues from preserved state
+      Effect("skip", "start:0 1 2"), // skipErrors=true: continues from last non-error state
       Effect("prop-err", "err"), // skipErrors=false: error state persists
     )
   }
