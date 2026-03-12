@@ -251,7 +251,7 @@ with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
 
   override def scanLeftRecover[B](
     initial: Try[B],
-    resetOnStop: Boolean,
+    resetOnStop: Boolean = false,
   )(
     combine: (Try[B], Try[A]) => Try[B],
   ): Signal[B] = {

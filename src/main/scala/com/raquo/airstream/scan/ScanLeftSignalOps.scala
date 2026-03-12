@@ -15,7 +15,7 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
 
   override def scanLeftRecover[B](
     initial: Try[B],
-    resetOnStop: Boolean,
+    resetOnStop: Boolean = false,
   )(
     combine: (Try[B], Try[A]) => Try[B],
   ): Self[B] = {
@@ -24,8 +24,8 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
 
   override def reduceLeft[B >: A](
     combine: (B, A) => B,
-    resetOnStop: Boolean,
-    skipErrors: Boolean,
+    resetOnStop: Boolean = false,
+    skipErrors: Boolean = false,
   ): Self[B] = {
     scanLeftGenerated[B]((x: B) => x, resetOnStop = resetOnStop, skipErrors = skipErrors)(combine)
   }
