@@ -487,7 +487,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     ) { (acc, n) => s"$acc $n" }
 
     val subReset = signalReset.addObserver(Observer[String](effects += Effect("reset", _)))
-    val subKeep  = signalKeep.addObserver(Observer[String](effects += Effect("keep", _)))
+    val subKeep = signalKeep.addObserver(Observer[String](effects += Effect("keep", _)))
 
     effects shouldBe mutable.Buffer(Effect("reset", "start:1"), Effect("keep", "start:1"))
     effects.clear()
@@ -506,7 +506,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     signalKeep.addObserver(Observer[String](effects += Effect("keep", _)))
 
     effects shouldBe mutable.Buffer(
-      Effect("reset", "start:10"),    // resetOnStop=true: re-evaluates makeInitial(parent.now=10)
+      Effect("reset", "start:10"), // resetOnStop=true: re-evaluates makeInitial(parent.now=10)
       Effect("keep", "start:1 2 10"), // resetOnStop=false: re-syncs; combine("start:1 2", 10)
     )
     effects.clear()
@@ -558,10 +558,10 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     val v = Var(1)
 
     val signalReset = v.signal.scanLeft("n:", resetOnStop = true) { (acc, n) => s"$acc $n" }
-    val signalKeep  = v.signal.scanLeft("n:", resetOnStop = false) { (acc, n) => s"$acc $n" }
+    val signalKeep = v.signal.scanLeft("n:", resetOnStop = false) { (acc, n) => s"$acc $n" }
 
     val subReset = signalReset.addObserver(Observer[String](effects += Effect("reset", _)))
-    val subKeep  = signalKeep.addObserver(Observer[String](effects += Effect("keep", _)))
+    val subKeep = signalKeep.addObserver(Observer[String](effects += Effect("keep", _)))
 
     // combine("n:", 1) = "n: 1"
     effects shouldBe mutable.Buffer(Effect("reset", "n: 1"), Effect("keep", "n: 1"))
@@ -581,7 +581,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
     signalKeep.addObserver(Observer[String](effects += Effect("keep", _)))
 
     effects shouldBe mutable.Buffer(
-      Effect("reset", "n: 10"),    // resetOnStop=true: re-apply seed to current parent → combine("n:", 10)
+      Effect("reset", "n: 10"), // resetOnStop=true: re-apply seed to current parent → combine("n:", 10)
       Effect("keep", "n: 1 2 10"), // resetOnStop=false: re-sync; combine("n: 1 2", 10); seed is NOT re-applied
     )
     effects.clear()
@@ -633,7 +633,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
 
     effects shouldBe mutable.Buffer(
       Effect("skip", "start:0 1"), // skipErrors=true: state preserved and re-emitted
-      Effect("prop-err", "err"),   // skipErrors=false: error propagated
+      Effect("prop-err", "err"), // skipErrors=false: error propagated
     )
     errorEffects shouldBe mutable.Buffer()
     effects.clear()
@@ -642,7 +642,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
 
     effects shouldBe mutable.Buffer(
       Effect("skip", "start:0 1 2"), // skipErrors=true: accumulation continues from preserved state
-      Effect("prop-err", "err"),     // skipErrors=false: error state persists
+      Effect("prop-err", "err"), // skipErrors=false: error state persists
     )
   }
 
@@ -685,7 +685,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
 
     effects shouldBe mutable.Buffer(
       Effect("skip", "start:0 1"), // skipErrors=true: error discarded; state preserved
-      Effect("prop-err", "err"),   // skipErrors=false: error replaces state
+      Effect("prop-err", "err"), // skipErrors=false: error replaces state
     )
     errorEffects shouldBe mutable.Buffer()
     effects.clear()
@@ -694,7 +694,7 @@ class ScanLeftSignalSpec extends UnitSpec with BeforeAndAfter {
 
     effects shouldBe mutable.Buffer(
       Effect("skip", "start:0 1 2"), // skipErrors=true: continues from preserved state
-      Effect("prop-err", "err"),     // skipErrors=false: error state persists
+      Effect("prop-err", "err"), // skipErrors=false: error state persists
     )
   }
 }

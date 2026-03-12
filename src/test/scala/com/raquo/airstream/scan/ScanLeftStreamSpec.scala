@@ -315,10 +315,10 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     val bus = new EventBus[Int]
 
     val signalReset = bus.events.scanLeft(0, resetOnStop = true)(_ + _)
-    val signalKeep  = bus.events.scanLeft(0, resetOnStop = false)(_ + _)
+    val signalKeep = bus.events.scanLeft(0, resetOnStop = false)(_ + _)
 
     val subReset = signalReset.addObserver(Observer[Int](effects += Effect("reset", _)))
-    val subKeep  = signalKeep.addObserver(Observer[Int](effects += Effect("keep", _)))
+    val subKeep = signalKeep.addObserver(Observer[Int](effects += Effect("keep", _)))
 
     effects shouldBe mutable.Buffer(Effect("reset", 0), Effect("keep", 0))
     effects.clear()
@@ -340,16 +340,16 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     signalKeep.addObserver(Observer[Int](effects += Effect("keep", _)))
 
     effects shouldBe mutable.Buffer(
-      Effect("reset", 0),  // resetOnStop=true: accumulated value reset to seed
-      Effect("keep", 30),  // resetOnStop=false: accumulated value preserved
+      Effect("reset", 0), // resetOnStop=true: accumulated value reset to seed
+      Effect("keep", 30), // resetOnStop=false: accumulated value preserved
     )
     effects.clear()
 
     bus.writer.onNext(3)
 
     effects shouldBe mutable.Buffer(
-      Effect("reset", 3),  // accumulates from reset seed (0)
-      Effect("keep", 33),  // accumulates from preserved state (30)
+      Effect("reset", 3), // accumulates from reset seed (0)
+      Effect("keep", 33), // accumulates from preserved state (30)
     )
   }
 
@@ -382,7 +382,7 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     bus.writer.onError(err1)
 
     effects shouldBe mutable.Buffer(
-      Effect("skip", 1),      // skipErrors=true: preserved and re-emitted
+      Effect("skip", 1), // skipErrors=true: preserved and re-emitted
       Effect("prop-err", -1), // skipErrors=false: error propagated
     )
     errorEffects shouldBe mutable.Buffer()
@@ -391,7 +391,7 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     bus.writer.onNext(2)
 
     effects shouldBe mutable.Buffer(
-      Effect("skip", 3),      // skipErrors=true: continues from preserved state (1)
+      Effect("skip", 3), // skipErrors=true: continues from preserved state (1)
       Effect("prop-err", -1), // skipErrors=false: error state persists
     )
     errorEffects shouldBe mutable.Buffer()
@@ -424,7 +424,7 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     bus.writer.onNext(-1)
 
     effects shouldBe mutable.Buffer(
-      Effect("skip", 5),      // skipErrors=true: error caught and discarded; state (5) preserved
+      Effect("skip", 5), // skipErrors=true: error caught and discarded; state (5) preserved
       Effect("prop-err", -1), // skipErrors=false: error replaces state
     )
     errorEffects shouldBe mutable.Buffer()
@@ -433,7 +433,7 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     bus.writer.onNext(3)
 
     effects shouldBe mutable.Buffer(
-      Effect("skip", 8),      // skipErrors=true: continues from preserved state (5)
+      Effect("skip", 8), // skipErrors=true: continues from preserved state (5)
       Effect("prop-err", -1), // skipErrors=false: error state persists
     )
   }

@@ -30,7 +30,7 @@ extends Observable[A]
 with BaseObservable[EventStream, A]
 with EventSource[A]
 with CombineStreamOps[A] // combineWith, combineWithFn, withCurrentValueOf, sample
-with ScanLeftStreamOps[A]
+with ScanLeftStreamOps[A] // scanLeft, scanLeftRecover, reduceLeft, etc.
 with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
 {
 

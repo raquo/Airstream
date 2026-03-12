@@ -5,12 +5,12 @@ import com.raquo.airstream.core.Signal
 import scala.util.Try
 
 /**
- * A base trait for [[Signal]] with reduction operators such as `scanLeft` and `reduceLeft`.
- *
- * @tparam Self The kind of signal that this is.
- * @tparam A    The type of value contained in this signal.
- * @see         [[ScanLeftStreamOps]]
- */
+  * A base trait for [[Signal]] with reduction operators such as `scanLeft` and `reduceLeft`.
+  *
+  * @tparam Self The kind of signal that this is.
+  * @tparam A    The type of value contained in this signal.
+  * @see         [[ScanLeftStreamOps]]
+  */
 trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Self, A] {
 
   override def scanLeftRecover[B](
@@ -31,14 +31,14 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
   }
 
   /**
-   * Accumulates all updates from this parent using `combine`.
-   * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
-   *
-   * @param combine     A binary operator to update the accumulator given its previous value and the next event.
-   *                    It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
-   * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
-   * @see               [[reduceLeft]], [[scanLeftGenerated]]
-   */
+    * Accumulates all updates from this parent using `combine`.
+    * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
+    *
+    * @param combine     A binary operator to update the accumulator given its previous value and the next event.
+    *                    It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
+    * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
+    * @see               [[reduceLeft]], [[scanLeftGenerated]]
+    */
   def reduceLeftRecover[B >: A](
     combine: (Try[B], Try[A]) => Try[B],
     resetOnStop: Boolean = false,
@@ -47,16 +47,16 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
   }
 
   /**
-   * Accumulates all updates from this parent using `combine`.
-   * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
-   *
-   * @param makeInitial A generator for the accumulator's seed, given the initial value of this parent.
-   * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
-   * @param skipErrors  Whether to continue after receiving an error.
-   * @param combine     A binary operator to update the accumulator given its previous value and the next event.
-   *                    Exceptions thrown during evaluation are caught by Airstream (see `recover()`).
-   * @see               [[scanLeft]], [[scanLeftGeneratedRecover]], [[reduceLeft]]
-   */
+    * Accumulates all updates from this parent using `combine`.
+    * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
+    *
+    * @param makeInitial A generator for the accumulator's seed, given the initial value of this parent.
+    * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
+    * @param skipErrors  Whether to continue after receiving an error.
+    * @param combine     A binary operator to update the accumulator given its previous value and the next event.
+    *                    Exceptions thrown during evaluation are caught by Airstream (see `recover()`).
+    * @see               [[scanLeft]], [[scanLeftGeneratedRecover]], [[reduceLeft]]
+    */
   def scanLeftGenerated[B](
     makeInitial: A => B,
     resetOnStop: Boolean = false,
@@ -69,15 +69,15 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
   }
 
   /**
-   * Accumulates all updates from this parent using `combine`.
-   * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
-   *
-   * @param makeInitial A generator for the accumulator's seed, given the initial value of this parent.
-   * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
-   * @param combine     A binary operator to update the accumulator given its previous value and the next event.
-   *                    It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
-   * @see               [[scanLeftGenerated]], [[scanLeft]]
-   */
+    * Accumulates all updates from this parent using `combine`.
+    * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
+    *
+    * @param makeInitial A generator for the accumulator's seed, given the initial value of this parent.
+    * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
+    * @param combine     A binary operator to update the accumulator given its previous value and the next event.
+    *                    It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
+    * @see               [[scanLeftGenerated]], [[scanLeft]]
+    */
   def scanLeftGeneratedRecover[B](
     makeInitial: Try[A] => Try[B],
     resetOnStop: Boolean = false,
