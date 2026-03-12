@@ -54,7 +54,7 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
     * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
     * @param skipErrors  Whether to continue after receiving an error.
     * @param combine     A binary operator to update the accumulator given its previous value and the next event.
-    *                    Exceptions thrown during evaluation are caught by Airstream (see `recover()`).
+    *                    Exceptions here are emitted as errors
     * @see               [[scanLeft]], [[scanLeftGeneratedRecover]], [[reduceLeft]]
     */
   def scanLeftGenerated[B](

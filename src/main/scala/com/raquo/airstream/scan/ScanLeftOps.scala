@@ -24,7 +24,7 @@ trait ScanLeftOps[+ScanSelf[+B] <: Observable[B], +ReduceSelf[+B] <: Observable[
     * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
     * @param skipErrors  Whether to continue after receiving an error.
     * @param combine     A binary operator to update the accumulator given its previous value and the next event.
-    *                    Exceptions thrown during evaluation are caught by Airstream (see `recover()`).
+    *                    Exceptions here are emitted as errors
     * @see               [[scanLeftRecover]], [[reduceLeft]]
     */
   def scanLeft[B](
@@ -64,7 +64,7 @@ trait ScanLeftOps[+ScanSelf[+B] <: Observable[B], +ReduceSelf[+B] <: Observable[
     * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
     * @param skipErrors  Whether to continue after receiving an error.
     * @param combine     A binary operator to update the accumulator given its previous value and the next event.
-    *                    Exceptions thrown during evaluation are caught by Airstream (see `recover()`).
+    *                    Exceptions here are emitted as errors
     * @see               [[scanLeft]]
     */
   def reduceLeft[B >: A](
