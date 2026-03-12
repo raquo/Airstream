@@ -3,6 +3,7 @@ package com.raquo.airstream.core
 import com.raquo.airstream.debug.DebugOps
 import com.raquo.airstream.distinct.DistinctOps
 import com.raquo.airstream.flatten.{AllowFlatMap, FlattenStrategy, MergingStrategy, SwitchingStrategy}
+import com.raquo.airstream.map.MapOps
 import com.raquo.airstream.ownership.{Owner, Subscription}
 import com.raquo.airstream.status.{FlatMapStatusObservable, Status}
 import com.raquo.ew.JsArray
@@ -35,7 +36,7 @@ import scala.util.Try
 trait BaseObservable[+Self[+_] <: Observable[_], +A]
 extends Source[A]
 with Named
-with CoreOps[Self, A]
+with MapOps[Self, A]
 with RecoverOps[Self, A]
 with DistinctOps[Self[A], A]
 with DebugOps[Self, A] {

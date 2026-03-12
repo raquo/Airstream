@@ -11,6 +11,7 @@ import com.raquo.airstream.dynamicImport.{DynamicImportStreamObjectOps, DynamicI
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.extensions._
 import com.raquo.airstream.javaflow.FlowPublisherStream
+import com.raquo.airstream.map.{MapOps, MapStream}
 import com.raquo.airstream.misc._
 import com.raquo.airstream.split.SplittableOneStream
 import com.raquo.airstream.status.{AsyncStatusObservable, Status}
@@ -31,7 +32,7 @@ with CombineStreamOps[A] // combineWith, combineWithFn, withCurrentValueOf, samp
 with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
 {
 
-  /** See more map-like operators in [[CoreOps]]
+  /** See more map-like operators in [[MapOps]]
     *
     * @param project Note: guarded against exceptions
     */
