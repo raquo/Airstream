@@ -1,8 +1,7 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.core.CoreOps
 import com.raquo.airstream.distinct.{DistinctOps, DistinctSignal}
-import com.raquo.airstream.misc.MapSignal
+import com.raquo.airstream.map.{MapOps, MapSignal}
 import com.raquo.airstream.state.{LazyStrictSignal, StrictSignal}
 
 import scala.util.Try
@@ -10,7 +9,7 @@ import scala.util.Try
 trait KeyedStrictSignal[+K, +A]
 extends StrictSignal[A]
 with Keyed[K]
-with CoreOps[({ type Self[+V] = KeyedStrictSignal[K, V] })#Self, A] // #TODO[Scala] how to express this more concisely?
+with MapOps[({ type Self[+V] = KeyedStrictSignal[K, V] })#Self, A] // #TODO[Scala] how to express this more concisely?
 with DistinctOps[KeyedStrictSignal[K, A], A] { self =>
 
   // #Note: Only add operators here that are needed internally for Airstream's split* functionality.

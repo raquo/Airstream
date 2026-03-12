@@ -53,13 +53,13 @@ trait RecoverOps[+Self[+_], +A] {
   //  - We had to introduce `InitialValueError` to handle that edge case for now as of 18.0.0-M3.
   //  - Corollary: Signals can't do `recoverIgnoreErrors` without becoming a PartialSignal or providing a fallbackInitialValue
   /** If `recover` is defined and needs to be called, it can do the following:
-   *  - Return Some(value) to make this observable emit `value`
-   *  - Return None to make this observable ignore (swallow) this error
-   *    - #Warning: we're unable to swallow a Signal's initial value
-   *  - Not handle the error (meaning .isDefinedAt(error) must be false) to emit the original error
-   *
-   * If `recover` throws an exception, it will be wrapped in `ErrorHandlingError` and propagated.
-   */
+    *  - Return Some(value) to make this observable emit `value`
+    *  - Return None to make this observable ignore (swallow) this error
+    *    - #Warning: we're unable to swallow a Signal's initial value
+    *  - Not handle the error (meaning .isDefinedAt(error) must be false) to emit the original error
+    *
+    * If `recover` throws an exception, it will be wrapped in `ErrorHandlingError` and propagated.
+    */
   protected def mapRecover[B](
     projectValue: A => B,
     recoverError: PartialFunction[Throwable, Option[B]]

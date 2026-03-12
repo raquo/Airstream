@@ -91,16 +91,16 @@ class OptionObservable[A, Self[+_] <: Observable[_]](
   }
 
   /** This `.split`-s an Observable of an Option by the Option's `isDefined` property.
-  * If the observable is a stream, it's treated as if it contains None before it emits its first event.
-  *
-  * @param project - signalOfInput => output
-  *
-  *                  `project` is called whenever the parent observable switches from `None` to `Some(value)`.
-  *                  `signalOfInput` starts with an initial `Some(value)`, and updates whenever
-  *                  the parent observable updates from `Some(a)` to `Some(b)`.
-  *
-  *                  You can get the signal's current value with `.now()`.
-  */
+    * If the observable is a stream, it's treated as if it contains None before it emits its first event.
+    *
+    * @param project - signalOfInput => output
+    *
+    *                  `project` is called whenever the parent observable switches from `None` to `Some(value)`.
+    *                  `signalOfInput` starts with an initial `Some(value)`, and updates whenever
+    *                  the parent observable updates from `Some(a)` to `Some(b)`.
+    *
+    *                  You can get the signal's current value with `.now()`.
+    */
   def splitOption[B](
     project: StrictSignal[A] => B
   ): Signal[Option[B]] = {

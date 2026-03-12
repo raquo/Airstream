@@ -20,7 +20,6 @@ object DomEventStream {
     * @param eventTarget any DOM event target, e.g. element, document, or window
     * @param eventKey    DOM event name, e.g. "click", "input", "change"
     * @param useCapture  See section about "useCapture" in https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener
-    *
     */
   def apply[Ev <: dom.Event](
     eventTarget: dom.EventTarget,
