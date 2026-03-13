@@ -4,8 +4,7 @@ import com.raquo.airstream.core.Observable
 
 import scala.util.{Failure, Success, Try}
 
-/**
-  * A base trait for [[Observable]] with reduction operators such as `scanLeft` and `reduceLeft`.
+/** A base trait for [[Observable]] with reduction operators such as `scanLeft` and `reduceLeft`.
   *
   * @tparam ScanSelf   The kind of observable that is created by `scanLeft`.
   * @tparam ReduceSelf The kind of observable that is created by `reduceLeft`.
@@ -14,8 +13,7 @@ import scala.util.{Failure, Success, Try}
   */
 trait ScanLeftOps[+ScanSelf[+B] <: Observable[B], +ReduceSelf[+B] <: Observable[B], +A] {
 
-  /**
-    * Accumulates all events or updates from this parent using `combine`.
+  /** Accumulates all events or updates from this parent using `combine`.
     * Produces an [[Observable]] that emits the accumulated value every time this parent emits.
     *
     * @param initial     The seed value for the accumulator.
@@ -41,8 +39,7 @@ trait ScanLeftOps[+ScanSelf[+B] <: Observable[B], +ReduceSelf[+B] <: Observable[
     )(keepErrors(combine))
   }
 
-  /**
-    * Accumulates all events or updates from this parent using `combine`.
+  /** Accumulates all events or updates from this parent using `combine`.
     * Produces an [[Observable]] that emits the accumulated value every time this parent emits.
     *
     * @param initial     The seed value for the accumulator.
@@ -62,8 +59,7 @@ trait ScanLeftOps[+ScanSelf[+B] <: Observable[B], +ReduceSelf[+B] <: Observable[
     combine: (Try[B], Try[A]) => Try[B],
   ): ScanSelf[B]
 
-  /**
-    * Accumulates all events or updates from this parent using `combine`.
+  /**Accumulates all events or updates from this parent using `combine`.
     * Produces an [[Observable]] that emits the accumulated value every time this parent emits.
     *
     * @param resetOnStop Whether to reset the accumulator when this parent is restarted.

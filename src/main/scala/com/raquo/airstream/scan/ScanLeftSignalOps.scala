@@ -4,8 +4,7 @@ import com.raquo.airstream.core.Signal
 
 import scala.util.Try
 
-/**
-  * A base trait for [[Signal]] with reduction operators such as `scanLeft` and `reduceLeft`.
+/** A base trait for [[Signal]] with reduction operators such as `scanLeft` and `reduceLeft`.
   *
   * @tparam Self The kind of signal that this is.
   * @tparam A    The type of value contained in this signal.
@@ -39,8 +38,7 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
     )(combine)
   }
 
-  /**
-    * Accumulates all updates from this parent using `combine`.
+  /** Accumulates all updates from this parent using `combine`.
     * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
     *
     * @param combine     A binary operator to update the accumulator given its previous value and the next event.
@@ -61,8 +59,7 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
     )(combine)
   }
 
-  /**
-    * Accumulates all updates from this parent using `combine`.
+  /** Accumulates all updates from this parent using `combine`.
     * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
     *
     * @param makeInitial A generator for the accumulator's seed, given the initial value of this parent.
@@ -86,8 +83,7 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
     )(keepErrors(combine))
   }
 
-  /**
-    * Accumulates all updates from this parent using `combine`.
+  /** Accumulates all updates from this parent using `combine`.
     * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
     *
     * @param makeInitial A generator for the accumulator's seed, given the initial value of this parent.

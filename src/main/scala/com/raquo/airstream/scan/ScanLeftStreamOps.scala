@@ -4,16 +4,14 @@ import com.raquo.airstream.core.{EventStream, Signal}
 
 import scala.util.Try
 
-/**
-  * A base trait for [[EventStream]] with reduction operators such as `scanLeft` and `reduceLeft`.
+/** A base trait for [[EventStream]] with reduction operators such as `scanLeft` and `reduceLeft`.
   *
   * @tparam A The type of event emitted by this stream.
   * @see      [[ScanLeftSignalOps]]
   */
 trait ScanLeftStreamOps[+A] extends ScanLeftOps[Signal, EventStream, A] {
 
-  /**
-    * Accumulates all events from this parent using `combine`.
+  /** Accumulates all events from this parent using `combine`.
     * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
     * Values are given as [[Option]], which are [[None]] precisely when this parent has not yet emitted.
     *
@@ -38,8 +36,7 @@ trait ScanLeftStreamOps[+A] extends ScanLeftOps[Signal, EventStream, A] {
     }
   }
 
-  /**
-    * Accumulates all events from this parent using `combine`.
+  /** Accumulates all events from this parent using `combine`.
     * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
     *
     * @param default     The initial value for the resulting signal, used until this parent emits for the first time.
