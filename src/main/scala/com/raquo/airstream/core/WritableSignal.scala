@@ -5,14 +5,12 @@ import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
 /** This trait exists to provide private functionality that can not be covariant in A.
-  * Concrete classes like MapSignal can extend this trait, but more general types like
-  * Signal[A] need to remain covariant in A for good ergonomics.
-  */
+ * Concrete classes like MapSignal can extend this trait, but more general types like
+ * Signal[A] need to remain covariant in A for good ergonomics.
+ */
 trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
 
   protected var maybeLastSeenCurrentValue: js.UndefOr[Try[A]] = js.undefined
-
-  protected var maybeLastSeenSuccessValue: js.UndefOr[A] = js.undefined
 
   protected def setCurrentValue(newValue: Try[A]): Unit = {
     val isInitial = maybeLastSeenCurrentValue.isEmpty
@@ -21,20 +19,6 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
       _lastUpdateId = Signal.nextUpdateId()
     }
     maybeLastSeenCurrentValue = newValue
-    newValue.foreach(maybeLastSeenSuccessValue = _)
-  }
-
-  protected def removeCurrentValue(incrementUpdateId: Boolean = true): Unit = {
-    if (incrementUpdateId) this.incrementUpdateId()
-    maybeLastSeenCurrentValue = js.undefined
-    maybeLastSeenSuccessValue = js.undefined
-  }
-
-  protected def loadCurrentValueFromParent(incrementUpdateId: Boolean = true): Try[A] = {
-    if (incrementUpdateId) this.incrementUpdateId()
-    val nextValue = currentValueFromParent()
-    setCurrentValue(nextValue)
-    nextValue
   }
 
   // #Warning: be very careful when overriding tryNow. The returned value must
@@ -45,17 +29,21 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
   /** Note: Initial value is only evaluated if/when needed (when there are observers) */
   override protected[airstream] def tryNow(): Try[A] = {
     // dom.console.log(s"> ${this} > tryNow (maybeLastSeenCurrentValue = ${maybeLastSeenCurrentValue})")
-
-    // #TODO[Integrity] I'm not sure if passing `incrementUpdateId = true` here is right.
-    //  - I expected `0` to indicate "initial value" (no events emitted yet),
-    //    as mentioned in Signal.nextUpdateId, but it seems that it's only `0`
-    //    until the signal's initial value is evaluated, then we increment it here.
-    //  - I'm not sure if this is done on purpose or not, it's possible that the
-    //    comment is incorrect. Either way, need to figure this out some time.
-    //  - Currently, tests pass either way, but it's hard to tell definitely
-    //    if this change would really be ok.
-    // dom.console.log(s"${this} -> eval current value from tryNow")
-    maybeLastSeenCurrentValue.getOrElse(loadCurrentValueFromParent(incrementUpdateId = true))
+    maybeLastSeenCurrentValue.getOrElse {
+      // #TODO[Integrity] I'm not sure if updating `_lastUpdateId` here is right.
+      //  - I expected `0` to indicate "initial value" (no events emitted yet),
+      //    as mentioned in Signal.nextUpdateId, but it seems that it's only `0`
+      //    until the signal's initial value is evaluated, then we increment it here.
+      //  - I'm not sure if this is done on purpose or not, it's possible that the
+      //    comment is incorrect. Either way, need to figure this out some time.
+      //  - Currently, tests pass either way, but it's hard to tell definitely
+      //    if this change would really be ok.
+      // dom.console.log(s"${this} -> eval current value from tryNow")
+      _lastUpdateId = Signal.nextUpdateId()
+      val nextValue = currentValueFromParent()
+      setCurrentValue(nextValue)
+      nextValue
+    }
   }
 
   final override protected def fireValue(nextValue: A, transaction: Transaction): Unit = {
@@ -107,4 +95,5 @@ trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
       nextValue.fold(AirstreamError.sendUnhandledError, _ => ())
     }
   }
+
 }

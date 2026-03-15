@@ -165,7 +165,7 @@ object LazyStrictSignal {
       makeInitial = () => makeInitial(parentSignal.tryNow()),
       combine = combine,
       resetOnStop = resetOnStop,
-      skipErrors = skipErrors,
+      // skipErrors = skipErrors,
     )
       with LazyStrictSignal[A, B] {
 

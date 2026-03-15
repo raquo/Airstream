@@ -262,7 +262,7 @@ with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
       makeInitial = () => initial,
       combine = combine,
       resetOnStop = resetOnStop,
-      skipErrors = skipErrors,
+      // skipErrors = skipErrors,
     )
   }
 
