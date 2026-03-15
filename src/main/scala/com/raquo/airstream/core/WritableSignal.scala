@@ -5,9 +5,9 @@ import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
 /** This trait exists to provide private functionality that can not be covariant in A.
-  * Concrete classes like MapSignal can extend this trait, but more general types like
-  * Signal[A] need to remain covariant in A for good ergonomics.
-  */
+ * Concrete classes like MapSignal can extend this trait, but more general types like
+ * Signal[A] need to remain covariant in A for good ergonomics.
+ */
 trait WritableSignal[A] extends Signal[A] with WritableObservable[A] {
 
   protected var maybeLastSeenCurrentValue: js.UndefOr[Try[A]] = js.undefined

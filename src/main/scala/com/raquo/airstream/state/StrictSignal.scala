@@ -1,9 +1,10 @@
 package com.raquo.airstream.state
 
-import com.raquo.airstream.core.{RecoverOps, ScanLeftSignalOps, Signal}
+import com.raquo.airstream.core.{RecoverOps, Signal}
 import com.raquo.airstream.debug.{Debugger, DebugSignalOps}
 import com.raquo.airstream.distinct.DistinctOps
 import com.raquo.airstream.map.MapOps
+import com.raquo.airstream.scan.ScanLeftSignalOps
 
 import scala.util.Try
 
@@ -70,15 +71,17 @@ with DebugSignalOps[StrictSignal, A] {
     )
   }
 
-  override def scanLeftRecover[B](
-    makeInitial: Try[A] => Try[B]
+  protected override def scanLeftGeneratedRecover[B](
+    makeInitial: Try[A] => Try[B],
+    resumeOnError: Boolean,
   )(
-    fn: (Try[B], Try[A]) => Try[B]
+    combine: (Try[B], Try[A]) => Try[B],
   ): StrictSignal[B] = {
     LazyStrictSignal.scanLeftRecoverSignal(
       parentSignal = this,
       makeInitial = makeInitial,
-      fn = fn,
+      combine = combine,
+      resumeOnError = resumeOnError,
       parentDisplayName = displayName,
       displayNameSuffix = ".scanLeft*"
     )

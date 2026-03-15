@@ -2,6 +2,7 @@ package com.raquo.airstream.errors
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.{AirstreamError, EventStream, Observer}
+import com.raquo.airstream.core.AirstreamError.InitialValueError
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import com.raquo.airstream.state.{Val, Var}
@@ -213,15 +214,17 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     )
   }
 
-  it("fold perma-breaks on error (note: use foldRecover to handle it)") {
+  it("scanLeft perma-breaks on error in initial value (note: use scanLeftRecover to handle it)") {
 
     val bus = new EventBus[Int]
 
-    val signalUp = bus.events.startWith(-1).scanLeft { num =>
-      if (num < 0) {
-        throw err1
-      } else num
-    }((acc, nextValue) => {
+    val signalUp = bus.events.startWith(-1).scanLeftGenerated(
+      { (num: Int) =>
+        if (num < 0) {
+          throw err1
+        } else num
+      }
+    )((acc, nextValue) => {
       if (nextValue == 10) throw err2 else acc + nextValue
     }).map(Calculation.log("signalUp", calculations))
 
@@ -252,11 +255,11 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     signalUp.tryNow() shouldBe Failure(err1)
     signalDown.tryNow() shouldBe Success(-123)
 
-    // Fold is now broken because it needs previous state, which it doesn't have. This is unlike other operators.
+    // scanLeft is now broken because it needs previous state, which it doesn't have. This is unlike other operators.
 
     bus.writer.onNext(1)
 
-    signalUp.tryNow() shouldBe Failure(err1)
+    signalUp.tryNow() shouldBe Failure(InitialValueError(err1))
     signalDown.tryNow() shouldBe Success(-123)
 
     calculations shouldBe mutable.Buffer(
@@ -271,16 +274,17 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     effects.clear()
   }
 
-  it("foldRecover recovers from error") {
+  it("scanLeftRecover recovers from error") {
 
     val bus = new EventBus[Int]
 
-    val signalUp = bus.events.startWith(-1).scanLeftRecover(tryNum =>
-      tryNum.map { num =>
-        if (num < 0) {
-          throw err1
-        } else num
-      }
+    val signalUp = bus.events.startWith(-1).scanLeftGeneratedRecover(
+      tryNum =>
+        tryNum.map { num =>
+          if (num < 0) {
+            throw err1
+          } else num
+        }
     )((tryAcc, tryNextValue) => {
       tryNextValue.map(tryAcc.getOrElse(-100) + _)
     }).map(Calculation.log("signalUp", calculations))
@@ -313,7 +317,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     Try(signalDown.now()) shouldBe Success(-123)
     signalDown.tryNow() shouldBe Success(-123)
 
-    // foldRecover recovers from an error state
+    // scanLeftRecover recovers from an error state
 
     bus.writer.onNext(1)
 
