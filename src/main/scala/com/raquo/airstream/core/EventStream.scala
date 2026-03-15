@@ -250,19 +250,17 @@ with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
     EventStream.merge(allStreams: _*)
   }
 
-  override def scanLeftRecover[B](
+  protected override def scanLeftRecover[B](
     initial: Try[B],
-    resetOnStop: Boolean = false,
-    skipErrors: Boolean = false,
+    resumeOnError: Boolean,
   )(
     combine: (Try[B], Try[A]) => Try[B],
   ): Signal[B] = {
     new ScanLeftSignal(
       parent = this,
-      makeInitial = () => initial,
-      combine = combine,
-      resetOnStop = resetOnStop,
-      // skipErrors = skipErrors,
+      makeInitialValue = () => initial,
+      fn = combine,
+      resumeOnError = resumeOnError,
     )
   }
 

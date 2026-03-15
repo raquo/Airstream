@@ -189,68 +189,22 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
   }
 
   // =========================================================================
-  // resetOnStop
+  // Error handling: scanLeft skips errors, scanLeftRecover propagates them
   // =========================================================================
 
-  it("EventStream.scanLeft resetOnStop: resets to seed vs preserves state on restart") {
+  it("EventStream.scanLeft: upstream error — skipped by scanLeft, propagated by scanLeftRecover") {
 
     implicit val owner: TestableOwner = new TestableOwner
 
     val effects = mutable.Buffer[Effect[Int]]()
     val bus = new EventBus[Int]
 
-    val signalReset = bus.events.scanLeft(0, resetOnStop = true)(_ + _)
-    val signalKeep = bus.events.scanLeft(0, resetOnStop = false)(_ + _)
-
-    val subReset = signalReset.addObserver(Observer[Int](effects += Effect("reset", _)))
-    val subKeep = signalKeep.addObserver(Observer[Int](effects += Effect("keep", _)))
-
-    effects shouldBe mutable.Buffer(Effect("reset", 0), Effect("keep", 0))
-    effects.clear()
-
-    bus.writer.onNext(10)
-    bus.writer.onNext(20)
-
-    effects shouldBe mutable.Buffer(
-      Effect("reset", 10), Effect("keep", 10),
-      Effect("reset", 30), Effect("keep", 30),
-    )
-    effects.clear()
-
-    subReset.kill()
-    subKeep.kill()
-    bus.writer.onNext(5) // missed while stopped
-
-    signalReset.addObserver(Observer[Int](effects += Effect("reset", _)))
-    signalKeep.addObserver(Observer[Int](effects += Effect("keep", _)))
-
-    effects shouldBe mutable.Buffer(
-      Effect("reset", 0), // resetOnStop=true: accumulated value reset to seed
-      Effect("keep", 30), // resetOnStop=false: accumulated value preserved
-    )
-    effects.clear()
-
-    bus.writer.onNext(3)
-
-    effects shouldBe mutable.Buffer(
-      Effect("reset", 3), // accumulates from reset seed (0)
-      Effect("keep", 33), // accumulates from preserved state (30)
-    )
-  }
-
-  // =========================================================================
-  // skipErrors
-  // =========================================================================
-
-  it("EventStream.scanLeft skipErrors: upstream error — skipped vs propagated") {
-
-    implicit val owner: TestableOwner = new TestableOwner
-
-    val effects = mutable.Buffer[Effect[Int]]()
-    val bus = new EventBus[Int]
-
-    val signalSkip = bus.events.scanLeft(0, skipErrors = true)(_ + _)
-    val signalProp = bus.events.scanLeft(0, skipErrors = false)(_ + _)
+    val signalSkip = bus.events.scanLeft(0)(_ + _)
+    val signalProp = bus.events.scanLeftRecover(scala.util.Success(0)) {
+      case (scala.util.Success(acc), scala.util.Success(next)) => scala.util.Try(acc + next)
+      case (scala.util.Failure(e), _) => scala.util.Failure(e)
+      case (_, scala.util.Failure(e)) => scala.util.Failure(e)
+    }
 
     signalSkip.addObserver(Observer.withRecover[Int](effects += Effect("skip", _), _ => effects += Effect("skip-err", -1)))
     signalProp.addObserver(Observer.withRecover[Int](effects += Effect("prop", _), _ => effects += Effect("prop-err", -1)))
@@ -267,8 +221,8 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     bus.writer.onError(err1)
 
     effects shouldBe mutable.Buffer(
-      Effect("skip-err", -1), // skipErrors=true: error is emitted
-      Effect("prop-err", -1), // skipErrors=false: error propagated
+      Effect("skip-err", -1), // scanLeft: error is emitted, continues from last non-error state
+      Effect("prop-err", -1), // scanLeftRecover: error propagated
     )
     errorEffects shouldBe mutable.Buffer()
     effects.clear()
@@ -276,13 +230,13 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     bus.writer.onNext(2)
 
     effects shouldBe mutable.Buffer(
-      Effect("skip", 3), // skipErrors=true: continues from last non-error state (1)
-      Effect("prop-err", -1), // skipErrors=false: error state persists
+      Effect("skip", 3), // scanLeft: continues from last non-error state (1)
+      Effect("prop-err", -1), // scanLeftRecover: error state persists
     )
     errorEffects shouldBe mutable.Buffer()
   }
 
-  it("EventStream.scanLeft skipErrors: combine error — skipped vs persists") {
+  it("EventStream.scanLeft: combine error — skipped by scanLeft, persists in scanLeftRecover") {
 
     implicit val owner: TestableOwner = new TestableOwner
 
@@ -291,8 +245,12 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
 
     val combine = (acc: Int, next: Int) => { if (next < 0) throw err1; acc + next }
 
-    val signalSkip = bus.events.scanLeft(0, skipErrors = true)(combine)
-    val signalProp = bus.events.scanLeft(0, skipErrors = false)(combine)
+    val signalSkip = bus.events.scanLeft(0)(combine)
+    val signalProp = bus.events.scanLeftRecover(scala.util.Success(0)) {
+      case (scala.util.Success(acc), scala.util.Success(next)) => scala.util.Try(combine(acc, next))
+      case (scala.util.Failure(e), _) => scala.util.Failure(e)
+      case (_, scala.util.Failure(e)) => scala.util.Failure(e)
+    }
 
     signalSkip.addObserver(Observer.withRecover[Int](effects += Effect("skip", _), _ => effects += Effect("skip-err", -1)))
     signalProp.addObserver(Observer.withRecover[Int](effects += Effect("prop", _), _ => effects += Effect("prop-err", -1)))
@@ -309,8 +267,8 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     bus.writer.onNext(-1)
 
     effects shouldBe mutable.Buffer(
-      Effect("skip-err", -1), // skipErrors=true: error is emitted
-      Effect("prop-err", -1), // skipErrors=false: error replaces state
+      Effect("skip-err", -1), // scanLeft: error is emitted, continues from last non-error state
+      Effect("prop-err", -1), // scanLeftRecover: error replaces state
     )
     errorEffects shouldBe mutable.Buffer()
     effects.clear()
@@ -318,57 +276,8 @@ class ScanLeftStreamSpec extends UnitSpec with BeforeAndAfter {
     bus.writer.onNext(3)
 
     effects shouldBe mutable.Buffer(
-      Effect("skip", 8), // skipErrors=true: continues from last non-error state (5)
-      Effect("prop-err", -1), // skipErrors=false: error state persists
+      Effect("skip", 8), // scanLeft: continues from last non-error state (5)
+      Effect("prop-err", -1), // scanLeftRecover: error state persists
     )
-  }
-
-  // =========================================================================
-  // resetOnStop + skipErrors combined
-  // =========================================================================
-
-  it("EventStream.scanLeft(resetOnStop=true, skipErrors=true): both flags work together") {
-
-    implicit val owner: TestableOwner = new TestableOwner
-
-    val effects = mutable.Buffer[Effect[Int]]()
-    val bus = new EventBus[Int]
-
-    val signal = bus.events.scanLeft(0, resetOnStop = true, skipErrors = true)(_ + _)
-
-    val sub = signal.addObserver(Observer.withRecover[Int](
-      effects += Effect("obs", _),
-      _ => effects += Effect("obs-err", -1),
-    ))
-
-    effects shouldBe mutable.Buffer(Effect("obs", 0))
-    effects.clear()
-
-    bus.writer.onNext(5)
-
-    // Upstream error — emitted; last non-error state (5) preserved
-    bus.writer.onError(err1)
-
-    effects shouldBe mutable.Buffer(
-      Effect("obs", 5),
-      Effect("obs-err", -1), // skipErrors=true: error is emitted
-    )
-    errorEffects shouldBe mutable.Buffer()
-    effects.clear()
-
-    sub.kill()
-
-    // Re-subscribe — reset to initial seed (0), ignoring preserved value (5)
-    signal.addObserver(Observer.withRecover[Int](
-      effects += Effect("obs", _),
-      _ => effects += Effect("obs-err", -1),
-    ))
-
-    effects shouldBe mutable.Buffer(Effect("obs", 0))
-    effects.clear()
-
-    bus.writer.onNext(2)
-
-    effects shouldBe mutable.Buffer(Effect("obs", 2))
   }
 }

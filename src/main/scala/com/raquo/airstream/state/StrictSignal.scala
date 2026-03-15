@@ -71,10 +71,9 @@ with DebugSignalOps[StrictSignal, A] {
     )
   }
 
-  override def scanLeftGeneratedRecover[B](
+  protected override def scanLeftGeneratedRecover[B](
     makeInitial: Try[A] => Try[B],
-    resetOnStop: Boolean = false,
-    skipErrors: Boolean = false,
+    resumeOnError: Boolean,
   )(
     combine: (Try[B], Try[A]) => Try[B],
   ): StrictSignal[B] = {
@@ -82,10 +81,9 @@ with DebugSignalOps[StrictSignal, A] {
       parentSignal = this,
       makeInitial = makeInitial,
       combine = combine,
-      resetOnStop = resetOnStop,
-      skipErrors = skipErrors,
+      resumeOnError = resumeOnError,
       parentDisplayName = displayName,
-      displayNameSuffix = ".scanLeft*",
+      displayNameSuffix = ".scanLeft*"
     )
   }
 

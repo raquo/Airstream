@@ -483,7 +483,7 @@ class LazyStrictSignalSpec extends UnitSpec with BeforeAndAfter {
     val s =
       sourceVar.signal
         .map(identity)
-        .scanLeftGenerated((foo: Foo) => foo.id, resetOnStop = false, skipErrors = false) { (acc, foo) => acc + foo.id }
+        .scanLeftGenerated((foo: Foo) => foo.id) { (acc, foo) => acc + foo.id }
         .map(Effect.log("s", intEffects))
 
     // --

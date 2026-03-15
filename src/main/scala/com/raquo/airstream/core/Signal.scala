@@ -37,10 +37,6 @@ with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
 
   protected[airstream] def lastUpdateId: Int = _lastUpdateId
 
-  protected[airstream] def incrementUpdateId(): Unit = {
-    _lastUpdateId = Signal.nextUpdateId()
-  }
-
   /** Get the signal's current value */
   protected[airstream] def tryNow(): Try[A]
 
@@ -138,19 +134,17 @@ with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
   @deprecated("signal.changes renamed to signal.updates", since = "18.0.0-M3")
   def changes[AA >: A](compose: EventStream[A] => EventStream[AA]): Signal[AA] = updates(compose)
 
-  override def scanLeftGeneratedRecover[B](
+  protected override def scanLeftGeneratedRecover[B](
     makeInitial: Try[A] => Try[B],
-    resetOnStop: Boolean = false,
-    skipErrors: Boolean = false,
+    resumeOnError: Boolean,
   )(
     combine: (Try[B], Try[A]) => Try[B],
   ): Signal[B] = {
     new ScanLeftSignal(
       parent = this,
-      makeInitial = () => makeInitial(tryNow()),
-      combine = combine,
-      resetOnStop = resetOnStop,
-      // skipErrors = skipErrors,
+      makeInitialValue = () => makeInitial(tryNow()),
+      fn = combine,
+      resumeOnError = resumeOnError,
     )
   }
 
@@ -174,7 +168,7 @@ with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
     * You can use `myStream.toWeakSignal.observe.tryNow()` to read the last emitted
     * value from event streams just as well.
     */
-  def observe(implicit owner: Owner): OwnedSignal[A] = new ObservedSignal(this, Observer.empty, owner)
+  def observe(implicit owner: Owner): OwnedSignal[A] = new ObservedSignal(this, Observer.emptyIgnoreErrors, owner)
 
   override def toObservable: Signal[A] = this
 

@@ -15,22 +15,14 @@ trait ScanLeftStreamOps[+A] extends ScanLeftOps[Signal, EventStream, A] {
     * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
     * Values are given as [[Option]], which are [[None]] precisely when this parent has not yet emitted.
     *
-    * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
-    * @param skipErrors  Whether to continue after receiving an error.
-    * @param combine     A binary operator to update the accumulator given its previous value and the next event.
-    *                    Exceptions here are emitted as errors
-    * @see               [[reduceLeft]], [[scanLeft]]
+    * @param combine A binary operator to update the accumulator given its previous value and the next event.
+   *                 Exceptions here are emitted as errors.
+    * @see           [[reduceLeft]], [[scanLeft]]
     */
   private def reduceLeftOption[B >: A](
     combine: (B, A) => B,
-    resetOnStop: Boolean = false,
-    skipErrors: Boolean = false,
   ): Signal[Option[B]] = {
-    scanLeft[Option[B]](
-      initial = None,
-      resetOnStop = resetOnStop,
-      skipErrors = skipErrors,
-    ) {
+    scanLeft[Option[B]](None) {
       case (None, next) => Some(next)
       case (Some(previous), next) => Some(combine(previous, next))
     }
@@ -38,14 +30,11 @@ trait ScanLeftStreamOps[+A] extends ScanLeftOps[Signal, EventStream, A] {
 
   override def reduceLeft[B >: A](
     combine: (B, A) => B,
-    resetOnStop: Boolean,
-    skipErrors: Boolean,
   ): EventStream[B] = {
-    reduceLeftOption[B](
-      combine = combine,
-      resetOnStop = resetOnStop,
-      skipErrors = skipErrors,
-    ).updates.collect { case Some(value) => value }
+    reduceLeftOption[B](combine)
+      .updates.collect {
+        case Some(value) => value
+      }
   }
 
   @deprecated("foldLeft was renamed to scanLeft", "15.0.0-M1")

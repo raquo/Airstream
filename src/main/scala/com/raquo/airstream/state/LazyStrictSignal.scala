@@ -152,8 +152,7 @@ object LazyStrictSignal {
     parentSignal: Signal[A],
     makeInitial: Try[A] => Try[B],
     combine: (Try[B], Try[A]) => Try[B],
-    resetOnStop: Boolean,
-    skipErrors: Boolean,
+    resumeOnError: Boolean,
     parentDisplayName: => String,
     displayNameSuffix: String,
   ): StrictSignal[B] = {
@@ -162,12 +161,10 @@ object LazyStrictSignal {
 
     new ScanLeftSignal(
       parent = parentSignal,
-      makeInitial = () => makeInitial(parentSignal.tryNow()),
-      combine = combine,
-      resetOnStop = resetOnStop,
-      // skipErrors = skipErrors,
-    )
-      with LazyStrictSignal[A, B] {
+      makeInitialValue = () => makeInitial(parentSignal.tryNow()),
+      fn = combine,
+      resumeOnError = resumeOnError,
+    ) with LazyStrictSignal[A, B] {
 
       override protected def parentDisplayName: String = _pdn
 

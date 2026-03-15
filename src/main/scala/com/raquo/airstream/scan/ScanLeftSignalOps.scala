@@ -12,91 +12,92 @@ import scala.util.Try
   */
 trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Self, A] {
 
-  override def scanLeftRecover[B](
-    initial: Try[B],
-    resetOnStop: Boolean = false,
-    skipErrors: Boolean = false,
-  )(
-    combine: (Try[B], Try[A]) => Try[B],
-  ): Self[B] = {
-    scanLeftGeneratedRecover[B](
-      combine(initial, _),
-      resetOnStop = resetOnStop,
-      skipErrors = skipErrors,
-    )(combine)
-  }
-
   override def reduceLeft[B >: A](
     combine: (B, A) => B,
-    resetOnStop: Boolean = false,
-    skipErrors: Boolean = false,
   ): Self[B] = {
     scanLeftGenerated[B](
       makeInitial = x => x,
-      resetOnStop = resetOnStop,
-      skipErrors = skipErrors,
-    )(combine)
+    )(
+      combine = combine,
+    )
   }
 
   /** Accumulates all updates from this parent using `combine`.
     * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
     *
-    * @param combine     A binary operator to update the accumulator given its previous value and the next event.
-    *                    It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
-    * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
-   *  @param skipErrors  Whether to continue after receiving an error.
-    * @see               [[reduceLeft]], [[scanLeftGenerated]]
+    * @param combine A binary operator to update the accumulator given its previous value and the next event.
+   *                 It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
+    * @see           [[reduceLeft]], [[scanLeftGenerated]]
     */
   def reduceLeftRecover[B >: A](
     combine: (Try[B], Try[A]) => Try[B],
-    resetOnStop: Boolean = false,
-    skipErrors: Boolean = false,
   ): Self[B] = {
     scanLeftGeneratedRecover[B](
       makeInitial = x => x,
-      resetOnStop = resetOnStop,
-      skipErrors = skipErrors,
-    )(combine)
+    )(
+      combine = combine,
+    )
   }
 
   /** Accumulates all updates from this parent using `combine`.
     * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
     *
     * @param makeInitial A generator for the accumulator's seed, given the initial value of this parent.
-    * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
-    * @param skipErrors  Whether to continue after receiving an error.
     * @param combine     A binary operator to update the accumulator given its previous value and the next event.
-    *                    Exceptions here are emitted as errors
+    *                    Exceptions here are emitted as errors.
     * @see               [[scanLeft]], [[scanLeftGeneratedRecover]], [[reduceLeft]]
     */
   def scanLeftGenerated[B](
     makeInitial: A => B,
-    resetOnStop: Boolean = false,
-    skipErrors: Boolean = false,
   )(
     combine: (B, A) => B,
   ): Self[B] = {
     scanLeftGeneratedRecover[B](
       makeInitial = _.map(makeInitial),
-      resetOnStop = resetOnStop,
-      skipErrors = skipErrors,
-    )(keepErrors(combine))
+      resumeOnError = true,
+    )(
+      combine = keepErrors(combine),
+    )
   }
 
   /** Accumulates all updates from this parent using `combine`.
     * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
     *
     * @param makeInitial A generator for the accumulator's seed, given the initial value of this parent.
-    * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
-   *  @param skipErrors  Whether to continue after receiving an error.
     * @param combine     A binary operator to update the accumulator given its previous value and the next event.
     *                    It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
     * @see               [[scanLeftGenerated]], [[scanLeft]]
     */
   def scanLeftGeneratedRecover[B](
     makeInitial: Try[A] => Try[B],
-    resetOnStop: Boolean = false,
-    skipErrors: Boolean = false,
+  )(
+    combine: (Try[B], Try[A]) => Try[B],
+  ): Self[B] = {
+    scanLeftGeneratedRecover(
+      makeInitial = makeInitial,
+      resumeOnError = false,
+    )(
+      combine = combine,
+    )
+  }
+
+  protected override def scanLeftRecover[B](
+    initial: Try[B],
+    resumeOnError: Boolean,
+  )(
+    combine: (Try[B], Try[A]) => Try[B],
+  ): Self[B] = {
+    scanLeftGeneratedRecover[B](
+      makeInitial = combine(initial, _),
+      resumeOnError = resumeOnError,
+    )(
+      combine = combine,
+    )
+  }
+
+  protected def scanLeftGeneratedRecover[B](
+    makeInitial: Try[A] => Try[B],
+    resumeOnError: Boolean,
   )(
     combine: (Try[B], Try[A]) => Try[B],
   ): Self[B]
