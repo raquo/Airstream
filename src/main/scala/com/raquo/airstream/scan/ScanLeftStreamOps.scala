@@ -19,9 +19,9 @@ trait ScanLeftStreamOps[+A] extends ScanLeftOps[Signal, EventStream, A] {
     * @param skipErrors  Whether to continue after receiving an error.
     * @param combine     A binary operator to update the accumulator given its previous value and the next event.
     *                    Exceptions here are emitted as errors
-    * @see               [[reduceLeft]], [[reduceLeftDefault]], [[scanLeft]]
+    * @see               [[reduceLeft]], [[scanLeft]]
     */
-  def reduceLeftOption[B >: A](
+  private def reduceLeftOption[B >: A](
     combine: (B, A) => B,
     resetOnStop: Boolean = false,
     skipErrors: Boolean = false,
@@ -34,31 +34,6 @@ trait ScanLeftStreamOps[+A] extends ScanLeftOps[Signal, EventStream, A] {
       case (None, next) => Some(next)
       case (Some(previous), next) => Some(combine(previous, next))
     }
-  }
-
-  /** Accumulates all events from this parent using `combine`.
-    * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
-    *
-    * @param default     The initial value for the resulting signal, used until this parent emits for the first time.
-    *                    Following the first event, `default` is discarded and thereafter plays no role.
-    * @param resetOnStop Whether to reset the accumulator when this parent is restarted.
-    * @param skipErrors  Whether to continue after receiving an error.
-    * @param combine     A binary operator to update the accumulator given its previous value and the next event.
-    *                    Exceptions here are emitted as errors
-    * @see               [[reduceLeftOption]], [[reduceLeft]], [[scanLeft]]
-    */
-  def reduceLeftDefault[B >: A](
-    default: => B,
-    resetOnStop: Boolean = false,
-    skipErrors: Boolean = false,
-  )(
-    combine: (B, A) => B,
-  ): Signal[B] = {
-    reduceLeftOption[B](
-      combine = combine,
-      resetOnStop = resetOnStop,
-      skipErrors = skipErrors,
-    ).map(_.getOrElse(default))
   }
 
   override def reduceLeft[B >: A](
