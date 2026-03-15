@@ -9,16 +9,12 @@ trait ScanLeftSignalOps[+Self[+_] <: Signal[_], +A] {
     * @param makeInitial Note: guarded against exceptions
     * @param fn Note: guarded against exceptions
     */
-  def scanLeft[B](makeInitial: A => B)(fn: (B, A) => B): Self[B] = {
-    scanLeftRecover(parentInitial => parentInitial.map(makeInitial)) { (currentValue, nextParentValue) =>
-      Try(fn(currentValue.get, nextParentValue.get))
-    }
-  }
+  def scanLeft[B](makeInitial: A => B)(fn: (B, A) => B): Self[B]
 
   /** A signal that emits the accumulated value every time that the parent signal emits.
     *
-    * @param makeInitial currentParentValue => initialValue   Note: must not throw
-    * @param fn (currentValue, nextParentValue) => nextValue
+    * @param makeInitial currentParentValue => initialValue   Note: guarded against exceptions
+    * @param fn (currentValue, nextParentValue) => nextValue   Note: guarded against exceptions
     * @return
     */
   def scanLeftRecover[B](

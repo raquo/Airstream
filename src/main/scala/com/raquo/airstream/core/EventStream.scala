@@ -262,17 +262,20 @@ with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
     * @param fn Note: guarded against exceptions
     */
   def scanLeft[B](initial: B)(fn: (B, A) => B): Signal[B] = {
-    scanLeftRecover(Success(initial)) { (currentValue, nextParentValue) =>
-      Try(fn(currentValue.get, nextParentValue.get))
-    }
+    new ScanLeftSignal[A, B, EventStream[A]](
+      parent = this,
+      () => Success(initial),
+      (currentValue, nextParentValue) => Try(fn(currentValue.get, nextParentValue.get)),
+      resumeOnError = true
+    )
   }
 
   /** A signal that emits the accumulated value every time that the parent stream emits.
     *
-    * @param fn Note: Must not throw!
+    * @param fn Note: Guarded against exceptions
     */
   def scanLeftRecover[B](initial: Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = {
-    new ScanLeftSignal(parent = this, () => initial, fn)
+    new ScanLeftSignal(parent = this, () => initial, fn, resumeOnError = false)
   }
 
   /** Convert stream to signal, given an initial value

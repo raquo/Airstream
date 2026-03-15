@@ -2,6 +2,7 @@ package com.raquo.airstream.errors
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.{AirstreamError, EventStream, Observer}
+import com.raquo.airstream.core.AirstreamError.InitialValueError
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
 import com.raquo.airstream.state.{Val, Var}
@@ -213,7 +214,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     )
   }
 
-  it("fold perma-breaks on error (note: use foldRecover to handle it)") {
+  it("scanLeft perma-breaks on error in initial value (note: use scanLeftRecover to handle it)") {
 
     val bus = new EventBus[Int]
 
@@ -252,11 +253,11 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     signalUp.tryNow() shouldBe Failure(err1)
     signalDown.tryNow() shouldBe Success(-123)
 
-    // Fold is now broken because it needs previous state, which it doesn't have. This is unlike other operators.
+    // scanLeft is now broken because it needs previous state, which it doesn't have. This is unlike other operators.
 
     bus.writer.onNext(1)
 
-    signalUp.tryNow() shouldBe Failure(err1)
+    signalUp.tryNow() shouldBe Failure(InitialValueError(err1))
     signalDown.tryNow() shouldBe Success(-123)
 
     calculations shouldBe mutable.Buffer(
@@ -271,7 +272,7 @@ class SignalErrorSpec extends UnitSpec with BeforeAndAfter {
     effects.clear()
   }
 
-  it("foldRecover recovers from error") {
+  it("scanLeftRecover recovers from error") {
 
     val bus = new EventBus[Int]
 

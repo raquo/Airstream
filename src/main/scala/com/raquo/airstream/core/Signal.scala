@@ -139,6 +139,15 @@ with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
   @deprecated("foldLeftRecover was renamed to scanLeftRecover", "15.0.0-M1")
   def foldLeftRecover[B](makeInitial: Try[A] => Try[B])(fn: (Try[B], Try[A]) => Try[B]): Signal[B] = scanLeftRecover(makeInitial)(fn)
 
+  override def scanLeft[B](makeInitial: A => B)(fn: (B, A) => B): Signal[B] = {
+    new ScanLeftSignal[A, B, Signal[A]](
+      parent = this,
+      makeInitialValue = () => tryNow().map(makeInitial),
+      fn = (currentValue, nextParentValue) => Try(fn(currentValue.get, nextParentValue.get)),
+      resumeOnError = true
+    )
+  }
+
   /** A signal that emits the accumulated value every time that the parent signal emits.
     *
     * @param makeInitial currentParentValue => initialValue   Note: must not throw
@@ -153,7 +162,8 @@ with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
     new ScanLeftSignal(
       parent = this,
       makeInitialValue = () => makeInitial(tryNow()),
-      fn
+      fn,
+      resumeOnError = false
     )
   }
 
@@ -177,7 +187,7 @@ with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
     * You can use `myStream.toWeakSignal.observe.tryNow()` to read the last emitted
     * value from event streams just as well.
     */
-  def observe(implicit owner: Owner): OwnedSignal[A] = new ObservedSignal(this, Observer.empty, owner)
+  def observe(implicit owner: Owner): OwnedSignal[A] = new ObservedSignal(this, Observer.emptyIgnoreErrors, owner)
 
   override def toObservable: Signal[A] = this
 

@@ -70,6 +70,17 @@ with DebugSignalOps[StrictSignal, A] {
     )
   }
 
+  override def scanLeft[B](makeInitial: A => B)(fn: (B, A) => B): StrictSignal[B] = {
+    LazyStrictSignal.scanLeftRecoverSignal[A, B](
+      parentSignal = this,
+      makeInitial = _.map(makeInitial),
+      fn = (currentValue, nextParentValue) => Try(fn(currentValue.get, nextParentValue.get)),
+      resumeOnError = true,
+      parentDisplayName = displayName,
+      displayNameSuffix = ".scanLeft*"
+    )
+  }
+
   override def scanLeftRecover[B](
     makeInitial: Try[A] => Try[B]
   )(
@@ -79,6 +90,7 @@ with DebugSignalOps[StrictSignal, A] {
       parentSignal = this,
       makeInitial = makeInitial,
       fn = fn,
+      resumeOnError = false,
       parentDisplayName = displayName,
       displayNameSuffix = ".scanLeft*"
     )

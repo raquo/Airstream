@@ -113,11 +113,19 @@ object Observer {
 
   private val _empty = Observer[Any](_ => ())
 
-  /** An observer that does nothing. Use it to ensure that an Observable is started
+  private val _emptyIgnoreErrors = Observer.ignoreErrors[Any](_ => ())
+
+  /** An observer that does nothing, except send errors into `unhandled`.
     *
-    * Used by SignalView and EventStreamView
+    * @see [[emptyIgnoreErrors]]
     */
   def empty[A]: Observer[A] = _empty
+
+  /** An observer that does nothing. Ignores errors.
+    *
+    * @see [[empty]] which does not ignore errors.
+    */
+  def emptyIgnoreErrors[A]: Observer[A] = _emptyIgnoreErrors
 
   /** Provides debug* methods for observers */
   implicit def toDebuggableObserver[A](observer: Observer[A]): DebuggableObserver[A] = new DebuggableObserver(observer)
