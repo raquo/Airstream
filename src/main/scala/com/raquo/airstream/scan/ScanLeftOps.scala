@@ -79,8 +79,6 @@ trait ScanLeftOps[+ScanSelf[+B] <: Observable[B], +ReduceSelf[+B] <: Observable[
 
   /** Convert a reduction function into one that is error-aware and keeps all errors. */
   protected def keepErrors[X, Y](combine: (Y, X) => Y): (Try[Y], Try[X]) => Try[Y] = {
-    case (Success(current), Success(next)) => Try(combine(current, next))
-    case (Failure(error), _) => Failure(error)
-    case (_, Failure(error)) => Failure(error)
+    (current: Try[Y], next: Try[X]) => Try(combine(current.get, next.get))
   }
 }
