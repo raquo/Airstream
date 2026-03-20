@@ -26,7 +26,7 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
     * Produces a [[Signal]] that emits the accumulated value every time this parent emits.
     *
     * @param combine A binary operator to update the accumulator given its previous value and the next event.
-   *                 It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
+    *                 It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
     * @see           [[reduceLeft]], [[scanLeftGenerated]]
     */
   def reduceLeftRecover[B >: A](
@@ -81,7 +81,7 @@ trait ScanLeftSignalOps[+Self[+B] <: Signal[B], +A] extends ScanLeftOps[Self, Se
     )
   }
 
-  protected override def scanLeftRecover[B](
+  override protected def scanLeftRecover[B](
     initial: Try[B],
     resumeOnError: Boolean,
   )(

@@ -134,7 +134,7 @@ with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
   @deprecated("signal.changes renamed to signal.updates", since = "18.0.0-M3")
   def changes[AA >: A](compose: EventStream[A] => EventStream[AA]): Signal[AA] = updates(compose)
 
-  protected override def scanLeftGeneratedRecover[B](
+  override protected def scanLeftGeneratedRecover[B](
     makeInitial: Try[A] => Try[B],
     resumeOnError: Boolean,
   )(

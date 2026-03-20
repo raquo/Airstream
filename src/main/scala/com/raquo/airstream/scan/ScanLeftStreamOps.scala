@@ -16,7 +16,7 @@ trait ScanLeftStreamOps[+A] extends ScanLeftOps[Signal, EventStream, A] {
     * Values are given as [[Option]], which are [[None]] precisely when this parent has not yet emitted.
     *
     * @param combine A binary operator to update the accumulator given its previous value and the next event.
-   *                 Exceptions here are emitted as errors.
+    *                 Exceptions here are emitted as errors.
     * @see           [[reduceLeft]], [[scanLeft]]
     */
   private def reduceLeftOption[B >: A](

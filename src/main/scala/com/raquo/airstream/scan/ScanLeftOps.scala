@@ -41,7 +41,7 @@ trait ScanLeftOps[+ScanSelf[+B] <: Observable[B], +ReduceSelf[+B] <: Observable[
     *
     * @param initial The seed value for the accumulator.
     *                For signals, this is combined with the signal's initial value immediately.
-   *                 For streams, this is used as the initial value until the first event arrives.
+    *                 For streams, this is used as the initial value until the first event arrives.
     * @param combine A binary operator to update the accumulator given its previous value and the next event.
     *                It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
     * @see           [[scanLeft]]
@@ -59,7 +59,7 @@ trait ScanLeftOps[+ScanSelf[+B] <: Observable[B], +ReduceSelf[+B] <: Observable[
     )
   }
 
-  /**Accumulates all events or updates from this parent using `combine`.
+  /** Accumulates all events or updates from this parent using `combine`.
     * Produces an [[Observable]] that emits the accumulated value every time this parent emits.
     *
     * @param combine A binary operator to update the accumulator given its previous value and the next event.

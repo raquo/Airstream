@@ -9,25 +9,25 @@ import scala.scalajs.js
 import scala.util.{Failure, Try}
 
 /** @param makeInitialValue
- *     Note: Guarded against exceptions
- *     MUST RETURN SUCCESS IF `resumeOnError = true`, otherwise
- *     signal will be broken
- * @param fn
- *     Note: Guarded against exceptions
- * @param resumeOnError
- *     If true, [[fn]] will be called with "last seen success value"
- *     instead of "last seen value". In practice, if the user-facing
- *     `fn` is actually `(B, A) => B`, this lets you recover from
- *     exceptions in `fn` by using the previous (good) value of `B`.
- *
- *     If `resumeOnError` is true, you should ensure that the initial
- *     value is not an error. Otherwise, this signal will emit
- *     [[com.raquo.airstream.core.AirstreamError.InitialValueError]].
- *
- *     In contrast, if `resumeOnError` is false, then `(B, A) => B`
- *     will never be able to recover from the exception, keeping
- *     the signal in a failed state perpetually.
- */
+  *     Note: Guarded against exceptions
+  *     MUST RETURN SUCCESS IF `resumeOnError = true`, otherwise
+  *     signal will be broken
+  * @param fn
+  *     Note: Guarded against exceptions
+  * @param resumeOnError
+  *     If true, [[fn]] will be called with "last seen success value"
+  *     instead of "last seen value". In practice, if the user-facing
+  *     `fn` is actually `(B, A) => B`, this lets you recover from
+  *     exceptions in `fn` by using the previous (good) value of `B`.
+  *
+  *     If `resumeOnError` is true, you should ensure that the initial
+  *     value is not an error. Otherwise, this signal will emit
+  *     [[com.raquo.airstream.core.AirstreamError.InitialValueError]].
+  *
+  *     In contrast, if `resumeOnError` is false, then `(B, A) => B`
+  *     will never be able to recover from the exception, keeping
+  *     the signal in a failed state perpetually.
+  */
 class ScanLeftSignal[A, B, Parent <: Observable[A]](
   override protected[this] val parent: Parent,
   makeInitialValue: () => Try[B],
@@ -38,11 +38,11 @@ class ScanLeftSignal[A, B, Parent <: Observable[A]](
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
   /** If `resumeOnError` is `false`, this is just a copy of [[maybeLastSeenCurrentValue]].
-   *
-   * If  `resumeOnError` is `true`, this becomes "last seen Success value", and
-   * will be used by [[fn]] instead of [[maybeLastSeenCurrentValue]]. Except if the
-   * initial value is a Failure (or throws), then this can still contain a Failure.
-   */
+    *
+    * If  `resumeOnError` is `true`, this becomes "last seen Success value", and
+    * will be used by [[fn]] instead of [[maybeLastSeenCurrentValue]]. Except if the
+    * initial value is a Failure (or throws), then this can still contain a Failure.
+    */
   private var maybeEffectiveLastSeenCurrentValue: js.UndefOr[Try[B]] = js.undefined
 
   /** #Note: this is called from tryNow(), make sure to avoid infinite loop. */
