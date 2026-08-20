@@ -1,16 +1,22 @@
-package com.raquo.airstream.misc
+package com.raquo.airstream.scan
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.{EventStream, Observer}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
-import com.raquo.airstream.scan.ScanLeftSignal
 import com.raquo.airstream.state.Var
 
 import scala.collection.mutable
 import scala.util.{Failure, Success}
 
-class ScanLeftSignalSpec extends UnitSpec {
+/** This test suite derives from the original scanLeft tests,
+  * from before they were reworked in https://github.com/raquo/Airstream/pull/153
+  *
+  * It was expanded with `resumeOnErrors = true` tests during this change.
+  *
+  * See also other test suites in this package.
+  */
+class ScanLeftOriginalSpec extends UnitSpec {
 
   it("ScanLeftSignal made with EventStream.scanLeft") {
 

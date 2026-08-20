@@ -3,7 +3,7 @@ package com.raquo.airstream.scan
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.{AirstreamError, Observer}
 import com.raquo.airstream.eventbus.EventBus
-import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
+import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.state.Var
 import org.scalatest.BeforeAndAfter
 
