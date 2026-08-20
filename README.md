@@ -2608,21 +2608,22 @@ Airstream-provided Observer constructors that let you specify an error handling 
 
 #### Other Error Handling Considerations
 
-* **`scanLeft`** operator is unable to proceed when encountering an error, so such an observable will enter a permanent error state if it encounters an error. You can not use the standard `recover` method to recover from this. You need to use `scanLeftRecover` instead of `scanLeft` to supply your error handling logic.
+* By default, reduction operators such as `scanLeft` are unable to proceed when encountering an error;
+  any unhandled exception will cause the resulting signal to enter a permanent error state.
+  You can not use the standard `recover` method to recover from this.
+  The solution is to pass the flag `skipErrors = true` (recommended),
+  or instead use `scanLeftRecover` for custom error handling.
+  @TODO Should `skipErrors` be `true` by default?
 
 * **`filter`** operator can't filter if its passes function fails, so it will pass through all errors that it receives, unfiltered. You can filter errors using `recover`, by returning `None`.
 
 * Remember that Signal's initial value is not evaluated until and unless it is needed. That is true even if the initial value would have been an error because obviously you can't know what it is without evaluating it. And if an error is not evaluated, then it can't possibly be reported anywhere because, well, it didn't actually happen. In practice this means that the initial value of a Signal whose only consumer is its `.changes` stream is completely ignored (because no one cares about it). @TODO[API] Should we reconsider this particular aspect of laziness? Either way, we should document the rationale for that some more.
 
 
-
-
 ## Limitations
 
 * Airstream only runs on Scala.js because its primary intended use case is unidirectional dataflow architecture on the frontend. I have no plans to make it run on the JVM. It would require too much of my time and too much compromise, complicating the API to support a completely different environment and use cases. 
 * Airstream has no concept of observables "completing". Personally I don't think this is much of a limitation, but I can see it being viewed as such. See [Issue #23](https://github.com/raquo/Airstream/issues/23).
-
-
 
 
 ## My Related Projects
@@ -2637,15 +2638,11 @@ Other building blocks of Laminar:
 - [Scala DOM TestUtils](https://github.com/raquo/scala-dom-testutils) – Test that your Javascript DOM nodes match your expectations
 
 
-
-
 ## Author
 
 Nikita Gazarov – [@raquo](https://twitter.com/raquo)
 
 Please [support Airstream development](https://github.com/sponsors/raquo) if you use it commercially.
-
-
 
 
 ## License

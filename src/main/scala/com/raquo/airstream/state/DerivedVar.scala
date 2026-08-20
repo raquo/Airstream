@@ -6,6 +6,7 @@ import com.raquo.airstream.ownership.Owner
 
 import scala.util.{Failure, Success, Try}
 
+// #TODO[Naming] Rename to `StrictDerivedVar`, as opposed to the now common LazyDerivedVar?
 /** DerivedVar has the same Var contract as SourceVar, but instead of maintaining its own state
   * it is essentially a lens on the underlying SourceVar.
   *
