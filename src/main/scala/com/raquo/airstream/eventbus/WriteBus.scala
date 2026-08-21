@@ -2,8 +2,9 @@ package com.raquo.airstream.eventbus
 
 import com.raquo.airstream.core.{EventStream, InternalObserver, Observer, Transaction}
 import com.raquo.airstream.ownership.{Owner, Subscription}
-import com.raquo.airstream.util.hasDuplicateTupleKeys
+import com.raquo.airstream.util.{FeatureFlags, hasDuplicateTupleKeys}
 
+import scala.annotation.nowarn
 import scala.util.Try
 
 class WriteBus[A](
@@ -47,17 +48,16 @@ class WriteBus[A](
   }
 
   override def onNext(nextValue: A): Unit = {
-    if (stream.isStarted) { // important check
+    if ((FeatureFlags.V18_EVENTBUS_ISSTARTED_FIX_155: @nowarn("msg=deprecated")) || stream.isStarted) {
+      // #Note: See https://github.com/raquo/Airstream/issues/155 about isStarted check
       // @TODO[Integrity] We rely on the knowledge that EventBusStream discards the transaction it's given. Laaaame
       InternalObserver.onNext(stream, nextValue, transaction = null)
     }
-    // else {
-    //   println(">>>> WriteBus.onNext called, but stream is not started!")
-    // }
   }
 
   override def onError(nextError: Throwable): Unit = {
-    if (stream.isStarted) {
+    if ((FeatureFlags.V18_EVENTBUS_ISSTARTED_FIX_155: @nowarn("msg=deprecated")) || stream.isStarted) {
+      // #Note: See https://github.com/raquo/Airstream/issues/155 about isStarted check
       // @TODO[Integrity] We rely on the knowledge that EventBusStream discards the transaction it's given. Laaaame
       InternalObserver.onError(stream, nextError, transaction = null)
     }

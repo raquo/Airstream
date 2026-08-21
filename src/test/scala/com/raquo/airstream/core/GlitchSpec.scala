@@ -3,10 +3,12 @@ package com.raquo.airstream.core
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
+import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription}
 import com.raquo.airstream.split.Splittable
 import com.raquo.airstream.state.Var
-import com.raquo.airstream.util.{IdUnwrap, IdWrap}
+import com.raquo.airstream.util.{FeatureFlags, IdUnwrap, IdWrap}
 
+import scala.annotation.nowarn
 import scala.collection.mutable
 
 /** A collection of tests that ensure that there are no FRP glitches */
@@ -640,6 +642,39 @@ class GlitchSpec extends UnitSpec {
       )
     )
     effects.clear()
+
+  }
+
+  // https://github.com/raquo/Airstream/issues/155
+  it("EventBus isStarted check - issue #155 by j_mie6") {
+    Seq(
+      FeatureFlags.V18_EVENTBUS_ISSTARTED_FIX_155: @nowarn("msg=deprecate"),
+      !FeatureFlags.V18_EVENTBUS_ISSTARTED_FIX_155: @nowarn("msg=deprecate")
+    ).map { isNewBehaviour =>
+      withClue(s"[FeatureFlags.V18_EVENTBUS_ISSTARTED_FIX_155 = ${isNewBehaviour}]") {
+        (FeatureFlags.V18_EVENTBUS_ISSTARTED_FIX_155 = isNewBehaviour): @nowarn("msg=deprecate")
+
+        val effects = mutable.Buffer[Int]()
+        lazy val state = Var(1)
+
+        lazy val bus = new EventBus[Int]
+
+        val dynamicOwner = new DynamicOwner(() => throw new Exception("access after killed"))
+        Transaction.onStart.shared({
+          DynamicSubscription.subscribeSink(dynamicOwner, state.signal, bus)
+          DynamicSubscription.subscribeFn(dynamicOwner, bus.stream, { (ev: Int) => effects += ev })
+        })
+        dynamicOwner.activate()
+
+        if (isNewBehaviour) {
+          assert(effects.toList == List(1))
+          effects.clear()
+        } else {
+          assert(effects.toList == Nil)
+        }
+      }
+    }
+
 
   }
 }

@@ -2,7 +2,10 @@ package com.raquo.airstream.eventbus
 
 import com.raquo.airstream.common.InternalNextErrorObserver
 import com.raquo.airstream.core.{EventStream, Protected, Transaction, WritableStream}
+import com.raquo.airstream.util.FeatureFlags
 import com.raquo.ew.JsArray
+
+import scala.annotation.nowarn
 
 class EventBusStream[A] private[eventbus] (
   parentDisplayName: => String
@@ -37,13 +40,14 @@ class EventBusStream[A] private[eventbus] (
     // dom.console.log(s">>>>WBS.onNext($nextValue): isStarted=$isStarted")
     // dom.console.log(sources)
 
-    // Note: We're not checking isStarted here because if this stream wasn't started, it wouldn't have been
-    // fired as an internal observer. WriteBus calls this method manually, so it checks .isStarted on its own.
-    // @TODO ^^^^ We should document this contract in InternalObserver
-
     // println(s"> init trx from EventBusStream(${nextValue})")
 
-    Transaction(fireValue(nextValue, _))
+    Transaction { trx =>
+      // #Note: see https://github.com/raquo/Airstream/issues/155 about isStarted check
+      if (isStarted || (!FeatureFlags.V18_EVENTBUS_ISSTARTED_FIX_155: @nowarn("msg=deprecated"))) {
+        fireValue(nextValue, trx)
+      }
+    }
   }
 
   /** Helper method to support batch emit using `WriteBus.emit` / `WriteBus.emitTry` */
@@ -57,7 +61,12 @@ class EventBusStream[A] private[eventbus] (
   }
 
   override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
-    Transaction(fireError(nextError, _))
+    Transaction { trx =>
+      // #Note: see https://github.com/raquo/Airstream/issues/155 about isStarted check
+      if (isStarted || (!FeatureFlags.V18_EVENTBUS_ISSTARTED_FIX_155: @nowarn("msg=deprecated"))) {
+        fireError(nextError, trx)
+      }
+    }
   }
 
   override protected def onWillStart(): Unit = {
