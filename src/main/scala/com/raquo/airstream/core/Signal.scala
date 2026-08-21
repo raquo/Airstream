@@ -321,6 +321,32 @@ with DynamicImportSignalObjectOps // Provides `dynamicImport` method (Scala 3 on
 
   implicit def toTupleSignal9[T1, T2, T3, T4, T5, T6, T7, T8, T9](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]): TupleSignal9[T1, T2, T3, T4, T5, T6, T7, T8, T9] = new TupleSignal9(stream)
 
+  implicit def toTupleSignal10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]): TupleSignal10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10] = new TupleSignal10(stream)
+
+  implicit def toTupleSignal11[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)]): TupleSignal11[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11] = new TupleSignal11(stream)
+
+  implicit def toTupleSignal12[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)]): TupleSignal12[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12] = new TupleSignal12(stream)
+
+  implicit def toTupleSignal13[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)]): TupleSignal13[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13] = new TupleSignal13(stream)
+
+  implicit def toTupleSignal14[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)]): TupleSignal14[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14] = new TupleSignal14(stream)
+
+  implicit def toTupleSignal15[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)]): TupleSignal15[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15] = new TupleSignal15(stream)
+
+  implicit def toTupleSignal16[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16)]): TupleSignal16[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16] = new TupleSignal16(stream)
+
+  implicit def toTupleSignal17[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17)]): TupleSignal17[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17] = new TupleSignal17(stream)
+
+  implicit def toTupleSignal18[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18)]): TupleSignal18[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18] = new TupleSignal18(stream)
+
+  implicit def toTupleSignal19[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19)]): TupleSignal19[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19] = new TupleSignal19(stream)
+
+  implicit def toTupleSignal20[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)]): TupleSignal20[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20] = new TupleSignal20(stream)
+
+  implicit def toTupleSignal21[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)]): TupleSignal21[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21] = new TupleSignal21(stream)
+
+  implicit def toTupleSignal22[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22](stream: Signal[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22)]): TupleSignal22[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22] = new TupleSignal22(stream)
+
   private var lastUpdateId: Int = 0
 
   def nextUpdateId(): Int = {

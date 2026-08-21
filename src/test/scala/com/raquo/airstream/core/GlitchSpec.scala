@@ -674,7 +674,5 @@ class GlitchSpec extends UnitSpec {
         }
       }
     }
-
-
   }
 }

@@ -536,4 +536,30 @@ with DynamicImportStreamObjectOps // Provides `dynamicImport` method (Scala 3 on
   implicit def toTupleStream8[T1, T2, T3, T4, T5, T6, T7, T8](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8)]): TupleStream8[T1, T2, T3, T4, T5, T6, T7, T8] = new TupleStream8(stream)
 
   implicit def toTupleStream9[T1, T2, T3, T4, T5, T6, T7, T8, T9](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9)]): TupleStream9[T1, T2, T3, T4, T5, T6, T7, T8, T9] = new TupleStream9(stream)
+
+  implicit def toTupleStream10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]): TupleStream10[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10] = new TupleStream10(stream)
+
+  implicit def toTupleStream11[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)]): TupleStream11[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11] = new TupleStream11(stream)
+
+  implicit def toTupleStream12[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)]): TupleStream12[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12] = new TupleStream12(stream)
+
+  implicit def toTupleStream13[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)]): TupleStream13[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13] = new TupleStream13(stream)
+
+  implicit def toTupleStream14[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)]): TupleStream14[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14] = new TupleStream14(stream)
+
+  implicit def toTupleStream15[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)]): TupleStream15[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15] = new TupleStream15(stream)
+
+  implicit def toTupleStream16[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16)]): TupleStream16[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16] = new TupleStream16(stream)
+
+  implicit def toTupleStream17[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17)]): TupleStream17[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17] = new TupleStream17(stream)
+
+  implicit def toTupleStream18[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18)]): TupleStream18[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18] = new TupleStream18(stream)
+
+  implicit def toTupleStream19[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19)]): TupleStream19[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19] = new TupleStream19(stream)
+
+  implicit def toTupleStream20[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)]): TupleStream20[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20] = new TupleStream20(stream)
+
+  implicit def toTupleStream21[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)]): TupleStream21[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21] = new TupleStream21(stream)
+
+  implicit def toTupleStream22[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22](stream: EventStream[(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22)]): TupleStream22[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22] = new TupleStream22(stream)
 }
