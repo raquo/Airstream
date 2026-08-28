@@ -198,10 +198,22 @@ object Transaction {
 
     /** Add a callback to execute once the new shared transaction gets executed.
       *
+      * This must only be called while an onStart.shared block is executing.
+      *
+      * In Airstream, it's not possible to start an observable without being
+      * inside an onStart.shared block (see e.g. [[WritableObservable.addObserver]]
+      * and [[WritableObservable.addInternalObserver]]), so this is safe to call
+      * from inside an [[Observable.onStart]].
+      *
       * @param callback - Must not throw!
       */
     def add(callback: Transaction => Unit): Unit = {
       // println(s"// add callback ${callback.hashCode()}")
+      if (!isSharedStart) {
+        throw new Exception(
+          "Transaction.onStart.add was called outside of a Transaction.onStart.shared block. This is likely a bug in Airstream."
+        )
+      }
       pendingCallbacks.push(callback)
     }
 

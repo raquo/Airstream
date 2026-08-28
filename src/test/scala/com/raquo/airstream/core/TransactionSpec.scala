@@ -275,4 +275,43 @@ class TransactionSpec extends UnitSpec with BeforeAndAfter {
     assert(ix == Transaction.maxDepth)
     assert(nestedIx == 3 * (Transaction.maxDepth - 1) - 3)
   }
+
+  it("onStart.add throws when called outside of a shared start block") {
+    // `onStart.add` defers a callback until the enclosing shared start block
+    // resolves. Outside of a shared block there is nothing that would ever
+    // resolve it, so the callback would silently linger until some unrelated
+    // shared block happened to flush it. We forbid that entirely.
+
+    Transaction.isClearState shouldBe true
+
+    val caught = intercept[Exception] {
+      Transaction.onStart.add(_ => ())
+    }
+    assert(caught.getMessage.contains("Transaction.onStart.shared block"))
+
+    // The rejected callback must not have been enqueued, so state stays clean
+    // and no later shared block picks it up.
+    Transaction.isClearState shouldBe true
+  }
+
+  it("onStart.add defers callbacks until the shared start block resolves") {
+    // The valid usage: called from within a shared block (as it always is via
+    // WritableObservable's onStart wrapping). Callbacks do NOT run immediately;
+    // they run, in order, in a single new transaction once the outermost shared
+    // block finishes.
+
+    val effects = mutable.Buffer[Int]()
+
+    Transaction.onStart.shared {
+      Transaction.onStart.add { _ => effects += 1 }
+      Transaction.onStart.add { _ => effects += 2 }
+      // Not resolved yet - still inside the shared block.
+      effects shouldBe mutable.Buffer()
+    }
+
+    // Outermost shared block has finished: callbacks ran, in order.
+    effects shouldBe mutable.Buffer(1, 2)
+
+    Transaction.isClearState shouldBe true
+  }
 }
