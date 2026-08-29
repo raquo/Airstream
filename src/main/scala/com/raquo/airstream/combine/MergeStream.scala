@@ -1,6 +1,6 @@
 package com.raquo.airstream.combine
 
-import com.raquo.airstream.common.{InternalParentObserver, MultiParentStream, Observation}
+import com.raquo.airstream.common.{InternalParentObserver, MultiParentStream, ObservationExt}
 import com.raquo.airstream.core.{EventStream, Observable, Protected, SyncObservable, Transaction, WritableStream}
 import com.raquo.airstream.util.{FeatureFlags, JsPriorityQueue}
 import com.raquo.ew.JsArray
@@ -26,26 +26,15 @@ class MergeStream[A](
     parentStreams.asInstanceOf[JsArray[Observable[A]]]
   }
 
+  private val numParents: Int = parents.length
+
   override protected val topoRank: Int = Protected.maxTopoRank(parents) + 1
 
   private[this] var lastFiredInTrx: js.UndefOr[Transaction] = js.undefined
 
-  private[this] val pendingParentValues: JsPriorityQueue[Observation[A]] = {
-    if (FeatureFlags.V18_TRX_ONSTART_FIX_144: @nowarn("msg=deprecated")) {
-      // Order by topoRank, breaking ties by parent (argument) index rather than
-      // by arrival/start order. This matters now that simultaneously-started
-      // sources (e.g. several `fromValue`-s under one mount) can deliver their
-      // start-emissions in the same transaction - see CustomStreamSource, https://github.com/raquo/airstream/issues/144.
-      // `topoRank * numParents + parentIndex` keeps topoRank dominant since
-      // parentIndex is in [0, numParents) range.
-      val numParents = parents.length
-      new JsPriorityQueue(observation =>
-        Protected.topoRank(observation.observable) * numParents + parents.indexOf(observation.observable)
-      )
-    } else {
-      new JsPriorityQueue(observation => Protected.topoRank(observation.observable))
-    }
-  }
+  /** Priority by topoRank first, then by order of parent in `parents` (by default as of v18). */
+  private[this] val pendingParentValues: JsPriorityQueue[ObservationExt[A, Int]] =
+    new JsPriorityQueue(_.extra) // see makeInternalObserver below for `extra` value.
 
   private[this] val parentObservers: JsArray[InternalParentObserver[A]] = JsArray()
 
@@ -95,8 +84,22 @@ class MergeStream[A](
   }
 
   private def makeInternalObserver(parent: Observable[A]): InternalParentObserver[A] = {
+    /** Events with lower sourcePriority values will be emitted first
+      * if multiple events are fired at the sae time.
+      */
+    val sourcePriority: Int = if (FeatureFlags.V18_TRX_ONSTART_FIX_144: @nowarn("msg=deprecated")) {
+      // Order simultaneous events by topoRank, breaking ties by parent (argument) index rather than
+      // by arrival/start order. This matters now that simultaneously-started
+      // sources (e.g. several `fromValue`-s under one mount) can deliver their
+      // start-emissions in the same transaction - see CustomStreamSource, https://github.com/raquo/airstream/issues/144.
+      // `topoRank * numParents + parentIndex` keeps topoRank dominant since
+      // parentIndex is in [0, numParents) range.
+      Protected.topoRank(parent) * numParents + parents.indexOf(parent)
+    } else {
+      Protected.topoRank(parent)
+    }
     InternalParentObserver.fromTry(parent, (nextValue, transaction) => {
-      pendingParentValues.enqueue(new Observation(parent, nextValue))
+      pendingParentValues.enqueue(new ObservationExt(parent, nextValue, sourcePriority))
       // @TODO[API] Actually, why are we checking for .contains here? We need to better define behaviour
       // @TODO Make a test case that would exercise this .contains check or lack thereof
       // @TODO I think this check is moot because we can't have an observable emitting more than once in a transaction. Or can we? I feel like we can't/ It should probably be part of the transaction contract.

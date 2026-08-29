@@ -4,7 +4,8 @@ import com.raquo.airstream.core.Observable
 
 import scala.util.Try
 
-class Observation[A](
+class ObservationExt[A, Extra](
   val observable: Observable[A],
-  val value: Try[A]
+  val value: Try[A],
+  val extra: Extra
 )
