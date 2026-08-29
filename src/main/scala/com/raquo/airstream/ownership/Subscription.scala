@@ -38,8 +38,11 @@ class Subscription(
 
   private[this] def safeCleanup(): Unit = {
     if (!_isKilled) {
-      cleanup()
+      // Set _isKilled first before running user code (`cleanup()`) to avoid
+      // a potential infinite loop if user code ends up calling .kill() on
+      // this same subscription.
       _isKilled = true
+      cleanup()
     } else {
       throw new Exception("Can not kill Subscription: it was already killed.")
     }
