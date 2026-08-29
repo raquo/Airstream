@@ -2,9 +2,10 @@ package com.raquo.airstream.combine
 
 import com.raquo.airstream.common.{InternalParentObserver, MultiParentStream, Observation}
 import com.raquo.airstream.core.{EventStream, Observable, Protected, SyncObservable, Transaction, WritableStream}
-import com.raquo.airstream.util.JsPriorityQueue
+import com.raquo.airstream.util.{FeatureFlags, JsPriorityQueue}
 import com.raquo.ew.JsArray
 
+import scala.annotation.nowarn
 import scala.scalajs.js
 
 /** Stream that emit events from all of its parents.
@@ -30,7 +31,20 @@ class MergeStream[A](
   private[this] var lastFiredInTrx: js.UndefOr[Transaction] = js.undefined
 
   private[this] val pendingParentValues: JsPriorityQueue[Observation[A]] = {
-    new JsPriorityQueue(observation => Protected.topoRank(observation.observable))
+    if (FeatureFlags.V18_TRX_ONSTART_FIX_144: @nowarn("msg=deprecated")) {
+      // Order by topoRank, breaking ties by parent (argument) index rather than
+      // by arrival/start order. This matters now that simultaneously-started
+      // sources (e.g. several `fromValue`-s under one mount) can deliver their
+      // start-emissions in the same transaction - see CustomStreamSource, https://github.com/raquo/airstream/issues/144.
+      // `topoRank * numParents + parentIndex` keeps topoRank dominant since
+      // parentIndex is in [0, numParents) range.
+      val numParents = parents.length
+      new JsPriorityQueue(observation =>
+        Protected.topoRank(observation.observable) * numParents + parents.indexOf(observation.observable)
+      )
+    } else {
+      new JsPriorityQueue(observation => Protected.topoRank(observation.observable))
+    }
   }
 
   private[this] val parentObservers: JsArray[InternalParentObserver[A]] = JsArray()

@@ -29,4 +29,10 @@ object FeatureFlags {
     */
   @deprecated("V18_EVENTBUS_ISSTARTED_FIX_155 disabled: reverted to pre-v18 behaviour. See https://github.com/raquo/Airstream/issues/155", since = "18.0.0-M6")
   var V18_EVENTBUS_ISSTARTED_FIX_155: Boolean = true
+
+  @deprecated("V18_TRX_ONSTART_ADD_FAIL_EARLY disabled: reverted to pre-v18 behaviour.", since = "18.0.0-M6")
+  var V18_TRX_ONSTART_ADD_FAIL_EARLY: Boolean = true
+
+  @deprecated("V18_TRX_ONSTART_FIX_144 disabled: reverted to pre-v18 behaviour. See https://github.com/raquo/Airstream/issues/144", since = "18.0.0-M6")
+  var V18_TRX_ONSTART_FIX_144 = true
 }

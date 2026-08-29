@@ -53,7 +53,7 @@ class Transaction(private[Transaction] var code: Transaction => Any) {
     // and it's not like there is a reasonable way to locally handle such a condition anyway.
     AirstreamError.sendUnhandledError(TransactionDepthExceeded(this, Transaction.maxDepth))
   } else {
-    if (Transaction.onStart.isSharedStart) {
+    if (Transaction.onStart._isInSharedStart) {
       // This delays scheduling transactions until the end of
       // the shared start transaction
       // println(s">>> onStart.postStartTransactions.push($this)")
@@ -141,19 +141,25 @@ object Transaction {
     */
   object onStart {
 
-    private[Transaction] var isSharedStart: Boolean = false
+    private[Transaction] var _isInSharedStart: Boolean = false
+
+    /** Whether we're executing synchronously inside a shared-start block.
+      * Read by custom sources to decide how to schedule events that are fired onStart.
+      */
+    def isInSharedStart: Boolean = _isInSharedStart
 
     private val pendingCallbacks: JsArray[Transaction => Unit] = JsArray()
 
     private[Transaction] val postStartTransactions: JsArray[Transaction] = JsArray()
 
     /* Put the code that (potentially) adds more than one observer inside.
-     * If that code causes `signal.changes` to restart (and emit the signal's
+     * If that code causes `signal.updates` to restart (and emit the signal's
      * updated value), this event will be delayed until the rest of your code
      * in `shared` has finished executing. You can nest `shared` calls if
      * needed, and Airstream will wait for the outermost `shared` block to
-     * finish running before executing all pendingCallbacks. Currently this
-     * logic is only used to fire those signal.changes events.
+     * finish running before executing all pendingCallbacks. This logic fires
+     * `signal.updates` re-sync events, and single start-emissions of custom
+     * sources (e.g. `fromValue`) - see CustomStreamSource.
      *
      * To be more specific, once the outermost `shared` block finishes executing,
      * a new transaction will be created, and inside of it, all pending callbacks
@@ -175,7 +181,7 @@ object Transaction {
      * See https://github.com/raquo/Airstream/#restarting-streams-that-depend-on-signals--signalchanges-
      */
     def shared[A](code: => A, when: Boolean = true): A = {
-      if (isSharedStart || !when) {
+      if (_isInSharedStart || !when) {
         // - We are already executing inside the `code` argument passed
         //   to another onStart.shared block, so adding another try-catch
         //   block is not necessary: that other block will take care of it.
@@ -183,12 +189,12 @@ object Transaction {
         code
       } else {
         // println("> START SHARED")
-        isSharedStart = true
+        _isInSharedStart = true
         val result =
           try {
             code
           } finally {
-            isSharedStart = false
+            _isInSharedStart = false
             resolve()
           }
         // println("< END SHARED")
@@ -209,10 +215,8 @@ object Transaction {
       */
     def add(callback: Transaction => Unit): Unit = {
       // println(s"// add callback ${callback.hashCode()}")
-      if (!isSharedStart) {
-        throw new Exception(
-          "Transaction.onStart.add was called outside of a Transaction.onStart.shared block. This is likely a bug in Airstream."
-        )
+      if (!_isInSharedStart) {
+        throw new Exception("Transaction.onStart.add was called outside of a Transaction.onStart.shared block. This is likely a bug in Airstream.")
       }
       pendingCallbacks.push(callback)
     }
