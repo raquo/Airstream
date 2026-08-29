@@ -1,15 +1,12 @@
 package com.raquo.airstream.ownership
 
 import com.raquo.airstream.core.{Named, Transaction}
+import com.raquo.airstream.util.{FeatureFlags, JsResilientIterator}
 import com.raquo.ew.JsArray
 
 import scala.annotation.nowarn
 
-// @Warning[Fragile]
-//  - We track a list of subscriptions and when activating / deactivating we run user code on each subscription
-//  - This is potentially dangerous because said user code could add / remove more subscriptions from this DynamicOwner
-//  - I think I've addressed those issues with `pendingSubscriptionRemovals`, but need to be very careful when changing anything here.
-//  - Small things like `foreach` caching `subscriptions.length` are very important.
+// #Warning[Fragile] See JsResilientIterator scaladoc, be careful with edits, test thoroughly.
 
 /** DynamicOwner manages [[DynamicSubscription]]-s similarly to how Owner manages `Subscription`s,
   * except `DynamicSubscription` can be activated and deactivated repeatedly.
@@ -27,10 +24,12 @@ extends Named {
     *       subscriptions to code that didn't create those subscriptions.
     *       We rely on that in TransferableSubscription for example.
     */
-  private[this] val subscriptions: JsArray[DynamicSubscription] = JsArray()
+  private[this] val subscriptions: JsResilientIterator[DynamicSubscription] = new JsResilientIterator
 
+  /** Legacy variable used for pre-V18 deferred removals logic (behind feature flag) */
   private var isSafeToRemoveSubscription = true
 
+  /** Legacy variable used for pre-V18 deferred removals logic (behind feature flag) */
   private val pendingSubscriptionRemovals: JsArray[DynamicSubscription] = JsArray()
 
   private var _maybeCurrentOwner: Option[Owner] = None
@@ -49,76 +48,32 @@ extends Named {
   //    inside activate / deactivate methods.
   //  - That's a bit fragile, keep in mind
 
-  // -- Activation state --
-
-  // #TODO[API] Package this state as smth like SubscriptionsIterator? Could maybe even reuse for observers?
-
-  // #Note: `-1` in these means "we are not currently activating this subscription".
-  //  Do not use these values when they are -1, that is not a valid value.
-
-  private[this] var initialNumSubs = -1
-
-  private[this] var numPrependedSubs = -1
-
-  private[this] var activationSubIx = -1
-
-  private[this] var numRemovedSubs = -1
-
-  @inline private[this] def numSubsToIterate = {
-    val numSubsRemovedFromList = {
-      if (DynamicOwner.TEMP_UNSAFE_USE_PRE_V18_DELAYED_DYNSUB_REMOVAL: @nowarn("msg=deprecated")) {
-        0
-      } else {
-        numRemovedSubs
-      }
-    }
-    numPrependedSubs + initialNumSubs - numSubsRemovedFromList
-  }
-
   // --
 
   def activate(): Unit = {
     if (!isActive) {
       Transaction.onStart.shared {
-        // println(s"> activate $this")
         val newOwner = new OneTimeOwner(onAccessAfterKilled)
-        // @Note If activating a subscription adds another subscription, we must make sure to call onActivate on it.
-        //  - the loop below deliberately does not do this because it fetches array length only once, at the beginning.
-        //  - it is instead done by addSubscription by virtue of _maybeCurrentOwner being already defined at this point.
-        //  - this is rather fragile, so maybe we should use a different foreach implementation.
         _maybeCurrentOwner = Some(newOwner)
-        numPrependedSubs = 0
-        activationSubIx = 0
-        if (DynamicOwner.TEMP_UNSAFE_USE_PRE_V18_DELAYED_DYNSUB_REMOVAL: @nowarn("msg=deprecated")) {
-          isSafeToRemoveSubscription = false
+        if (FeatureFlags.V18_IMMEDIATE_DYNSUB_REMOVAL_FIX_145: @nowarn("msg=deprecated")) {
+          // Note: this does NOT iterate over any subscriptions that are added during the iteration.
+          // Such new subs are activated in `addSubscription` below (since `_maybeCurrentOwner` is already set above).
+          subscriptions.forEachExisting { sub =>
+            sub.onActivate(newOwner)
+          }
         } else {
-          numRemovedSubs = 0
-        }
+          // Pre-V18 behaviour: Defer all removals until after the activation pass.
+          // With deferral, removals don't shift the list during iteration (the iterator's cursor never adjusts).
+          // See `removeSubscription`.
+          isSafeToRemoveSubscription = false
 
-        initialNumSubs = subscriptions.length // avoid double-starting subs added during the loop. See the big comment above
+          subscriptions.forEachExisting { sub =>
+            sub.onActivate(newOwner)
+          }
 
-        // println(s"    - start iteration. numPrependedSubs = {$numPrependedSubs}, initialNumSubs = ${initialNumSubs}, numRemovedSubs = ${numRemovedSubs}, numSubsToIterate = ${numSubsToIterate}")
-        while (activationSubIx < numSubsToIterate) {
-          // Prepending a sub while iterating shifts array indices, so we account for that
-          //  - Use case for this: in Laminar controlled inputs logic, we create a prepend sub
-          //    inside another dynamic subscription's activate callback
-          // activationSubIx = makeActivationSubIx(ix)
-          val sub = subscriptions(activationSubIx)
-          // println(s"    - activating ${sub} from iteration (activationSubIx = ${activationSubIx})")
-          sub.onActivate(newOwner)
-          activationSubIx += 1
-        }
-        // println(s"    - stop iteration of $this. numPrependedSubs = $numPrependedSubs, numDeletedSubs = ${numRemovedSubs}, activationSubIx = ${activationSubIx}, activationSubIx < numSubsToIterate = ${activationSubIx} < ${numSubsToIterate}")
-
-        if (DynamicOwner.TEMP_UNSAFE_USE_PRE_V18_DELAYED_DYNSUB_REMOVAL: @nowarn("msg=deprecated")) {
           removePendingSubscriptionsNow()
           isSafeToRemoveSubscription = true
-        } else {
-          numRemovedSubs = -1
         }
-        numPrependedSubs = -1
-        activationSubIx = -1
-        initialNumSubs = -1
       }
     } else {
       throw new Exception(s"Can not activate $this: it is already active")
@@ -136,72 +91,63 @@ extends Named {
         // dynamic subscriptions would not have been notified about this,
         // and would carry dead subscriptions inside of them.
 
-        isSafeToRemoveSubscription = false
+        if (FeatureFlags.V18_IMMEDIATE_DYNSUB_REMOVAL_FIX_145: @nowarn("msg=deprecated")) {
+          subscriptions.forEachExisting(_.onDeactivate())
 
-        subscriptions.forEach(_.onDeactivate())
+          // After DynamicSubscription-s were removed from the DynamicOwner,
+          // we can now kill any other subscriptions that the user might
+          // have added to the current non-dynamic Owner.
+          _maybeCurrentOwner.foreach(_._killSubscriptions())
 
-        removePendingSubscriptionsNow()
+        } else {
+          isSafeToRemoveSubscription = false
 
-        // After dynamic subscriptions were removed from the owner,
-        // we can now kill any other subscriptions that the user might
-        // have added to the current owner.
-        _maybeCurrentOwner.foreach(_._killSubscriptions())
+          subscriptions.forEachExisting(_.onDeactivate())
 
-        removePendingSubscriptionsNow()
+          removePendingSubscriptionsNow()
 
-        isSafeToRemoveSubscription = true
+          _maybeCurrentOwner.foreach(_._killSubscriptions())
+
+          removePendingSubscriptionsNow()
+
+          isSafeToRemoveSubscription = true
+        }
 
         _maybeCurrentOwner = None
       }
     } else {
       throw new Exception(s"Can not deactivate $this: it is not active")
     }
-
   }
 
   /** @param prepend  - If true, dynamic owner will prepend subscription to the list instead of appending.
     *                   This affects activation and deactivation order of subscriptions.
     */
   private[ownership] def addSubscription(subscription: DynamicSubscription, prepend: Boolean): Unit = {
-    // println(s"> add sub ${subscription} to $this")
     if (prepend) {
-      if (numPrependedSubs != -1) {
-        numPrependedSubs += 1
-        activationSubIx += 1
-      }
-      subscriptions.unshift(subscription)
+      subscriptions.prepend(subscription)
     } else {
-      subscriptions.push(subscription)
+      subscriptions.append(subscription)
     }
     _maybeCurrentOwner.foreach { o =>
-      // println(s"    - activating ${subscription} after adding it to $this")
       subscription.onActivate(o)
     }
   }
 
   private[ownership] def removeSubscription(subscription: DynamicSubscription): Unit = {
-    // println(s"> removeSubscription ${subscription}")
     if (isSafeToRemoveSubscription) {
       removeSubscriptionNow(subscription)
     } else {
+      // This branch only happens under legacy pre-V18 behaviour
       pendingSubscriptionRemovals.push(subscription)
     }
   }
 
   private[this] def removeSubscriptionNow(subscription: DynamicSubscription): Unit = {
-    val index = subscriptions.indexOf(subscription)
-    if (index != -1) {
-      if (!DynamicOwner.TEMP_UNSAFE_USE_PRE_V18_DELAYED_DYNSUB_REMOVAL: @nowarn("msg=deprecated")) {
-        if (numRemovedSubs != -1 && index < numSubsToIterate) {
-          // println(s"numDeletedSubs += 1 = ${numRemovedSubs + 1}")
-          numRemovedSubs += 1
-        }
-        if (activationSubIx != -1 && activationSubIx >= index) {
-          // println(s"activationSubIx -= 1 = ${activationSubIx - 1}")
-          activationSubIx -= 1
-        }
-      }
-      subscriptions.splice(index, deleteCount = 1)
+    // Note: If we're mid-activation, `JsResilientIterator.remove` adjusts its cursor so that removing
+    // this sub neither skips a not-yet-activated sub, nor re-visits a shifted one.
+    val removed = subscriptions.remove(subscription)
+    if (removed) {
       if (isActive) {
         subscription.onDeactivate()
       }
@@ -210,6 +156,7 @@ extends Named {
     }
   }
 
+  /** Legacy method used for pre-V18 deferred removals logic (behind feature flag) */
   private[this] def removePendingSubscriptionsNow(): Unit = {
     // println("> removePendingSubscriptionsNow")
     // #TODO[Performance] Can we do a for-loop and then clear the whole array at once? Would that be 100% equivalent?
@@ -218,11 +165,4 @@ extends Named {
       removeSubscriptionNow(subscriptionToRemove)
     }
   }
-}
-
-object DynamicOwner {
-
-  // #nc[Doc] add link
-  @deprecated("Warning: TEMP_UNSAFE_USE_PRE_V18_DELAYED_DYNSUB_REMOVAL should only be used as a temporary debugging helper when migrating to Laminar/Airstream v18+. See details here: #TODO")
-  var TEMP_UNSAFE_USE_PRE_V18_DELAYED_DYNSUB_REMOVAL = false
 }

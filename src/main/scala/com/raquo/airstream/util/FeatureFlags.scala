@@ -35,4 +35,7 @@ object FeatureFlags {
 
   @deprecated("V18_TRX_ONSTART_FIX_144 disabled: reverted to pre-v18 behaviour. See https://github.com/raquo/Airstream/issues/144", since = "18.0.0-M6")
   var V18_TRX_ONSTART_FIX_144 = true
+
+  @deprecated("V18_IMMEDIATE_DYNSUB_REMOVAL_FIX_145 disabled: reverted to pre-v18 behaviour. See https://github.com/raquo/Airstream/issues/145", since = "18.0.0-M6")
+  var V18_IMMEDIATE_DYNSUB_REMOVAL_FIX_145 = true
 }

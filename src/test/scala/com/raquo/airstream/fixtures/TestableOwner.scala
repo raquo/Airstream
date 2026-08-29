@@ -4,7 +4,7 @@ import com.raquo.airstream.ownership.{Owner, Subscription}
 
 class TestableOwner extends Owner {
 
-  def _testSubscriptions: List[Subscription] = subscriptions.asScalaJs.toList
+  def _testSubscriptions: List[Subscription] = subscriptions.toList
 
   override def killSubscriptions(): Unit = {
     super.killSubscriptions()

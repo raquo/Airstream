@@ -1,9 +1,9 @@
 package com.raquo.airstream.ownership
 
 import com.raquo.airstream.core.Named
-import com.raquo.ew.JsArray
+import com.raquo.airstream.util.{FeatureFlags, JsResilientIterator}
 
-import scala.annotation.unused
+import scala.annotation.{nowarn, unused}
 
 /** Owner decides when to kill its subscriptions.
   *  - Ownership is defined at creation of the [[Subscription]]
@@ -21,12 +21,28 @@ import scala.annotation.unused
 trait Owner
 extends Named {
 
-  /** Note: This is enforced to be a sorted set outside the type system. #performance */
-  protected[this] val subscriptions: JsArray[Subscription] = JsArray()
+  protected[this] val subscriptions: JsResilientIterator[Subscription] =
+    new JsResilientIterator
 
   protected[this] def killSubscriptions(): Unit = {
-    subscriptions.forEach(_.onKilledByOwner())
-    subscriptions.length = 0
+    if (FeatureFlags.V18_IMMEDIATE_DYNSUB_REMOVAL_FIX_145: @nowarn("msg=deprecated")) {
+      // We use `forEachExistingAndAppended`, not `forEachExisting`: a subscription's
+      // user-defined `cleanup` function may potentially register a new subscription on
+      // this same owner, which would append it to `subscriptions` mid-iteratino.
+      // We must kill that new appended subscription too, otherwise the following `clear()`
+      // would silently drop it without running the sub's `cleanup()` function – a leak.
+      subscriptions.forEachExistingAndAppended { subscription =>
+        if (!subscription.isKilled) {
+          subscription.onKilledByOwner()
+        }
+      }
+    } else {
+      // Pre-V18 behaviour
+      subscriptions.forEachSnapshotLegacy { subscription =>
+        subscription.onKilledByOwner()
+      }
+    }
+    subscriptions.clear()
   }
 
   // @TODO[API] This method only exists because I can't figure out how to better deal with permissions.
@@ -39,16 +55,14 @@ extends Named {
   protected[this] def onOwned(@unused subscription: Subscription): Unit = ()
 
   private[ownership] def onKilledExternally(subscription: Subscription): Unit = {
-    val index = subscriptions.indexOf(subscription)
-    if (index != -1) {
-      subscriptions.splice(index, deleteCount = 1)
-    } else {
+    val removed = subscriptions.remove(subscription)
+    if (!removed) {
       throw new Exception("Can not remove Subscription from Owner: subscription not found.")
     }
   }
 
   private[ownership] def own(subscription: Subscription): Unit = {
-    subscriptions.push(subscription)
+    subscriptions.append(subscription)
     onOwned(subscription)
   }
 }
