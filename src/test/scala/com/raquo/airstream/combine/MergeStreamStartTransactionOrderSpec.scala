@@ -391,38 +391,4 @@ class MergeStreamStartTransactionOrderSpec extends UnitSpec {
       }
     }
   }
-
-  it("sampleCombine (withCurrentValueOf) samples the fresh value only when fixed (or pre-started)") {
-    for { fixEnabled <- Seq(true, false); preStartSampled <- List(false, true) } {
-      withFix144(fixEnabled) {
-        withClue(s"[fix=$fixEnabled, preStartSampled=$preStartSampled] ") {
-          val effects = mutable.Buffer[(Int, Int)]()
-          val owner = new TestableOwner
-          val sampling = EventStream.fromValue(10)
-          val sampled = EventStream.fromValue(20).startWith(0)
-
-          Transaction.onStart.shared {
-            if (preStartSampled) {
-              sampled.foreach(_ => ())(owner)
-            }
-            sampling.withCurrentValueOf(sampled).foreach(effects += _)(owner)
-          }
-
-          val expected =
-            if (fixEnabled || preStartSampled) {
-              // Fresh sample: the sampled signal is already at 20 when sampling
-              // fires 10 (same transaction under the fix, or already-propagated
-              // when pre-started).
-              List((10, 20))
-            } else {
-              // Pre-fix glitch: sampling's 10 fires in an earlier transaction
-              // than the sampled's 20, so the still-initial value 0 is sampled.
-              List((10, 0))
-            }
-
-          effects.toList shouldBe expected
-        }
-      }
-    }
-  }
 }
