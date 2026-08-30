@@ -14,7 +14,7 @@ case class GenerateCombineSignalOps(
   override def apply(): Unit = {
     line("package com.raquo.airstream.combine.generated")
     line()
-    line("import app.tulz.tuplez.Composition")
+    line("import app.tulz.tuplez.Compose")
     line("import com.raquo.airstream.combine.SampleCombineSignalN")
     line("import com.raquo.airstream.core.Signal")
     line("import com.raquo.airstream.core.Source.SignalSource")
@@ -31,7 +31,7 @@ case class GenerateCombineSignalOps(
         enter(s"def combineWith[${tupleType(n)}](") {
           line((1 to n).map(i => s"s${i}: SignalSource[T${i}]").mkString(", "))
         }
-        enter(s")(implicit c: Composition[A, (${tupleType(n)})]): Signal[c.Composed] = {", "}") {
+        enter(s")(implicit c: Compose[A, (${tupleType(n)})]): Signal[c.Composed] = {", "}") {
           line(s"combineWithFn(${tupleType(n, "s")})((a, ${tupleType(n, "v")}) => c.compose(a, (${tupleType(n, "v")})))")
         }
         line()
@@ -49,7 +49,7 @@ case class GenerateCombineSignalOps(
         enter(s"def withCurrentValueOf[${tupleType(n)}](") {
           line((1 to n).map(i => s"s${i}: SignalSource[T${i}]").mkString(", "))
         }
-        enter(s")(implicit c: Composition[A, (${tupleType(n)})]): Signal[c.Composed] = {", "}") {
+        enter(s")(implicit c: Compose[A, (${tupleType(n)})]): Signal[c.Composed] = {", "}") {
           line(s"val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (${(1 to n).map(i => s"arr(${i}).asInstanceOf[T${i}]").mkString(", ")}))")
           line(s"val sampledSignals = JsArray[Signal[Any]](${tupleType(n, "s", ".toObservable")})")
           enter(s"new SampleCombineSignalN(", ")") {

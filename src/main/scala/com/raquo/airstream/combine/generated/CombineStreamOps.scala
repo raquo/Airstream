@@ -1,6 +1,6 @@
 package com.raquo.airstream.combine.generated
 
-import app.tulz.tuplez.Composition
+import app.tulz.tuplez.Compose
 import com.raquo.airstream.combine.SampleCombineStreamN
 import com.raquo.airstream.core.{EventStream, Signal}
 import com.raquo.airstream.core.Source.{EventSource, SignalSource}
@@ -15,7 +15,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1](
     s1: EventSource[T1]
-  )(implicit c: Composition[A, (T1)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1)]): EventStream[c.Composed] = {
     combineWithFn(s1)((a, v1) => c.compose(a, (v1)))
   }
 
@@ -30,7 +30,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1](
     s1: SignalSource[T1]
-  )(implicit c: Composition[A, (T1)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable)
     new SampleCombineStreamN(
@@ -52,7 +52,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2](
     s1: EventSource[T1], s2: EventSource[T2]
-  )(implicit c: Composition[A, (T1, T2)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2)((a, v1, v2) => c.compose(a, (v1, v2)))
   }
 
@@ -67,7 +67,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2](
     s1: SignalSource[T1], s2: SignalSource[T2]
-  )(implicit c: Composition[A, (T1, T2)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable)
     new SampleCombineStreamN(
@@ -89,7 +89,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3]
-  )(implicit c: Composition[A, (T1, T2, T3)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3)((a, v1, v2, v3) => c.compose(a, (v1, v2, v3)))
   }
 
@@ -104,7 +104,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3]
-  )(implicit c: Composition[A, (T1, T2, T3)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable)
     new SampleCombineStreamN(
@@ -126,7 +126,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4]
-  )(implicit c: Composition[A, (T1, T2, T3, T4)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4)((a, v1, v2, v3, v4) => c.compose(a, (v1, v2, v3, v4)))
   }
 
@@ -141,7 +141,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4]
-  )(implicit c: Composition[A, (T1, T2, T3, T4)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable)
     new SampleCombineStreamN(
@@ -163,7 +163,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4, T5](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4, s5)((a, v1, v2, v3, v4, v5) => c.compose(a, (v1, v2, v3, v4, v5)))
   }
 
@@ -178,7 +178,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4, T5](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4], s5: SignalSource[T5]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4], arr(5).asInstanceOf[T5]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable)
     new SampleCombineStreamN(
@@ -200,7 +200,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4, T5, T6](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4, s5, s6)((a, v1, v2, v3, v4, v5, v6) => c.compose(a, (v1, v2, v3, v4, v5, v6)))
   }
 
@@ -215,7 +215,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4], s5: SignalSource[T5], s6: SignalSource[T6]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4], arr(5).asInstanceOf[T5], arr(6).asInstanceOf[T6]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable)
     new SampleCombineStreamN(
@@ -237,7 +237,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4, T5, T6, T7](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4, s5, s6, s7)((a, v1, v2, v3, v4, v5, v6, v7) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7)))
   }
 
@@ -252,7 +252,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4], s5: SignalSource[T5], s6: SignalSource[T6], s7: SignalSource[T7]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4], arr(5).asInstanceOf[T5], arr(6).asInstanceOf[T6], arr(7).asInstanceOf[T7]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable)
     new SampleCombineStreamN(
@@ -274,7 +274,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4, T5, T6, T7, T8](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8)((a, v1, v2, v3, v4, v5, v6, v7, v8) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8)))
   }
 
@@ -289,7 +289,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4], s5: SignalSource[T5], s6: SignalSource[T6], s7: SignalSource[T7], s8: SignalSource[T8]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4], arr(5).asInstanceOf[T5], arr(6).asInstanceOf[T6], arr(7).asInstanceOf[T7], arr(8).asInstanceOf[T8]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable, s8.toObservable)
     new SampleCombineStreamN(
@@ -311,7 +311,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4, T5, T6, T7, T8, T9](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8], s9: EventSource[T9]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8, s9)((a, v1, v2, v3, v4, v5, v6, v7, v8, v9) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8, v9)))
   }
 
@@ -326,7 +326,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4], s5: SignalSource[T5], s6: SignalSource[T6], s7: SignalSource[T7], s8: SignalSource[T8], s9: SignalSource[T9]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4], arr(5).asInstanceOf[T5], arr(6).asInstanceOf[T6], arr(7).asInstanceOf[T7], arr(8).asInstanceOf[T8], arr(9).asInstanceOf[T9]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable, s8.toObservable, s9.toObservable)
     new SampleCombineStreamN(
@@ -348,7 +348,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8], s9: EventSource[T9], s10: EventSource[T10]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)((a, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8, v9, v10)))
   }
 
@@ -363,7 +363,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4], s5: SignalSource[T5], s6: SignalSource[T6], s7: SignalSource[T7], s8: SignalSource[T8], s9: SignalSource[T9], s10: SignalSource[T10]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4], arr(5).asInstanceOf[T5], arr(6).asInstanceOf[T6], arr(7).asInstanceOf[T7], arr(8).asInstanceOf[T8], arr(9).asInstanceOf[T9], arr(10).asInstanceOf[T10]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable, s8.toObservable, s9.toObservable, s10.toObservable)
     new SampleCombineStreamN(
@@ -385,7 +385,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8], s9: EventSource[T9], s10: EventSource[T10], s11: EventSource[T11]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11)((a, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11)))
   }
 
@@ -400,7 +400,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4], s5: SignalSource[T5], s6: SignalSource[T6], s7: SignalSource[T7], s8: SignalSource[T8], s9: SignalSource[T9], s10: SignalSource[T10], s11: SignalSource[T11]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4], arr(5).asInstanceOf[T5], arr(6).asInstanceOf[T6], arr(7).asInstanceOf[T7], arr(8).asInstanceOf[T8], arr(9).asInstanceOf[T9], arr(10).asInstanceOf[T10], arr(11).asInstanceOf[T11]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable, s8.toObservable, s9.toObservable, s10.toObservable, s11.toObservable)
     new SampleCombineStreamN(
@@ -422,7 +422,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8], s9: EventSource[T9], s10: EventSource[T10], s11: EventSource[T11], s12: EventSource[T12]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12)((a, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12)))
   }
 
@@ -437,7 +437,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4], s5: SignalSource[T5], s6: SignalSource[T6], s7: SignalSource[T7], s8: SignalSource[T8], s9: SignalSource[T9], s10: SignalSource[T10], s11: SignalSource[T11], s12: SignalSource[T12]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4], arr(5).asInstanceOf[T5], arr(6).asInstanceOf[T6], arr(7).asInstanceOf[T7], arr(8).asInstanceOf[T8], arr(9).asInstanceOf[T9], arr(10).asInstanceOf[T10], arr(11).asInstanceOf[T11], arr(12).asInstanceOf[T12]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable, s8.toObservable, s9.toObservable, s10.toObservable, s11.toObservable, s12.toObservable)
     new SampleCombineStreamN(
@@ -459,7 +459,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8], s9: EventSource[T9], s10: EventSource[T10], s11: EventSource[T11], s12: EventSource[T12], s13: EventSource[T13]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13)((a, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13)))
   }
 
@@ -474,7 +474,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4], s5: SignalSource[T5], s6: SignalSource[T6], s7: SignalSource[T7], s8: SignalSource[T8], s9: SignalSource[T9], s10: SignalSource[T10], s11: SignalSource[T11], s12: SignalSource[T12], s13: SignalSource[T13]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4], arr(5).asInstanceOf[T5], arr(6).asInstanceOf[T6], arr(7).asInstanceOf[T7], arr(8).asInstanceOf[T8], arr(9).asInstanceOf[T9], arr(10).asInstanceOf[T10], arr(11).asInstanceOf[T11], arr(12).asInstanceOf[T12], arr(13).asInstanceOf[T13]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable, s8.toObservable, s9.toObservable, s10.toObservable, s11.toObservable, s12.toObservable, s13.toObservable)
     new SampleCombineStreamN(
@@ -496,7 +496,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8], s9: EventSource[T9], s10: EventSource[T10], s11: EventSource[T11], s12: EventSource[T12], s13: EventSource[T13], s14: EventSource[T14]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14)((a, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14)))
   }
 
@@ -511,7 +511,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4], s5: SignalSource[T5], s6: SignalSource[T6], s7: SignalSource[T7], s8: SignalSource[T8], s9: SignalSource[T9], s10: SignalSource[T10], s11: SignalSource[T11], s12: SignalSource[T12], s13: SignalSource[T13], s14: SignalSource[T14]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4], arr(5).asInstanceOf[T5], arr(6).asInstanceOf[T6], arr(7).asInstanceOf[T7], arr(8).asInstanceOf[T8], arr(9).asInstanceOf[T9], arr(10).asInstanceOf[T10], arr(11).asInstanceOf[T11], arr(12).asInstanceOf[T12], arr(13).asInstanceOf[T13], arr(14).asInstanceOf[T14]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable, s8.toObservable, s9.toObservable, s10.toObservable, s11.toObservable, s12.toObservable, s13.toObservable, s14.toObservable)
     new SampleCombineStreamN(
@@ -533,7 +533,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8], s9: EventSource[T9], s10: EventSource[T10], s11: EventSource[T11], s12: EventSource[T12], s13: EventSource[T13], s14: EventSource[T14], s15: EventSource[T15]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15)((a, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15)))
   }
 
@@ -548,7 +548,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4], s5: SignalSource[T5], s6: SignalSource[T6], s7: SignalSource[T7], s8: SignalSource[T8], s9: SignalSource[T9], s10: SignalSource[T10], s11: SignalSource[T11], s12: SignalSource[T12], s13: SignalSource[T13], s14: SignalSource[T14], s15: SignalSource[T15]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4], arr(5).asInstanceOf[T5], arr(6).asInstanceOf[T6], arr(7).asInstanceOf[T7], arr(8).asInstanceOf[T8], arr(9).asInstanceOf[T9], arr(10).asInstanceOf[T10], arr(11).asInstanceOf[T11], arr(12).asInstanceOf[T12], arr(13).asInstanceOf[T13], arr(14).asInstanceOf[T14], arr(15).asInstanceOf[T15]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable, s8.toObservable, s9.toObservable, s10.toObservable, s11.toObservable, s12.toObservable, s13.toObservable, s14.toObservable, s15.toObservable)
     new SampleCombineStreamN(
@@ -570,7 +570,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8], s9: EventSource[T9], s10: EventSource[T10], s11: EventSource[T11], s12: EventSource[T12], s13: EventSource[T13], s14: EventSource[T14], s15: EventSource[T15], s16: EventSource[T16]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16)((a, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16)))
   }
 
@@ -585,7 +585,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4], s5: SignalSource[T5], s6: SignalSource[T6], s7: SignalSource[T7], s8: SignalSource[T8], s9: SignalSource[T9], s10: SignalSource[T10], s11: SignalSource[T11], s12: SignalSource[T12], s13: SignalSource[T13], s14: SignalSource[T14], s15: SignalSource[T15], s16: SignalSource[T16]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4], arr(5).asInstanceOf[T5], arr(6).asInstanceOf[T6], arr(7).asInstanceOf[T7], arr(8).asInstanceOf[T8], arr(9).asInstanceOf[T9], arr(10).asInstanceOf[T10], arr(11).asInstanceOf[T11], arr(12).asInstanceOf[T12], arr(13).asInstanceOf[T13], arr(14).asInstanceOf[T14], arr(15).asInstanceOf[T15], arr(16).asInstanceOf[T16]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable, s8.toObservable, s9.toObservable, s10.toObservable, s11.toObservable, s12.toObservable, s13.toObservable, s14.toObservable, s15.toObservable, s16.toObservable)
     new SampleCombineStreamN(
@@ -607,7 +607,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8], s9: EventSource[T9], s10: EventSource[T10], s11: EventSource[T11], s12: EventSource[T12], s13: EventSource[T13], s14: EventSource[T14], s15: EventSource[T15], s16: EventSource[T16], s17: EventSource[T17]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17)((a, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17)))
   }
 
@@ -622,7 +622,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4], s5: SignalSource[T5], s6: SignalSource[T6], s7: SignalSource[T7], s8: SignalSource[T8], s9: SignalSource[T9], s10: SignalSource[T10], s11: SignalSource[T11], s12: SignalSource[T12], s13: SignalSource[T13], s14: SignalSource[T14], s15: SignalSource[T15], s16: SignalSource[T16], s17: SignalSource[T17]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4], arr(5).asInstanceOf[T5], arr(6).asInstanceOf[T6], arr(7).asInstanceOf[T7], arr(8).asInstanceOf[T8], arr(9).asInstanceOf[T9], arr(10).asInstanceOf[T10], arr(11).asInstanceOf[T11], arr(12).asInstanceOf[T12], arr(13).asInstanceOf[T13], arr(14).asInstanceOf[T14], arr(15).asInstanceOf[T15], arr(16).asInstanceOf[T16], arr(17).asInstanceOf[T17]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable, s8.toObservable, s9.toObservable, s10.toObservable, s11.toObservable, s12.toObservable, s13.toObservable, s14.toObservable, s15.toObservable, s16.toObservable, s17.toObservable)
     new SampleCombineStreamN(
@@ -644,7 +644,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8], s9: EventSource[T9], s10: EventSource[T10], s11: EventSource[T11], s12: EventSource[T12], s13: EventSource[T13], s14: EventSource[T14], s15: EventSource[T15], s16: EventSource[T16], s17: EventSource[T17], s18: EventSource[T18]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18)((a, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18)))
   }
 
@@ -659,7 +659,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4], s5: SignalSource[T5], s6: SignalSource[T6], s7: SignalSource[T7], s8: SignalSource[T8], s9: SignalSource[T9], s10: SignalSource[T10], s11: SignalSource[T11], s12: SignalSource[T12], s13: SignalSource[T13], s14: SignalSource[T14], s15: SignalSource[T15], s16: SignalSource[T16], s17: SignalSource[T17], s18: SignalSource[T18]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4], arr(5).asInstanceOf[T5], arr(6).asInstanceOf[T6], arr(7).asInstanceOf[T7], arr(8).asInstanceOf[T8], arr(9).asInstanceOf[T9], arr(10).asInstanceOf[T10], arr(11).asInstanceOf[T11], arr(12).asInstanceOf[T12], arr(13).asInstanceOf[T13], arr(14).asInstanceOf[T14], arr(15).asInstanceOf[T15], arr(16).asInstanceOf[T16], arr(17).asInstanceOf[T17], arr(18).asInstanceOf[T18]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable, s8.toObservable, s9.toObservable, s10.toObservable, s11.toObservable, s12.toObservable, s13.toObservable, s14.toObservable, s15.toObservable, s16.toObservable, s17.toObservable, s18.toObservable)
     new SampleCombineStreamN(
@@ -681,7 +681,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8], s9: EventSource[T9], s10: EventSource[T10], s11: EventSource[T11], s12: EventSource[T12], s13: EventSource[T13], s14: EventSource[T14], s15: EventSource[T15], s16: EventSource[T16], s17: EventSource[T17], s18: EventSource[T18], s19: EventSource[T19]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19)((a, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19)))
   }
 
@@ -696,7 +696,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4], s5: SignalSource[T5], s6: SignalSource[T6], s7: SignalSource[T7], s8: SignalSource[T8], s9: SignalSource[T9], s10: SignalSource[T10], s11: SignalSource[T11], s12: SignalSource[T12], s13: SignalSource[T13], s14: SignalSource[T14], s15: SignalSource[T15], s16: SignalSource[T16], s17: SignalSource[T17], s18: SignalSource[T18], s19: SignalSource[T19]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4], arr(5).asInstanceOf[T5], arr(6).asInstanceOf[T6], arr(7).asInstanceOf[T7], arr(8).asInstanceOf[T8], arr(9).asInstanceOf[T9], arr(10).asInstanceOf[T10], arr(11).asInstanceOf[T11], arr(12).asInstanceOf[T12], arr(13).asInstanceOf[T13], arr(14).asInstanceOf[T14], arr(15).asInstanceOf[T15], arr(16).asInstanceOf[T16], arr(17).asInstanceOf[T17], arr(18).asInstanceOf[T18], arr(19).asInstanceOf[T19]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable, s8.toObservable, s9.toObservable, s10.toObservable, s11.toObservable, s12.toObservable, s13.toObservable, s14.toObservable, s15.toObservable, s16.toObservable, s17.toObservable, s18.toObservable, s19.toObservable)
     new SampleCombineStreamN(
@@ -718,7 +718,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8], s9: EventSource[T9], s10: EventSource[T10], s11: EventSource[T11], s12: EventSource[T12], s13: EventSource[T13], s14: EventSource[T14], s15: EventSource[T15], s16: EventSource[T16], s17: EventSource[T17], s18: EventSource[T18], s19: EventSource[T19], s20: EventSource[T20]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20)((a, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20)))
   }
 
@@ -733,7 +733,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4], s5: SignalSource[T5], s6: SignalSource[T6], s7: SignalSource[T7], s8: SignalSource[T8], s9: SignalSource[T9], s10: SignalSource[T10], s11: SignalSource[T11], s12: SignalSource[T12], s13: SignalSource[T13], s14: SignalSource[T14], s15: SignalSource[T15], s16: SignalSource[T16], s17: SignalSource[T17], s18: SignalSource[T18], s19: SignalSource[T19], s20: SignalSource[T20]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4], arr(5).asInstanceOf[T5], arr(6).asInstanceOf[T6], arr(7).asInstanceOf[T7], arr(8).asInstanceOf[T8], arr(9).asInstanceOf[T9], arr(10).asInstanceOf[T10], arr(11).asInstanceOf[T11], arr(12).asInstanceOf[T12], arr(13).asInstanceOf[T13], arr(14).asInstanceOf[T14], arr(15).asInstanceOf[T15], arr(16).asInstanceOf[T16], arr(17).asInstanceOf[T17], arr(18).asInstanceOf[T18], arr(19).asInstanceOf[T19], arr(20).asInstanceOf[T20]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable, s8.toObservable, s9.toObservable, s10.toObservable, s11.toObservable, s12.toObservable, s13.toObservable, s14.toObservable, s15.toObservable, s16.toObservable, s17.toObservable, s18.toObservable, s19.toObservable, s20.toObservable)
     new SampleCombineStreamN(
@@ -755,7 +755,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def combineWith[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21](
     s1: EventSource[T1], s2: EventSource[T2], s3: EventSource[T3], s4: EventSource[T4], s5: EventSource[T5], s6: EventSource[T6], s7: EventSource[T7], s8: EventSource[T8], s9: EventSource[T9], s10: EventSource[T10], s11: EventSource[T11], s12: EventSource[T12], s13: EventSource[T13], s14: EventSource[T14], s15: EventSource[T15], s16: EventSource[T16], s17: EventSource[T17], s18: EventSource[T18], s19: EventSource[T19], s20: EventSource[T20], s21: EventSource[T21]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)]): EventStream[c.Composed] = {
     combineWithFn(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21)((a, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21) => c.compose(a, (v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21)))
   }
 
@@ -770,7 +770,7 @@ trait CombineStreamOps[+A] { this: EventStream[A] =>
 
   def withCurrentValueOf[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21](
     s1: SignalSource[T1], s2: SignalSource[T2], s3: SignalSource[T3], s4: SignalSource[T4], s5: SignalSource[T5], s6: SignalSource[T6], s7: SignalSource[T7], s8: SignalSource[T8], s9: SignalSource[T9], s10: SignalSource[T10], s11: SignalSource[T11], s12: SignalSource[T12], s13: SignalSource[T13], s14: SignalSource[T14], s15: SignalSource[T15], s16: SignalSource[T16], s17: SignalSource[T17], s18: SignalSource[T18], s19: SignalSource[T19], s20: SignalSource[T20], s21: SignalSource[T21]
-  )(implicit c: Composition[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)]): EventStream[c.Composed] = {
+  )(implicit c: Compose[A, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21)]): EventStream[c.Composed] = {
     val combinator = (arr: JsArray[Any]) => c.compose(arr(0).asInstanceOf[A], (arr(1).asInstanceOf[T1], arr(2).asInstanceOf[T2], arr(3).asInstanceOf[T3], arr(4).asInstanceOf[T4], arr(5).asInstanceOf[T5], arr(6).asInstanceOf[T6], arr(7).asInstanceOf[T7], arr(8).asInstanceOf[T8], arr(9).asInstanceOf[T9], arr(10).asInstanceOf[T10], arr(11).asInstanceOf[T11], arr(12).asInstanceOf[T12], arr(13).asInstanceOf[T13], arr(14).asInstanceOf[T14], arr(15).asInstanceOf[T15], arr(16).asInstanceOf[T16], arr(17).asInstanceOf[T17], arr(18).asInstanceOf[T18], arr(19).asInstanceOf[T19], arr(20).asInstanceOf[T20], arr(21).asInstanceOf[T21]))
     val sampledSignals = JsArray[Signal[Any]](s1.toObservable, s2.toObservable, s3.toObservable, s4.toObservable, s5.toObservable, s6.toObservable, s7.toObservable, s8.toObservable, s9.toObservable, s10.toObservable, s11.toObservable, s12.toObservable, s13.toObservable, s14.toObservable, s15.toObservable, s16.toObservable, s17.toObservable, s18.toObservable, s19.toObservable, s20.toObservable, s21.toObservable)
     new SampleCombineStreamN(
