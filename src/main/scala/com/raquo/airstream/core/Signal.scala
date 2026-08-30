@@ -100,6 +100,20 @@ with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
     updatesOperator(updates).toSignalWithTry(initialOperator(tryNow()), cacheInitialValue)
   }
 
+  /** A stream of all values in this signal, including the initial value.
+    *
+    * This works just like [[updates]], EXCEPT that it also emits the signal's
+    * current value when the stream is first started. Once this stream has
+    * emitted its first event, it behaves exactly like [[updates]]:
+    *
+    * When re-starting this stream, it emits the signal's new current value
+    * iff the signal's value has been updated.
+    *
+    * The initial value is emitted in a new transaction, similarly to how
+    * [[EventStream.fromValue]] emits its value on start.
+    */
+  def toStream: EventStream[A] = new StreamFromSignal[A](parent = this, updatesOnly = false)
+
   // #TODO[API] Why is .updates a def, and not a lazy val?
   //  See `signal.updates shouldNotBe signal.updates` in SignalSpec
   /** A stream of all values in this signal, excluding the initial value.
