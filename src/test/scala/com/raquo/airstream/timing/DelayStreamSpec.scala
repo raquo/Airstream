@@ -1,7 +1,7 @@
 package com.raquo.airstream.timing
 
 import com.raquo.airstream.AsyncUnitSpec
-import com.raquo.airstream.core.Observer
+import com.raquo.airstream.core.{EventStream, Observer}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import org.scalatest.BeforeAndAfter
@@ -66,6 +66,44 @@ class DelayStreamSpec extends AsyncUnitSpec with BeforeAndAfter {
     }.flatMap { _ =>
       delay(40) { // a bit extra margin for the last check just to be sure that we caught any events
         effects shouldBe mutable.Buffer(Effect("obs1", 6))
+        effects.clear()
+        assert(true)
+      }
+    }
+  }
+
+  it("EventStream.delay(ms, event) evaluates event by-name after the delay, and re-evaluates on restart (#138)") {
+    var numEvaluations = 0
+
+    val stream = EventStream.delay(30, {
+      numEvaluations += 1
+      numEvaluations
+    })
+
+    // The event must not be evaluated eagerly, only after the stream is started and the delay elapses.
+    numEvaluations shouldBe 0
+
+    val sub = stream.addObserver(obs1)
+
+    delay {
+      // Still nothing right after starting, the delay hasn't elapsed yet.
+      numEvaluations shouldBe 0
+      effects shouldBe mutable.Buffer()
+    }.flatMap[Unit] { _ =>
+      delay(40) {
+        numEvaluations shouldBe 1
+        effects shouldBe mutable.Buffer(Effect("obs1", 1))
+        effects.clear()
+
+        // Restart the stream – the by-name event should be evaluated again.
+        sub.kill()
+        stream.addObserver(obs1)
+        ()
+      }
+    }.flatMap { _ =>
+      delay(40) {
+        numEvaluations shouldBe 2
+        effects shouldBe mutable.Buffer(Effect("obs1", 2))
         effects.clear()
         assert(true)
       }

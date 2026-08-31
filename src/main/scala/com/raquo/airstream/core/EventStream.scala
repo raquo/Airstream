@@ -465,11 +465,17 @@ with DynamicImportStreamObjectOps // Provides `dynamicImport` method (Scala 3 on
   }
 
   /** Emit () with a delay (`ms` milliseconds after stream is started) */
-  @inline def delay(ms: Int): EventStream[Unit] = delay(ms, ())
+  def delay(ms: Int): EventStream[Unit] =
+    EventStream.fromValue(()).delay(ms)
 
-  /** Emit `event` with a delay (`ms` milliseconds after stream is started) */
-  def delay[A](ms: Int, event: A, emitOnce: Boolean = false): EventStream[A] = {
-    EventStream.fromValue(event, emitOnce).delay(ms)
+  /** Emit `event` with a delay (`ms` milliseconds after stream is started)
+    * Note: `event` is evaluated by-name, every time that the delayed stream fires.
+    */
+  def delay[A](ms: Int, event: => A, emitOnce: Boolean = false): EventStream[A] = {
+    EventStream
+      .fromValue((), emitOnce)
+      .delay(ms)
+      .mapTo(event) // #TODO[Perf] we could reduce the number of streams this is built from, if needed
   }
 
   def periodic(
