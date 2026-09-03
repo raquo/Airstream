@@ -19,7 +19,7 @@ package-lock.json
 yarn.lock
 !website/yarn.lock
 
-.downloads
+.buildkit
 
 # Agents
 .claude/settings.local.json
