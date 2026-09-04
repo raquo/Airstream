@@ -15,7 +15,7 @@ class BooleanObservableSpec extends UnitSpec {
 
     val bus = new EventBus[Boolean]
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     bus
       .stream
       .invert
@@ -50,7 +50,7 @@ class BooleanObservableSpec extends UnitSpec {
 
     val bus = new EventBus[Boolean]
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     bus
       .stream
       .splitBoolean(
@@ -148,7 +148,7 @@ class BooleanObservableSpec extends UnitSpec {
 
     val _var = Var(true)
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     _var
       .signal
       .splitBoolean(
@@ -238,7 +238,7 @@ class BooleanObservableSpec extends UnitSpec {
 
     val _var = Var(true)
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     _var
       .signal
       .mapTrueToSome("a")
@@ -274,7 +274,7 @@ class BooleanObservableSpec extends UnitSpec {
 
     val _var = Var(false)
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     _var
       .signal
       .mapFalseToSome("a")

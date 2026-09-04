@@ -24,9 +24,9 @@ class SampleCombineSignalN[A, Out](
 
   override protected val topoRank: Int = Protected.maxTopoRank(samplingSignal, sampledSignals) + 1
 
-  override protected[this] def inputsReady: Boolean = true
+  override protected def inputsReady: Boolean = true
 
-  override protected[this] val parents: JsArray[Signal[A]] = {
+  override protected val parents: JsArray[Signal[A]] = {
     val arr = JsArray(samplingSignal)
     sampledSignals.forEach { sampledSignal =>
       arr.push(sampledSignal)
@@ -34,8 +34,8 @@ class SampleCombineSignalN[A, Out](
     arr
   }
 
-  override protected[this] val parentObservers: JsArray[InternalParentObserver[_]] = {
-    val arr = JsArray[InternalParentObserver[_]](
+  override protected val parentObservers: JsArray[InternalParentObserver[?]] = {
+    val arr = JsArray[InternalParentObserver[?]](
       InternalParentObserver.fromTry[A](samplingSignal, (_, trx) => {
         onInputsReady(trx)
       })
@@ -50,7 +50,7 @@ class SampleCombineSignalN[A, Out](
     arr
   }
 
-  override protected[this] def combinedValue: Try[Out] = {
+  override protected def combinedValue: Try[Out] = {
     val values = JsArray(samplingSignal.tryNow())
     sampledSignals.forEach { sampledSignal =>
       values.push(sampledSignal.tryNow())

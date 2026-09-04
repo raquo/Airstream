@@ -26,12 +26,12 @@ import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchValu
   * }}}
   */
 
-final case class SplitMatchOneValueObservable[Self[+_] <: Observable[_], I, O, V] private (private val underlying: Unit) extends AnyVal
+final case class SplitMatchOneValueObservable[Self[+_] <: Observable[?], I, O, V] private (private val underlying: Unit) extends AnyVal
 
 object SplitMatchOneValueObservable {
 
   @compileTimeOnly("`splitMatchOne` without `toSignal`/`toStream` is illegal")
-  def build[Self[+_] <: Observable[_], I, O, V](
+  def build[Self[+_] <: Observable[?], I, O, V](
     observable: BaseObservable[Self, I]
   )(
     caseList: CaseAny*

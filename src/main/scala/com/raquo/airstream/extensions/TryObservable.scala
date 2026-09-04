@@ -6,7 +6,7 @@ import com.raquo.airstream.state.StrictSignal
 import scala.util.Try
 
 /** See also [[TryStream]] for stream-specific try operators */
-class TryObservable[A, Self[+_] <: Observable[_]](
+class TryObservable[A, Self[+_] <: Observable[?]](
   private val observable: BaseObservable[Self, Try[A]]
 ) extends AnyVal {
 

@@ -15,7 +15,7 @@ import scala.util.Success
 
 object SplitMatchSeqMacros {
 
-  private[airstream] inline def delegateHandleCase[Self[+_] <: Observable[_], I, K, O, CC[_], A, B, O1 >: O](
+  private[airstream] inline def delegateHandleCase[Self[+_] <: Observable[?], I, K, O, CC[_], A, B, O1 >: O](
     inline matchSplitObservable: SplitMatchSeqObservable[Self, I, K, O, CC],
     inline casePf: PartialFunction[A, B],
     inline handleFn: StrictSignal[B] => O1
@@ -23,13 +23,13 @@ object SplitMatchSeqMacros {
     handleCaseImpl('{ matchSplitObservable }, '{ casePf }, '{ handleFn })
   }
 
-  private[airstream] inline def delegateHandleType[Self[+_] <: Observable[_], I, K, O, CC[_], T](
+  private[airstream] inline def delegateHandleType[Self[+_] <: Observable[?], I, K, O, CC[_], T](
     inline matchSplitObservable: SplitMatchSeqObservable[Self, I, K, O, CC]
   ) = ${
     handleTypeImpl[Self, I, K, O, CC, T]('{ matchSplitObservable })
   }
 
-  private[airstream] inline def delegateHandleValue[Self[+_] <: Observable[_], I, K, O, CC[_], V](
+  private[airstream] inline def delegateHandleValue[Self[+_] <: Observable[?], I, K, O, CC[_], V](
     inline matchSplitObservable: SplitMatchSeqObservable[Self, I, K, O, CC],
     inline v: V
   )(
@@ -38,25 +38,25 @@ object SplitMatchSeqMacros {
     handleValueImpl('{ matchSplitObservable }, '{ v })
   }
 
-  private[airstream] inline def delegateHandleTypeApply[Self[+_] <: Observable[_], I, K, O, CC[_], T, O1 >: O](
+  private[airstream] inline def delegateHandleTypeApply[Self[+_] <: Observable[?], I, K, O, CC[_], T, O1 >: O](
     inline matchTypeObserver: SplitMatchSeqTypeObservable[Self, I, K, O, CC, T],
     inline handleFn: StrictSignal[T] => O1
   ) = ${
     handleTypeApplyImpl('{ matchTypeObserver }, '{ handleFn })
   }
 
-  private[airstream] inline def delegateHandleValueApply[Self[+_] <: Observable[_], I, K, O, CC[_], V, O1 >: O](
+  private[airstream] inline def delegateHandleValueApply[Self[+_] <: Observable[?], I, K, O, CC[_], V, O1 >: O](
     inline matchValueObservable: SplitMatchSeqValueObservable[Self, I, K, O, CC, V],
     inline handleFn: StrictSignal[V] => O1
   ) = ${
     handleValueApplyImpl('{ matchValueObservable }, '{ handleFn })
   }
 
-  private[airstream] inline def delegateToSignal[Self[+_] <: Observable[_], I, K, O, CC[_]](
+  private[airstream] inline def delegateToSignal[Self[+_] <: Observable[?], I, K, O, CC[_]](
     inline matchSplitObservable: SplitMatchSeqObservable[Self, I, K, O, CC]
   ) = ${ observableImpl('{ matchSplitObservable }) }
 
-  private def handleCaseImpl[Self[+_] <: Observable[_]: Type, I: Type, K: Type, O: Type, O1 >: O: Type, CC[_]: Type, A: Type, B: Type](
+  private def handleCaseImpl[Self[+_] <: Observable[?]: Type, I: Type, K: Type, O: Type, O1 >: O: Type, CC[_]: Type, A: Type, B: Type](
     matchSplitObservableExpr: Expr[SplitMatchSeqObservable[Self, I, K, O, CC]],
     casePfExpr: Expr[PartialFunction[A, B]],
     handleFnExpr: Expr[Function1[StrictSignal[B], O1]]
@@ -111,7 +111,7 @@ object SplitMatchSeqMacros {
     }
   }
 
-  private def handleTypeImpl[Self[+_] <: Observable[_]: Type, I: Type, K: Type, O: Type, CC[_]: Type, T: Type](
+  private def handleTypeImpl[Self[+_] <: Observable[?]: Type, I: Type, K: Type, O: Type, CC[_]: Type, T: Type](
     matchSplitObservableExpr: Expr[SplitMatchSeqObservable[Self, I, K, O, CC]]
   )(
     using quotes: Quotes
@@ -152,7 +152,7 @@ object SplitMatchSeqMacros {
     }
   }
 
-  private def handleTypeApplyImpl[Self[+_] <: Observable[_]: Type, I: Type, K: Type, O: Type, O1 >: O: Type, CC[_]: Type, T: Type](
+  private def handleTypeApplyImpl[Self[+_] <: Observable[?]: Type, I: Type, K: Type, O: Type, O1 >: O: Type, CC[_]: Type, T: Type](
     matchSplitObservableExpr: Expr[SplitMatchSeqTypeObservable[Self, I, K, O, CC, T]],
     handleFnExpr: Expr[Function1[StrictSignal[T], O1]]
   )(
@@ -210,7 +210,7 @@ object SplitMatchSeqMacros {
     }
   }
 
-  private def handleValueImpl[Self[+_] <: Observable[_]: Type, I: Type, K: Type, O: Type, CC[_]: Type, V: Type](
+  private def handleValueImpl[Self[+_] <: Observable[?]: Type, I: Type, K: Type, O: Type, CC[_]: Type, V: Type](
     matchSplitObservableExpr: Expr[SplitMatchSeqObservable[Self, I, K, O, CC]],
     vExpr: Expr[V]
   )(
@@ -252,7 +252,7 @@ object SplitMatchSeqMacros {
     }
   }
 
-  private def handleValueApplyImpl[Self[+_] <: Observable[_]: Type, I: Type, K: Type, O: Type, O1 >: O: Type, CC[_]: Type, V: Type](
+  private def handleValueApplyImpl[Self[+_] <: Observable[?]: Type, I: Type, K: Type, O: Type, O1 >: O: Type, CC[_]: Type, V: Type](
     matchValueObservableExpr: Expr[SplitMatchSeqValueObservable[Self, I, K, O, CC, V]],
     handleFnExpr: Expr[Function1[StrictSignal[V], O1]]
   )(
@@ -310,7 +310,7 @@ object SplitMatchSeqMacros {
     }
   }
 
-  private def innerHandleCaseImpl[Self[+_] <: Observable[_]: Type, I: Type, K: Type, O: Type, O1 >: O: Type, CC[_]: Type, A: Type, B: Type](
+  private def innerHandleCaseImpl[Self[+_] <: Observable[?]: Type, I: Type, K: Type, O: Type, O1 >: O: Type, CC[_]: Type, A: Type, B: Type](
     keyFnExpr: Expr[Function1[I, K]],
     // distinctComposeExpr: Expr[Function1[KeyedStrictSignal[K, I], KeyedStrictSignal[K, I]]],
     distinctComposeExpr: Expr[DistinctOp[I]],
@@ -368,7 +368,7 @@ object SplitMatchSeqMacros {
     idx -> keyFn(i)
   }
 
-  private def toSplitSeqObservable[Self[+_] <: Observable[_], I, K, O, CC[_]](
+  private def toSplitSeqObservable[Self[+_] <: Observable[?], I, K, O, CC[_]](
     parentObservable: BaseObservable[Self, CC[(I, Int, Any)]],
     keyFn: I => K,
     distinctOp: DistinctOp[I],
@@ -390,7 +390,7 @@ object SplitMatchSeqMacros {
     }(splittable)
   }
 
-  private def observableImpl[Self[+_] <: Observable[_]: Type, I: Type, K: Type, O: Type, CC[_]: Type](
+  private def observableImpl[Self[+_] <: Observable[?]: Type, I: Type, K: Type, O: Type, CC[_]: Type](
     matchSplitObservableExpr: Expr[SplitMatchSeqObservable[Self, I, K, O, CC]]
   )(
     using quotes: Quotes

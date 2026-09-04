@@ -42,7 +42,7 @@ class ConcurrentStream[A](
     }
   }
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     parent.addInternalObserver(this, shouldCallMaybeWillStart = false)
     accumulatedStreams.forEach(_.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false))
     parent match {
@@ -58,7 +58,7 @@ class ConcurrentStream[A](
     }
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     accumulatedStreams.forEach(_.removeInternalObserver(internalEventObserver))
     parent.removeInternalObserver(observer = this)
     super.onStop()

@@ -3,7 +3,7 @@ package com.raquo.airstream.extensions
 import com.raquo.airstream.core.{BaseObservable, Observable}
 
 /** See also: [[EitherStream]] */
-class EitherThrowableObservable[A, B, Self[+_] <: Observable[_]](
+class EitherThrowableObservable[A, B, Self[+_] <: Observable[?]](
   private val observable: BaseObservable[Self, Either[Throwable, B]]
 ) extends AnyVal {
 

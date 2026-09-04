@@ -15,7 +15,7 @@ class SeqObservableSpec extends UnitSpec {
 
     val bus = new EventBus[List[Int]]
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     bus
       .events
       .seqOrElse(0)
@@ -66,7 +66,7 @@ class SeqObservableSpec extends UnitSpec {
   //
   //   val bus = new EventBus[List[Bar]]
   //
-  //   val effects = mutable.Buffer[Effect[_]]()
+  //   val effects = mutable.Buffer[Effect[?]]()
   //   bus
   //     .events
   //     .seqOrElse(NoFoo) // #nc <<< this doesn't compile because we don't have AA >: A in seqOrElse because Splitaable's M is cont covariant because mutable types are supported but can't be covariant. Any chance we could maybe upcast M into something that is generic non-mutable in Scala? Or something...

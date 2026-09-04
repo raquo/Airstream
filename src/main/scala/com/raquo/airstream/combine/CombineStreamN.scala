@@ -18,16 +18,16 @@ class CombineStreamN[A, Out](
 
   // @TODO[API] Maybe this should throw if parents.isEmpty
 
-  override protected[this] val parents: JsArray[Observable[A]] = {
+  override protected val parents: JsArray[Observable[A]] = {
     // #Note this is safe as long as we don't put non-streams into this JsArray.
     parentStreams.asInstanceOf[JsArray[Observable[A]]]
   }
 
   override protected val topoRank: Int = Protected.maxTopoRank(parents) + 1
 
-  private[this] val maybeLastParentValues: JsArray[js.UndefOr[Try[A]]] = parents.map(_ => js.undefined)
+  private val maybeLastParentValues: JsArray[js.UndefOr[Try[A]]] = parents.map(_ => js.undefined)
 
-  override protected[this] val parentObservers: JsArray[InternalParentObserver[_]] = {
+  override protected val parentObservers: JsArray[InternalParentObserver[?]] = {
     parents.mapWithIndex { (parent, ix) =>
       InternalParentObserver.fromTry[A](
         parent,
@@ -41,7 +41,7 @@ class CombineStreamN[A, Out](
     }
   }
 
-  override protected[this] def inputsReady: Boolean = {
+  override protected def inputsReady: Boolean = {
     var allReady: Boolean = true
     maybeLastParentValues.forEach { lastValue =>
       if (lastValue.isEmpty) {
@@ -51,7 +51,7 @@ class CombineStreamN[A, Out](
     allReady
   }
 
-  override protected[this] def combinedValue: Try[Out] = {
+  override protected def combinedValue: Try[Out] = {
     // #Note don't call this unless you have first verified that
     //  inputs are ready, otherwise this asInstanceOf will not be safe.
     CombineObservable.jsArrayCombinator(maybeLastParentValues.asInstanceOf[JsArray[Try[A]]], combinator)

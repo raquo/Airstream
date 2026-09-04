@@ -24,30 +24,30 @@ object Protected {
     */
   private[airstream] val protectedAccessEvidence: Protected = new Protected()
 
-  @inline def topoRank[O[+_] <: Observable[_]](observable: BaseObservable[O, _]): Int = {
+  @inline def topoRank[O[+_] <: Observable[?]](observable: BaseObservable[O, ?]): Int = {
     BaseObservable.topoRank(observable)
   }
 
   // Note: this implementation is not used in Airstream, and is provided
   // only for third party developers who don't want to use JsArray.
-  def maxTopoRank[O[+_] <: Observable[_]](observables: Iterable[BaseObservable[O, _]]): Int = {
+  def maxTopoRank[O[+_] <: Observable[?]](observables: Iterable[BaseObservable[O, ?]]): Int = {
     observables.foldLeft(0)((maxRank, parent) => Protected.topoRank(parent) max maxRank)
   }
 
-  @inline def maxTopoRank[O <: Observable[_]](
+  @inline def maxTopoRank[O <: Observable[?]](
     observables: JsArray[O]
   ): Int = {
     maxTopoRank(minRank = 0, observables)
   }
 
-  def maxTopoRank[O <: Observable[_]](
-    observable: Observable[_],
+  def maxTopoRank[O <: Observable[?]](
+    observable: Observable[?],
     observables: JsArray[O]
   ): Int = {
     maxTopoRank(minRank = Protected.topoRank(observable), observables)
   }
 
-  def maxTopoRank[O <: Observable[_]](
+  def maxTopoRank[O <: Observable[?]](
     minRank: Int,
     observables: JsArray[O]
   ): Int = {
@@ -61,13 +61,13 @@ object Protected {
     maxRank
   }
 
-  def lastUpdateId(signal: Signal[_])(implicit @unused ev: Protected): Int = signal.lastUpdateId
+  def lastUpdateId(signal: Signal[?])(implicit @unused ev: Protected): Int = signal.lastUpdateId
 
   @inline def tryNow[A](signal: Signal[A])(implicit @unused ev: Protected): Try[A] = signal.tryNow()
 
   @inline def now[A](signal: Signal[A])(implicit @unused ev: Protected): A = signal.now()
 
-  @inline def maybeWillStart[O[+_] <: Observable[_]](observable: BaseObservable[O, _]): Unit = {
+  @inline def maybeWillStart[O[+_] <: Observable[?]](observable: BaseObservable[O, ?]): Unit = {
     BaseObservable.maybeWillStart(observable)
   }
 }

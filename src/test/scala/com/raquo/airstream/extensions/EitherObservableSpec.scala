@@ -15,7 +15,7 @@ class EitherObservableSpec extends UnitSpec {
 
     val bus = new EventBus[Either[Int, String]]
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     bus
       .events
       .mapLeft(_ * 10)
@@ -64,7 +64,7 @@ class EitherObservableSpec extends UnitSpec {
 
     val bus = new EventBus[Either[Int, String]]
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
 
     var ix = 0
     bus
@@ -160,7 +160,7 @@ class EitherObservableSpec extends UnitSpec {
 
     val _var = Var[Either[Int, String]](Left(0))
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
 
     var ix = 0
     _var
@@ -257,7 +257,7 @@ class EitherObservableSpec extends UnitSpec {
 
     val bus = new EventBus[Either[Int, String]]
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
 
     bus
       .events
@@ -302,7 +302,7 @@ class EitherObservableSpec extends UnitSpec {
 
     val bus = new EventBus[Either[Int, String]]
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
 
     bus
       .events

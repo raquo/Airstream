@@ -21,10 +21,10 @@ import scala.annotation.{nowarn, unused}
 trait Owner
 extends Named {
 
-  protected[this] val subscriptions: JsResilientIterator[Subscription] =
+  protected val subscriptions: JsResilientIterator[Subscription] =
     new JsResilientIterator
 
-  protected[this] def killSubscriptions(): Unit = {
+  protected def killSubscriptions(): Unit = {
     if (FeatureFlags.V18_IMMEDIATE_DYNSUB_REMOVAL_FIX_145: @nowarn("msg=deprecated")) {
       // We use `forEachExistingAndAppended`, not `forEachExisting`: a subscription's
       // user-defined `cleanup` function may potentially register a new subscription on
@@ -52,7 +52,7 @@ extends Named {
     * You can override it to add custom behaviour.
     * Note: You can rely on this base method being empty.
     */
-  protected[this] def onOwned(@unused subscription: Subscription): Unit = ()
+  protected def onOwned(@unused subscription: Subscription): Unit = ()
 
   private[ownership] def onKilledExternally(subscription: Subscription): Unit = {
     val removed = subscriptions.remove(subscription)

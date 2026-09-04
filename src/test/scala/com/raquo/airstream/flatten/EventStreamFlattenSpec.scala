@@ -27,7 +27,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec with Matchers {
         }.setDisplayName("META")
         .flattenSwitch.setDisplayName("FLAT")
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     val obs0 = Observer[Int](newValue => effects += Effect("obs0", newValue)).setDisplayName("obs0")
     val subscription0 = flatStream.addObserver(obs0)
 
@@ -49,7 +49,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec with Matchers {
         .setDisplayName("MO")
         .flattenSwitch.setDisplayName("FS")
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     val obs = Observer[Int](v => effects += Effect("obs0", v)).setDisplayName("obs")
     val subscription0 = flatStream.addObserver(obs)
 
@@ -81,7 +81,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec with Matchers {
         }
         .flattenSwitch
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
     subscription0.kill()
@@ -116,7 +116,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec with Matchers {
         }
         .flattenSwitch
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
     delay(150) {
@@ -149,7 +149,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec with Matchers {
         }
         .flattenSwitch
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
     delay(200) {
@@ -172,7 +172,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec with Matchers {
           EventStream.fromSeq(Seq(v * 3), emitOnce = true)
         }
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
     subscription0.kill()
@@ -193,7 +193,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec with Matchers {
           }
         }
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
     subscription0.kill()
@@ -217,7 +217,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec with Matchers {
           delayedStream(range2, interval = 6, _ * v)
         }
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
     delay(200) {
@@ -249,7 +249,7 @@ class EventStreamFlattenSpec extends AsyncUnitSpec with Matchers {
           }
         }
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     val subscription0 = flatStream.foreach(newValue => effects += Effect("obs0", newValue))
 
     delay(200) {

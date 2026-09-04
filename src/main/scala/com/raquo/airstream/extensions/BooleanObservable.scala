@@ -5,7 +5,7 @@ import com.raquo.airstream.split.Splittable
 import com.raquo.airstream.state.StrictSignal
 
 /** See also [[BooleanStream]] for stream-specific operators. */
-class BooleanObservable[Self[+_] <: Observable[_]](
+class BooleanObservable[Self[+_] <: Observable[?]](
   private val observable: BaseObservable[Self, Boolean]
 ) extends AnyVal {
 

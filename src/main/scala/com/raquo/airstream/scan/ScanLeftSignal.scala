@@ -29,7 +29,7 @@ import scala.util.{Failure, Try}
   *     the signal in a failed state perpetually.
   */
 class ScanLeftSignal[A, B, Parent <: Observable[A]](
-  override protected[this] val parent: Parent,
+  override protected val parent: Parent,
   makeInitialValue: () => Try[B],
   fn: (Try[B], Try[A]) => Try[B],
   resumeOnError: Boolean

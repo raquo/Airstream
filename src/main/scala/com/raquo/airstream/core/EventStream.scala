@@ -111,7 +111,7 @@ with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
   /** Make a stream that emits this stream's values but waits for `after` stream to emit first in a given transaction.
     * You can use this for Signals too with `Signal.composeChanges` (see docs for more details)
     */
-  def delaySync(after: EventStream[_]): EventStream[A] = {
+  def delaySync(after: EventStream[?]): EventStream[A] = {
     new SyncDelayStream[A](parent = this, after = after)
   }
 

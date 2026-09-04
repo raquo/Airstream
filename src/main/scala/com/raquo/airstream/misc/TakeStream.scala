@@ -48,7 +48,7 @@ class TakeStream[A](
     }
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     if (resetOnStop) {
       disableTaking = false
       reset()

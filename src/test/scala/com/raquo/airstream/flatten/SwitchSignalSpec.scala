@@ -417,7 +417,7 @@ class SwitchSignalSpec extends UnitSpec {
 
     val owner = new TestableOwner
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
 
     var updateSource: Try[Int] => Unit = _ => throw new Exception("source signal has not been started yet")
 

@@ -18,7 +18,7 @@ import scala.util.{Failure, Success, Try}
   *
   * See also [[DebugOps]] for generic debug operators
   */
-trait DebugSignalOps[+Self[+_] <: Signal[_], +A]
+trait DebugSignalOps[+Self[+_] <: Signal[?], +A]
 extends DebugOps[Self, A] {
   this: Named =>
 

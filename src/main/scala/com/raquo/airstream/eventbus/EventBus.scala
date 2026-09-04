@@ -41,7 +41,7 @@ object EventBus {
     * Example usage: emitTry(eventBus1 -> value1, eventBus2 -> value2)
     */
   def emit(
-    values: EventBusTuple[_]*
+    values: EventBusTuple[?]*
   ): Unit = {
     WriteBus.emit(values.map(toWriterTuple(_)): _*)
   }
@@ -50,7 +50,7 @@ object EventBus {
     * Example usage: emitTry(eventBus1 -> Success(value1), eventBus2 -> Failure(error2))
     */
   def emitTry(
-    values: EventBusTryTuple[_]*
+    values: EventBusTryTuple[?]*
   ): Unit = {
     WriteBus.emitTry(values.map(toWriterTryTuple(_)): _*)
   }

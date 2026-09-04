@@ -23,7 +23,7 @@ with DistinctOps[Var[A], A]
 with Named {
 
   /** Used to make sure we don't update the same var twice in the same transaction */
-  private[state] def underlyingVar: SourceVar[_]
+  private[state] def underlyingVar: SourceVar[?]
 
   private[state] def getCurrentValue: Try[A]
 
@@ -268,8 +268,8 @@ object Var {
     * If input contains duplicate vars, reports an Airstream unhandled error.
     * Airstream allows a maximum of one event per observable per transaction.
     */
-  def set(values: VarTuple[_]*): Unit = {
-    val tryValues: Seq[VarTryTuple[_]] = values.map(t => toTryTuple(t))
+  def set(values: VarTuple[?]*): Unit = {
+    val tryValues: Seq[VarTryTuple[?]] = values.map(t => toTryTuple(t))
     setTry(tryValues: _*)
   }
 
@@ -279,7 +279,7 @@ object Var {
     * If input contains duplicate vars, reports an Airstream unhandled error.
     * Airstream allows a maximum of one event per observable per transaction.
     */
-  def setTry(values: VarTryTuple[_]*): Unit = {
+  def setTry(values: VarTryTuple[?]*): Unit = {
     // println(s"> init trx from Var.set/setTry")
     Transaction { trx =>
       if (hasDuplicateVars(values.map(_.tuple))) {
@@ -304,13 +304,13 @@ object Var {
     * 2) if input contains duplicate vars.
     * Airstream allows a maximum of one event per observable per transaction.
     */
-  def update(mods: VarModTuple[_]*): Unit = {
+  def update(mods: VarModTuple[?]*): Unit = {
     // println(s"> init trx from Var.update")
     Transaction { trx =>
       if (hasDuplicateVars(mods.map(_.tuple))) {
         throw VarError("Unable to Var.update: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None)
       }
-      val tryMods: Seq[VarTryModTuple[_]] = mods.map(t => modToTryModTuple(t))
+      val tryMods: Seq[VarTryModTuple[?]] = mods.map(t => modToTryModTuple(t))
       val vars = mods.map(_.tuple._1)
       try {
         vars.foreach(_.now())
@@ -318,7 +318,7 @@ object Var {
         case err: Throwable =>
           throw VarError("Unable to Var.update a failed Var. Consider Var.tryUpdate instead.", cause = Some(err))
       }
-      val tryValues: Seq[VarTryTuple[_]] = tryMods.map(t => tryModToTryTuple(t))
+      val tryValues: Seq[VarTryTuple[?]] = tryMods.map(t => tryModToTryTuple(t))
       tryValues.foreach(setTryValue(_, trx))
     }
   }
@@ -331,13 +331,13 @@ object Var {
     * If input contains duplicate vars, reports an Airstream unhandled error.
     * Airstream allows a maximum of one event per observable per transaction.
     */
-  def tryUpdate(mods: VarTryModTuple[_]*): Unit = {
+  def tryUpdate(mods: VarTryModTuple[?]*): Unit = {
     // println(s"> init trx from Var.tryUpdate")
     Transaction { trx =>
       if (hasDuplicateVars(mods.map(_.tuple))) {
         throw VarError("Unable to Var.tryUpdate: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None)
       }
-      val tryValues: Seq[VarTryTuple[_]] = mods.map(t => tryModToTryTuple(t))
+      val tryValues: Seq[VarTryTuple[?]] = mods.map(t => tryModToTryTuple(t))
       tryValues.foreach(setTryValue(_, trx))
     }
   }
@@ -358,7 +358,7 @@ object Var {
     tuple.tuple._1.setCurrentValue(tuple.tuple._2, transaction)
   }
 
-  private def hasDuplicateVars(tuples: Seq[(Var[_], _)]): Boolean = {
+  private def hasDuplicateVars(tuples: Seq[(Var[?], ?)]): Boolean = {
     hasDuplicateTupleKeys(tuples.map(t => t.copy(_1 = t._1.underlyingVar)))
   }
 

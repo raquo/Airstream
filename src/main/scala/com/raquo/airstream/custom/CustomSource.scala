@@ -15,28 +15,28 @@ import scala.util.Try
   */
 trait CustomSource[A] extends WritableObservable[A] {
 
-  protected[this] val config: Config
+  protected val config: Config
 
   // --
 
   /** CustomSource is intended for observables that don't synchronously depend on other observables. */
   override protected val topoRank: Int = 1
 
-  protected[this] var startIndex: StartIndex = 0
+  protected var startIndex: StartIndex = 0
 
   override protected def onWillStart(): Unit = {
     startIndex += 1
     config.onWillStart()
   }
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     Try(config.onStart()).recover[Unit] {
       case err: Throwable => Transaction(fireError(err, _))
     }
     super.onStart()
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     config.onStop()
     super.onStop()
   }

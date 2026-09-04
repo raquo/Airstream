@@ -90,7 +90,7 @@ class DebuggableObserver[A](
     debugLog(whenEvent, useJsLogger = false)
   }
 
-  protected[this] def log(
+  protected def log(
     action: String,
     value: Any,
     useJsLogger: Boolean

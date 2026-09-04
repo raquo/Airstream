@@ -19,16 +19,16 @@ class CustomStreamSource[A](
     * thunks) until `onStart` finishes, so [[resolveStartCallbacks]] can decide
     * how to schedule them. Asynchronously fired events bypass this, as they are never shared.
     */
-  private[this] val onStartCallbacks: JsArray[Transaction => Unit] = JsArray()
+  private val onStartCallbacks: JsArray[Transaction => Unit] = JsArray()
 
-  override protected[this] val config: Config = makeConfig(
+  override protected val config: Config = makeConfig(
     value => scheduleTransaction(fireValue(value, _)),
     err => scheduleTransaction(fireError(err, _)),
     () => startIndex,
     () => isStarted
   )
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     onStartCallbacks.length = 0 // should already be empty, but just in case
     super.onStart() // runs config.onStart(), which may fill onStartCallbacks
     resolveStartCallbacks()

@@ -4,7 +4,7 @@ import com.raquo.airstream.core.{BaseObservable, EventStream, Observable}
 
 object FlatMapStatusObservable {
 
-  def apply[A, B, Self[+_] <: Observable[_]](
+  def apply[A, B, Self[+_] <: Observable[?]](
     parent: BaseObservable[Self, A],
     project: A => EventStream[B]
   ): Self[Status[A, B]] = {

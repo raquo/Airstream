@@ -19,19 +19,19 @@ import scala.util.Try
   * This keeps this stream in sync with the parent signal even after restarting.
   */
 class StreamFromSignal[A](
-  override protected[this] val parent: Signal[A],
+  override protected val parent: Signal[A],
   updatesOnly: Boolean
 ) extends SingleParentStream[A, A] with InternalTryObserver[A] {
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
-  private[this] var lastSeenParentUpdateId: Int = 0
+  private var lastSeenParentUpdateId: Int = 0
 
-  private[this] var isFirstPull: Boolean = true
+  private var isFirstPull: Boolean = true
 
-  private[this] var hasEmittedEvents: Boolean = false
+  private var hasEmittedEvents: Boolean = false
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     val newParentLastUpdateId = Protected.lastUpdateId(parent)
     if (isFirstPull && updatesOnly) {
       lastSeenParentUpdateId = newParentLastUpdateId

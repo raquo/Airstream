@@ -30,10 +30,10 @@ class DynamicSubscription private (
 ) extends Named {
 
   // @Note this can be None even if this dynamic subscription is active (if activate() returned None)
-  private[this] var maybeCurrentSubscription: Option[Subscription] = None
+  private var maybeCurrentSubscription: Option[Subscription] = None
 
   /** Note: this var is only guaranteed accurate inside onActivate. See comments below. */
-  private[this] var isPendingDeactivation = false
+  private var isPendingDeactivation = false
 
   dynamicOwner.addSubscription(this, prepend)
 

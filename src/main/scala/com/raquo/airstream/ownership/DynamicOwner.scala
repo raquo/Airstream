@@ -24,7 +24,7 @@ extends Named {
     *       subscriptions to code that didn't create those subscriptions.
     *       We rely on that in TransferableSubscription for example.
     */
-  private[this] val subscriptions: JsResilientIterator[DynamicSubscription] = new JsResilientIterator
+  private val subscriptions: JsResilientIterator[DynamicSubscription] = new JsResilientIterator
 
   /** Legacy variable used for pre-V18 deferred removals logic (behind feature flag) */
   private var isSafeToRemoveSubscription = true
@@ -143,7 +143,7 @@ extends Named {
     }
   }
 
-  private[this] def removeSubscriptionNow(subscription: DynamicSubscription): Unit = {
+  private def removeSubscriptionNow(subscription: DynamicSubscription): Unit = {
     // Note: If we're mid-activation, `JsResilientIterator.remove` adjusts its cursor so that removing
     // this sub neither skips a not-yet-activated sub, nor re-visits a shifted one.
     val removed = subscriptions.remove(subscription)
@@ -157,7 +157,7 @@ extends Named {
   }
 
   /** Legacy method used for pre-V18 deferred removals logic (behind feature flag) */
-  private[this] def removePendingSubscriptionsNow(): Unit = {
+  private def removePendingSubscriptionsNow(): Unit = {
     // println("> removePendingSubscriptionsNow")
     // #TODO[Performance] Can we do a for-loop and then clear the whole array at once? Would that be 100% equivalent?
     while (pendingSubscriptionRemovals.length > 0) {

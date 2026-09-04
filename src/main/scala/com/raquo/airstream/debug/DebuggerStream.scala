@@ -7,7 +7,7 @@ import scala.util.{Failure, Success, Try}
 
 /** See [[DebugOps]] and [[DebuggableSignal]] for user-facing debug methods */
 class DebuggerStream[A](
-  override protected[this] val parent: EventStream[A],
+  override protected val parent: EventStream[A],
   override protected val debugger: Debugger[A]
 ) extends SingleParentStream[A, A] with DebuggerObservable[A] {
 
@@ -15,22 +15,22 @@ class DebuggerStream[A](
 
   override protected def defaultDisplayName: String = DebuggerObservable.defaultDisplayName(parent)
 
-  override protected[this] def fireValue(nextValue: A, transaction: Transaction): Unit = {
+  override protected def fireValue(nextValue: A, transaction: Transaction): Unit = {
     debugFireTry(Success(nextValue))
     super.fireValue(nextValue, transaction)
   }
 
-  override protected[this] def fireError(nextError: Throwable, transaction: Transaction): Unit = {
+  override protected def fireError(nextError: Throwable, transaction: Transaction): Unit = {
     debugFireTry(Failure(nextError))
     super.fireError(nextError, transaction)
   }
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     super.onStart()
     debugOnStart()
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     super.onStop()
     debugOnStop()
   }

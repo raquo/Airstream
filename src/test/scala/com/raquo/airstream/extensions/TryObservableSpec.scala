@@ -19,7 +19,7 @@ class TryObservableSpec extends UnitSpec {
 
     val bus = new EventBus[Try[Int]]
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     bus
       .events
       .mapFailure({
@@ -69,7 +69,7 @@ class TryObservableSpec extends UnitSpec {
 
     val bus = new EventBus[Try[Int]]
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
 
     bus
       .events
@@ -122,7 +122,7 @@ class TryObservableSpec extends UnitSpec {
 
     val bus = new EventBus[Try[Int]]
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
 
     var ix = 0
     bus

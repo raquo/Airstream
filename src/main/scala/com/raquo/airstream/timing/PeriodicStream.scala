@@ -69,12 +69,12 @@ class PeriodicStream[A](
 
   override protected def onWillStart(): Unit = () // noop
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     super.onStart()
     tick()
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     super.onStop()
     clearTimeout()
     if (resetOnStop) {

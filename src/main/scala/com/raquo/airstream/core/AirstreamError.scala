@@ -106,7 +106,7 @@ object AirstreamError {
     *
     * Instead, we provide a similar Observer-based API as described below.
     */
-  private[this] val unhandledErrorCallbacks = mutable.Buffer[Throwable => Unit]()
+  private val unhandledErrorCallbacks = mutable.Buffer[Throwable => Unit]()
 
   /** Note: In IE, console is not defined unless the developer tools console is actually open.
     * Some test environments might be lacking the console as well (e.g. node.js without jsdom).

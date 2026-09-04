@@ -72,7 +72,7 @@ object KeyedDerivedVar {
     * }}}
     */
   object varWithKey {
-    def unapply[K, A](v: KeyedDerivedVar[K, _, A]): Some[(KeyedDerivedVar[K, _, A], K)] = {
+    def unapply[K, A](v: KeyedDerivedVar[K, ?, A]): Some[(KeyedDerivedVar[K, ?, A], K)] = {
       Some((v, v.key))
     }
   }

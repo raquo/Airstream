@@ -7,7 +7,7 @@ import com.raquo.ew.JsArray
 trait MultiParentStream[I, O] extends WritableStream[O] {
 
   /** This array is read-only, never update it. */
-  protected[this] val parents: JsArray[Observable[I]]
+  protected val parents: JsArray[Observable[I]]
 
   override protected def onWillStart(): Unit = {
     parents.forEach(Protected.maybeWillStart(_))

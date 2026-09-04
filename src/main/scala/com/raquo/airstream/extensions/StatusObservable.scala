@@ -5,7 +5,7 @@ import com.raquo.airstream.state.StrictSignal
 import com.raquo.airstream.status.{Pending, Resolved, Status}
 
 /** See also [[StatusStream]] for stream-specific status operators */
-class StatusObservable[In, Out, Self[+_] <: Observable[_]](
+class StatusObservable[In, Out, Self[+_] <: Observable[?]](
   private val observable: BaseObservable[Self, Status[In, Out]]
 ) extends AnyVal {
 

@@ -33,7 +33,7 @@ import scala.util.Try
   * #Warning: The [[Self]] kind must be either of: [[Observable]], [[EventStream]], or [[Signal]].
   *  - It must NOT be a more specific type, otherwise [[matchStreamOrSignalAsSelf]] will break.
   */
-trait BaseObservable[+Self[+_] <: Observable[_], +A]
+trait BaseObservable[+Self[+_] <: Observable[?], +A]
 extends Source[A]
 with Named
 with MapOps[Self, A]
@@ -51,7 +51,7 @@ with DebugOps[Self, A] {
   /** #WARNING: DO NOT USE THIS METHOD. Use flatMapSwitch... but actually learn about flatmapping first.
     * See https://github.com/raquo/Airstream/#flattening-observables
     */
-  @inline def flatMap[B, Inner[_], Output[+_] <: Observable[_]](
+  @inline def flatMap[B, Inner[_], Output[+_] <: Observable[?]](
     project: A => Inner[B]
   )(implicit
     strategy: SwitchingStrategy[Self, Inner, Output],
@@ -61,7 +61,7 @@ with DebugOps[Self, A] {
   }
 
   /** Alias to flatMapSwitch(_ => s) */
-  @inline def flatMapTo[B, Inner[_], Output[+_] <: Observable[_]](
+  @inline def flatMapTo[B, Inner[_], Output[+_] <: Observable[?]](
     s: => Inner[B]
   )(implicit strategy: SwitchingStrategy[Self, Inner, Output]
   ): Output[B] = {
@@ -69,7 +69,7 @@ with DebugOps[Self, A] {
   }
 
   /** @param project Note: guarded against exceptions */
-  @inline def flatMapSwitch[B, Inner[_], Output[+_] <: Observable[_]](
+  @inline def flatMapSwitch[B, Inner[_], Output[+_] <: Observable[?]](
     project: A => Inner[B]
   )(implicit strategy: SwitchingStrategy[Self, Inner, Output]
   ): Output[B] = {
@@ -77,7 +77,7 @@ with DebugOps[Self, A] {
   }
 
   /** @param project Note: guarded against exceptions */
-  @inline def flatMapMerge[B, Inner[_], Output[+_] <: Observable[_]](
+  @inline def flatMapMerge[B, Inner[_], Output[+_] <: Observable[?]](
     project: A => Inner[B]
   )(implicit strategy: MergingStrategy[Self, Inner, Output]
   ): Output[B] = {
@@ -85,7 +85,7 @@ with DebugOps[Self, A] {
   }
 
   /** @param project Note: guarded against exceptions */
-  @inline def flatMapCustom[B, Inner[_], Output[+_] <: Observable[_]](
+  @inline def flatMapCustom[B, Inner[_], Output[+_] <: Observable[?]](
     project: A => Inner[B]
   )(
     strategy: FlattenStrategy[Self, Inner, Output]
@@ -153,9 +153,9 @@ with DebugOps[Self, A] {
   /** Subscribe an external observer to this observable */
   def addObserver(observer: Observer[A])(implicit owner: Owner): Subscription
 
-  protected[this] def addExternalObserver(observer: Observer[A], owner: Owner): Subscription
+  protected def addExternalObserver(observer: Observer[A], owner: Owner): Subscription
 
-  protected[this] def onAddedExternalObserver(observer: Observer[A]): Unit
+  protected def onAddedExternalObserver(observer: Observer[A]): Unit
 
   /** Child observable should call this method on its parents when it is started.
     * This observable calls [[onStart]] if this action has given it its first observer (internal or external).
@@ -286,19 +286,19 @@ with DebugOps[Self, A] {
 
 object BaseObservable {
 
-  @inline private[airstream] def topoRank[O[+_] <: Observable[_]](observable: BaseObservable[O, _]): Int = {
+  @inline private[airstream] def topoRank[O[+_] <: Observable[?]](observable: BaseObservable[O, ?]): Int = {
     observable.topoRank
   }
 
-  @inline private[airstream] def maybeWillStart[O[+_] <: Observable[_]](observable: BaseObservable[O, _]): Unit = {
+  @inline private[airstream] def maybeWillStart[O[+_] <: Observable[?]](observable: BaseObservable[O, ?]): Unit = {
     observable.maybeWillStart()
   }
 
-  @inline def numAllObservers[O[+_] <: Observable[_]](observable: BaseObservable[O, _]): Int = {
+  @inline def numAllObservers[O[+_] <: Observable[?]](observable: BaseObservable[O, ?]): Int = {
     observable.numAllObservers
   }
 
-  @inline def isStarted[O[+_] <: Observable[_]](observable: BaseObservable[O, _]): Boolean = {
+  @inline def isStarted[O[+_] <: Observable[?]](observable: BaseObservable[O, ?]): Boolean = {
     observable.isStarted
   }
 }

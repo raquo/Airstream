@@ -341,7 +341,7 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     val stream = bus.events.flatMapSwitch(EventStream.fromValue(_, emitOnce = true))
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
 
     stream.addObserver(Observer.withRecover(
       onNext = ev => effects += Effect("onNext", ev),
@@ -381,7 +381,7 @@ class EventStreamErrorSpec extends UnitSpec with BeforeAndAfter {
 
     val stream = myVar.signal.flatMapSwitch(EventStream.fromValue(_, emitOnce = true))
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
 
     stream.addObserver(Observer.withRecover(
       onNext = ev => effects += Effect("onNext", ev),

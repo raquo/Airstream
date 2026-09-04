@@ -67,7 +67,7 @@ trait WritableObservable[A] extends Observable[A] {
   }
 
   /** Subscribe an external observer to this observable */
-  override protected[this] def addExternalObserver(observer: Observer[A], owner: Owner): Subscription = {
+  override protected def addExternalObserver(observer: Observer[A], owner: Owner): Subscription = {
     val subscription = new Subscription(owner, () => removeExternalObserver(observer))
     externalObservers.push(observer)
     // dom.console.log(s"Adding subscription: $subscription")
@@ -114,7 +114,7 @@ trait WritableObservable[A] extends Observable[A] {
     }
   }
 
-  private[this] def maybeStart(): Unit = {
+  private def maybeStart(): Unit = {
     val isStarting = numAllObservers == 1
     if (isStarting) {
       // We've just added first observer
@@ -122,7 +122,7 @@ trait WritableObservable[A] extends Observable[A] {
     }
   }
 
-  private[this] def maybeStop(): Unit = {
+  private def maybeStop(): Unit = {
     if (!isStarted) {
       // We've just removed last observer
       onStop()

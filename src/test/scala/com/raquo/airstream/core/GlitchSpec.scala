@@ -480,7 +480,7 @@ class GlitchSpec extends UnitSpec {
 
     val bus = new EventBus[Int]
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
 
     val initial = 0
 
@@ -553,7 +553,7 @@ class GlitchSpec extends UnitSpec {
 
     val owner = new TestableOwner
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
 
     var x = 0
 

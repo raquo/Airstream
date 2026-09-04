@@ -7,7 +7,7 @@ import scala.scalajs.js
 import scala.util.Try
 
 class SignalFromStream[A](
-  override protected[this] val parent: EventStream[A],
+  override protected val parent: EventStream[A],
   pullInitialValue: => Try[A],
   cacheInitialValue: Boolean
 ) extends SingleParentSignal[A, A] {

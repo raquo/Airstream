@@ -21,7 +21,7 @@ class OneTimeOwner(onAccessAfterKilled: () => Unit) extends Owner {
     }
   }
 
-  override protected[this] def killSubscriptions(): Unit = {
+  override protected def killSubscriptions(): Unit = {
     super.killSubscriptions()
     _isKilledForever = true
   }

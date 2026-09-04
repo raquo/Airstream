@@ -7,9 +7,9 @@ import com.raquo.ew.JsArray
 trait MultiParentSignal[I, O] extends WritableSignal[O] {
 
   /** This array is read-only, never update it. */
-  protected[this] val parents: JsArray[Signal[I]]
+  protected val parents: JsArray[Signal[I]]
 
-  protected[this] lazy val _parentLastUpdateIds: JsArray[Int] = parents.map(Protected.lastUpdateId(_))
+  protected lazy val _parentLastUpdateIds: JsArray[Int] = parents.map(Protected.lastUpdateId(_))
 
   override protected def onWillStart(): Unit = {
     parents.forEach(Protected.maybeWillStart(_))
@@ -20,7 +20,7 @@ trait MultiParentSignal[I, O] extends WritableSignal[O] {
   }
 
   /** @return Whether parent has emitted since last time we checked */
-  protected[this] def updateParentLastUpdateIds(): Boolean = {
+  protected def updateParentLastUpdateIds(): Boolean = {
     var parentHasUpdated = false
     parents.forEachWithIndex { (parent, ix) =>
       val newLastUpdateId = Protected.lastUpdateId(parent)

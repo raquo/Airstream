@@ -11,7 +11,7 @@ import scala.collection.mutable
 class FlowPublisherStreamSpec extends UnitSpec {
 
   class RangePublisher(range: Range) extends Flow.Publisher[Int] {
-    def subscribe(subscriber: Flow.Subscriber[_ >: Int]): Unit = {
+    def subscribe(subscriber: Flow.Subscriber[? >: Int]): Unit = {
       val subscription = new Flow.Subscription {
         def request(n: Long): Unit = range.foreach(subscriber.onNext(_))
         def cancel(): Unit = ()
@@ -27,7 +27,7 @@ class FlowPublisherStreamSpec extends UnitSpec {
     val range = 1 to 3
     val stream = EventStream.fromPublisher(new RangePublisher(range))
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     val sub1 = stream.foreach(newValue => effects += Effect("obs1", newValue))
 
     effects.toList shouldBe range.map(i => Effect("obs1", i))

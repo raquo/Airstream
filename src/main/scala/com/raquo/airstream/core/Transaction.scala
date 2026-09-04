@@ -35,7 +35,7 @@ class Transaction(private[Transaction] var code: Transaction => Any) {
     *
     * Corollary: An Observable that is dequeue-d from here does not synchronously depend on any other pending observables
     */
-  private[this] var maybePendingObservables: js.UndefOr[JsPriorityQueue[SyncObservable[_]]] = js.undefined
+  private var maybePendingObservables: js.UndefOr[JsPriorityQueue[SyncObservable[?]]] = js.undefined
 
   /**
     * Note: The transaction may be _actually scheduled_ one layer deeper
@@ -75,13 +75,13 @@ class Transaction(private[Transaction] var code: Transaction => Any) {
     }
   }
 
-  private[airstream] def containsPendingObservable(observable: SyncObservable[_]): Boolean = {
+  private[airstream] def containsPendingObservable(observable: SyncObservable[?]): Boolean = {
     maybePendingObservables.map(_.contains(observable)).getOrElse(false)
   }
 
-  private[airstream] def enqueuePendingObservable(observable: SyncObservable[_]): Unit = {
+  private[airstream] def enqueuePendingObservable(observable: SyncObservable[?]): Unit = {
     val queue = maybePendingObservables.getOrElse {
-      val newQueue = new JsPriorityQueue[SyncObservable[_]](Protected.topoRank)
+      val newQueue = new JsPriorityQueue[SyncObservable[?]](Protected.topoRank)
       maybePendingObservables = newQueue
       newQueue
     }

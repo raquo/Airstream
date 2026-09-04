@@ -3,7 +3,7 @@ package com.raquo.airstream.split
 import com.raquo.airstream.core.{BaseObservable, Observable, Signal}
 import com.raquo.airstream.distinct.DistinctOps.DistinctOp
 
-class SplittableSeqObservable[Self[+_] <: Observable[_], M[_], Input](
+class SplittableSeqObservable[Self[+_] <: Observable[?], M[_], Input](
   private val observable: BaseObservable[Self, M[Input]]
 ) extends AnyVal {
 

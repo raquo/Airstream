@@ -23,7 +23,7 @@ extends MapSignal[A, A](
 with OwnedSignal[A]
 with WritableStrictSignal[A] {
 
-  override protected[this] val subscription: Subscription = addObserver(observer)(owner)
+  override protected val subscription: Subscription = addObserver(observer)(owner)
 
   override protected def defaultDisplayName: String = parent.displayName + s".observe@${hashCode()}"
 }

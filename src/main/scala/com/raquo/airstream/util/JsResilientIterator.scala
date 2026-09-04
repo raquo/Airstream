@@ -28,7 +28,7 @@ class JsResilientIterator[A](
   // val ignoreRemovalsDuringIteration: Boolean   // #TODO possible performance optimization for Subscription case
 ) {
 
-  private[this] val items: JsArray[A] = JsArray()
+  private val items: JsArray[A] = JsArray()
 
   /** If we're currently iterating in [[forEachExisting]], this is the current item index. */
   private var iterIx = -1

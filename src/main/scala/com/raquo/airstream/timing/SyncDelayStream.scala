@@ -12,11 +12,11 @@ import scala.util.Try
   *  - if `after` is a Signal, this stream ignores its initial value
   */
 class SyncDelayStream[A](
-  override protected[this] val parent: Observable[A],
-  after: Observable[_]
+  override protected val parent: Observable[A],
+  after: Observable[?]
 ) extends SingleParentStream[A, A] with InternalTryObserver[A] with SyncObservable[A] {
 
-  private[this] var maybePendingValue: js.UndefOr[Try[A]] = js.undefined
+  private var maybePendingValue: js.UndefOr[Try[A]] = js.undefined
 
   override protected val topoRank: Int = (Protected.topoRank(parent) max Protected.topoRank(after)) + 1
 

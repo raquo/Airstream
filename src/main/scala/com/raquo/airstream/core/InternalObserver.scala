@@ -76,7 +76,7 @@ object InternalObserver {
   }
 
   @inline private[airstream] def onError(
-    observer: InternalObserver[_],
+    observer: InternalObserver[?],
     nextError: Throwable,
     transaction: Transaction
   ): Unit = {

@@ -13,7 +13,7 @@ class WebStorageVarSpec extends UnitSpec with BeforeAndAfter {
 
   // #TODO[Test] can we test with disabled local storage, or across several frames?
   // #TODO[Test] verify effects too, to make sure there are no duplicates
-  private val effects = mutable.Buffer[Effect[_]]()
+  private val effects = mutable.Buffer[Effect[?]]()
 
   private val errorEffects = mutable.Buffer[Effect[Throwable]]()
 

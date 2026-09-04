@@ -63,7 +63,7 @@ class AjaxStream(
 
   override protected def onWillStart(): Unit = ()
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     val request = AjaxStream.initRequest(timeoutMs, withCredentials, responseType)
 
     maybePendingRequest = request
@@ -148,7 +148,7 @@ class AjaxStream(
     super.onStart()
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     maybePendingRequest = js.undefined
     super.onStop()
   }

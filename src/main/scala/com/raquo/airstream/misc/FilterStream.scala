@@ -13,7 +13,7 @@ import scala.util.Try
   * @param passes Note: guarded against exceptions
   */
 class FilterStream[A](
-  override protected[this] val parent: EventStream[A],
+  override protected val parent: EventStream[A],
   passes: A => Boolean
 ) extends SingleParentStream[A, A] with InternalNextErrorObserver[A] {
 

@@ -15,7 +15,7 @@ class OptionObservableSpec extends UnitSpec {
 
     val bus = new EventBus[Option[Int]]
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     bus
       .events
       .mapSome(_ * 10)
@@ -58,7 +58,7 @@ class OptionObservableSpec extends UnitSpec {
 
     val bus = new EventBus[Option[Int]]
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     bus
       .events
       .collectSome
@@ -107,7 +107,7 @@ class OptionObservableSpec extends UnitSpec {
 
     val bus = new EventBus[Option[Int]]
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     bus
       .events
       .collectSome { case x if x % 2 == 0 => x }

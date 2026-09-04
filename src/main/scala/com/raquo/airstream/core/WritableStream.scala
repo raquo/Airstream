@@ -6,7 +6,7 @@ import scala.util.Try
 
 trait WritableStream[A] extends EventStream[A] with WritableObservable[A] {
 
-  override protected[this] def fireValue(nextValue: A, transaction: Transaction): Unit = {
+  override protected def fireValue(nextValue: A, transaction: Transaction): Unit = {
     // dom.console.log(s"> $this > FIRE > $nextValue")
 
     // === CAUTION ===
@@ -34,7 +34,7 @@ trait WritableStream[A] extends EventStream[A] with WritableObservable[A] {
     }
   }
 
-  override protected[this] def fireError(nextError: Throwable, transaction: Transaction): Unit = {
+  override protected def fireError(nextError: Throwable, transaction: Transaction): Unit = {
     // dom.console.log(s"> $this > FIRE > $nextError")
 
     // === CAUTION ===
@@ -58,7 +58,7 @@ trait WritableStream[A] extends EventStream[A] with WritableObservable[A] {
     }
   }
 
-  final override protected[this] def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
+  final override protected def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
     nextValue.fold(
       fireError(_, transaction),
       fireValue(_, transaction)

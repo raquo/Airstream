@@ -20,7 +20,7 @@ class Subscription(
   /** Make sure we only kill any given Subscription once. Just a sanity check against bad user logic,
     * e.g. calling .kill() manually when `owner` has already killed this subscription.
     */
-  final private[this] var _isKilled = false
+  final private var _isKilled = false
 
   owner.own(this)
 
@@ -36,7 +36,7 @@ class Subscription(
     safeCleanup()
   }
 
-  private[this] def safeCleanup(): Unit = {
+  private def safeCleanup(): Unit = {
     if (!_isKilled) {
       // Set _isKilled first before running user code (`cleanup()`) to avoid
       // a potential infinite loop if user code ends up calling .kill() on

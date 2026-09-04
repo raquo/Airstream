@@ -8,7 +8,7 @@ import scala.util.Try
 
 /** Emits only values that are distinct from the last emitted value, according to isSame function */
 class DistinctStream[A](
-  override protected[this] val parent: EventStream[A],
+  override protected val parent: EventStream[A],
   isSame: (Try[A], Try[A]) => Boolean,
   resetOnStop: Boolean
 ) extends SingleParentStream[A, A] with InternalTryObserver[A] {
@@ -25,7 +25,7 @@ class DistinctStream[A](
     }
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     if (resetOnStop) {
       maybeLastSeenValue = js.undefined
     }

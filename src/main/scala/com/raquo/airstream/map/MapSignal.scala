@@ -20,9 +20,9 @@ import scala.util.{Failure, Success, Try}
   * @param recover Note: guarded against exceptions
   */
 class MapSignal[I, O](
-  protected[this] val parent: Signal[I],
-  protected[this] val project: I => O,
-  protected[this] val recover: Option[PartialFunction[Throwable, Option[O]]]
+  protected val parent: Signal[I],
+  protected val project: I => O,
+  protected val recover: Option[PartialFunction[Throwable, Option[O]]]
 ) extends SingleParentSignal[I, O] {
 
   override protected val topoRank: Int = Protected.topoRank(parent) + 1

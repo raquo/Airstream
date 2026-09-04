@@ -7,7 +7,7 @@ import com.raquo.airstream.state.StrictSignal
 import scala.annotation.nowarn
 
 /** See also: [[OptionStream]] for stream-specific option operators */
-class OptionObservable[A, Self[+_] <: Observable[_]](
+class OptionObservable[A, Self[+_] <: Observable[?]](
   private val observable: BaseObservable[Self, Option[A]]
 ) extends AnyVal {
 

@@ -22,7 +22,7 @@ with DistinctOps[KeyedStrictSignal[K, A], A] { self =>
 
       override val key: K = self.key
 
-      override protected[this] def displayClassName: String = s"KeyedStrictSignal.map(key=${key})"
+      override protected def displayClassName: String = s"KeyedStrictSignal.map(key=${key})"
 
       override protected val displayNameSuffix: String = ".map"
     }
@@ -39,7 +39,7 @@ with DistinctOps[KeyedStrictSignal[K, A], A] { self =>
 
       override val key: K = self.key
 
-      override protected[this] def displayClassName: String = s"KeyedStrictSignal.distinct*(key=${key})"
+      override protected def displayClassName: String = s"KeyedStrictSignal.distinct*(key=${key})"
 
       override protected val displayNameSuffix: String = ".distinct*"
     }

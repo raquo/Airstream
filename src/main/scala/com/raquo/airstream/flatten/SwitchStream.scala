@@ -33,14 +33,14 @@ class SwitchStream[I, O](
 
   override protected val topoRank: Int = 1
 
-  private[this] val parentIsSignal: Boolean = parent.isInstanceOf[Signal[_]]
+  private val parentIsSignal: Boolean = parent.isInstanceOf[Signal[?]]
 
-  private[this] var maybeCurrentEventStreamTry: js.UndefOr[Try[EventStream[O]]] = js.undefined
+  private var maybeCurrentEventStreamTry: js.UndefOr[Try[EventStream[O]]] = js.undefined
 
-  private[this] var maybeNextEventStreamTry: js.UndefOr[Try[EventStream[O]]] = js.undefined
+  private var maybeNextEventStreamTry: js.UndefOr[Try[EventStream[O]]] = js.undefined
 
   // @TODO[Elegance] Maybe we should abstract away this kind of internal observer
-  private[this] val internalEventObserver: InternalObserver[O] = InternalObserver[O](
+  private val internalEventObserver: InternalObserver[O] = InternalObserver[O](
     onNext = (nextEvent, _) => {
       // println(s"> init trx from SwitchEventStream.onValue(${nextEvent})")
       Transaction(fireValue(nextEvent, _))
@@ -70,7 +70,7 @@ class SwitchStream[I, O](
     }
   }
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     parent.addInternalObserver(this, shouldCallMaybeWillStart = false)
 
     if (parentIsSignal) {
@@ -90,7 +90,7 @@ class SwitchStream[I, O](
     super.onStart()
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     parent.removeInternalObserver(observer = this)
     removeInternalObserverFromCurrentEventStream()
     super.onStop()

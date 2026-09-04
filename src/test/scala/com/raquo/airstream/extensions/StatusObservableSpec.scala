@@ -19,7 +19,7 @@ class StatusObservableSpec extends UnitSpec {
 
     val bus = new EventBus[Int]
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     bus
       .stream
       .flatMapWithStatus(v => EventStream.fromSeq(v :: v + 1 :: Nil).map(_ * 10))
@@ -112,7 +112,7 @@ class StatusObservableSpec extends UnitSpec {
 
     val _var = Var(10)
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     _var
       .signal
       .flatMapWithStatus(v => EventStream.fromSeq(v :: v + 1 :: Nil).map(_ * 10))

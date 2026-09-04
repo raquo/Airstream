@@ -17,11 +17,11 @@ class SwitchSignalStream[A](
 
   override protected val topoRank: Int = 1
 
-  private[this] var maybeCurrentSignalTry: js.UndefOr[Try[Signal[A]]] = js.undefined
+  private var maybeCurrentSignalTry: js.UndefOr[Try[Signal[A]]] = js.undefined
 
-  private[this] var lastSeenSignalUpdateId: Int = 0
+  private var lastSeenSignalUpdateId: Int = 0
 
-  private[this] val internalEventObserver: InternalObserver[A] = InternalObserver.fromTry[A](
+  private val internalEventObserver: InternalObserver[A] = InternalObserver.fromTry[A](
     onTry = (nextTry, _) => {
       // println(s"> init trx from SwitchSignalStream.onValue($nextTry)")
       Transaction { trx =>
@@ -96,7 +96,7 @@ class SwitchSignalStream[A](
     }
   }
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     super.onStart()
     parent.addInternalObserver(this, shouldCallMaybeWillStart = false)
     maybeCurrentSignalTry.foreach(_.foreach { currentSignal =>
@@ -114,7 +114,7 @@ class SwitchSignalStream[A](
     })
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     removeInternalObserverFromCurrentSignal()
     parent.removeInternalObserver(observer = this)
     super.onStop()

@@ -7,7 +7,7 @@ import scala.scalajs.js
 /** Tracks the status of input and output of operator(stream). See [[Status]]. */
 object AsyncStatusObservable {
 
-  def apply[A, B, Self[+_] <: Observable[_]](
+  def apply[A, B, Self[+_] <: Observable[?]](
     parent: BaseObservable[Self, A],
     operator: Self[A] => EventStream[B]
   ): Self[Status[A, B]] = {

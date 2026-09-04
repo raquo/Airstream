@@ -28,7 +28,7 @@ import scala.util.Try
   *                      - After parent stops containing an Input for this Key, we forget we ever called project for this key
   */
 class SplitSignal[M[_], Input, Output, Key](
-  override protected[this] val parent: Signal[M[Input]],
+  override protected val parent: Signal[M[Input]],
   key: Input => Key,
   distinctOp: DistinctOp[Input],
   project: KeyedStrictSignal[Key, Input] => Output,
@@ -50,7 +50,7 @@ class SplitSignal[M[_], Input, Output, Key](
   //  - However, don't bother until we can benchmark how much time we spend
   //    in memoization, and how much we'll gain from switching to JS Maps.
   /** key -> (inputValue, inputSignal, outputValue, lastParentUpdateId) */
-  private[this] val memoized: mutable.Map[Key, (Input, Signal[Input], Output, Int)] = mutable.Map.empty
+  private val memoized: mutable.Map[Key, (Input, Signal[Input], Output, Int)] = mutable.Map.empty
 
   override protected def onTry(nextParentValue: Try[M[Input]], transaction: Transaction): Unit = {
     super.onTry(nextParentValue, transaction)
@@ -60,7 +60,7 @@ class SplitSignal[M[_], Input, Output, Key](
     )
   }
 
-  private[this] val sharedDelayedParent = new SyncDelayStream(parent, after = this)
+  private val sharedDelayedParent = new SyncDelayStream(parent, after = this)
 
   // We add this empty observer to every child signal to make sure that they run even
   // if the user has not subscribed to them. This is important because we expose .now()
@@ -72,11 +72,11 @@ class SplitSignal[M[_], Input, Output, Key](
   // (Previously, I removed this mechanism some time between 18.0.0-M1 and 18.0.0-M2
   //  because there was no test for this behaviour in Airstream, only in Laminar,
   //  I've fixed that now.)
-  private[this] val strictnessObserver = new InternalTryObserver[Input] {
+  private val strictnessObserver = new InternalTryObserver[Input] {
     override protected def onTry(nextValue: Try[Input], transaction: Transaction): Unit = ()
   }
 
-  private[this] def memoizedProject(nextInputs: M[Input]): M[Output] = {
+  private def memoizedProject(nextInputs: M[Input]): M[Output] = {
     // Any keys not in this set by the end of this function will be removed from `memoized` map
     // This ensures that previously memoized values are forgotten once the source observables stops emitting their inputs
     val nextKeys = mutable.HashSet.empty[Key] // HashSet has desirable performance tradeoffs
@@ -200,7 +200,7 @@ class SplitSignal[M[_], Input, Output, Key](
     nextOutputs
   }
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     parent.tryNow().foreach { inputs =>
       // splittable.foreach has predictable order that users expect (unlike memoized.keys.foreach)
       splittable.foreach(inputs, (input: Input) => {
@@ -220,7 +220,7 @@ class SplitSignal[M[_], Input, Output, Key](
     super.onStart()
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     // memoized.keys has no defined order, so we don't want to
     // use it for starting subscriptions, but for stopping them,
     // seems fine.

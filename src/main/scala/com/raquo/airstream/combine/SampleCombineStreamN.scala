@@ -25,11 +25,11 @@ class SampleCombineStreamN[A, Out](
 
   override protected val topoRank: Int = Protected.maxTopoRank(samplingStream, sampledSignals) + 1
 
-  private[this] var maybeLastSamplingValue: js.UndefOr[Try[A]] = js.undefined
+  private var maybeLastSamplingValue: js.UndefOr[Try[A]] = js.undefined
 
-  override protected[this] def inputsReady: Boolean = maybeLastSamplingValue.nonEmpty
+  override protected def inputsReady: Boolean = maybeLastSamplingValue.nonEmpty
 
-  override protected[this] val parents: JsArray[Observable[A]] = {
+  override protected val parents: JsArray[Observable[A]] = {
     val arr = JsArray[Observable[A]](samplingStream)
     sampledSignals.forEach { sampledSignal =>
       arr.push(sampledSignal)
@@ -37,8 +37,8 @@ class SampleCombineStreamN[A, Out](
     arr
   }
 
-  override protected[this] val parentObservers: JsArray[InternalParentObserver[_]] = {
-    val arr = JsArray[InternalParentObserver[_]](
+  override protected val parentObservers: JsArray[InternalParentObserver[?]] = {
+    val arr = JsArray[InternalParentObserver[?]](
       InternalParentObserver.fromTry[A](
         samplingStream,
         (nextSamplingValue, trx) => {
@@ -57,7 +57,7 @@ class SampleCombineStreamN[A, Out](
     arr
   }
 
-  override protected[this] def combinedValue: Try[Out] = {
+  override protected def combinedValue: Try[Out] = {
     val values = JsArray(maybeLastSamplingValue.get)
     sampledSignals.forEach { sampledSignal =>
       values.push(sampledSignal.tryNow())

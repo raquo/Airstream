@@ -209,7 +209,7 @@ trait DebugOps[+Self[+_] <: Named, +A] {
     )
   }
 
-  protected[this] def log(
+  protected def log(
     action: String,
     value: Option[Any],
     useJsLogger: Boolean

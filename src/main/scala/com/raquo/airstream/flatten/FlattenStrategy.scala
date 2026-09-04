@@ -8,9 +8,9 @@ import scala.annotation.implicitNotFound
 
 /** Specifies how to flatten observables of observables. */
 trait FlattenStrategy[
-  -Outer[+_] <: Observable[_],
+  -Outer[+_] <: Observable[?],
   -Inner[_],
-  +Output[+_] <: Observable[_]
+  +Output[+_] <: Observable[?]
 ] {
   /** Must not throw */
   def flatten[A](parent: Outer[Inner[A]]): Output[A]
@@ -18,16 +18,16 @@ trait FlattenStrategy[
 
 /** Flatten strategies with semantics of mirroring the latest emitted observable. */
 trait SwitchingStrategy[
-  -Outer[+_] <: Observable[_],
+  -Outer[+_] <: Observable[?],
   -Inner[_],
-  +Output[+_] <: Observable[_]
+  +Output[+_] <: Observable[?]
 ] extends FlattenStrategy[Outer, Inner, Output]
 
 /** Flatten strategies with semantics of merging all of the emitted observables. */
 trait MergingStrategy[
-  -Outer[+_] <: Observable[_],
+  -Outer[+_] <: Observable[?],
   -Inner[_],
-  +Output[+_] <: Observable[_]
+  +Output[+_] <: Observable[?]
 ] extends FlattenStrategy[Outer, Inner, Output]
 
 // format: on

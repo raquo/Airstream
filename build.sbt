@@ -43,10 +43,43 @@ scalacOptions ~= { options: Seq[String] =>
 
 scalacOptions += pointScalaJsSourceMapsToGithub("raquo/Airstream").value
 
+// Silence Scala 3 migration warnings for constructs that we intentionally keep
+// because the sources cross-compile to Scala 2.13, which does not support the
+// suggested Scala 3 replacements:
+//  - `x: _*` vararg splices (2.13 has no `x*` splice syntax)
+//  - `with` as a type operator (2.13 has no `&` intersection types)
+//  - passing implicit arguments positionally (2.13 has no `using`)
+//  - trailing ` _` eta-expansion (kept to avoid a Scala.js eta-expansion warning
+//    about js.FunctionN not being @FunctionalInterface)
+scalacOptions ++= {
+  if (scalaVersion.value.startsWith("3"))
+    Seq(
+      "-Wconf:msg=vararg splices:s",
+      "-Wconf:msg=with as a type operator:s",
+      "-Wconf:msg=Implicit parameters should be provided with a:s",
+      "-Wconf:msg=for eta-expansion is unnecessary:s"
+    )
+  else
+    Nil
+}
+
 (Test / scalacOptions) ~= { options: Seq[String] =>
   options.filterNot { o =>
     o.startsWith("-Ywarn-unused") || o.startsWith("-Wunused")
   }
+}
+
+// Silence Scala 3 migration/lint warnings that are only noise in the test sources
+// (and that we don't migrate there, to avoid churn and keep 2.13 cross-compilation):
+//  - ScalaTest matchers used infix, e.g. `x shouldBe y` (would require backticking
+//    every assertion; the matchers are not declared `infix`)
+(Test / scalacOptions) ++= {
+  if (scalaVersion.value.startsWith("3"))
+    Seq(
+      "-Wconf:msg=is not declared infix:s",
+    )
+  else
+    Nil
 }
 
 // (Compile / scalacOptions) ~= (_.filterNot(Set(

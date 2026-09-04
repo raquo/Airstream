@@ -7,7 +7,7 @@ import scala.util.Try
 
 /** Emits only values that are distinct from the last emitted value, according to isSame function */
 class DistinctSignal[A](
-  override protected[this] val parent: Signal[A],
+  override protected val parent: Signal[A],
   isSame: (Try[A], Try[A]) => Boolean,
   resetOnStop: Boolean
 ) extends SingleParentSignal[A, A] {

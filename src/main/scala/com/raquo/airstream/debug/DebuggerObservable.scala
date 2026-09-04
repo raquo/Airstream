@@ -11,7 +11,7 @@ trait DebuggerObservable[A] extends InternalTryObserver[A] {
 
   protected val debugger: Debugger[A]
 
-  protected[this] def debugFireTry(nextValue: Try[A]): Unit = {
+  protected def debugFireTry(nextValue: Try[A]): Unit = {
     try {
       debugger.onFire(nextValue)
     } catch {
@@ -21,7 +21,7 @@ trait DebuggerObservable[A] extends InternalTryObserver[A] {
     }
   }
 
-  protected[this] def debugOnStart(): Unit = {
+  protected def debugOnStart(): Unit = {
     try {
       debugger.onStart()
     } catch {
@@ -29,7 +29,7 @@ trait DebuggerObservable[A] extends InternalTryObserver[A] {
     }
   }
 
-  protected[this] def debugOnStop(): Unit = {
+  protected def debugOnStop(): Unit = {
     try {
       debugger.onStop()
     } catch {

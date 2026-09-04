@@ -4,7 +4,7 @@ import com.raquo.airstream.core.{BaseObservable, Observable}
 import com.raquo.airstream.util.IdWrap
 
 /** See also: [[SplittableOneStream]] for additional stream-specific operators */
-class SplittableOneObservable[Self[+_] <: Observable[_], Input](
+class SplittableOneObservable[Self[+_] <: Observable[?], Input](
   private val observable: BaseObservable[Self, Input]
 ) extends AnyVal {
 

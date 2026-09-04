@@ -21,7 +21,7 @@ class MergeStream[A](
   parentStreams: JsArray[EventStream[A]],
 ) extends WritableStream[A] with SyncObservable[A] with MultiParentStream[A, A] {
 
-  override protected[this] val parents: JsArray[Observable[A]] = {
+  override protected val parents: JsArray[Observable[A]] = {
     // This cast is safe as long as we don't put signals into this array
     parentStreams.asInstanceOf[JsArray[Observable[A]]]
   }
@@ -30,13 +30,13 @@ class MergeStream[A](
 
   override protected val topoRank: Int = Protected.maxTopoRank(parents) + 1
 
-  private[this] var lastFiredInTrx: js.UndefOr[Transaction] = js.undefined
+  private var lastFiredInTrx: js.UndefOr[Transaction] = js.undefined
 
   /** Priority by topoRank first, then by order of parent in `parents` (by default as of v18). */
-  private[this] val pendingParentValues: JsPriorityQueue[ObservationExt[A, Int]] =
+  private val pendingParentValues: JsPriorityQueue[ObservationExt[A, Int]] =
     new JsPriorityQueue(_.extra) // see makeInternalObserver below for `extra` value.
 
-  private[this] val parentObservers: JsArray[InternalParentObserver[A]] = JsArray()
+  private val parentObservers: JsArray[InternalParentObserver[A]] = JsArray()
 
   parents.forEach(parent => parentObservers.push(makeInternalObserver(parent)))
 
@@ -72,12 +72,12 @@ class MergeStream[A](
     }
   }
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     parentObservers.forEach(_.addToParent(shouldCallMaybeWillStart = false))
     super.onStart()
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     parentObservers.forEach(_.removeFromParent())
     lastFiredInTrx = js.undefined
     super.onStop()

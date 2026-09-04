@@ -8,7 +8,7 @@ import scala.util.Try
 
 /** See [[DebugOps]] and [[DebugSignalOps]] for user-facing debug methods */
 class DebuggerSignal[A](
-  override protected[this] val parent: Signal[A],
+  override protected val parent: Signal[A],
   override protected val debugger: Debugger[A]
 )
 extends SingleParentSignal[A, A]
@@ -30,18 +30,18 @@ with DebuggerObservable[A] {
     parentValue
   }
 
-  override protected[this] def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
+  override protected def fireTry(nextValue: Try[A], transaction: Transaction): Unit = {
     debugFireTry(nextValue)
     super.fireTry(nextValue, transaction)
   }
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     super.onStart()
     debugOnStart()
     debugFireTry(tryNow())
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     super.onStop()
     debugOnStop()
   }

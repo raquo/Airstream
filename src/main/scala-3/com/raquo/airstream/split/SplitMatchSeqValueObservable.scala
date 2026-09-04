@@ -6,12 +6,12 @@ import com.raquo.airstream.split.MacrosUtilities.{CaseAny, HandlerAny, MatchValu
 
 import scala.annotation.compileTimeOnly
 
-final case class SplitMatchSeqValueObservable[Self[+_] <: Observable[_], I, K, O, CC[_], V] private (private val underlying: Unit) extends AnyVal
+final case class SplitMatchSeqValueObservable[Self[+_] <: Observable[?], I, K, O, CC[_], V] private (private val underlying: Unit) extends AnyVal
 
 object SplitMatchSeqValueObservable {
 
   @compileTimeOnly("`splitMatchSeq` without `toSignal` is illegal")
-  def build[Self[+_] <: Observable[_], I, K, O, CC[_], V](
+  def build[Self[+_] <: Observable[?], I, K, O, CC[_], V](
     keyFn: Function1[I, K],
     distinctOp: DistinctOp[I],
     duplicateKeysConfig: DuplicateKeysConfig,

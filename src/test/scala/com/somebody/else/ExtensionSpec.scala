@@ -18,7 +18,7 @@ class ExtensionSpec extends UnitSpec {
 object ExtensionSpec {
 
   class ExtSignal[I, O](
-    override protected[this] val parent: Signal[I],
+    override protected val parent: Signal[I],
     project: I => O
   ) extends SingleParentSignal[I, O] {
 

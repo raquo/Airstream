@@ -21,7 +21,7 @@ import scala.util.Try
   * @param recover Note: guarded against exceptions
   */
 class MapStream[I, O](
-  override protected[this] val parent: Observable[I],
+  override protected val parent: Observable[I],
   project: I => O,
   recover: Option[PartialFunction[Throwable, Option[O]]]
 ) extends SingleParentStream[I, O] with InternalNextErrorObserver[I] {

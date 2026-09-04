@@ -22,37 +22,37 @@ extends ObservableMacroImplicits
 with ObservableLowPriorityImplicits {
 
   /** Provides methods on Observable: splitSeq, splitSeqByIndex */
-  implicit def toSplittableSeqObservable[Self[+_] <: Observable[_], M[_], Input](observable: BaseObservable[Self, M[Input]]): SplittableSeqObservable[Self, M, Input] = new SplittableSeqObservable(observable)
+  implicit def toSplittableSeqObservable[Self[+_] <: Observable[?], M[_], Input](observable: BaseObservable[Self, M[Input]]): SplittableSeqObservable[Self, M, Input] = new SplittableSeqObservable(observable)
 
   /** Provides methods on Observable: splitSomeSeq, splitSomeSeqByIndex */
-  implicit def toSplittableSeqOptionObservable[Self[+_] <: Observable[_], M[_], Input](observable: BaseObservable[Self, Option[M[Input]]]): SplittableSeqOptionObservable[Self, M, Input] = new SplittableSeqOptionObservable(observable)
+  implicit def toSplittableSeqOptionObservable[Self[+_] <: Observable[?], M[_], Input](observable: BaseObservable[Self, Option[M[Input]]]): SplittableSeqOptionObservable[Self, M, Input] = new SplittableSeqOptionObservable(observable)
 
   /** Provides methods on Observable: splitOne */
-  implicit def toSplittableOneObservable[Self[+_] <: Observable[_], Input](observable: BaseObservable[Self, Input]): SplittableOneObservable[Self, Input] = new SplittableOneObservable(observable)
+  implicit def toSplittableOneObservable[Self[+_] <: Observable[?], Input](observable: BaseObservable[Self, Input]): SplittableOneObservable[Self, Input] = new SplittableOneObservable(observable)
 
   /** Provides methods on observable: flip, foldBoolean, splitBoolean */
-  implicit def toBooleanObservable[Self[+_] <: Observable[_]](observable: BaseObservable[Self, Boolean]): BooleanObservable[Self] = new BooleanObservable(observable)
+  implicit def toBooleanObservable[Self[+_] <: Observable[?]](observable: BaseObservable[Self, Boolean]): BooleanObservable[Self] = new BooleanObservable(observable)
 
   /** Provides methods on observable: mapSome, mapFilterSome, foldOption, mapToRight, mapToLeft, splitOption */
-  implicit def toOptionObservable[A, Self[+_] <: Observable[_]](observable: BaseObservable[Self, Option[A]]): OptionObservable[A, Self] = new OptionObservable(observable)
+  implicit def toOptionObservable[A, Self[+_] <: Observable[?]](observable: BaseObservable[Self, Option[A]]): OptionObservable[A, Self] = new OptionObservable(observable)
 
   /** Provides methods on observable: mapRight, mapLeft, foldEither, mapToOption, mapLeftToOption, splitEither */
-  implicit def toEitherObservable[A, B, Self[+_] <: Observable[_]](observable: BaseObservable[Self, Either[A, B]]): EitherObservable[A, B, Self] = new EitherObservable(observable)
+  implicit def toEitherObservable[A, B, Self[+_] <: Observable[?]](observable: BaseObservable[Self, Either[A, B]]): EitherObservable[A, B, Self] = new EitherObservable(observable)
 
   /** Provides methods on observable: mapSuccess, mapFailure, foldTry, mapToEither, recoverFailure, throwFailure, splitTry */
-  implicit def toTryObservable[A, Self[+_] <: Observable[_]](observable: BaseObservable[Self, Try[A]]): TryObservable[A, Self] = new TryObservable(observable)
+  implicit def toTryObservable[A, Self[+_] <: Observable[?]](observable: BaseObservable[Self, Try[A]]): TryObservable[A, Self] = new TryObservable(observable)
 
   /** Provides methods on observable: mapOutput, mapInput, mapResolved, mapPending, foldStatus, splitStatus */
-  implicit def toStatusObservable[In, Out, Self[+_] <: Observable[_]](observable: BaseObservable[Self, Status[In, Out]]): StatusObservable[In, Out, Self] = new StatusObservable(observable)
+  implicit def toStatusObservable[In, Out, Self[+_] <: Observable[?]](observable: BaseObservable[Self, Status[In, Out]]): StatusObservable[In, Out, Self] = new StatusObservable(observable)
 
   /** Provides methods on observable: mapSeq, seqOrElse */
-  implicit def toSeqObservable[A, Self[+_] <: Observable[_], M[_]](observable: BaseObservable[Self, M[A]]): SeqObservable[A, Self, M] = new SeqObservable(observable)
+  implicit def toSeqObservable[A, Self[+_] <: Observable[?], M[_]](observable: BaseObservable[Self, M[A]]): SeqObservable[A, Self, M] = new SeqObservable(observable)
 
   /** Provides methods on observable: mapSeqOpt, seqOptOrElse */
-  implicit def toSeqOptionObservable[A, Self[+_] <: Observable[_], M[_]](observable: BaseObservable[Self, Option[M[A]]]): SeqOptionObservable[A, Self, M] = new SeqOptionObservable(observable)
+  implicit def toSeqOptionObservable[A, Self[+_] <: Observable[?], M[_]](observable: BaseObservable[Self, Option[M[A]]]): SeqOptionObservable[A, Self, M] = new SeqOptionObservable(observable)
 
   /** Provides methods on observable: flattenSwitch, flattenMerge, flattenCustom, flatten (deprecated) */
-  implicit def toMetaObservable[A, Outer[+_] <: Observable[_], Inner[_]](observable: Outer[Inner[A]]): MetaObservable[A, Outer, Inner] = new MetaObservable(observable)
+  implicit def toMetaObservable[A, Outer[+_] <: Observable[?], Inner[_]](observable: Outer[Inner[A]]): MetaObservable[A, Outer, Inner] = new MetaObservable(observable)
 
   implicit val switchStreamStrategy: SwitchingStrategy[Observable, EventStream, EventStream] = SwitchStreamStrategy
 

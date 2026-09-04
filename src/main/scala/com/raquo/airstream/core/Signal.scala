@@ -33,7 +33,7 @@ with DebugSignalOps[Signal, A] // debug* (debugLogEvents, debugSpyAll, etc.)
 with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
 {
 
-  protected[this] var _lastUpdateId: Int = 0
+  protected var _lastUpdateId: Int = 0
 
   protected[airstream] def lastUpdateId: Int = _lastUpdateId
 
@@ -194,7 +194,7 @@ with DynamicImportSignalOps[A] // dynamicImport (Scala 3 only)
     * initialValue because Signal needs to know when its current value has
     * changed.
     */
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     // println(s"$this onStart")
     tryNow() // trigger setCurrentValue if we didn't initialize this before
     super.onStart()

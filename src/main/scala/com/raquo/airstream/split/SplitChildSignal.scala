@@ -38,9 +38,9 @@ import scala.util.{Success, Try}
   * @param getMemoizedValue get the latest memoized value and its corresponding parentLastUpdateId.
   */
 private[airstream] class SplitChildSignal[K, M[_], A](
-  override protected[this] val parent: SyncDelayStream[M[A]],
+  override protected val parent: SyncDelayStream[M[A]],
   override val key: K,
-  private[this] var initialValue: Option[(A, Int)],
+  private var initialValue: Option[(A, Int)],
   getMemoizedValue: () => Option[(A, Int)]
 )
 extends KeyedStrictSignal[K, A]

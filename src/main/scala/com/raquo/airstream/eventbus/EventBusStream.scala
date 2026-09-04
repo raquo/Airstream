@@ -73,12 +73,12 @@ class EventBusStream[A] private[eventbus] (
     sourceStreams.forEach(Protected.maybeWillStart(_))
   }
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     sourceStreams.forEach(_.addInternalObserver(this, shouldCallMaybeWillStart = false))
     super.onStart()
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     // dom.console.log("EventBusStream STOPPED!", this.toString)
     sourceStreams.forEach(_.removeInternalObserver(observer = this))
     super.onStop()

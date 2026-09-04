@@ -12,7 +12,7 @@ import scala.util.Try
   * @param fn Note: guarded against exceptions
   */
 class CollectStream[A, B](
-  override protected[this] val parent: EventStream[A],
+  override protected val parent: EventStream[A],
   fn: A => Option[B],
 ) extends SingleParentStream[A, B] with InternalNextErrorObserver[A] {
 

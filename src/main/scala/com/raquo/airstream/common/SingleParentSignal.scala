@@ -12,12 +12,12 @@ trait SingleParentSignal[I, O]
 extends WritableSignal[O]
 with InternalTryObserver[I] {
 
-  protected[this] val parent: Observable[I]
+  protected val parent: Observable[I]
 
   // This needs to be lazy, otherwise it risks evaluating with an uninitialized `parent`
   // if another trait extends this trait (overriding `val parent` in subclass param seems to be fine)
-  protected[this] lazy val parentAsSignalOpt: Option[Signal[I]] = {
-    if (parent.isInstanceOf[Signal[_]]) {
+  protected lazy val parentAsSignalOpt: Option[Signal[I]] = {
+    if (parent.isInstanceOf[Signal[?]]) {
       Some(parent.asInstanceOf[Signal[I]])
     } else {
       None
@@ -30,7 +30,7 @@ with InternalTryObserver[I] {
   //       prudent. If using 0, the initial onWillStart may not detect the
   //       "change" (from no value to parent signal's initial value), and the
   //       signal's value would only be updated in tryNow().
-  protected[this] var _parentLastUpdateId: Int = -1
+  protected var _parentLastUpdateId: Int = -1
 
   /** Note: this is overridden in:
     *  - [[SplitChildSignal]] because its parent is a special timing stream, not the real parent
@@ -40,7 +40,7 @@ with InternalTryObserver[I] {
     // dom.console.log(s"${this} > onWillStart (SPS)")
     Protected.maybeWillStart(parent)
     if (peekWhetherParentHasUpdated().contains(true)) {
-      val newParentLastUpdateId = Protected.lastUpdateId(parent.asInstanceOf[Signal[_]])
+      val newParentLastUpdateId = Protected.lastUpdateId(parent.asInstanceOf[Signal[?]])
       updateCurrentValueFromParent(
         currentValueFromParent(),
         newParentLastUpdateId
@@ -80,17 +80,17 @@ with InternalTryObserver[I] {
     */
   override protected def onTry(nextParentValue: Try[I], transaction: Transaction): Unit = {
     parentAsSignalOpt.foreach { _ =>
-      _parentLastUpdateId = Protected.lastUpdateId(parent.asInstanceOf[Signal[_]])
+      _parentLastUpdateId = Protected.lastUpdateId(parent.asInstanceOf[Signal[?]])
     }
   }
 
-  override protected[this] def onStart(): Unit = {
+  override protected def onStart(): Unit = {
     // println(s"${this} > onStart")
     parent.addInternalObserver(this, shouldCallMaybeWillStart = false)
     super.onStart()
   }
 
-  override protected[this] def onStop(): Unit = {
+  override protected def onStop(): Unit = {
     parent.removeInternalObserver(observer = this)
     super.onStop()
   }

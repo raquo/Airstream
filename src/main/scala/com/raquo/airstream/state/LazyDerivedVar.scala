@@ -25,7 +25,7 @@ class LazyDerivedVar[ParentV, ThisV](
   displayNameSuffix: String
 ) extends Var[ThisV] {
 
-  override private[state] def underlyingVar: SourceVar[_] = parent.underlyingVar
+  override private[state] def underlyingVar: SourceVar[?] = parent.underlyingVar
 
   // #Note this getCurrentValue implementation is different from SourceVar
   //  - SourceVar's getCurrentValue looks at an internal currentValue variable

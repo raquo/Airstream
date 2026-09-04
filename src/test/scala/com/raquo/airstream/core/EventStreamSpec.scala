@@ -18,7 +18,7 @@ class EventStreamSpec extends UnitSpec {
     val range = 1 to 3
     val stream = EventStream.fromSeq(range)
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     val sub1 = stream.foreach(newValue => effects += Effect("obs1", newValue))
 
     effects.toList shouldBe range.map(i => Effect("obs1", i))
@@ -39,7 +39,7 @@ class EventStreamSpec extends UnitSpec {
     val range = 1 to 3
     val signal = EventStream.fromSeq(range).startWith(0)
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     val sub1 = signal.foreach(newValue => effects += Effect("obs1", newValue))
 
     effects.toList shouldBe (0 +: range).map(i => Effect("obs1", i))
@@ -61,7 +61,7 @@ class EventStreamSpec extends UnitSpec {
     val range = 0 to 10
     val stream = EventStream.fromSeq(range, emitOnce = true)
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     val subscription0 = stream.filter(f).foreach(newValue => effects += Effect("obs0", newValue))
 
     subscription0.kill()
@@ -76,7 +76,7 @@ class EventStreamSpec extends UnitSpec {
     val range = 0 to 10
     val stream = EventStream.fromSeq(range, emitOnce = true)
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     val subscription0 = stream.filterNot(f).foreach(newValue => effects += Effect("obs0", newValue))
 
     subscription0.kill()
@@ -89,7 +89,7 @@ class EventStreamSpec extends UnitSpec {
 
     val bus = new EventBus[Either[String, Int]]
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     bus
       .events
       .collect { case Right(i) => i }
@@ -142,7 +142,7 @@ class EventStreamSpec extends UnitSpec {
 
     val bus = new EventBus[List[Int]]
 
-    val effects = mutable.Buffer[Effect[_]]()
+    val effects = mutable.Buffer[Effect[?]]()
     bus
       .events
       .collectOpt(NonEmptyList.from(_))

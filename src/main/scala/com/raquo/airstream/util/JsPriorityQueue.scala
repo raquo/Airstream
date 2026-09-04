@@ -4,7 +4,7 @@ import com.raquo.ew.JsArray
 
 class JsPriorityQueue[A](getRank: A => Int) {
 
-  private[this] val queue: JsArray[A] = JsArray()
+  private val queue: JsArray[A] = JsArray()
 
   def enqueue(item: A): Unit = {
     val itemRank = getRank(item)
