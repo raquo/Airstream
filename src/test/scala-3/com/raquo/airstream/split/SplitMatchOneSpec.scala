@@ -1,6 +1,7 @@
 package com.raquo.airstream.split
 
 import com.raquo.airstream.UnitSpec
+import com.raquo.airstream.core.{EventStream, Signal}
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.state.Var
@@ -29,35 +30,35 @@ class SplitMatchOneSpec extends UnitSpec {
     val owner = new TestableOwner
 
     val signal = myVar.signal
-      .splitMatchOne
-      .handleCase {
-        case Bar(Some(str)) => str
-        case Bar(None) => "null"
-      } { strSignal =>
-        effects += Effect("init-child", s"Bar-${strSignal.now()}")
-        // @Note keep foreach or addObserver here – this is important.
-        //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-        strSignal.foreach { str =>
-          effects += Effect("update-child", s"Bar-$str")
-        }(owner)
+      .splitMatchOne(
+        _.handleCase {
+          case Bar(Some(str)) => str
+          case Bar(None) => "null"
+        } { strSignal =>
+          effects += Effect("init-child", s"Bar-${strSignal.now()}")
+          // @Note keep foreach or addObserver here – this is important.
+          //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
+          strSignal.foreach { str =>
+            effects += Effect("update-child", s"Bar-$str")
+          }(owner)
 
-        Res("Bar")
-      }
-      .handleType[Baz] { bazSignal =>
-        effects += Effect("init-child", s"Baz-${bazSignal.now().ordinal}-${bazSignal.now().toString}")
-        // @Note keep foreach or addObserver here – this is important.
-        //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-        bazSignal.foreach { baz =>
-          effects += Effect("update-child", s"Baz-${baz.ordinal}-${baz.toString}")
-        }(owner)
+          Res("Bar")
+        },
+        _.handleType[Baz] { bazSignal =>
+          effects += Effect("init-child", s"Baz-${bazSignal.now().ordinal}-${bazSignal.now().toString}")
+          // @Note keep foreach or addObserver here – this is important.
+          //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
+          bazSignal.foreach { baz =>
+            effects += Effect("update-child", s"Baz-${baz.ordinal}-${baz.toString}")
+          }(owner)
 
-        Res("Baz")
-      }
-      .handleValue(Tar) {
-        effects += Effect("init-child", s"Tar-${10}")
-        Res("Tar")
-      }
-      .toSignal
+          Res("Baz")
+        },
+        _.handleValue(Tar) {
+          effects += Effect("init-child", s"Tar-${10}")
+          Res("Tar")
+        },
+      )
 
     signal.foreach { result =>
       effects += Effect("result", result.toString)
@@ -156,24 +157,24 @@ class SplitMatchOneSpec extends UnitSpec {
 
     // handleRest makes the match exhaustive, so this must NOT warn about non-exhaustiveness.
     val signal = myVar.signal
-      .splitMatchOne
-      .handleCase { case Bar(Some(str)) => str } { strSignal =>
-        effects += Effect("init-child", s"Bar-${strSignal.now()}")
-        strSignal.foreach { str =>
-          effects += Effect("update-child", s"Bar-$str")
-        }(owner)
+      .splitMatchOne(
+        _.handleCase { case Bar(Some(str)) => str } { strSignal =>
+          effects += Effect("init-child", s"Bar-${strSignal.now()}")
+          strSignal.foreach { str =>
+            effects += Effect("update-child", s"Bar-$str")
+          }(owner)
 
-        Res("Bar")
-      }
-      .handleRest { restSignal =>
-        effects += Effect("init-rest", s"Rest-${restSignal.now()}")
-        restSignal.foreach { foo =>
-          effects += Effect("update-rest", s"Rest-$foo")
-        }(owner)
+          Res("Bar")
+        },
+        _.handleRest { restSignal =>
+          effects += Effect("init-rest", s"Rest-${restSignal.now()}")
+          restSignal.foreach { foo =>
+            effects += Effect("update-rest", s"Rest-$foo")
+          }(owner)
 
-        Res("Rest")
-      }
-      .toSignal
+          Res("Rest")
+        },
+      )
 
     signal.foreach { result =>
       effects += Effect("result", result.toString)
@@ -244,34 +245,35 @@ class SplitMatchOneSpec extends UnitSpec {
     // #TODO[Test] How to confirm exhaustiveness warning without having it printed to the test output?
     // This should warn "match may not be exhaustive" with mising cases, and some idea can also flag it
     val signal = myVar.signal
-      .splitMatchOne
-      .handleCase {
-        case Bar(Some(str)) => str
-      } { strSignal =>
-        effects += Effect("init-child", s"Bar-${strSignal.now()}")
-        // @Note keep foreach or addObserver here – this is important.
-        //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-        strSignal.foreach { str =>
-          effects += Effect("update-child", s"Bar-$str")
-        }(owner)
+      // !!! Yes, this is expected to warn about non-exhaustive match in tests: "It would fail on pattern case: Bar(None), Baz2"
+      .splitMatchOne(
+        _.handleCase {
+          case Bar(Some(str)) => str
+        } { strSignal =>
+          effects += Effect("init-child", s"Bar-${strSignal.now()}")
+          // @Note keep foreach or addObserver here – this is important.
+          //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
+          strSignal.foreach { str =>
+            effects += Effect("update-child", s"Bar-$str")
+          }(owner)
 
-        Res("Bar")
-      }
-      .handleType[Baz.Baz1.type] { bazSignal =>
-        effects += Effect("init-child", s"Baz-${bazSignal.now().ordinal}-${bazSignal.now().toString}")
-        // @Note keep foreach or addObserver here – this is important.
-        //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-        bazSignal.foreach { baz =>
-          effects += Effect("update-child", s"Baz-${baz.ordinal}-${baz.toString}")
-        }(owner)
+          Res("Bar")
+        },
+        _.handleType[Baz.Baz1.type] { bazSignal =>
+          effects += Effect("init-child", s"Baz-${bazSignal.now().ordinal}-${bazSignal.now().toString}")
+          // @Note keep foreach or addObserver here – this is important.
+          //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
+          bazSignal.foreach { baz =>
+            effects += Effect("update-child", s"Baz-${baz.ordinal}-${baz.toString}")
+          }(owner)
 
-        Res("Baz1")
-      }
-      .handleValue(Tar) {
-        effects += Effect("init-child", s"Tar-${10}")
-        Res("Tar")
-      }
-      .toSignal // !!! Yes, this is expected to warn about non-exhaustive match in tests: "It would fail on pattern case: Bar(None), Baz2"
+          Res("Baz1")
+        },
+        _.handleValue(Tar) {
+          effects += Effect("init-child", s"Tar-${10}")
+          Res("Tar")
+        },
+      )
 
     signal.foreach { result =>
       effects += Effect("result", result.toString)
@@ -333,35 +335,35 @@ class SplitMatchOneSpec extends UnitSpec {
     val owner = new TestableOwner
 
     val stream = myEventBus.events
-      .splitMatchOne
-      .handleCase {
-        case Bar(Some(str)) => str
-        case Bar(None) => "null"
-      } { strSignal =>
-        effects += Effect("init-child", s"Bar-${strSignal.now()}")
-        // @Note keep foreach or addObserver here – this is important.
-        //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-        strSignal.foreach { str =>
-          effects += Effect("update-child", s"Bar-$str")
-        }(owner)
+      .splitMatchOne(
+        _.handleCase {
+          case Bar(Some(str)) => str
+          case Bar(None) => "null"
+        } { strSignal =>
+          effects += Effect("init-child", s"Bar-${strSignal.now()}")
+          // @Note keep foreach or addObserver here – this is important.
+          //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
+          strSignal.foreach { str =>
+            effects += Effect("update-child", s"Bar-$str")
+          }(owner)
 
-        Res("Bar")
-      }
-      .handleType[Baz] { bazSignal =>
-        effects += Effect("init-child", s"Baz-${bazSignal.now().ordinal}-${bazSignal.now().toString}")
-        // @Note keep foreach or addObserver here – this is important.
-        //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-        bazSignal.foreach { baz =>
-          effects += Effect("update-child", s"Baz-${baz.ordinal}-${baz.toString}")
-        }(owner)
+          Res("Bar")
+        },
+        _.handleType[Baz] { bazSignal =>
+          effects += Effect("init-child", s"Baz-${bazSignal.now().ordinal}-${bazSignal.now().toString}")
+          // @Note keep foreach or addObserver here – this is important.
+          //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
+          bazSignal.foreach { baz =>
+            effects += Effect("update-child", s"Baz-${baz.ordinal}-${baz.toString}")
+          }(owner)
 
-        Res("Baz")
-      }
-      .handleValue(Tar) {
-        effects += Effect("init-child", s"Tar-${10}")
-        Res("Tar")
-      }
-      .toStream
+          Res("Baz")
+        },
+        _.handleValue(Tar) {
+          effects += Effect("init-child", s"Tar-${10}")
+          Res("Tar")
+        },
+      )
 
     stream.foreach { result =>
       effects += Effect("result", result.toString)
@@ -455,31 +457,31 @@ class SplitMatchOneSpec extends UnitSpec {
     // This should warn "match may not be exhaustive" with mising cases, and some idea can also flag it
     // #Note Compiler only flag the first warning in some case, so it's best to comment out first warning test for this to flag the warning
     val stream = myEventBus.events
-      .splitMatchOne
-      .handleCase {
-        case Bar(None) => "null"
-      } { strSignal =>
-        effects += Effect("init-child", s"Bar-${strSignal.now()}")
-        // @Note keep foreach or addObserver here – this is important.
-        //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-        strSignal.foreach { str =>
-          effects += Effect("update-child", s"Bar-$str")
-        }(owner)
+      .splitMatchOne(
+        _.handleCase {
+          case Bar(None) => "null"
+        } { strSignal =>
+          effects += Effect("init-child", s"Bar-${strSignal.now()}")
+          // @Note keep foreach or addObserver here – this is important.
+          //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
+          strSignal.foreach { str =>
+            effects += Effect("update-child", s"Bar-$str")
+          }(owner)
 
-        Res("Bar")
-      }
-      .handleType[Baz] { bazSignal =>
-        val baz = bazSignal.now()
-        effects += Effect("init-child", s"Baz-${baz.ordinal}-${baz.toString}")
-        // @Note keep foreach or addObserver here – this is important.
-        //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
-        bazSignal.foreach { baz =>
-          effects += Effect("update-child", s"Baz-${baz.ordinal}-${baz.toString}")
-        }(owner)
+          Res("Bar")
+        },
+        _.handleType[Baz] { bazSignal =>
+          val baz = bazSignal.now()
+          effects += Effect("init-child", s"Baz-${baz.ordinal}-${baz.toString}")
+          // @Note keep foreach or addObserver here – this is important.
+          //  It tests that SplitSignal does not cause an infinite loop trying to evaluate its initialValue.
+          bazSignal.foreach { baz =>
+            effects += Effect("update-child", s"Baz-${baz.ordinal}-${baz.toString}")
+          }(owner)
 
-        Res("Baz")
-      }
-      .toStream
+          Res("Baz")
+        },
+      )
 
     stream.foreach { result =>
       effects += Effect("result", result.toString)
@@ -536,116 +538,158 @@ class SplitMatchOneSpec extends UnitSpec {
 
   }
 
+  it("result type: preserves Self and infers O as the LUB of handler result types") {
+    val myVar = Var[Foo](Bar(Some("initial")))
+    val myEventBus = new EventBus[Foo]
+
+    // Homogeneous handlers → O is exactly `Res`. These ascriptions are the actual assertions:
+    // if the macro let O widen to `Any`, `Signal[Res]` / `EventStream[Res]` would not compile
+    // (both type constructors are covariant, so `Signal[Any]` is NOT a `Signal[Res]`).
+    // The clauses are exhaustive over `Foo` (Bar, Baz, Tar), so there is no exhaustiveness warning.
+    val exactSignal: Signal[Res] = myVar.signal
+      .splitMatchOne(
+        _.handleCase {
+          case Bar(Some(str)) => str
+          case Bar(None) => "null"
+        } { _ => Res("Bar") },
+        _.handleType[Baz] { _ => Res("Baz") },
+        _.handleValue(Tar) { Res("Tar") },
+      )
+
+    // Self is preserved: an EventStream source yields `EventStream[O]`, not `Signal[O]`.
+    val exactStream: EventStream[Res] = myEventBus.events
+      .splitMatchOne(
+        _.handleCase {
+          case Bar(Some(str)) => str
+          case Bar(None) => "null"
+        } { _ => Res("Bar") },
+        _.handleType[Baz] { _ => Res("Baz") },
+        _.handleValue(Tar) { Res("Tar") },
+      )
+
+    // Heterogeneous handlers returning different subtypes of `Foo` → O is their LUB, which is
+    // still `<: Foo` (not widened to `Any`). `handleRest` makes the match exhaustive.
+    val lubSignal: Signal[Foo] = myVar.signal
+      .splitMatchOne(
+        _.handleCase { case Bar(Some(str)) => str } { _ => Bar(None) }, // Bar
+        _.handleType[Baz] { _ => Tar }, // Tar.type
+        _.handleValue(Tar) { Baz.Baz1 }, // Baz
+        _.handleRest { _ => Bar(Some("rest")) }, // Bar
+      )
+
+    assert(exactSignal != null && exactStream != null && lubSignal != null)
+  }
+
   it("100 cases can be compiled") {
     val myVar = Var[Foo](Bar(Some("initial")))
     def cond(str: String): Boolean = true // Only purpose is to avoid 100x "unreachable case" warnings
     val signal = myVar.signal
-      .splitMatchOne
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () }
-      .handleCase { case Bar(Some(str)) => str } { strSignal => () }
-      .handleCase { case Bar(None) => "Bar(None)" } { strSignal => () }
-      .handleCase { case Baz.Baz1 => "Baz1" } { strSignal => () }
-      .handleCase { case Baz.Baz2 => "Baz2" } { strSignal => () }
-      .handleCase { case Tar => "Tar" } { strSignal => () }
-      .toSignal
+      .splitMatchOne(
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) if cond(str) => str } { strSignal => () },
+        _.handleCase { case Bar(Some(str)) => str } { strSignal => () },
+        _.handleCase { case Bar(None) => "Bar(None)" } { strSignal => () },
+        _.handleCase { case Baz.Baz1 => "Baz1" } { strSignal => () },
+        _.handleCase { case Baz.Baz2 => "Baz2" } { strSignal => () },
+        _.handleCase { case Tar => "Tar" } { strSignal => () },
+      )
 
     succeed
   }
