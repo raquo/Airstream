@@ -147,6 +147,93 @@ class SplitMatchOneSpec extends UnitSpec {
 
   }
 
+  it("split match signal - handleRest") {
+    val effects = mutable.Buffer[Effect[String]]()
+
+    val myVar = Var[Foo](Bar(Some("initial")))
+
+    val owner = new TestableOwner
+
+    // handleRest makes the match exhaustive, so this must NOT warn about non-exhaustiveness.
+    val signal = myVar.signal
+      .splitMatchOne
+      .handleCase { case Bar(Some(str)) => str } { strSignal =>
+        effects += Effect("init-child", s"Bar-${strSignal.now()}")
+        strSignal.foreach { str =>
+          effects += Effect("update-child", s"Bar-$str")
+        }(owner)
+
+        Res("Bar")
+      }
+      .handleRest { restSignal =>
+        effects += Effect("init-rest", s"Rest-${restSignal.now()}")
+        restSignal.foreach { foo =>
+          effects += Effect("update-rest", s"Rest-$foo")
+        }(owner)
+
+        Res("Rest")
+      }
+      .toSignal
+
+    signal.foreach { result =>
+      effects += Effect("result", result.toString)
+    }(owner)
+
+    effects shouldBe mutable.Buffer(
+      Effect("init-child", "Bar-initial"),
+      Effect("update-child", "Bar-initial"),
+      Effect("result", "Res(Bar)")
+    )
+
+    effects.clear()
+
+    // Bar(None) does not match the handleCase, so it falls through to handleRest.
+
+    myVar.writer.onNext(Bar(None))
+
+    effects shouldBe mutable.Buffer(
+      Effect("init-rest", "Rest-Bar(None)"),
+      Effect("update-rest", "Rest-Bar(None)"),
+      Effect("result", "Res(Rest)")
+    )
+
+    effects.clear()
+
+    // Baz1 also falls through to handleRest – same underlying child, so it only updates.
+
+    myVar.writer.onNext(Baz.Baz1)
+
+    effects shouldBe mutable.Buffer(
+      Effect("result", "Res(Rest)"),
+      Effect("update-rest", "Rest-Baz1")
+    )
+
+    effects.clear()
+
+    myVar.writer.onNext(Tar)
+
+    effects shouldBe mutable.Buffer(
+      Effect("result", "Res(Rest)"),
+      Effect("update-rest", "Rest-Tar")
+    )
+
+    effects.clear()
+
+    // Switching back to a matched case creates a fresh child.
+
+    myVar.writer.onNext(Bar(Some("hello")))
+
+    effects shouldBe mutable.Buffer(
+      Effect("init-child", "Bar-hello"),
+      Effect("update-child", "Bar-hello"),
+      Effect("result", "Res(Bar)"),
+      Effect("update-child", "Bar-hello")
+    )
+
+    effects.clear()
+
+  }
+
   it("split match signal - with warning in compiler") {
     val effects = mutable.Buffer[Effect[String]]()
 

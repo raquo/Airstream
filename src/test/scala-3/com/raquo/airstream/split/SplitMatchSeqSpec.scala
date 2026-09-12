@@ -200,6 +200,74 @@ class SplitMatchSeqSpec extends UnitSpec with BeforeAndAfter {
     }
   }
 
+  it("split match seq - handleRest") {
+    withOrWithoutDuplicateKeyWarnings {
+      val effects = mutable.Buffer[Effect[String]]()
+
+      val bus = new EventBus[List[Foo]]
+
+      val owner = new TestableOwner
+
+      // handleRest makes the match exhaustive, so this must NOT warn about non-exhaustiveness.
+      val stream = bus.stream
+        .splitMatchSeq(_.id)
+        .handleCase { case FooE(Some(num)) => num } { numSignal =>
+          val initialNum = numSignal.now()
+          effects += Effect("init-child", s"FooE($initialNum)")
+          numSignal.foreach { num =>
+            effects += Effect("update-child", s"FooE($num)")
+          }(owner)
+          Bar(s"E$initialNum")
+        }
+        .handleRest { fooSignal =>
+          val initialId = fooSignal.now().id
+          effects += Effect("init-rest", s"Rest($initialId)")
+          fooSignal.foreach { foo =>
+            effects += Effect("update-rest", s"Rest(${foo.id})")
+          }(owner)
+          Bar(s"R$initialId")
+        }
+        .toSignal
+
+      stream.foreach { result =>
+        effects += Effect("result", result.toString)
+      }(owner)
+
+      effects shouldBe mutable.Buffer(
+        Effect("result", "List()")
+      )
+
+      effects.clear()
+
+      // -- FooE1 matches the handleCase; FooC falls through to handleRest.
+
+      bus.writer.onNext(FooE.FooE1 :: FooC("a", 1) :: Nil)
+
+      effects shouldBe mutable.Buffer(
+        Effect("init-child", "FooE(0)"),
+        Effect("update-child", "FooE(0)"),
+        Effect("init-rest", "Rest(a)"),
+        Effect("update-rest", "Rest(a)"),
+        Effect("result", "List(Bar(E0), Bar(Ra))")
+      )
+
+      effects.clear()
+
+      // -- FooE3 (numOpt = None) and FooO both fall through to handleRest.
+
+      bus.writer.onNext(FooC("a", 2) :: FooE.FooE3 :: FooO :: Nil)
+
+      effects shouldBe mutable.Buffer(
+        Effect("init-rest", "Rest(int_-1)"),
+        Effect("update-rest", "Rest(int_-1)"),
+        Effect("init-rest", "Rest(object)"),
+        Effect("update-rest", "Rest(object)"),
+        Effect("result", "List(Bar(Ra), Bar(Rint_-1), Bar(Robject))"),
+        Effect("update-rest", "Rest(a)")
+      )
+    }
+  }
+
   it("split signal into signals") {
     withOrWithoutDuplicateKeyWarnings {
       val effects = mutable.Buffer[Effect[String]]()

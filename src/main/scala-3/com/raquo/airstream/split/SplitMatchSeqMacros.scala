@@ -29,6 +29,13 @@ object SplitMatchSeqMacros {
     handleTypeImpl[Self, I, K, O, CC, T]('{ matchSplitObservable })
   }
 
+  private[airstream] inline def delegateHandleRest[Self[+_] <: Observable[?], I, K, O, CC[_], O1 >: O](
+    inline matchSplitObservable: SplitMatchSeqObservable[Self, I, K, O, CC],
+    inline handleFn: StrictSignal[I] => O1
+  ) = ${
+    handleRestImpl('{ matchSplitObservable }, '{ handleFn })
+  }
+
   private[airstream] inline def delegateHandleValue[Self[+_] <: Observable[?], I, K, O, CC[_], V](
     inline matchSplitObservable: SplitMatchSeqObservable[Self, I, K, O, CC],
     inline v: V
@@ -145,6 +152,62 @@ object SplitMatchSeqMacros {
             MatchTypeHandler.instance[T]
           )
         }
+      case other =>
+        report.errorAndAbort(
+          "Macro expansion failed, please use `splitMatchSeq` instead of creating new SplitMatchSeqObservable explicitly"
+        )
+    }
+  }
+
+  private def handleRestImpl[Self[+_] <: Observable[?]: Type, I: Type, K: Type, O: Type, O1 >: O: Type, CC[_]: Type](
+    matchSplitObservableExpr: Expr[SplitMatchSeqObservable[Self, I, K, O, CC]],
+    handleFnExpr: Expr[Function1[StrictSignal[I], O1]]
+  )(
+    using quotes: Quotes
+  ): Expr[SplitMatchSeqObservable[Self, I, K, O1, CC]] = {
+    import quotes.reflect.*
+
+    matchSplitObservableExpr match {
+      case '{
+            SplitMatchSeqObservable.build[Self, I, K, O, CC](
+              $keyFnExpr,
+              $distinctComposeExpr,
+              $duplicateKeysConfigExpr,
+              $observableExpr
+            )(
+              ${caseExpr}*
+            )(
+              ${handlerExpr}*
+            )
+          } => {
+
+            val caseExprSeq = caseExpr match {
+              case Varargs(caseExprSeq) => caseExprSeq
+              case _ => report.errorAndAbort(
+                "Macro expansion failed, please use `splitMatchSeq` instead of creating new SplitMatchSeqObservable explicitly"
+              )
+            }
+
+            val handlerExprSeq = handlerExpr match {
+              case Varargs(handlerExprSeq) => handlerExprSeq
+              case _ => report.errorAndAbort(
+                "Macro expansion failed, please use `splitMatchSeq` instead of creating new SplitMatchSeqObservable explicitly"
+              )
+            }
+
+            val restCaseExpr: Expr[PartialFunction[I, I]] = '{ { case rest: I => rest } }
+
+            innerHandleCaseImpl(
+              keyFnExpr,
+              distinctComposeExpr,
+              duplicateKeysConfigExpr,
+              observableExpr,
+              caseExprSeq,
+              handlerExprSeq,
+              restCaseExpr,
+              handleFnExpr
+            )
+          }
       case other =>
         report.errorAndAbort(
           "Macro expansion failed, please use `splitMatchSeq` instead of creating new SplitMatchSeqObservable explicitly"

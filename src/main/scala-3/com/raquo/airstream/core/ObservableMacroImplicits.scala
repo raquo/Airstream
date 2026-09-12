@@ -24,6 +24,13 @@ trait ObservableMacroImplicits {
 
     inline def handleValue[V](inline v: V)(using inline valueOf: ValueOf[V]): SplitMatchOneValueObservable[Self, I, O, V] =
       SplitMatchOneMacros.delegateHandleValue(matchSplitObservable, v)
+
+    /** Handle all input values not matched by prior `handleCase` / `handleType` / `handleValue` clauses,
+      * equivalent to a `case _ =>` in a pattern match.
+      * The handler receives a signal of the unmatched input value.
+      */
+    inline def handleRest[O1 >: O](inline handleFn: StrictSignal[I] => O1): SplitMatchOneObservable[Self, I, O1] =
+      SplitMatchOneMacros.delegateHandleRest(matchSplitObservable, handleFn)
   }
 
   extension [Self[+_] <: Observable[?], I, O, T](inline matchTypeObserver: SplitMatchOneTypeObservable[Self, I, O, T]) {
@@ -65,6 +72,13 @@ trait ObservableMacroImplicits {
 
     inline def handleValue[V](inline v: V)(using inline valueOf: ValueOf[V]): SplitMatchSeqValueObservable[Self, I, K, O, CC, V] =
       SplitMatchSeqMacros.delegateHandleValue(matchSplitObservable, v)
+
+    /** Handle all input values not matched by prior `handleCase` / `handleType` / `handleValue` clauses,
+      * equivalent to a `case _ =>` in a pattern match.
+      * The handler receives a signal of the unmatched input value.
+      */
+    inline def handleRest[O1 >: O](inline handleFn: Signal[I] => O1): SplitMatchSeqObservable[Self, I, K, O1, CC] =
+      SplitMatchSeqMacros.delegateHandleRest(matchSplitObservable, handleFn)
 
     inline def toSignal: Signal[CC[O]] =
       SplitMatchSeqMacros.delegateToSignal(matchSplitObservable)

@@ -67,6 +67,13 @@ object SplitMatchOneMacros {
     handleTypeImpl[Self, I, O, T]('{ matchSplitObservable })
   }
 
+  private[airstream] inline def delegateHandleRest[Self[+_] <: Observable[?], I, O, O1 >: O](
+    inline matchSplitObservable: SplitMatchOneObservable[Self, I, O],
+    inline handleFn: StrictSignal[I] => O1
+  ) = ${
+    handleRestImpl('{ matchSplitObservable }, '{ handleFn })
+  }
+
   private[airstream] inline def delegateHandleValue[Self[+_] <: Observable[?], I, O, V](
     inline matchSplitObservable: SplitMatchOneObservable[Self, I, O],
     inline v: V
@@ -206,6 +213,48 @@ object SplitMatchOneMacros {
           caseExprSeq,
           handlerExprSeq,
           tCaseExpr,
+          handleFnExpr
+        )
+      case other =>
+        report.errorAndAbort(
+          "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
+        )
+    }
+  }
+
+  private def handleRestImpl[Self[+_] <: Observable[?]: Type, I: Type, O: Type, O1 >: O: Type](
+    matchSplitObservableExpr: Expr[SplitMatchOneObservable[Self, I, O]],
+    handleFnExpr: Expr[Function1[StrictSignal[I], O1]]
+  )(
+    using quotes: Quotes
+  ): Expr[SplitMatchOneObservable[Self, I, O1]] = {
+    import quotes.reflect.*
+
+    matchSplitObservableExpr match {
+      case '{
+            SplitMatchOneObservable.build[Self, I, O]($observableExpr)(${caseExpr}*)(${handlerExpr}*)
+          } =>
+        val caseExprSeq = caseExpr match {
+          case Varargs(caseExprSeq) => caseExprSeq
+          case _ => report.errorAndAbort(
+            "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
+          )
+        }
+
+        val handlerExprSeq = handlerExpr match {
+          case Varargs(handlerExprSeq) => handlerExprSeq
+          case _ => report.errorAndAbort(
+            "Macro expansion failed, please use `splitMatchOne` instead of creating new SplitMatchOneObservable explicitly"
+          )
+        }
+
+        val restCaseExpr: Expr[PartialFunction[I, I]] = '{ { case rest: I => rest } }
+
+        innerHandleCaseImpl[Self, I, O, O1, I, I](
+          observableExpr,
+          caseExprSeq,
+          handlerExprSeq,
+          restCaseExpr,
           handleFnExpr
         )
       case other =>
