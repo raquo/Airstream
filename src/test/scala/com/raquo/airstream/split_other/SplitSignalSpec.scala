@@ -6,7 +6,7 @@ import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.ownership.{DynamicOwner, DynamicSubscription, ManualOwner, Subscription}
 import com.raquo.airstream.split.{DuplicateKeysConfig, Splittable}
-import com.raquo.airstream.split.KeyedStrictSignal.withKey
+import com.raquo.airstream.split.withKey
 import com.raquo.airstream.state.Var
 import com.raquo.airstream.util.IdWrap
 import com.raquo.ew.JsArray

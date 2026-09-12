@@ -20,7 +20,7 @@ trait ScanLeftOps[+ScanSelf[+B] <: Observable[B], +ReduceSelf[+B] <: Observable[
     *                For signals, this is combined with the signal's initial value immediately.
     *                For streams, this is used as the initial value until the first event arrives.
     * @param combine A binary operator to update the accumulator given its previous value and the next event.
-    *                Exceptions here are emitted as errors.
+    *                Note: Exceptions thrown here are emitted as errors.
     * @see           [[scanLeftRecover]], [[reduceLeft]]
     */
   def scanLeft[B](
@@ -41,9 +41,9 @@ trait ScanLeftOps[+ScanSelf[+B] <: Observable[B], +ReduceSelf[+B] <: Observable[
     *
     * @param initial The seed value for the accumulator.
     *                For signals, this is combined with the signal's initial value immediately.
-    *                 For streams, this is used as the initial value until the first event arrives.
+    *                For streams, this is used as the initial value until the first event arrives.
     * @param combine A binary operator to update the accumulator given its previous value and the next event.
-    *                It is not safe to throw uncaught exceptions; you must use [[Try]] instead!
+    *                Note: Exceptions thrown here are emitted as errors.
     * @see           [[scanLeft]]
     */
   def scanLeftRecover[B](
@@ -63,7 +63,7 @@ trait ScanLeftOps[+ScanSelf[+B] <: Observable[B], +ReduceSelf[+B] <: Observable[
     * Produces an [[Observable]] that emits the accumulated value every time this parent emits.
     *
     * @param combine A binary operator to update the accumulator given its previous value and the next event.
-    *                Exceptions here are emitted as errors.
+    *                Note: Exceptions thrown here are emitted as errors.
     * @see           [[scanLeft]]
     */
   def reduceLeft[B >: A](

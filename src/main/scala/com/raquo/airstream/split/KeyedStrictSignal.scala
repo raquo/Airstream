@@ -48,6 +48,9 @@ with DistinctOps[KeyedStrictSignal[K, A], A] { self =>
 
 object KeyedStrictSignal {
 
+  // #Note: `withKey` extractor lives in its own top-level object
+  //  (see varWithKey.scala in scala-2 and scala-3 dirs)
+
   /** Use this extractor if you want to name the `key` argument, e.g.:
     * {{{
     * seqSignal.splitSeq(_.id) { case KeyedStrictSignal(signal, id) => ... }
@@ -57,18 +60,4 @@ object KeyedStrictSignal {
   //   Some((signal, signal.key))
   // }
 
-  /** Use this shorthand extractor if you want to name the `key` argument, e.g.:
-    * {{{
-    * seqSignal.splitSeq(_.id) { case withKey(signal, id) => ... }
-    * }}}
-    * Or (gasp!) using infix notation:
-    * {{{
-    * seqSignal.splitSeq(_.id) { case signal withKey id => ... }
-    * }}}
-    */
-  object withKey {
-    def unapply[K, A](signal: KeyedStrictSignal[K, A]): Some[(KeyedStrictSignal[K, A], K)] = {
-      Some((signal, signal.key))
-    }
-  }
 }

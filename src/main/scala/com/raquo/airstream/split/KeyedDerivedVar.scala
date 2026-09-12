@@ -21,6 +21,9 @@ with Keyed[K]
 
 object KeyedDerivedVar {
 
+  // #Note: `varWithKey` extractor lives in its own top-level object
+  //  (see varWithKey.scala in scala-2 and scala-3 dirs)
+
   @inline def standardErrorsF[M[_], A](
     updateParent: (M[A], A) => Option[M[A]]
   )(
@@ -61,19 +64,4 @@ object KeyedDerivedVar {
   // def unapply[K, A](v: KeyedDerivedVar[K, _, A]): Some[(KeyedDerivedVar[K, _, A], K)] = {
   //   Some((v, v.key))
   // }
-
-  /** Use this shorthand extractor if you want to name the `key` argument, e.g.:
-    * {{{
-    * seqSignal.splitSeq(_.id) { case withKey(signal, id) => ... }
-    * }}}
-    * Or (gasp!) using infix notation:
-    * {{{
-    * seqSignal.splitSeq(_.id) { case signal withKey id => ... }
-    * }}}
-    */
-  object varWithKey {
-    def unapply[K, A](v: KeyedDerivedVar[K, ?, A]): Some[(KeyedDerivedVar[K, ?, A], K)] = {
-      Some((v, v.key))
-    }
-  }
 }
