@@ -91,6 +91,7 @@ object SplitMatchMacros {
         (reown(pf).asExprOf[CaseAny], reown(handler).asExprOf[HandlerAny[Any]])
 
       case Apply(Apply(TypeApply(Select(_, "handleValue"), _), v :: Nil), handler :: Nil) =>
+        requireSingleton(v)
         v.tpe.asType match {
           case '[vt] =>
             val vExpr = v.changeOwner(Symbol.spliceOwner).asExprOf[vt]
@@ -225,6 +226,7 @@ object SplitMatchMacros {
         (reown(pf).asExprOf[CaseAny], reown(handler).asExprOf[HandlerAny[Any]])
 
       case Apply(Apply(TypeApply(Select(_, "handleValue"), _), v :: Nil), handler :: Nil) =>
+        requireSingleton(v)
         v.tpe.asType match {
           case '[vt] =>
             val vExpr = v.changeOwner(Symbol.spliceOwner).asExprOf[vt]
@@ -304,6 +306,38 @@ object SplitMatchMacros {
   }
 
   // ---------------------------------------------------------------------------
+
+  /** `handleValue(v)` is compiled to a generated `case _: v.type` type test, which the compiler can
+    * only treat as matching the single value `v` – and count towards exhaustiveness – when `v` is a
+    * statically-known singleton: a case object, a plain `object`, or an enum case (parameterless, or
+    * a parameterized-parent case like `case Qux1 extends Qux(1)`).
+    *
+    * We reject anything else – a `val`/`def` reference, a constructor call, a literal, an instance –
+    * because for those the generated match would either silently swallow sibling cases (a widened
+    * type like `Color`) or fail to participate in exhaustiveness checking (a `val` of a singleton
+    * type). Note that a `val` reference is NOT reliably distinguishable from a widened value at the
+    * macro level – e.g. for `val x: Baz = Baz.Baz1` there is no reflect operation that recovers
+    * `Baz.Baz1` from the static type `Baz` – so we require the singleton to be passed literally.
+    */
+  private def requireSingleton(using quotes: Quotes)(v: quotes.reflect.Term): Unit = {
+    import quotes.reflect.*
+    val sym = v.tpe.termSymbol
+    val isStaticSingleton =
+      sym.flags.is(Flags.Module) || // object / case object
+        (sym.flags.is(Flags.Enum) && sym.flags.is(Flags.Case)) // enum case value
+    if (!isStaticSingleton) {
+      report.errorAndAbort(
+        s"`handleValue(...)` requires a statically-known singleton: a case object, a plain `object`, " +
+          s"or an enum case – e.g. `handleValue(MyCaseObject)` or `handleValue(MyEnum.Variant)`. " +
+          s"You passed `${v.show}`, which the macro cannot treat as a single known case. A `val`/`def` " +
+          s"reference is rejected even when it holds a singleton, because its static type is not a " +
+          s"singleton (e.g. `val x: Color = Color.Red` has type `Color`, not `Color.Red.type`), so the " +
+          s"generated match would not participate in exhaustiveness checking. To match an arbitrary " +
+          s"value by equality, use `handleCase { case `yourValue` => yourValue } { ... }` instead.",
+        v.pos
+      )
+    }
+  }
 
   private def unpackClauses[A](
     clausesExpr: Expr[Seq[A]],
