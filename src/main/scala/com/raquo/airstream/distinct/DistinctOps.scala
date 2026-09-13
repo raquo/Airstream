@@ -26,6 +26,10 @@ trait DistinctOps[+Self, +A] {
     case _ => false
   }
 
+  /** Collapse consecutive `None` events into one, keep Some(_) events as-is. */
+  def distinctNoneOnly[AA](implicit ev: A <:< Option[AA]): Self =
+    distinctByFn(isSame = ev(_).isEmpty && ev(_).isEmpty)
+
   /** Distinct errors only (but keep all events) using a comparison function */
   def distinctErrors(isSame: (Throwable, Throwable) => Boolean): Self = distinctTry {
     case (Failure(prevErr), Failure(nextErr)) => isSame(prevErr, nextErr)
