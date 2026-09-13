@@ -135,6 +135,13 @@ Compile / sourceGenerators += Def.task {
       from = generateTupleCombinatorsFrom,
       to = generateTupleCombinatorsTo
     ).run,
+    GenerateOptionTupleObservables(
+      classNamePattern = n => s"OptionTupleObservable$n",
+      fileName = "OptionTupleObservables.scala",
+      sourceDir = (Compile / sourceDirectory).value,
+      from = generateTupleCombinatorsFrom,
+      to = generateTupleCombinatorsTo
+    ).run,
     GenerateCombineStreamOps(
       traitName = "CombineStreamOps",
       sourceDir = (Compile / sourceDirectory).value,
