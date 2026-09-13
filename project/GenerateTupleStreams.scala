@@ -43,7 +43,9 @@ case class GenerateTupleStreams(
       }
       line()
       line("// --")
-      line()
+      if (n != to) {
+        line()
+      }
     }
   }
 }

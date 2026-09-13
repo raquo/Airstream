@@ -41,6 +41,13 @@ abstract class SourceGenerator(outputFile: File) {
     printStream.println()
   }
 
+  /** Emit declarations (e.g. parameter lists) one per line, without a trailing comma. */
+  protected def paramsOnePerLine(decls: Seq[String]): Unit = {
+    decls.zipWithIndex.foreach { case (decl, i) =>
+      line(if (i < decls.size - 1) s"$decl," else decl)
+    }
+  }
+
   protected def tupleType(size: Int, prefix: String = "T", suffix: String = "", separator: String = ", "): String =
     tupleTypeRaw(size, prefix, suffix).mkString(separator)
 

@@ -35,7 +35,9 @@ case class GenerateTupleSignals(
       }
       line()
       line("// --")
-      line()
+      if (n != to) {
+        line()
+      }
     }
   }
 }

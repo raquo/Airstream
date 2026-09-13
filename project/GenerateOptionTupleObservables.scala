@@ -59,7 +59,9 @@ case class GenerateOptionTupleObservables(
       }
       line()
       line("// --")
-      line()
+      if (n != to) {
+        line()
+      }
     }
   }
 }
