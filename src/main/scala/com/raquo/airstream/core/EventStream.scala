@@ -135,6 +135,28 @@ with DynamicImportStreamOps[A] // dynamicImport (Scala 3 only)
     AsyncStatusObservable[A, A, EventStream](this, _.debounce(ms))
   }
 
+  /** Incoming events will be throttled using the browser's `requestAnimationFrame`.
+    *
+    * See docs for [[AnimationFrameStream]].
+    *
+    * See [[https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame requestAnimationFrame @ MDN]]
+    */
+  def throttleWithAnimationFrame: EventStream[A] = {
+    new AnimationFrameStream[A, A](parent = this, project = (ev, _) => ev)
+  }
+
+  /** Incoming events will be throttled using the browser's `requestAnimationFrame`.
+    *
+    * Emits tuples of `(event, timestampMs)`
+    *
+    * See docs for [[AnimationFrameStream]].
+    *
+    * See [[https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame requestAnimationFrame @ MDN]]
+    */
+  def throttleWithAnimationFrameWithTs: EventStream[(A, Double)] = {
+    new AnimationFrameStream[A, (A, Double)](parent = this, project = (ev, ts) => (ev, ts))
+  }
+
   /** Drop (skip) the first `numEvents` events from this stream. Note: errors are NOT dropped.
     *
     * @param resetOnStop  Reset the count if the stream stops
@@ -487,6 +509,30 @@ with DynamicImportStreamObjectOps // Provides `dynamicImport` method (Scala 3 on
       next = eventNumber => Some((eventNumber + 1, intervalMs)),
       resetOnStop = resetOnStop
     )
+  }
+
+  /** `event` will be emitted in the browser's `requestAnimationFrame`.
+    *
+    * See docs for [[AnimationFrameStream]].
+    *
+    * See [[https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame requestAnimationFrame @ MDN]]
+    */
+  def requestToAnimationFrame[A](event: => A, emitOnce: Boolean = false): EventStream[A] = {
+    throttleToAnimationFrameWithTs(_ => event, emitOnce)
+  }
+
+  /** Result of `project(timestampMs)` will be emitted the browser's `requestAnimationFrame`.
+    *
+    * Emits tuples of `(event, timestampMs)`
+    *
+    * See docs for [[AnimationFrameStream]].
+    *
+    * See [[https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame requestAnimationFrame @ MDN]]
+    */
+  def throttleToAnimationFrameWithTs[A](project: Double => A, emitOnce: Boolean = false): EventStream[A] = {
+    new AnimationFrameStream[Unit, A](
+      parent = EventStream.fromValue((), emitOnce),
+      project = (_, ts) => project(ts))
   }
 
   def sequence[A](streams: Seq[EventStream[A]]): EventStream[Seq[A]] = {
