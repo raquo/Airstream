@@ -1134,4 +1134,76 @@ class SwitchStreamSpec extends UnitSpec {
     assertEquals(effects.toList, List(Effect("result", 40)))
     effects.clear()
   }
+
+  it("EventStream: switched events emit in a new transaction (loopy) — a combineWith diamond glitches as expected") {
+
+    implicit val owner: TestableOwner = new TestableOwner
+
+    val effects = mutable.Buffer[Effect[(Int, Int)]]()
+
+    val bus = new EventBus[Int]
+
+    val n = bus.events
+
+    // `switched` is loopy: it re-emits each value in a NEW transaction.
+    val switched = n.flatMapSwitch(v => EventStream.fromValue(v))
+
+    // Diamond: combine the (flowy) parent value with the (loopy) switched value.
+    // Because `switched` emits in a separate transaction from `n`, this diamond is
+    // NOT glitch-free: when `n` emits, combineWith first fires with the still-stale
+    // `switched` value, then fires again once `switched` catches up in its own trx.
+    // (Contrast with the flowy diamond in GlitchSpec, which fires exactly once.)
+    n.combineWith(switched).foreach(v => effects += Effect("combined", v))
+
+    // -- first event: `switched` has no value yet during n's transaction, so
+    //    combineWith only fires once `switched` emits (in its new transaction).
+
+    bus.emit(1)
+
+    assertEquals(effects.toList, List(Effect("combined", (1, 1))))
+    effects.clear()
+
+    // -- second event: combineWith fires (2, 1) with the stale switched value in n's
+    //    transaction, then (2, 2) once `switched` re-emits in its own new transaction.
+
+    bus.emit(2)
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("combined", (2, 1)),
+        Effect("combined", (2, 2))
+      )
+    )
+    effects.clear()
+  }
+
+  it("EventStream: an inner fromSeq(1, 2, 3) emits three values, each in its own transaction, in order") {
+
+    implicit val owner: TestableOwner = new TestableOwner
+
+    val effects = mutable.Buffer[Effect[(Int, Int)]]()
+
+    val metaBus = new EventBus[EventStream[Int]]
+
+    val flat = metaBus.events.flattenSwitch
+
+    // `flat.map` is flowy (emits in the same transaction as `flat`), so this diamond
+    // is glitch-free *within* each transaction. Getting three clean pairs
+    // (1,100),(2,200),(3,300) — rather than a single fire or cross-glitches like
+    // (2,100) — shows each fromSeq value propagated fully in its own transaction.
+    flat.combineWith(flat.map(_ * 100)).foreach(v => effects += Effect("combined", v))
+
+    metaBus.emit(EventStream.fromSeq(List(1, 2, 3)))
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("combined", (1, 100)),
+        Effect("combined", (2, 200)),
+        Effect("combined", (3, 300))
+      )
+    )
+    effects.clear()
+  }
 }

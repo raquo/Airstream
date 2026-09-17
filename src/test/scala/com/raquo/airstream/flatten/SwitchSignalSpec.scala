@@ -671,4 +671,38 @@ class SwitchSignalSpec extends UnitSpec {
 
     sub3.kill()
   }
+
+  it("emits the switched-to signal's initial value before the updates that starting it triggers (trx timing)") {
+
+    implicit val owner: TestableOwner = new TestableOwner
+
+    val effects = mutable.Buffer[Effect[Int]]()
+
+    val metaVar = Var[Signal[Int]](Val(-1))
+
+    val flat = metaVar.signal.flattenSwitch
+
+    flat.foreach(v => effects += Effect("result", v))
+
+    // initial inner signal Val(-1)
+    assertEquals(effects.toList, List(Effect("result", -1)))
+    effects.clear()
+
+    // Switch (online, via switchToSignalOnline's `trx` block) to an inner signal whose
+    // *initial* value is 0, but whose start schedules updates 1, 2, 3 (the fromSeq
+    // events) in subsequent transactions. The initial value (0) must be emitted first,
+    // before those updates — not missed (a pre-Airstream-15 regression).
+    metaVar.set(EventStream.fromSeq(List(1, 2, 3)).startWith(0))
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("result", 0),
+        Effect("result", 1),
+        Effect("result", 2),
+        Effect("result", 3)
+      )
+    )
+    effects.clear()
+  }
 }
