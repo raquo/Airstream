@@ -8,11 +8,11 @@ import org.scalajs.dom
 import scala.collection.mutable
 import scala.scalajs.js
 
-final class FetchStreamLifecycleRegressionSpec extends UnitSpec {
+final class FetchStreamSpec extends UnitSpec {
 
   it("stopping a fetch unsubscribes from its cancellation source") {
     val previousFetch = js.Dynamic.global.globalThis.fetch
-    val owner = ManualOwner()
+    val owner = new ManualOwner()
     var abortSourceActive = false
     val abortSource = EventStream.fromCustomSource[Any](
       start = (_, _, _, _) => { abortSourceActive = true },
@@ -21,7 +21,7 @@ final class FetchStreamLifecycleRegressionSpec extends UnitSpec {
 
     // Keep the request pending. This test exercises subscriptions, not networking.
     js.Dynamic.global.globalThis.fetch = ((_: String, _: dom.RequestInit) => {
-      js.Promise[dom.Response]((_, _) => ())
+      new js.Promise[dom.Response]((_, _) => ())
     }): js.Function2[String, dom.RequestInit, js.Promise[dom.Response]]
 
     try {
@@ -39,7 +39,7 @@ final class FetchStreamLifecycleRegressionSpec extends UnitSpec {
 
   it("restarting an abortOnStop fetch uses a non-aborted signal") {
     val previousFetch = js.Dynamic.global.globalThis.fetch
-    val owner = ManualOwner()
+    val owner = new ManualOwner()
     val requestSignals = mutable.Buffer.empty[dom.AbortSignal]
     val abortedAtRequest = mutable.Buffer.empty[Boolean]
 
@@ -47,7 +47,7 @@ final class FetchStreamLifecycleRegressionSpec extends UnitSpec {
       val signal = init.signal.get
       requestSignals += signal
       abortedAtRequest += signal.aborted
-      js.Promise[dom.Response]((_, _) => ())
+      new js.Promise[dom.Response]((_, _) => ())
     }): js.Function2[String, dom.RequestInit, js.Promise[dom.Response]]
 
     try {
