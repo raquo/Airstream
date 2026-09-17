@@ -1993,7 +1993,7 @@ Unfortunately, with `flatMap` being such a common and innocuous operation on man
 
 If you see this compiler error, you should try to rewrite your logic with flowy operators like `combineWith`. Only if it's truly impossible to do that, should you use `flatMapSwitch`, or one of the other operators detailed below.
 
-**See also Laminar docs about [the flatMap anti-pattern](https://laminar.dev/documenation#flatmap-all-the-things).**
+**See also Laminar docs about [the flatMap anti-pattern](https://laminar.dev/documentation#flatmap-all-the-things).**
 
 
 ##### Acceptable uses of flatMap
