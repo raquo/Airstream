@@ -603,4 +603,72 @@ class SwitchSignalSpec extends UnitSpec {
     )
     effects.clear()
   }
+
+  it("re-syncs current value on restart iff the inner signal changed while stopped (no spurious event)") {
+
+    implicit val owner: TestableOwner = new TestableOwner
+
+    val calculations = mutable.Buffer[Calculation[Int]]()
+    val effects = mutable.Buffer[Effect[Int]]()
+
+    val innerVar = Var(0)
+    val metaVar = Var[Signal[Int]](innerVar.signal)
+
+    // `map(Calculation.log)` lets us distinguish a real re-sync (the SwitchSignal
+    // fired a new value, so the downstream map recomputes) from the ordinary
+    // "a signal hands its current value to a new observer" (no recompute).
+    val flatSignal = metaVar.signal.flattenSwitch.map(Calculation.log("flat", calculations))
+
+    val obs = Observer[Int](effects += Effect("obs", _))
+
+    val sub1 = flatSignal.addObserver(obs)
+
+    assertEquals(calculations.toList, List(Calculation("flat", 0)))
+    assertEquals(effects.toList, List(Effect("obs", 0)))
+    calculations.clear()
+    effects.clear()
+
+    innerVar.set(1)
+
+    assertEquals(calculations.toList, List(Calculation("flat", 1)))
+    assertEquals(effects.toList, List(Effect("obs", 1)))
+    calculations.clear()
+    effects.clear()
+
+    // -- stop, restart WITHOUT changing the inner signal: no re-sync (update id
+    //    unchanged), so no recompute. The new observer still gets the current value once.
+
+    sub1.kill()
+
+    val sub2 = flatSignal.addObserver(obs)
+
+    assertEquals(calculations.toList, Nil)
+    assertEquals(effects.toList, List(Effect("obs", 1)))
+    effects.clear()
+
+    // -- stop, change the inner signal while stopped (Var retains its value and bumps
+    //    its update id), restart: SwitchSignal re-syncs the new value exactly once.
+
+    sub2.kill()
+
+    innerVar.set(2)
+
+    val sub3 = flatSignal.addObserver(obs)
+
+    assertEquals(calculations.toList, List(Calculation("flat", 2)))
+    assertEquals(effects.toList, List(Effect("obs", 2)))
+    calculations.clear()
+    effects.clear()
+
+    // -- and it keeps mirroring after restart
+
+    innerVar.set(3)
+
+    assertEquals(calculations.toList, List(Calculation("flat", 3)))
+    assertEquals(effects.toList, List(Effect("obs", 3)))
+    calculations.clear()
+    effects.clear()
+
+    sub3.kill()
+  }
 }

@@ -540,4 +540,65 @@ class SwitchSignalStreamSpec extends UnitSpec {
     )
     effects.clear()
   }
+
+  it("restart re-emits the current signal's value iff it changed while stopped (update-id logic)") {
+
+    // Complements "start & restart event order" above, which exercises the
+    // fromSeq-re-emits-on-restart path and a changed-while-stopped emit; this test
+    // isolates the update-id guard, including the clean unchanged-while-stopped case.
+
+    implicit val owner: TestableOwner = new TestableOwner
+
+    val effects = mutable.Buffer[Effect[Int]]()
+
+    val innerVar = Var(0)
+
+    val metaBus = new EventBus[Signal[Int]]
+
+    val flatStream = metaBus.events.flattenSwitch
+
+    val sub1 = flatStream.foreach(v => effects += Effect("result", v))
+
+    // switching to a signal emits its current value
+    metaBus.emit(innerVar.signal)
+
+    assertEquals(effects.toList, List(Effect("result", 0)))
+    effects.clear()
+
+    innerVar.set(1)
+
+    assertEquals(effects.toList, List(Effect("result", 1)))
+    effects.clear()
+
+    // -- stop, restart WITHOUT changing the inner signal: its update id is unchanged,
+    //    so nothing is re-emitted on restart (a stream is not a signal; it has no
+    //    current value to hand out).
+
+    sub1.kill()
+
+    val sub2 = flatStream.foreach(v => effects += Effect("result", v))
+
+    assertEquals(effects.toList, Nil)
+
+    // -- stop, change the inner signal while stopped (Var retains its value and bumps
+    //    its update id), restart: the current value is re-emitted exactly once.
+
+    sub2.kill()
+
+    innerVar.set(2)
+
+    val sub3 = flatStream.foreach(v => effects += Effect("result", v))
+
+    assertEquals(effects.toList, List(Effect("result", 2)))
+    effects.clear()
+
+    // -- and it keeps mirroring after restart
+
+    innerVar.set(3)
+
+    assertEquals(effects.toList, List(Effect("result", 3)))
+    effects.clear()
+
+    sub3.kill()
+  }
 }
