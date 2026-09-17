@@ -36,6 +36,12 @@ class ConcurrentStream[A](
             // We add internal observer later, in `onStart`. onWillStart should not start any observables.
             // #TODO[Doc] Document this pattern ^^^.
             maybeAddStream(stream, addInternalObserver = false)
+            // This stream was just added to `accumulatedStreams`, after the `forEach` above already
+            // ran willStart on the rest, so we must run its willStart phase here too. Otherwise, since
+            // `onStart` adds the internal observer with `shouldCallMaybeWillStart = false`, this stream
+            // would never be willStarted, and a stream that emits on start (e.g. `EventStream.fromValue`)
+            // would silently fail to emit its initial event.
+            Protected.maybeWillStart(stream)
           case _ => ()
         }
       case _ => ()
