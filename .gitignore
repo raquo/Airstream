@@ -11,6 +11,9 @@ metals.sbt
 .bloop
 .bsp
 
+.claude
+.scalex
+
 project/metals.sbt
 project/.bloop
 
