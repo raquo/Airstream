@@ -63,6 +63,13 @@ class SwitchSignalStream[A](
       // checked if the signal emitted anything since the stream stopped).
 
     } else {
+      val prevSignalTry = maybeCurrentSignalTry
+
+      // Make-before-break semantics: keep shared common ancestor of previous and next
+      // inner streams active during transition.
+      // See https://github.com/raquo/Airstream/issues/140 for analogous SwitchSignal bug.
+      prevSignalTry.foreach(_.foreach(_.addInternalObserver(InternalObserver.empty, shouldCallMaybeWillStart = false)))
+
       removeInternalObserverFromCurrentSignal()
       maybeCurrentSignalTry = nextSignalTry
       // negative update ids don't exist normally, so next update is guaranteed to trigger an event.
@@ -92,6 +99,9 @@ class SwitchSignalStream[A](
             nextSignal.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false)
           }
         }
+
+        // Remove temporary observer now that the transition happened (or was aborted – if !isStart).
+        prevSignalTry.foreach(_.foreach(_.removeInternalObserver(InternalObserver.empty)))
       }
     }
   }

@@ -3,10 +3,11 @@ package com.raquo.airstream.flatten
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.{EventStream, Observer, Signal}
 import com.raquo.airstream.eventbus.EventBus
-import com.raquo.airstream.fixtures.{Calculation, Effect, TestableOwner}
+import com.raquo.airstream.fixtures.{Calculation, Effect, TestSource, TestableOwner}
 import com.raquo.airstream.state.Var
 
 import scala.collection.mutable
+import scala.util.{Success, Try}
 
 class SwitchSignalStreamSpec extends UnitSpec {
 
@@ -339,5 +340,204 @@ class SwitchSignalStreamSpec extends UnitSpec {
     calculations.clear()
     effects.clear()
 
+  }
+
+  it("switching away drops the previous inner signal (stops it unless it has another observer)") {
+
+    implicit val owner: TestableOwner = new TestableOwner
+
+    val effects = mutable.Buffer[Effect[?]]()
+
+    var updateA: Try[Int] => Unit = { _ => throw new Exception("innerA has not been started yet") }
+    var updateB: Try[Int] => Unit = { _ => throw new Exception("innerB has not been started yet") }
+
+    // Two independent inner signals (no shared ancestor) so that we can observe
+    // start/stop of each one directly via the instrumented custom source.
+    val innerA = TestSource.signal[Int](
+      effects = effects, label = "A", initial = Success(0), onStart = { updateA = _ }
+    )
+    val innerB = TestSource.signal[Int](
+      effects = effects, label = "B", initial = Success(100), onStart = { updateB = _ }
+    )
+
+    // EventStream parent, driven through the flatMapSwitch(project) entry point.
+    val intBus = new EventBus[Int]
+
+    intBus.events
+      .flatMapSwitch(n => if (n < 10) innerA else innerB)
+      .foreach(v => effects += Effect("result", v))(owner)
+
+    assertEquals(effects.toList, Nil) // nothing is mirrored until the parent emits a signal
+
+    // -- switch to innerA
+
+    intBus.emit(0)
+
+    // #Note the signal's current value is emitted before the inner is started.
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("result", 0),
+        Effect("A-start", "ix-1")
+      )
+    )
+    effects.clear()
+
+    updateA(Success(1))
+
+    assertEquals(effects.toList, List(Effect("result", 1)))
+    effects.clear()
+
+    // -- give innerA an independent observer, then switch away to innerB.
+    //    innerA must NOT be stopped, while the flattened stream now mirrors innerB.
+
+    val extSubA = innerA.addObserver(Observer.empty)
+
+    assertEquals(effects.toList, Nil) // innerA already running, no extra start
+
+    intBus.emit(10)
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("result", 100),
+        Effect("B-start", "ix-1")
+      )
+    )
+    effects.clear()
+
+    // -- innerA's updates no longer reach the flattened stream (switch forgot it),
+    //    but innerA keeps running (via extSubA), so it retains this new value (2)
+
+    updateA(Success(2))
+
+    assertEquals(effects.toList, Nil)
+
+    // -- ... but innerB's updates do
+
+    updateB(Success(3))
+
+    assertEquals(effects.toList, List(Effect("result", 3)))
+    effects.clear()
+
+    // -- killing innerA's independent observer finally stops it
+
+    extSubA.kill()
+
+    assertEquals(effects.toList, List(Effect("A-stop", "ix-1")))
+    effects.clear()
+
+    // -- switching back to innerA re-subscribes it from scratch (the switch had
+    //    forgotten it), so it starts again (ix-2) and re-syncs its retained value (2).
+    //    Thanks to make-before-break, innerB is stopped last, after innerA is running.
+
+    intBus.emit(5)
+
+    // #Note make-before-break: innerA is re-synced and started before innerB is stopped
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("result", 2),
+        Effect("A-start", "ix-2"),
+        Effect("B-stop", "ix-1")
+      )
+    )
+    effects.clear()
+  }
+
+  it("Switching between two signals does not cause their common ancestor to briefly stop") {
+
+    val owner = new TestableOwner
+
+    val effects = mutable.Buffer[Effect[?]]()
+
+    var updateSource: Try[Int] => Unit = { _ => throw new Exception("source signal has not been started yet") }
+
+    val source = TestSource.signal[Int](
+      effects = effects, label = "source", initial = Success(1), onStart = { updateSource = _ }
+    )
+
+    val sig1 = source.map(_ * 10)
+    val sig2 = source.map(_ * 100)
+
+    // EventStream parent, driven through the flatMapSwitch(project) entry point.
+    val switchBus = new EventBus[Int]
+
+    switchBus
+      .events
+      .flatMapSwitch { v =>
+        effects += Effect("switch", v)
+        if (v % 2 == 0) sig1 else sig2
+      }
+      .foreach(v => {
+        effects += Effect("result", v)
+      })(owner)
+
+    assertEquals(effects.toList, Nil) // nothing is mirrored until the parent emits a signal
+
+    // --
+
+    switchBus.emit(1)
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("switch", 1),
+        Effect("result", 100),
+        Effect("source-start", "ix-1")
+      )
+    )
+    effects.clear()
+
+    // --
+
+    updateSource(Success(2))
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("result", 200)
+      )
+    )
+    effects.clear()
+
+    // -- switching between sig1 and sig2 (which share `source`) must NOT stop and
+    //    restart `source` (no source-stop / source-start), thanks to make-before-break.
+
+    switchBus.emit(2)
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("switch", 2),
+        Effect("result", 20)
+      )
+    )
+    effects.clear()
+
+    // --
+
+    switchBus.emit(3)
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("switch", 3),
+        Effect("result", 200)
+      )
+    )
+    effects.clear()
+
+    // -- the shared `source` was never stopped, so it keeps its running subscription
+
+    updateSource(Success(4))
+
+    assertEquals(
+      effects.toList,
+      List(
+        Effect("result", 400)
+      )
+    )
+    effects.clear()
   }
 }

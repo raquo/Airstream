@@ -137,10 +137,10 @@ class SwitchSignal[A](
           innerSignalLastSeenUpdateId = nextSignalTry.map(Protected.lastUpdateId).getOrElse(0)
 
           nextSignalTry.foreach(_.addInternalObserver(internalEventObserver, shouldCallMaybeWillStart = false))
-
-          // Remove temporary observer that we added above
-          prevSignalTry.foreach(_.removeInternalObserver(InternalObserver.empty))
         }
+
+        // Remove temporary observer now that the transition happened (or was aborted – if !isStart).
+        prevSignalTry.foreach(_.removeInternalObserver(InternalObserver.empty))
       }
     }
   }
