@@ -44,15 +44,7 @@ class Transaction(private[Transaction] var code: Transaction => Any) {
     */
   private val depth: Int = Transaction.pendingTransactions.peekStack().fold(1)(_.depth + 1)
 
-  if (Transaction.maxDepth == -1 || depth > Transaction.maxDepth) {
-    // Short circuit to break out of infinite loops without pinning CPU or crashing the whole app.
-    // See e.g. https://github.com/raquo/Laminar/issues/116
-    // This transaction will not be executed. Instead, it is reported in unhandled errors.
-    // Other transactions will continue executing, if you have any that don't exceed the depth.
-    // We don't throw an exception here because I'm afraid this could break things too violently,
-    // and it's not like there is a reasonable way to locally handle such a condition anyway.
-    AirstreamError.sendUnhandledError(TransactionDepthExceeded(this, Transaction.maxDepth))
-  } else {
+  if (depth <= Transaction.maxDepth || Transaction.maxDepth == -1) {
     if (Transaction.onStart._isInSharedStart) {
       // This delays scheduling transactions until the end of
       // the shared start transaction
@@ -62,6 +54,14 @@ class Transaction(private[Transaction] var code: Transaction => Any) {
       // println(s">>> Transaction.pendingTransactions.add($this)")
       Transaction.pendingTransactions.add(this)
     }
+  } else {
+    // Short circuit to break out of infinite loops without pinning CPU or crashing the whole app.
+    // See e.g. https://github.com/raquo/Laminar/issues/116
+    // This transaction will not be executed. Instead, it is reported in unhandled errors.
+    // Other transactions will continue executing, if you have any that don't exceed the depth.
+    // We don't throw an exception here because I'm afraid this could break things too violently,
+    // and it's not like there is a reasonable way to locally handle such a condition anyway.
+    AirstreamError.sendUnhandledError(TransactionDepthExceeded(this, Transaction.maxDepth))
   }
 
   @inline private[Transaction] def resolvePendingObservables(): Unit = {
