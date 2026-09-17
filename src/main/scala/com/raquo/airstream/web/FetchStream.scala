@@ -97,13 +97,16 @@ class FetchBuilder[In, Out](
     url: String,
     setOptions: (FetchOptions[In] => Unit)*
   ): EventStream[Out] = {
-    val (request, maybeAbortController, maybeAbortStream, shouldAbortOnStop, emitOnce) = {
+    // #Note: `request` may be mutated by FetchStream to update
+    //  its abort `signal`, so keep it private here.
+    val (
+      request, maybeAbortStream, shouldAbortOnStop, emitOnce
+    ) = {
       val options = new FetchOptions[In](encodeRequest)
       setOptions.foreach(setOption => setOption(options))
       options.request.method = method(dom.HttpMethod)
       (
         options.request,
-        options.maybeAbortController,
         options.maybeAbortStream,
         options.shouldAbortOnStop,
         options.shouldEmitOnce
@@ -121,12 +124,11 @@ class FetchBuilder[In, Out](
     //     }
     // }
     new FetchStream(
-      url,
-      request,
-      maybeAbortController,
-      maybeAbortStream,
-      shouldAbortOnStop,
-      emitOnce
+      url = url,
+      requestInit = request,
+      maybeAbortStream = maybeAbortStream,
+      shouldAbortOnStop = shouldAbortOnStop,
+      emitOnce = emitOnce
     ).flatMapSwitch { promise =>
       EventStream
         .fromJsPromise(promise)
@@ -144,7 +146,6 @@ class FetchBuilder[In, Out](
 class FetchStream private[web] (
   url: String,
   requestInit: dom.RequestInit,
-  maybeAbortController: js.UndefOr[dom.AbortController],
   maybeAbortStream: js.UndefOr[EventStream[Any]],
   shouldAbortOnStop: Boolean,
   emitOnce: Boolean
@@ -161,13 +162,15 @@ class FetchStream private[web] (
 
   // TODO[API] Not sure if FetchStream re-emitting abortStream errors is desired
 
-  // #Note:
-  //  - if maybeAbortController is defined, either maybeAbortStream or shouldAbortOnStop or both will be defined/true.
-  //  - if maybeAbortController is empty, both maybeAbortStream and shouldAbortOnStop are empty/false
-
   override protected val topoRank: Int = 1
 
   private var hasEmittedEvents: Boolean = false
+
+  /** An AbortController / AbortSignal is single-use: once aborted, it can't be reused.
+    * We therefore create a fresh one on every start (see onWillStart), and abort it
+    * when the stream stops or the abort stream emits.
+    */
+  private var maybeAbortController: js.UndefOr[dom.AbortController] = js.undefined
 
   private val maybeAbortStreamObserver: js.UndefOr[InternalObserver[Any]] = {
     maybeAbortStream.map { _ =>
@@ -180,8 +183,16 @@ class FetchStream private[web] (
 
   override protected def onWillStart(): Unit = {
     if (!(emitOnce && hasEmittedEvents)) {
+      if (maybeAbortStream.nonEmpty || shouldAbortOnStop) {
+        val controller = new dom.AbortController
+        maybeAbortController = controller
+        requestInit.signal = controller.signal
+      }
       maybeAbortStream.foreach { abortStream =>
-        abortStream.addInternalObserver(maybeAbortStreamObserver.get, shouldCallMaybeWillStart = true)
+        abortStream.addInternalObserver(
+          observer = maybeAbortStreamObserver.get, // #Safe: maybeAbortStream.nonEmpty guarantees maybeAbortStreamObserver.nonEmpty
+          shouldCallMaybeWillStart = true
+        )
       }
       val responsePromise = dom.Fetch.fetch(url, requestInit)
       // #TODO[Integrity] Is it ok to emit asynchronously here? Maybe we should save `responsePromise` and emit it `onStart`?
@@ -194,10 +205,10 @@ class FetchStream private[web] (
 
   override protected def onStop(): Unit = {
     maybeAbortStream.foreach { abortStream =>
-      abortStream.removeInternalObserver(maybeAbortStreamObserver.get)
+      abortStream.removeInternalObserver(maybeAbortStreamObserver.get) // #Safe: maybeAbortStream.nonEmpty guarantees maybeAbortStreamObserver.nonEmpty
     }
     if (shouldAbortOnStop) {
-      maybeAbortController.get.abort()
+      maybeAbortController.get.abort() // #Safe: shouldAbortOnStop==true guarantees maybeAbortStreamObserver.nonEmpty in onWillStart
     }
   }
 }
@@ -210,22 +221,11 @@ class FetchOptions[In] private[web] (
 
   private var maybeHeaders: js.UndefOr[dom.Headers] = js.undefined
 
-  private[web] var maybeAbortController: js.UndefOr[dom.AbortController] = js.undefined
-
   private[web] var maybeAbortStream: js.UndefOr[EventStream[Any]] = js.undefined
 
   private[web] var shouldAbortOnStop: Boolean = false
 
   private[web] var shouldEmitOnce: Boolean = false
-
-  private def getOrCreateAbortController(): dom.AbortController = {
-    maybeAbortController.getOrElse {
-      val controller = new dom.AbortController
-      maybeAbortController = controller
-      request.signal = controller.signal
-      controller
-    }
-  }
 
   /** Set headers, overriding previous values for the corresponding keys.
     * @param kvs (key1 -> value1, key2 -> value2)
@@ -263,7 +263,6 @@ class FetchOptions[In] private[web] (
     * Errors emitted by abortStream will be re-emitted by FetchStream.
     */
   def abortStream(source: EventStream[Any]): Unit = {
-    getOrCreateAbortController()
     maybeAbortStream = source
   }
 
@@ -275,7 +274,6 @@ class FetchOptions[In] private[web] (
     * Aborting on stop might yield a marginal efficiency gain in certain scenarios.
     */
   def abortOnStop(): Unit = {
-    getOrCreateAbortController()
     shouldAbortOnStop = true
   }
 
