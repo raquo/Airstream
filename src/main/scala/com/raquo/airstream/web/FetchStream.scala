@@ -193,6 +193,9 @@ class FetchStream private[web] (
   }
 
   override protected def onStop(): Unit = {
+    maybeAbortStream.foreach { abortStream =>
+      abortStream.removeInternalObserver(maybeAbortStreamObserver.get)
+    }
     if (shouldAbortOnStop) {
       maybeAbortController.get.abort()
     }
