@@ -96,89 +96,87 @@ class SplitSignal[M[_], Input, Output, Key](
 
         nextKeys += memoizedKey
 
-        val cachedSignalAndOutput = memoized.get(memoizedKey).map(t => (t._2, t._3))
+        val nextMemoized = memoized.get(memoizedKey) match {
+          case Some((_, cachedSignal, cachedOutput, _)) =>
+            (nextInput, cachedSignal, cachedOutput, Protected.lastUpdateId(parent))
+          case None =>
+            val initialInput = nextInput
 
-        val nextSignalAndOutput = cachedSignalAndOutput.getOrElse {
-          val initialInput = nextInput
+            // @warning !!! DANGER ZONE !!!
+            // - We must avoid mapping over this signal itself here to avoid infinite loop (this function calling `initialValue`)
+            // - We must avoid looking at `memoized.get(key)` before `memoized` is populated with that key a few lines below
+            // = Therefore, we derive the child signal from the parent stream and a known initial value
+            //   - Using this signal's own changes instead won't work, because if the user calls `addObserver` or `foreach`
+            //     in the `project` callback, this will evaluate `initialValue`, causing an infinite loop.
+            //   - @TODO[Integrity] Moreover, it seems that such an infinite loop won't be detected.
+            //      Not sure why. I'm guessing must be one of our guards being excessive, but I can't find it.
 
-          // @warning !!! DANGER ZONE !!!
-          // - We must avoid mapping over this signal itself here to avoid infinite loop (this function calling `initialValue`)
-          // - We must avoid looking at `memoized.get(key)` before `memoized` is populated with that key a few lines below
-          // = Therefore, we derive the child signal from the parent stream and a known initial value
-          //   - Using this signal's own changes instead won't work, because if the user calls `addObserver` or `foreach`
-          //     in the `project` callback, this will evaluate `initialValue`, causing an infinite loop.
-          //   - @TODO[Integrity] Moreover, it seems that such an infinite loop won't be detected.
-          //      Not sure why. I'm guessing must be one of our guards being excessive, but I can't find it.
+            // Potential problem:
+            // - calling `project` calls `inputSignal.foreach` in user code (e.g.)
+            // - the result of `project` is needed to build output, to memoize it
+            // - `inputSignal.foreach` in user code triggers `inputSignal.onAddedExternalObserver`
+            // - that calls for `inputSignal.tryNow` to send the value to the new observer
+            // - that calls `parent.tryNow.map(memoizedProject)`
+            // - at this point, we still haven't obtained the output of `project` because we're still
+            //   running inside of it
+            // - so the code of memoizedProject goes into the same branch and into the `else` branch of `cachedOutput.getOrElse`
+            // - which is where the flow started, so that's a loop
+            // = I've been in this mess for so long, I forgot how exactly I fixed this. Tests will catch that if this happens again.
 
-          // Potential problem:
-          // - calling `project` calls `inputSignal.foreach` in user code (e.g.)
-          // - the result of `project` is needed to build output, to memoize it
-          // - `inputSignal.foreach` in user code triggers `inputSignal.onAddedExternalObserver`
-          // - that calls for `inputSignal.tryNow` to send the value to the new observer
-          // - that calls `parent.tryNow.map(memoizedProject)`
-          // - at this point, we still haven't obtained the output of `project` because we're still
-          //   running inside of it
-          // - so the code of memoizedProject goes into the same branch and into the `else` branch of `cachedOutput.getOrElse`
-          // - which is where the flow started, so that's a loop
-          // = I've been in this mess for so long, I forgot how exactly I fixed this. Tests will catch that if this happens again.
+            // - `inputSignal` fetches the latest input from `memoized` and emits that, subject to `compose`,
+            //   which by default applies the `distinct` operator to filter out changes to OTHER keys.
+            // - Without this default, each inputSignal would receive updates whenever any other unrelated key
+            //   was updated in the parent list of inputs. We do have a test to check that behaviour too.
 
-          // - `inputSignal` fetches the latest input from `memoized` and emits that, subject to `compose`,
-          //   which by default applies the `distinct` operator to filter out changes to OTHER keys.
-          // - Without this default, each inputSignal would receive updates whenever any other unrelated key
-          //   was updated in the parent list of inputs. We do have a test to check that behaviour too.
+            val inputSignal =
+              new SplitChildSignal[Key, M, Input](
+                sharedDelayedParent,
+                key = memoizedKey,
+                initialValue = Some((initialInput, Protected.lastUpdateId(parent))),
+                getMemoizedValue = () => {
+                  val maybeMemoizedValue = memoized.get(memoizedKey)
+                  (maybeMemoizedValue match {
+                    case Some(memoizedValue) =>
+                      val memoizedParentLastUpdateId = memoizedValue._4
+                      if (Protected.lastUpdateId(parent) > memoizedParentLastUpdateId) {
+                        // memoized storage does not have the latest data
+                        //  - this can happen when individual ChildSplitSignal is active
+                        //    while the SplitSignal is stopped (has no listeners)
+                        //  - ChildSplitSignal depends on `memoized`, which is the internal
+                        //    state of SplitSignal, but it does not actually depend on
+                        //    SplitSignal itself (using an internal observer).
+                        //  - So, in that case, SplitSignal's internal state is not updated,
+                        //    and memoized contains stale data. To mitigate this, we detect
+                        //    this situation using lastUpdateId check above, and if a discrepancy
+                        //    is detected, we have SplitSignal pull fresh data before reading it again.
+                        //  – I am not sure if setting up an actual dependency (w/ observer)
+                        //    is a good idea. I tried making sharedDelayedParent depend
+                        //    on SplitSignal in addition to `parent`, but that produces weird results.
+                        currentValueFromParent() // pull fresh data
+                        memoized.get(memoizedKey) // read the latest data
+                      } else {
+                        maybeMemoizedValue
+                      }
+                    case _ =>
+                      None
+                  }).map(t => (t._1, t._4))
+                }
+              ).distinctTry(isSame = distinctF)
 
-          val inputSignal =
-            new SplitChildSignal[Key, M, Input](
-              sharedDelayedParent,
-              key = memoizedKey,
-              initialValue = Some((initialInput, Protected.lastUpdateId(parent))),
-              getMemoizedValue = () => {
-                val maybeMemoizedValue = memoized.get(memoizedKey)
-                (maybeMemoizedValue match {
-                  case Some(memoizedValue) =>
-                    val memoizedParentLastUpdateId = memoizedValue._4
-                    if (Protected.lastUpdateId(parent) > memoizedParentLastUpdateId) {
-                      // memoized storage does not have the latest data
-                      //  - this can happen when individual ChildSplitSignal is active
-                      //    while the SplitSignal is stopped (has no listeners)
-                      //  - ChildSplitSignal depends on `memoized`, which is the internal
-                      //    state of SplitSignal, but it does not actually depend on
-                      //    SplitSignal itself (using an internal observer).
-                      //  - So, in that case, SplitSignal's internal state is not updated,
-                      //    and memoized contains stale data. To mitigate this, we detect
-                      //    this situation using lastUpdateId check above, and if a discrepancy
-                      //    is detected, we have SplitSignal pull fresh data before reading it again.
-                      //  – I am not sure if setting up an actual dependency (w/ observer)
-                      //    is a good idea. I tried making sharedDelayedParent depend
-                      //    on SplitSignal in addition to `parent`, but that produces weird results.
-                      currentValueFromParent() // pull fresh data
-                      memoized.get(memoizedKey) // read the latest data
-                    } else {
-                      maybeMemoizedValue
-                    }
-                  case _ =>
-                    None
-                }).map(t => (t._1, t._4))
-              }
-            ).distinctTry(isSame = distinctF)
+            if (isStarted) {
+              inputSignal.addInternalObserver(strictnessObserver, shouldCallMaybeWillStart = true)
+            }
 
-          if (isStarted) {
-            inputSignal.addInternalObserver(strictnessObserver, shouldCallMaybeWillStart = true)
-          }
+            val newOutput = project(inputSignal)
 
-          val newOutput = project(inputSignal)
-
-          (inputSignal, newOutput)
+            (nextInput, inputSignal, newOutput, Protected.lastUpdateId(parent))
         }
-
-        val inputSignal = nextSignalAndOutput._1
-        val nextOutput = nextSignalAndOutput._2
 
         // Cache this key for the first time, or update the input so that inputSignal can fetch it
         // dom.console.log(s"${this} memoized.update ${memoizedKey} -> ${nextInput}")
-        memoized.update(memoizedKey, (nextInput, inputSignal, nextOutput, Protected.lastUpdateId(parent)))
+        memoized.update(memoizedKey, nextMemoized)
 
-        nextOutput
+        nextMemoized._3
       }
     )
 
