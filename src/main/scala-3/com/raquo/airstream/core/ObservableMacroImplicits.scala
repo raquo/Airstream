@@ -37,8 +37,7 @@ trait ObservableMacroImplicits {
   extension [Self[+_] <: Observable[?], I, K, CC[_]](inline observable: BaseObservable[Self, CC[I]]) {
 
     /** Split a collection-valued observable by key, matching each element against a set of clauses.
-      * The clauses are built with [[SplitMatchSeqContext]]'s `handle*` methods (handlers receive a
-      * plain `Signal[_]`):
+      * The clauses are built with [[SplitMatchSeqContext]]'s `handle*` methods:
       *
       * {{{
       * fooListSignal.splitMatchSeq(_.id)(

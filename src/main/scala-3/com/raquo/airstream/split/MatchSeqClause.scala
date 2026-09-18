@@ -1,6 +1,6 @@
 package com.raquo.airstream.split
 
-import com.raquo.airstream.core.Signal
+import com.raquo.airstream.state.StrictSignal
 
 import scala.annotation.compileTimeOnly
 
@@ -16,7 +16,7 @@ sealed trait MatchSeqClause[+O]
   *
   * `I` is the element type of the collection being split. These methods are never evaluated – the
   * `splitMatchSeq` macro reads the clause shapes at compile time and generates a single match block.
-  * Handlers receive a plain `Signal[_]` (not a `StrictSignal[_]`), matching `splitMatchSeq`'s semantics.
+  * Handlers receive a [[StrictSignal]], like `splitSeq` and `splitMatchOne`, so `.now()` is available.
   */
 sealed trait SplitMatchSeqContext[I] {
 
@@ -26,7 +26,7 @@ sealed trait SplitMatchSeqContext[I] {
     * }}}
     */
   @compileTimeOnly("`handleCase` is only usable inside `splitMatchSeq`.")
-  def handleCase[A, B, O](pf: PartialFunction[A, B])(handler: Signal[B] => O): MatchSeqClause[O] =
+  def handleCase[A, B, O](pf: PartialFunction[A, B])(handler: StrictSignal[B] => O): MatchSeqClause[O] =
     SplitMatchSeqContext.stub
 
   /** Equivalent of `case t: T => t`. Usage:
@@ -53,7 +53,7 @@ sealed trait SplitMatchSeqContext[I] {
     * }}}
     */
   @compileTimeOnly("`handleRest` is only usable inside `splitMatchSeq`.")
-  def handleRest[O](handler: Signal[I] => O): MatchSeqClause[O] =
+  def handleRest[O](handler: StrictSignal[I] => O): MatchSeqClause[O] =
     SplitMatchSeqContext.stub
 }
 
@@ -65,6 +65,6 @@ object SplitMatchSeqContext {
 
   final class HandleType[I, T] private[split] () {
     @compileTimeOnly("`handleType` is only usable inside `splitMatchSeq`.")
-    def apply[O](handler: Signal[T] => O): MatchSeqClause[O] = stub
+    def apply[O](handler: StrictSignal[T] => O): MatchSeqClause[O] = stub
   }
 }

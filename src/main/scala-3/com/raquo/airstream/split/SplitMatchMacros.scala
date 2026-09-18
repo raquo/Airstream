@@ -232,7 +232,7 @@ object SplitMatchMacros {
             val vExpr = v.changeOwner(Symbol.spliceOwner).asExprOf[vt]
             val handlerExpr = reown(handler)
             val caseExpr: Expr[PartialFunction[vt, vt]] = '{ { case _: vt => $vExpr } }
-            val handlerFn = '{ (_: Signal[vt]) => $handlerExpr }
+            val handlerFn = '{ (_: StrictSignal[vt]) => $handlerExpr }
             (caseExpr.asExprOf[CaseAny], handlerFn.asExprOf[HandlerAny[Any]])
         }
 
