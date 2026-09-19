@@ -201,9 +201,11 @@ class OwnerKillCascadeSpec extends UnitSpec {
 
   private val FuzzSeeds: Seq[Long] = 0L until 500L
 
-  FuzzSeeds.foreach { seed =>
-    it(s"cascade stays consistent under random legal mutations (seed $seed)") {
-      runCascadeFuzz(seed)
+  it(s"cascade stays consistent under random legal mutations") {
+    FuzzSeeds.foreach { seed =>
+      withClue(s"s(seed ${seed}):") {
+        runCascadeFuzz(seed)
+      }
     }
   }
 
