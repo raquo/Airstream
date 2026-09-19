@@ -14,7 +14,7 @@ import com.raquo.airstream.core.Named
   */
 class Subscription(
   private[ownership] val owner: Owner,
-  cleanup: () => Unit
+  private var cleanup: () => Unit
 ) extends Named {
 
   /** Make sure we only kill any given Subscription once. Just a sanity check against bad user logic,
@@ -42,9 +42,17 @@ class Subscription(
       // a potential infinite loop if user code ends up calling .kill() on
       // this same subscription.
       _isKilled = true
-      cleanup()
+      val cleanupNow = cleanup
+      // A retained dead subscription should not retain the resources captured by cleanup.
+      cleanup = Subscription.emptyCleanup
+      cleanupNow()
     } else {
       throw new Exception("Can not kill Subscription: it was already killed.")
     }
   }
+}
+
+object Subscription {
+
+  private val emptyCleanup: () => Unit = () => ()
 }

@@ -7,6 +7,25 @@ import scala.util.Try
 
 class SubscriptionSpec extends UnitSpec {
 
+  it("a throwing cleanup stays killed and is not run again") {
+    // Defensive coverage for misuse: cleanup must not throw under the documented contract.
+    val owner = new TestableOwner
+    val error = new Exception("cleanup failed")
+    var cleanCount = 0
+    val sub = new Subscription(owner, cleanup = () => {
+      cleanCount += 1
+      throw error
+    })
+
+    Try(sub.kill()).failed.get shouldBe error
+    sub.isKilled shouldBe true
+    Try(sub.kill()).isFailure shouldBe true
+    cleanCount shouldBe 1
+    owner.killSubscriptions()
+    owner._testSubscriptions shouldBe Nil
+    cleanCount shouldBe 1
+  }
+
   it("re-entrant kill() inside cleanup does not re-run cleanup (safeCleanup guard)") {
 
     // Subscription whose cleanup calls its own kill().
