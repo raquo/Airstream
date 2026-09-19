@@ -7,7 +7,7 @@ import com.raquo.airstream.distinct.DistinctOps
 import com.raquo.airstream.extensions.OptionVar
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.split.SplittableSeqVar
-import com.raquo.airstream.util.hasDuplicateTupleKeys
+import com.raquo.ew.JsSet
 
 import scala.util.{Failure, Success, Try}
 
@@ -359,7 +359,9 @@ object Var {
   }
 
   private def hasDuplicateVars(tuples: Seq[(Var[?], ?)]): Boolean = {
-    hasDuplicateTupleKeys(tuples.map(t => t.copy(_1 = t._1.underlyingVar)))
+    val underlyingVars = new JsSet[SourceVar[?]]()
+    tuples.foreach(t => underlyingVars.add(t._1.underlyingVar))
+    tuples.size != underlyingVars.size
   }
 
   /** Provides methods on Var: split, splitMutate */
