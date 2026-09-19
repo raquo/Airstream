@@ -27,11 +27,17 @@ class CombineStreamN[A, Out](
 
   private val maybeLastParentValues: JsArray[js.UndefOr[Try[A]]] = parents.map(_ => js.undefined)
 
+  // Like the stored values, readiness is retained across stop / start cycles.
+  private var numMissingParentValues: Int = parents.length
+
   override protected val parentObservers: JsArray[InternalParentObserver[?]] = {
     parents.mapWithIndex { (parent, ix) =>
       InternalParentObserver.fromTry[A](
         parent,
         (nextParentValue, trx) => {
+          if (maybeLastParentValues(ix).isEmpty) {
+            numMissingParentValues -= 1
+          }
           maybeLastParentValues.update(ix, nextParentValue)
           if (inputsReady) {
             onInputsReady(trx)
@@ -41,15 +47,7 @@ class CombineStreamN[A, Out](
     }
   }
 
-  override protected def inputsReady: Boolean = {
-    var allReady: Boolean = true
-    maybeLastParentValues.forEach { lastValue =>
-      if (lastValue.isEmpty) {
-        allReady = false
-      }
-    }
-    allReady
-  }
+  override protected def inputsReady: Boolean = numMissingParentValues == 0
 
   override protected def combinedValue: Try[Out] = {
     // #Note don't call this unless you have first verified that

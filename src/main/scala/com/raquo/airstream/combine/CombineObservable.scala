@@ -35,7 +35,7 @@ trait CombineObservable[A] extends SyncObservable[A] { this: WritableObservable[
 
   /** This method is called after this pending observable has been resolved */
   override private[airstream] def syncFire(transaction: Transaction): Unit = {
-    // @TODO[Performance] I don't think this inputsReady check is needed here, but not confident enough to remove it.
+    // Keep this defensive readiness check; readiness is inexpensive to test.
     if (inputsReady) {
       fireTry(combinedValue, transaction)
     } else {
