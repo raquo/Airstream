@@ -1,4 +1,4 @@
-package splitmatch.publicapi
+package com.thirdparty.splitmatch
 
 import com.raquo.airstream.UnitSpec
 import com.raquo.airstream.core.Signal
@@ -23,7 +23,7 @@ import scala.collection.mutable
   * `assertCompiles` type-checks the snippet in THIS file's scope, so a failure here shows up as
   * a failed test rather than as a broken test build.
   */
-class SplitMatchSeqStrictSignalRegressionSpec extends UnitSpec {
+class SplitMatchSeqStrictSignalApiSpec extends UnitSpec {
 
   sealed trait Foo {
     def id: String

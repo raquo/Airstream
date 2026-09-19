@@ -21,7 +21,7 @@ import scala.collection.mutable
   * plain expressions inside `handleValue { ... }`, so nothing exercised this shape. These tests
   * make sure a future change to how the handler is re-owned cannot regress silently.
   */
-class SplitMatchHandleValueOwnerRegressionSpec extends UnitSpec {
+class SplitMatchHandleValueOwnerSpec extends UnitSpec {
 
   sealed trait Foo
   final case class Bar(str: String) extends Foo
