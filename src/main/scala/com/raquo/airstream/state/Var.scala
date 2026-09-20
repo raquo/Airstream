@@ -7,7 +7,7 @@ import com.raquo.airstream.distinct.DistinctOps
 import com.raquo.airstream.extensions.OptionVar
 import com.raquo.airstream.ownership.Owner
 import com.raquo.airstream.split.SplittableSeqVar
-import com.raquo.ew.JsSet
+import com.raquo.airstream.util.hasDuplicateKeys
 
 import scala.util.{Failure, Success, Try}
 
@@ -282,7 +282,7 @@ object Var {
   def setTry(values: VarTryTuple[?]*): Unit = {
     // println(s"> init trx from Var.set/setTry")
     Transaction { trx =>
-      if (hasDuplicateVars(values.map(_.tuple))) {
+      if (hasDuplicateUnderlyingVars(values)(_.tuple._1)) {
         throw VarError("Unable to Var.{set,setTry}: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None)
       }
       values.foreach(setTryValue(_, trx))
@@ -307,18 +307,17 @@ object Var {
   def update(mods: VarModTuple[?]*): Unit = {
     // println(s"> init trx from Var.update")
     Transaction { trx =>
-      if (hasDuplicateVars(mods.map(_.tuple))) {
+      if (hasDuplicateUnderlyingVars(mods)(_.tuple._1)) {
         throw VarError("Unable to Var.update: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None)
       }
-      val tryMods: Seq[VarTryModTuple[?]] = mods.map(t => modToTryModTuple(t))
-      val vars = mods.map(_.tuple._1)
       try {
-        vars.foreach(_.now())
+        mods.foreach(_.tuple._1.now())
       } catch {
         case err: Throwable =>
           throw VarError("Unable to Var.update a failed Var. Consider Var.tryUpdate instead.", cause = Some(err))
       }
-      val tryValues: Seq[VarTryTuple[?]] = tryMods.map(t => tryModToTryTuple(t))
+      // #Note: we compute all the new values before setting any of them.
+      val tryValues: Seq[VarTryTuple[?]] = mods.map(t => modToTryTuple(t))
       tryValues.foreach(setTryValue(_, trx))
     }
   }
@@ -334,9 +333,10 @@ object Var {
   def tryUpdate(mods: VarTryModTuple[?]*): Unit = {
     // println(s"> init trx from Var.tryUpdate")
     Transaction { trx =>
-      if (hasDuplicateVars(mods.map(_.tuple))) {
+      if (hasDuplicateUnderlyingVars(mods)(_.tuple._1)) {
         throw VarError("Unable to Var.tryUpdate: the provided list of vars has duplicates. You can't make an observable emit more than one event per transaction.", cause = None)
       }
+      // #Note: we compute all the new values before setting any of them.
       val tryValues: Seq[VarTryTuple[?]] = mods.map(t => tryModToTryTuple(t))
       tryValues.foreach(setTryValue(_, trx))
     }
@@ -346,8 +346,8 @@ object Var {
     VarTryTuple((varTuple.tuple._1, Success(varTuple.tuple._2)))
   }
 
-  @inline private def modToTryModTuple[A](modTuple: VarModTuple[A]): VarTryModTuple[A] = {
-    VarTryModTuple((modTuple.tuple._1, (t: Try[A]) => t.map(curr => modTuple.tuple._2(curr))))
+  @inline private def modToTryTuple[A](modTuple: VarModTuple[A]): VarTryTuple[A] = {
+    VarTryTuple((modTuple.tuple._1, modTuple.tuple._1.tryNow().map(modTuple.tuple._2)))
   }
 
   @inline private def tryModToTryTuple[A](modTuple: VarTryModTuple[A]): VarTryTuple[A] = {
@@ -358,10 +358,8 @@ object Var {
     tuple.tuple._1.setCurrentValue(tuple.tuple._2, transaction)
   }
 
-  private def hasDuplicateVars(tuples: Seq[(Var[?], ?)]): Boolean = {
-    val underlyingVars = new JsSet[SourceVar[?]]()
-    tuples.foreach(t => underlyingVars.add(t._1.underlyingVar))
-    tuples.size != underlyingVars.size
+  @inline private def hasDuplicateUnderlyingVars[A](items: Seq[A])(v: A => Var[?]): Boolean = {
+    hasDuplicateKeys(items)(item => v(item).underlyingVar)
   }
 
   /** Provides methods on Var: split, splitMutate */

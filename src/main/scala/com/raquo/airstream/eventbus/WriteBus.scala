@@ -2,7 +2,7 @@ package com.raquo.airstream.eventbus
 
 import com.raquo.airstream.core.{EventStream, InternalObserver, Observer, Transaction}
 import com.raquo.airstream.ownership.{Owner, Subscription}
-import com.raquo.airstream.util.{FeatureFlags, hasDuplicateTupleKeys}
+import com.raquo.airstream.util.{FeatureFlags, hasDuplicateKeys}
 
 import scala.annotation.nowarn
 import scala.util.Try
@@ -100,7 +100,7 @@ object WriteBus {
     */
   def emit(values: BusTuple[?]*): Unit = {
     // println(s"> init trx from WriteBus.emit($values)")
-    if (hasDuplicateTupleKeys(values.map(_.tuple))) {
+    if (hasDuplicateKeys(values)(_.tuple._1)) {
       throw new Exception("Unable to {EventBus,WriteBus}.emit: the provided list of event buses has duplicates. You can't make an observable emit more than one event per transaction.")
     }
     Transaction(trx => values.foreach(emitValue(_, trx)))
@@ -111,7 +111,7 @@ object WriteBus {
     */
   def emitTry(values: BusTryTuple[?]*): Unit = {
     // println(s"> init trx from WriteBus.emitTry($values)")
-    if (hasDuplicateTupleKeys(values.map(_.tuple))) {
+    if (hasDuplicateKeys(values)(_.tuple._1)) {
       throw new Exception("Unable to {EventBus,WriteBus}.emitTry: the provided list of event buses has duplicates. You can't make an observable emit more than one event per transaction.")
     }
     Transaction(trx => values.foreach(emitTryValue(_, trx)))
