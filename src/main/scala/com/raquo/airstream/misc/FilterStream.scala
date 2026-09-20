@@ -3,7 +3,7 @@ package com.raquo.airstream.misc
 import com.raquo.airstream.common.{InternalNextErrorObserver, SingleParentStream}
 import com.raquo.airstream.core.{EventStream, Protected, Transaction}
 
-import scala.util.Try
+import scala.util.control.NonFatal
 
 // @TODO[API] Should we also offer a Try[A] => Boolean filter? Currently handled by .collect.recover combination
 /** This stream fires a subset of the events fired by its parent
@@ -20,11 +20,13 @@ class FilterStream[A](
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
   override protected def onNext(nextParentValue: A, transaction: Transaction): Unit = {
-    // @TODO[Performance] Can / should we replace internal Try()-s with try-catch blocks?
-    Try(passes(nextParentValue)).fold(
-      onError(_, transaction),
-      passes => if (passes) fireValue(nextParentValue, transaction)
-    )
+    try {
+      if (passes(nextParentValue)) {
+        fireValue(nextParentValue, transaction)
+      }
+    } catch {
+      case NonFatal(error) => onError(error, transaction)
+    }
   }
 
   override protected def onError(nextError: Throwable, transaction: Transaction): Unit = {
