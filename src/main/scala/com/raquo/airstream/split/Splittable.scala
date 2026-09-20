@@ -219,12 +219,7 @@ trait LowPrioritySplittableImplicits extends LowestPrioritySplittableImplicits {
     }
 
     override def foreach[A](inputs: Seq[A], f: A => Unit): Unit = {
-      // #TODO[Perf] Do we actually need to force .toList here? I think LazyList.foreach is strict already.
-      val strictInputs = inputs match {
-        case lazyList: LazyList[A @unchecked] => lazyList.toList
-        case _ => inputs
-      }
-      strictInputs.foreach(f)
+      inputs.foreach(f)
     }
 
     override def isEmpty[A](inputs: Seq[A]): Boolean = inputs.isEmpty
@@ -248,12 +243,7 @@ trait LowestPrioritySplittableImplicits {
     }
 
     override def foreach[A](inputs: collection.Seq[A], f: A => Unit): Unit = {
-      // #TODO[Perf] Do we actually need to force .toList here? I think LazyList.foreach is strict already.
-      val strictInputs = inputs match {
-        case lazyList: LazyList[A @unchecked] => lazyList.toList
-        case _ => inputs
-      }
-      strictInputs.foreach(f)
+      inputs.foreach(f)
     }
 
     override def isEmpty[A](inputs: collection.Seq[A]): Boolean = inputs.isEmpty
