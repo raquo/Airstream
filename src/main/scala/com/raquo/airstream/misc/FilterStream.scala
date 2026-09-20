@@ -20,12 +20,16 @@ class FilterStream[A](
   override protected val topoRank: Int = Protected.topoRank(parent) + 1
 
   override protected def onNext(nextParentValue: A, transaction: Transaction): Unit = {
-    try {
-      if (passes(nextParentValue)) {
-        fireValue(nextParentValue, transaction)
+    val shouldFire =
+      try {
+        passes(nextParentValue)
+      } catch {
+        case NonFatal(error) =>
+          onError(error, transaction)
+          false
       }
-    } catch {
-      case NonFatal(error) => onError(error, transaction)
+    if (shouldFire) {
+      fireValue(nextParentValue, transaction)
     }
   }
 

@@ -1,6 +1,7 @@
 package com.raquo.airstream.core
 
 import com.raquo.airstream.UnitSpec
+import com.raquo.airstream.common.SingleParentStream
 import com.raquo.airstream.eventbus.EventBus
 import com.raquo.airstream.fixtures.{Effect, TestableOwner}
 import com.raquo.airstream.ownership.Owner
@@ -8,6 +9,7 @@ import org.scalactic.anyvals.NonEmptyList
 
 import java.util.concurrent.Flow
 import scala.collection.mutable
+import scala.util.Try
 
 class EventStreamSpec extends UnitSpec {
 
@@ -66,6 +68,42 @@ class EventStreamSpec extends UnitSpec {
 
     subscription0.kill()
     effects.toList shouldBe range.filter(f).map(i => Effect("obs0", i))
+  }
+
+  it("filter reports throwing internal observers as unhandled errors") {
+    implicit val owner: Owner = new TestableOwner
+    val bus = new EventBus[Int]
+    val stream = bus.events.filter(_ => true)
+    val error = new Exception("internal observer failed")
+    val effects = mutable.Buffer[Effect[?]]()
+    val unhandledErrors = mutable.Buffer[Throwable]()
+    val errorCallback: Throwable => Unit = err => { unhandledErrors += err; () }
+    val throwing: SingleParentStream[Int, Int] = new SingleParentStream[Int, Int] {
+      override protected val parent: EventStream[Int] = stream
+      override protected val topoRank: Int = Protected.topoRank(parent) + 1
+      override protected def onNext(nextValue: Int, transaction: Transaction): Unit = {
+        throw error
+      }
+      override protected def onError(nextError: Throwable, transaction: Transaction): Unit = ()
+      override protected def onTry(nextValue: Try[Int], transaction: Transaction): Unit = {
+        nextValue.fold(onError(_, transaction), onNext(_, transaction))
+      }
+    }
+
+    AirstreamError.registerUnhandledErrorCallback(errorCallback)
+    AirstreamError.unregisterUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
+    stream.foreach(value => effects += Effect("value", value))
+    val throwingSubscription = throwing.foreach(_ => ())
+    try {
+      bus.emit(1)
+
+      effects.toList shouldBe List(Effect("value", 1))
+      unhandledErrors.toList shouldBe List(error)
+    } finally {
+      throwingSubscription.kill()
+      AirstreamError.unregisterUnhandledErrorCallback(errorCallback)
+      AirstreamError.registerUnhandledErrorCallback(AirstreamError.consoleErrorCallback)
+    }
   }
 
   it("filterNot") {
