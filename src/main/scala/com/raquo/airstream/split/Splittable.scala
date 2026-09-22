@@ -99,6 +99,11 @@ object Splittable extends LowPrioritySplittableImplicits {
 
     override def map[A, B](inputs: Vector[A], project: A => B): Vector[B] = inputs.map(project)
 
+    override def findUpdate[A](inputs: Vector[A], predicate: A => Boolean, newItem: A): Vector[A] = {
+      val index = inputs.indexWhere(predicate)
+      if (index == -1) inputs else inputs.updated(index, newItem)
+    }
+
     override def foreach[A](inputs: Vector[A], f: A => Unit): Unit = inputs.foreach(f)
 
     override def isEmpty[A](inputs: Vector[A]): Boolean = inputs.isEmpty
