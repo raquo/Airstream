@@ -1,5 +1,6 @@
 package com.raquo.airstream.core
 
+import com.raquo.airstream.util.removeAt
 import com.raquo.ew.JsArray
 
 class ObserverList[Obs](
@@ -17,7 +18,7 @@ class ObserverList[Obs](
     val index = observers.indexOf(observer)
     val shouldRemove = index != -1
     if (shouldRemove) {
-      observers.splice(index, deleteCount = 1)
+      removeAt(observers, index)
     }
     shouldRemove
   }
