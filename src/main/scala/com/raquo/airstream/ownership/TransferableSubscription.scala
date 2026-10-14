@@ -33,8 +33,23 @@ class TransferableSubscription(
   /** Whether we are currently transferring this subscription from one active owner to another active owner. */
   private var isLiveTransferInProgress: Boolean = false
 
+  /** Whether this subscription is active: true from the start of `activate()` until the end of
+    * `deactivate()`, so that `setOwner` calls made from inside those callbacks see it as active.
+    *
+    * #Note: This is different from [[isCurrentOwnerActive]] – see scaladoc comment on [[isActive]].
+    */
+  private var _isActive: Boolean = false
+
+  /** This is different from [[isCurrentOwnerActive]] – an owner reports being active
+    * for the whole time that it's activating or deactivating its subscriptions one by one,
+    * so while it's activating, this subscription might not have been activated yet, and
+    * while it's deactivating, this subscription might have been deactivated already.
+    */
+  def isActive: Boolean = _isActive
+
   def hasOwner: Boolean = maybeSubscription.nonEmpty
 
+  /** #Note: this is different from [[isActive]] - see scaladoc comment there. */
   def isCurrentOwnerActive: Boolean = maybeSubscription.exists(_.isOwnerActive)
 
   /** Update the owner of this subscription. */
@@ -55,7 +70,8 @@ class TransferableSubscription(
     if (maybeSubscription.exists(_.isOwnedBy(nextOwner))) {
       // Owner is the same – do nothing
     } else {
-      if (isCurrentOwnerActive && nextOwner.isActive) {
+      // We check our own activation status rather than the current owner's – see [[isActive]].
+      if (_isActive && nextOwner.isActive) {
         isLiveTransferInProgress = true
       }
 
@@ -87,6 +103,7 @@ class TransferableSubscription(
           // (proof – the previous subscription is active)
           if (!isLiveTransferInProgress) {
             // println(s"    - activating pilot dynSub which is:")
+            _isActive = true
             activate()
           }
           new Subscription(
@@ -97,6 +114,7 @@ class TransferableSubscription(
               // so we need to skip deactivation here because now the NEW subscription will do it instead.
               if (!isLiveTransferInProgress) {
                 deactivate()
+                _isActive = false
               }
             }
           )
