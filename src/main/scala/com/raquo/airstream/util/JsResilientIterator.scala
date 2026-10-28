@@ -105,7 +105,7 @@ class JsResilientIterator[A](
           iterIx -= 1
         }
       }
-      items.splice(index, deleteCount = 1)
+      removeAt(items, index)
       true
     }
   }

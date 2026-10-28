@@ -1,6 +1,6 @@
 package com.raquo.airstream
 
-import com.raquo.ew.JsSet
+import com.raquo.ew.{JsArray, JsSet}
 
 import scala.util.{Failure, Try}
 
@@ -32,6 +32,21 @@ package object util {
       seenKeys.add(key(item))
     }
     items.size != seenKeys.size
+  }
+
+  /** Removes the item at `index` (must be a valid index) from `array`.
+    *
+    * For the first item we use `shift()`, which V8 does in O(1) by moving the array's
+    * start (except for very large arrays), whereas `splice(0, 1)` moves every other item.
+    * This makes removing many items in insertion order – e.g. when unmounting a long
+    * list, observers and subscriptions go away oldest-first – linear, not quadratic.
+    */
+  @inline private[airstream] def removeAt[A](array: JsArray[A], index: Int): Unit = {
+    if (index == 0) {
+      val _ = array.shift()
+    } else {
+      val _ = array.splice(index, deleteCount = 1)
+    }
   }
 
   /** Like `Try(v).flatten`, but avoids allocating another `Success`. */
