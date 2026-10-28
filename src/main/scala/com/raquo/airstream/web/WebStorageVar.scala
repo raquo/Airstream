@@ -119,9 +119,18 @@ class WebStorageVar[A] private[web] (
     // When we first enable sync, update this Var's value once,
     // if the stored value has changed since we've last read it.
     pullOnce(distinctOnly = true)
-    // Keep this var's value up-to-date
-    externalUpdates.foreach { ev =>
-      setFromStoredValue(Option(ev.newValue), distinctOnly = true)
+    // Keep this var's value up-to-date.
+    externalUpdates.foreach { _ =>
+      // - The browser sends StorageEvent events asynchronously, so `ev.newValue`
+      //   does not necessarily match the latest value that is already available
+      //   in the shared storage.
+      // - Because `setFromStoredValue` ultimately writes the new value not only
+      //   to the var, but also to the underlying storage, we can't write `ev.newValue`
+      //   directly to this var, as this value could be stale.
+      // - To avoid this, we read the value from the storage instead.
+      // - Downside: our Var may skip/swallow rapidly consecutive events from other
+      //   tabs, only getting one latest value, but not intermediary events.
+      pullOnce(distinctOnly = true)
     }(syncOwner)
   }
 
